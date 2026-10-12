@@ -200,7 +200,7 @@ public sealed class InlineBuilderTests
     [Fact]
     public void Build_AnchorsFragmentSpansAtTheInlineSource()
     {
-        var text = new DialogueDown.Markdown.TextInline("hi", SourceSpanFactory.Span(4, 2));
+        var text = Md.Text("hi", Md.Span(4, 2));
 
         var speech = Build([text]);
 
@@ -213,8 +213,7 @@ public sealed class InlineBuilderTests
         // Source "\* b": Markdig yields content "* b" with a raw span [2,6) that counts
         // the backslash, and a ContentSpan [3,6) that starts past it. The built text must
         // anchor at the content, not the raw span.
-        var text = new DialogueDown.Markdown.TextInline(
-            "* b", SourceSpanFactory.Span(2, 4), SourceSpanFactory.Span(3, 3));
+        var text = Md.TextEscaped("* b", Md.Span(2, 4));
 
         var speech = Build([text]);
 
@@ -226,9 +225,7 @@ public sealed class InlineBuilderTests
     {
         // Source "\#happy": the text is "#happy" with the escape recorded, so the tag is
         // read as plain text rather than metadata.
-        var text = new DialogueDown.Markdown.TextInline(
-            "#happy", SourceSpanFactory.Span(0, 7), SourceSpanFactory.Span(1, 6),
-            isFirstCharacterEscaped: true);
+        var text = Md.TextEscaped("#happy", Md.Span(0, 7));
 
         var speech = Build([text]);
 

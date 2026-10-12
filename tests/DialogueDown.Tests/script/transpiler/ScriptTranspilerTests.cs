@@ -26,7 +26,7 @@ public sealed class ScriptTranspilerTests
         Assert.Equal(2, script.Body.Count);
         AssertSceneHeading(script.Body[0], "The Cave", 1);
         var line = AssertLine(script.Body[1]);
-        AssertSpeakerNameReference(line.Speaker!, "Alice");
+        AssertSpeakerNameReference(line.Speaker, "Alice");
         AssertSpeechText(line, "Hi");
     }
 
@@ -59,7 +59,7 @@ public sealed class ScriptTranspilerTests
         Assert.Equal(3, script.Body.Count);
         AssertSceneHeading(script.Body[0], "The Cave", 1);
         var line = AssertLine(script.Body[1]);
-        AssertSpeakerNameReference(line.Speaker!, "Alice");
+        AssertSpeakerNameReference(line.Speaker, "Alice");
         AssertSpeechText(line, "Hello there.");
         var choices = AssertChoices(script.Body[2], isOrdered: false);
         Assert.Equal(2, choices.Options.Count);

@@ -20,7 +20,7 @@ public sealed class UnquotedKeyTranspilationTests
     {
         var script = Transpile("`Angry?` Guard: You again? Get out.");
 
-        AssertCondition(AssertLine(Assert.Single(script.Body)).Condition!, "Angry");
+        AssertCondition(AssertLine(Assert.Single(script.Body)).Condition, "Angry");
     }
 
     [Fact]
@@ -28,7 +28,7 @@ public sealed class UnquotedKeyTranspilationTests
     {
         var script = Transpile("`Is Alice happy?` Alice smiles and waves you in.");
 
-        AssertCondition(AssertLine(Assert.Single(script.Body)).Condition!, "Is Alice happy");
+        AssertCondition(AssertLine(Assert.Single(script.Body)).Condition, "Is Alice happy");
     }
 
     [Fact]
@@ -41,7 +41,7 @@ public sealed class UnquotedKeyTranspilationTests
             """);
 
         var choices = AssertChoices(Assert.Single(script.Body), isOrdered: false);
-        AssertCondition(choices.Options[0].Condition!, "HasKey");
+        AssertCondition(choices.Options[0].Condition, "HasKey");
         Assert.Null(choices.Options[1].Condition);
     }
 
@@ -55,7 +55,7 @@ public sealed class UnquotedKeyTranspilationTests
             """);
 
         var random = AssertRandomChoices(Assert.Single(script.Body));
-        AssertCondition(random.Options[0].Condition!, "IsAngry");
+        AssertCondition(random.Options[0].Condition, "IsAngry");
         AssertNumberWeight(random.Options[0], 50);
         AssertQueryWeight(random.Options[1], "Luck");
     }
@@ -66,7 +66,7 @@ public sealed class UnquotedKeyTranspilationTests
         var desugared = Pipeline.UntilDesugared("`Rainy?` => [Wait it out](#the-inn)");
 
         var control = AssertControlLine(Assert.Single(desugared.Document.Body));
-        AssertCondition(AssertJump(Assert.Single(control.Effects), "#the-inn").Condition!, "Rainy");
+        AssertCondition(AssertJump(Assert.Single(control.Effects), "#the-inn").Condition, "Rainy");
     }
 
     private ScriptDocument Transpile(string source) =>

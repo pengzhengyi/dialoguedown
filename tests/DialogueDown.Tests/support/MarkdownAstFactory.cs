@@ -21,11 +21,33 @@ internal static class MarkdownAstFactory
     public static SourceSpan Span(int start = 0, int length = 1) =>
         SourceSpanFactory.Span(start, length);
 
-    public static TextInline Text(string? text = null) =>
-        new(text ?? Faker.Lorem.Sentence(), Span());
+    public static TextInline Text(
+        string? text = null,
+        SourceSpan? span = null,
+        SourceSpan? contentSpan = null,
+        bool isFirstCharacterEscaped = false) =>
+        new(
+            text ?? Faker.Lorem.Sentence(),
+            span ?? Span(),
+            contentSpan,
+            isFirstCharacterEscaped);
+
+    /// <summary>
+    /// A text inline whose first character the source escaped (<c>\:</c>): the raw
+    /// <paramref name="span"/> counts the stripped backslash, so the content starts one past it
+    /// and runs one shorter. This is the single place that assumes an escape strips exactly one
+    /// leading backslash, so the raw span runs one longer than the text.
+    /// </summary>
+    public static TextInline TextEscaped(string text, SourceSpan span) =>
+        new(text, span, new SourceSpan(span.Start + 1, span.Length - 1),
+            isFirstCharacterEscaped: true);
 
     public static LinkInline Link(string? target = null, params MarkdownInline[] label) =>
-        new(target ?? $"#{Faker.Lorem.Slug()}", label.Length == 0 ? [Text()] : label, Span());
+        Link(target, Span(), label);
+
+    public static LinkInline Link(
+        string? target, SourceSpan span, params MarkdownInline[] label) =>
+        new(target ?? $"#{Faker.Lorem.Slug()}", label.Length == 0 ? [Text()] : label, span);
 
     public static ImageInline Image(string? source = null, params MarkdownInline[] alt) =>
         new(source ?? $"{Faker.Lorem.Slug()}.png", alt.Length == 0 ? [Text()] : alt, Span());
@@ -42,7 +64,11 @@ internal static class MarkdownAstFactory
     public static MarkdownInline[] ElseMarkerInlines() => [CodeSpan("else")];
 
     public static EmphasisInline Emphasis(EmphasisKind kind, params MarkdownInline[] children) =>
-        new(kind, children.Length == 0 ? [Text()] : children, Span());
+        Emphasis(kind, Span(), children);
+
+    public static EmphasisInline Emphasis(
+        EmphasisKind kind, SourceSpan span, params MarkdownInline[] children) =>
+        new(kind, children.Length == 0 ? [Text()] : children, span);
 
     public static LineBreak LineBreak(bool hard = false) => new(hard, Span());
 
@@ -53,7 +79,7 @@ internal static class MarkdownAstFactory
         new(inlines.Length == 0 ? [Text()] : inlines, Span());
 
     public static Paragraph TextParagraph(params string[] texts) =>
-        Paragraph(texts.Select(Text).ToArray());
+        Paragraph(texts.Select(text => Text(text)).ToArray());
 
     public static ListItem ListItem(params MarkdownBlock[] blocks) =>
         new(blocks.Length == 0 ? [Paragraph()] : blocks, Span());
