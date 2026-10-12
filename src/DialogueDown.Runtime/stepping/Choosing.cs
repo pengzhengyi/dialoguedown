@@ -47,6 +47,10 @@ internal static class Choosing
     /// was asked.
     /// </param>
     /// <returns>Where the run now stands, and what it has to say.</returns>
+    /// <remarks>
+    /// Every option is offered, in the order the node lists them, and the wait keeps the ones the
+    /// player can take.
+    /// </remarks>
     public static StepResult Offer(int position, ChoiceNode choice, Supply? supply = null)
     {
         ArgumentNullException.ThrowIfNull(choice);
@@ -57,8 +61,11 @@ internal static class Choosing
         }
 
         var options = choice.Options();
+        var available = AvailableOptions(options, supply);
+        var offer = new Offer(choice.Ordered, OfferedOptions.From(options, available));
+        var waiting = new AwaitingChoice(position, available);
 
-        return OfferOptions(position, choice.Ordered, options, AvailableOptions(options, supply));
+        return new StepResult(new PlayState(waiting), [offer]);
     }
 
     /// <summary>Takes the option the player chose, and arrives at the node it leads to.</summary>
@@ -92,17 +99,6 @@ internal static class Choosing
     // Without answers, only an option nothing guards can be taken; with them, whichever the world allows.
     private static bool IsAvailable(OptionEdge option, Supply? supply) =>
         supply is null ? option.Condition is null : supply.Allows(option);
-
-    // Every option is offered, in the order the node lists them, and the wait keeps the ones the
-    // player can take.
-    private static StepResult OfferOptions(
-        int position, bool ordered, ImmutableArray<OptionEdge> options, ImmutableArray<int> available)
-    {
-        var offer = new Offer(ordered, OfferedOptions.From(options, available));
-        var waiting = new AwaitingChoice(position, available);
-
-        return new StepResult(new PlayState(waiting), [offer]);
-    }
 
     // The node says how many options there are; the wait says which of them could be taken.
     private static StepResult Take(
