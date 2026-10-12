@@ -1,5 +1,4 @@
 using DialogueDown.Playbook.Checking;
-using DialogueDown.Playbook.Edges;
 using DialogueDown.Playbook.Nodes;
 using DialogueDown.TestSupport;
 using static DialogueDown.TestSupport.PlaybookNodeFactory;
@@ -22,7 +21,7 @@ public sealed class OutwardShapeCheckerTests
                     id: 1,
                     Option("Go east", target: 2),
                     Option("Go west", condition: "HasMap", target: 2),
-                    new SuccessionEdge(2)),
+                    Succession(2)),
                 End(id: 2),
             ]);
 
@@ -80,7 +79,7 @@ public sealed class OutwardShapeCheckerTests
     public void Check_AChoiceWithNoOptions_IsRefused()
     {
         var playbook = PlaybookFactory.Document(
-            nodes: [Choice(new SuccessionEdge(1)), End(id: 1)]);
+            nodes: [Choice(Succession(1)), End(id: 1)]);
 
         var error = Assert.Throws<InvalidPlaybookException>(() => _checker.Check(playbook));
 
@@ -92,7 +91,7 @@ public sealed class OutwardShapeCheckerTests
     {
         var playbook = PlaybookFactory.Document(
             speakers: [PlaybookFactory.Speaker()],
-            nodes: [SilentLine(ways: [new SuccessionEdge(1), new SuccessionEdge(1)]), End(id: 1)]);
+            nodes: [SilentLine(ways: [Succession(1), Succession(1)]), End(id: 1)]);
 
         var error = Assert.Throws<InvalidPlaybookException>(() => _checker.Check(playbook));
 
@@ -176,7 +175,7 @@ public sealed class OutwardShapeCheckerTests
                 Choice(
                     Option("Go east", condition: "HasMap", target: 1),
                     Option("Go west", condition: "HasMap", target: 1),
-                    new SuccessionEdge(1)),
+                    Succession(1)),
                 End(id: 1),
             ]);
 
@@ -206,7 +205,7 @@ public sealed class OutwardShapeCheckerTests
         // The succession can never run — an open option is always there — but it plays no
         // differently, so it is not refused.
         var playbook = PlaybookFactory.Document(
-            nodes: [Choice(Option("Go east", target: 1), new SuccessionEdge(1)), End(id: 1)]);
+            nodes: [Choice(Option("Go east", target: 1), Succession(1)), End(id: 1)]);
 
         _checker.Check(playbook);
     }
