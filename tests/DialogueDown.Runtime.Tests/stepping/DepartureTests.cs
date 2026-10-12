@@ -1,4 +1,3 @@
-using DialogueDown.Playbook.Edges;
 using DialogueDown.Runtime.Protocol;
 using DialogueDown.Runtime.Situations;
 using DialogueDown.Runtime.Stepping;
@@ -28,7 +27,9 @@ public sealed class DepartureTests
     [Fact]
     public void From_ANodeThatLeadsNowhere_Refuses() =>
         AssertRefused(
-            Departure.From(ALineLeadingNowhere(), 0), RefusalReason.LeadsNowhere, "leads nowhere");
+            Departure.From(ALineLeadingNowhere(), 0),
+            RefusalReason.LeadsNowhere,
+            "Node 0 leads nowhere.");
 
     [Fact]
     public void Supplied_WhenTheWorldAllowsTheJump_ArrivesWhereItLeads() =>
@@ -72,7 +73,10 @@ public sealed class DepartureTests
         var result = Departure.Supplied(
             PlayContextFactory.ALineWhoseJumpAsksTheWorld(), Waiting(0, "Alice.HasKey"), Answering(("Bob.HasRope", true)));
 
-        AssertRefused(result, RefusalReason.UnansweredKey, "Alice.HasKey");
+        AssertRefused(
+            result,
+            RefusalReason.UnansweredKey,
+            "The world was asked about Alice.HasKey and did not say.");
         AssertAwaitingSupply(result.State, node: 0, Moment.BeforeLeaving, "Alice.HasKey");
     }
 
@@ -108,7 +112,7 @@ public sealed class DepartureTests
     private static PlayContext AConditionalBlockWithoutAnElse() =>
         PlayContextFactory.Of(
             [
-                Branch(Arm("Alice.HasKey", target: 1), new SuccessionEdge(2)),
+                Branch(Arm("Alice.HasKey", target: 1), Succession(2)),
                 Line("The key turns.", id: 1, next: 2),
                 Line("Onward.", id: 2, next: 3),
                 End(id: 3),

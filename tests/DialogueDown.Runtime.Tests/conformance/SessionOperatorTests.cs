@@ -65,7 +65,7 @@ public sealed class SessionOperatorTests
         var op = new SessionOperator(PlayContextFactory.OneLine());
         var stateBefore = op.State;
 
-        AssertNotYetPlayable(op.SendCommand("frobnicate"), "frobnicate");
+        AssertNotYetPlayable(op.SendCommand("frobnicate"), "nothing sends frobnicate yet");
 
         Assert.Equal(stateBefore, op.State);
         AssertNoUnreadEvents(op);

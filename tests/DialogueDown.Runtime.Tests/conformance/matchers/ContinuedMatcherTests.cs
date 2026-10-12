@@ -1,6 +1,6 @@
-using System.Text.Json.Nodes;
 using DialogueDown.Conformance;
 using DialogueDown.Runtime.Protocol;
+using static DialogueDown.Runtime.Tests.Conformance.SessionEntries;
 using static DialogueDown.Runtime.Tests.Conformance.SessionOutcomeAssert;
 using static DialogueDown.TestSupport.SpeechFactory;
 
@@ -20,7 +20,11 @@ public sealed class ContinuedMatcherTests
 
     [Fact]
     public void DifferentSpeechDiverges() =>
-        AssertDiverged(Match(WentOn(" Bye."), """{ "speech": " Farewell." }"""), "Farewell", "Bye");
+        AssertDiverged(
+            Match(WentOn(" Bye."), """{ "speech": " Farewell." }"""),
+            """
+            expected " Farewell.", but heard " Bye."
+            """);
 
     [Fact]
     public void ARunOpeningALineInsteadDiverges() =>
@@ -28,14 +32,13 @@ public sealed class ContinuedMatcherTests
         // twice for one sentence.
         AssertDiverged(
             Match(new Said("Alice", [Text(" Bye.")]), """{ "speech": " Bye." }"""),
-            "expected the line to go on",
-            "heard Alice speak");
+            "expected the line to go on, but the run heard Alice speak");
 
     [Fact]
     public void GoingOnIsDescribedWhenSomethingElseWasExpected() =>
         AssertDiverged(
-            new EndedMatcher().Match(WentOn(" Bye."), JsonNode.Parse("{}")!),
-            "heard the line go on");
+            new EndedMatcher().Match(WentOn(" Bye."), Json("{}")),
+            "expected the run to end, but it heard the line go on");
 
     [Fact]
     public void AContinuedClaimingNoSpeechIsAnInvalidFixture() =>
@@ -45,5 +48,5 @@ public sealed class ContinuedMatcherTests
         new([Text(text)]);
 
     private SessionOutcome Match(Event happened, string expected) =>
-        _matcher.Match(happened, JsonNode.Parse(expected)!);
+        _matcher.Match(happened, Json(expected));
 }

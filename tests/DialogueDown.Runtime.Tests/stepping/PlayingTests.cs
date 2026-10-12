@@ -71,7 +71,7 @@ public sealed class PlayingTests
         AssertEvents(
             PlayTheFirstNode(ALineWithAStageDirectionMidSentence()),
             "said Yuki 'Then... '",
-            "perform (\"Yuki hides a smile behind her sleeve\")",
+            """perform ("Yuki hides a smile behind her sleeve")""",
             "continued ' I will not argue.'");
 
     [Fact]
@@ -139,7 +139,9 @@ public sealed class PlayingTests
         // Silence here would leave a run standing at a node forever, which reads as a hang rather
         // than as a node kind the runner cannot play.
         AssertRefused(
-            PlayTheFirstNode(PlayContextFactory.NotYetPlayable()), RefusalReason.UnplayableNode, "RandomChoiceNode");
+            PlayTheFirstNode(PlayContextFactory.NotYetPlayable()),
+            RefusalReason.UnplayableNode,
+            "This build cannot play a node of kind RandomChoiceNode yet.");
     }
 
     [Fact]
@@ -167,7 +169,10 @@ public sealed class PlayingTests
         // A run never waits on the host at the end, so only a state built by hand gets here.
         var result = Playing.Performed(PlayContextFactory.Of([End(id: 0)]), WaitingOnTheHost(0));
 
-        AssertRefused(result, RefusalReason.Misplaced, "asks nothing of the host");
+        AssertRefused(
+            result,
+            RefusalReason.Misplaced,
+            "Node 0, of kind EndNode, asks nothing of the host, so there is no Done to take there.");
         AssertAwaitingDone(result, 0);
     }
 
@@ -231,7 +236,7 @@ public sealed class PlayingTests
             WaitingOnTheWorldToContinueFrom(1, "mood"),
             Answering(("title", "Sir")));
 
-        AssertRefused(result, RefusalReason.UnansweredKey, "mood");
+        AssertRefused(result, RefusalReason.UnansweredKey, "The world was asked about mood and did not say.");
         AssertAwaitingSupply(result.State, node: 0, Moment.BeforeContinuingFrom(1), "mood");
     }
 
@@ -242,7 +247,10 @@ public sealed class PlayingTests
         var result = Playing.Supplied(
             PlayContextFactory.AnEffectThenALine(), WaitingOnTheWorldToContinueFrom(1), Answering());
 
-        AssertRefused(result, RefusalReason.Misplaced, "nothing to continue");
+        AssertRefused(
+            result,
+            RefusalReason.Misplaced,
+            "There is nothing to continue at node 0, waiting for the world before continuing from segment 1, so there is no Supply to take there.");
         AssertAwaitingSupply(result.State, node: 0, Moment.BeforeContinuingFrom(1));
     }
 
@@ -255,7 +263,9 @@ public sealed class PlayingTests
         var result = Playing.Supplied(PlayContextFactory.OneLine(), waitingToLeave, Answering());
 
         AssertRefused(
-            result, RefusalReason.Misplaced, "nothing to continue at node 0, waiting for the world before it leaves");
+            result,
+            RefusalReason.Misplaced,
+            "There is nothing to continue at node 0, waiting for the world before it leaves, so there is no Supply to take there.");
         Assert.Equal(waitingToLeave, result.State.Situation);
     }
 
