@@ -12,25 +12,22 @@ internal static class SessionOutcomeAssert
     public static void AssertConformed(SessionOutcome outcome) =>
         Assert.True(outcome.IsConformed, outcome.Because);
 
-    /// <summary>Asserts a check diverged, saying each of these things.</summary>
+    /// <summary>Asserts a check diverged, for exactly these reasons.</summary>
     /// <param name="outcome">What the check made of it.</param>
-    /// <param name="saying">Phrases the reason should carry.</param>
-    public static void AssertDiverged(SessionOutcome outcome, params string[] saying) =>
-        AssertVerdict(outcome, SessionVerdict.Diverged, saying);
+    /// <param name="reasons">Every reason it should give, each whole, in the order it gives them.</param>
+    public static void AssertDiverged(SessionOutcome outcome, params string[] reasons) =>
+        AssertVerdict(outcome, SessionVerdict.Diverged, reasons);
 
-    /// <summary>Asserts a check named something this build cannot run yet.</summary>
+    /// <summary>Asserts a check named something this build cannot run yet, for exactly these reasons.</summary>
     /// <param name="outcome">What the check made of it.</param>
-    /// <param name="saying">Phrases the reason should carry.</param>
-    public static void AssertNotYetPlayable(SessionOutcome outcome, params string[] saying) =>
-        AssertVerdict(outcome, SessionVerdict.NotYetPlayable, saying);
+    /// <param name="reasons">Every reason it should give, each whole, in the order it gives them.</param>
+    public static void AssertNotYetPlayable(SessionOutcome outcome, params string[] reasons) =>
+        AssertVerdict(outcome, SessionVerdict.NotYetPlayable, reasons);
 
-    private static void AssertVerdict(SessionOutcome outcome, SessionVerdict verdict, string[] saying)
+    // Each reason, not the joined text, so the comparison names the reason that differs.
+    private static void AssertVerdict(SessionOutcome outcome, SessionVerdict verdict, string[] reasons)
     {
         Assert.Equal(verdict, outcome.Verdict);
-
-        foreach (var phrase in saying)
-        {
-            Assert.Contains(phrase, outcome.Because, StringComparison.Ordinal);
-        }
+        Assert.Equal(reasons, outcome.Reasons);
     }
 }

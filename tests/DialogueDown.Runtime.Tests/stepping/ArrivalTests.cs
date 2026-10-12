@@ -1,4 +1,3 @@
-using DialogueDown.Playbook.Edges;
 using DialogueDown.Runtime.Protocol;
 using DialogueDown.Runtime.Situations;
 using DialogueDown.Runtime.Stepping;
@@ -132,7 +131,7 @@ public sealed class ArrivalTests
             Arrival.Supplied(
                 AConditionalLineLeadingNowhere(), Waiting(0, "Alice.HasKey"), Answering(("Alice.HasKey", false))),
             RefusalReason.LeadsNowhere,
-            "leads nowhere");
+            "Node 0 leads nowhere.");
     }
 
     [Fact]
@@ -228,7 +227,7 @@ public sealed class ArrivalTests
         AssertRefused(
             Arrival.At(ALineNeedingOneKeyBothWays(), 0),
             RefusalReason.KeyNeededBothWays,
-            "Alice.HasKey");
+            "Node 0 needs Alice.HasKey as a truth and as words both, and a single answer can only be one of those.");
 
     [Fact]
     public void At_AMenuNeedingOneKeyBothWays_RefusesBeforeAskingAnything() =>
@@ -249,7 +248,7 @@ public sealed class ArrivalTests
                 Waiting(0, "Alice.HasKey"),
                 Answering(("Alice.HasKey", "yes"))),
             RefusalReason.KeyNeededBothWays,
-            "Alice.HasKey");
+            "Node 0 needs Alice.HasKey as a truth and as words both, and a single answer can only be one of those.");
 
     [Fact]
     public void Supplied_WithAnAnswerNobodyAskedFor_RefusesAndStaysWhereItAsked()
@@ -259,7 +258,10 @@ public sealed class ArrivalTests
         var result = Arrival.Supplied(
             AConditionalLine(), Waiting(0, "Alice.HasKey"), Answering(("Bob.HasRope", true)));
 
-        AssertRefused(result, RefusalReason.UnansweredKey, "Alice.HasKey");
+        AssertRefused(
+            result,
+            RefusalReason.UnansweredKey,
+            "The world was asked about Alice.HasKey and did not say.");
         AssertAwaitingSupply(result.State, node: 0, Moment.BeforePlaying, "Alice.HasKey");
     }
 
@@ -299,8 +301,12 @@ public sealed class ArrivalTests
     public void At_ALoopOfJumps_RefusesRatherThanWalkingForever()
     {
         // Nothing in the loop ever hands the host anything, so a walk with no bound would never
-        // return and a total step would become a hang.
-        AssertRefused(Arrival.At(PlayContextFactory.LoopOfJumps(3), 0), RefusalReason.EndlessLoop, "loop");
+        // return and a total step would become a hang. The walk gives up once it has passed one node
+        // more than the playbook holds; from node 0 round a loop of three, that leaves it at node 1.
+        AssertRefused(
+            Arrival.At(PlayContextFactory.LoopOfJumps(3), 0),
+            RefusalReason.EndlessLoop,
+            "Node 1 sits in a loop of nodes that hand the host nothing, so a run entering it would never come out.");
     }
 
     [Fact]
@@ -566,7 +572,7 @@ public sealed class ArrivalTests
     private static PlayContext AMenuWhoseOnlyOptionIsConditionalThenALine() =>
         PlayContextFactory.Of(
             [
-                Choice(Option("Open the door", condition: "Alice.HasKey", target: 1), new SuccessionEdge(2)),
+                Choice(Option("Open the door", condition: "Alice.HasKey", target: 1), Succession(2)),
                 End(id: 1),
                 Line("It stays shut.", id: 2, next: 3),
                 End(id: 3),
@@ -590,12 +596,12 @@ public sealed class ArrivalTests
     /// <returns>A context whose entry has nothing to offer.</returns>
     private static PlayContext AMenuWithNoOptions() =>
         PlayContextFactory.Of(
-            [Choice(new SuccessionEdge(1)), Line("Onward.", id: 1, next: 2), End(id: 2)],
+            [Choice(Succession(1)), Line("Onward.", id: 1, next: 2), End(id: 2)],
             ["Alice"]);
 
     /// <summary>A menu with no options whose fall-through leads back to itself.</summary>
     /// <remarks>Built by hand rather than written, because no script writes a menu without options.</remarks>
     /// <returns>A context whose only node is walked past forever.</returns>
     private static PlayContext AMenuWithNoOptionsFallingThroughToItself() =>
-        PlayContextFactory.Of([Choice(new SuccessionEdge(0))]);
+        PlayContextFactory.Of([Choice(Succession(0))]);
 }

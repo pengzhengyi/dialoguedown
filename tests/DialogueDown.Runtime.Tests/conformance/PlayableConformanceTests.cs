@@ -26,10 +26,8 @@ public sealed class PlayableConformanceTests
             ? SessionOutcome.NotYetPlayable(reasons)
             : SessionOutcome.Conformed();
 
-        Assert.True(
-            expected.Verdict == outcome.Verdict && expected.Reasons.SequenceEqual(outcome.Reasons),
-            $"{aCase.Name}: expected {expected.Verdict} — {expected.Because}, "
-                + $"but was {outcome.Verdict} — {outcome.Because}");
+        Assert.Equal(expected.Verdict, outcome.Verdict);
+        Assert.Equal(expected.Reasons, outcome.Reasons);
     }
 
     [Fact]
@@ -43,6 +41,8 @@ public sealed class PlayableConformanceTests
             .Select(run => $"{run.Case}: {run.Outcome.Because}")
             .ToList();
 
+        // Assert.True rather than Assert.Empty: xUnit lists only the first few entries and cuts each
+        // one short, which would hide why a case diverged.
         Assert.True(diverged.Count == 0, string.Join(Environment.NewLine, diverged));
     }
 

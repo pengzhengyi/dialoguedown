@@ -207,8 +207,14 @@ public static class PlaybookNodeFactory
     public static RandomOptionEdge EvenChance(string? condition = null, int target = 0) =>
         new(target, new AutoWeight(), If(condition));
 
+    /// <summary>
+    /// The way on from a node when no other way is taken: a line's next node, a menu's
+    /// fall-through, or the way past a block whose conditions all fail.
+    /// </summary>
+    public static SuccessionEdge Succession(int target) => new(target);
+
     private static ImmutableArray<Edge> Ways(Edge[] ways, int? next) =>
-        next is int target ? [.. ways, new SuccessionEdge(target)] : [.. ways];
+        next is int target ? [.. ways, Succession(target)] : [.. ways];
 
     private static KeyCondition? If(string? condition) =>
         condition is null ? null : new KeyCondition(condition);

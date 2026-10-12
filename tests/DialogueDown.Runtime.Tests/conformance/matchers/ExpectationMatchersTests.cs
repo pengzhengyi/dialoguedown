@@ -1,4 +1,3 @@
-using System.Text.Json.Nodes;
 using DialogueDown.Conformance;
 using DialogueDown.Runtime.Protocol;
 using static DialogueDown.Runtime.Tests.Conformance.SessionEntries;
@@ -25,7 +24,7 @@ public sealed class ExpectationMatchersTests
     {
         AssertDiverged(
             Match(_hello, """{ "said": { "speaker": "Bob", "speech": "Hi" } }"""),
-            "expected Bob to speak");
+            "expected Bob to speak, but Alice did");
     }
 
     [Fact]
@@ -37,7 +36,7 @@ public sealed class ExpectationMatchersTests
     [Fact]
     public void AClaimNobodyOwnsIsNotYetPlayable()
     {
-        AssertNotYetPlayable(Match(_hello, """{ "frobnicate": true }"""), "frobnicate");
+        AssertNotYetPlayable(Match(_hello, """{ "frobnicate": true }"""), "nothing checks frobnicate yet");
     }
 
     [Fact]
@@ -46,7 +45,7 @@ public sealed class ExpectationMatchersTests
         // Stopping at the first claim recognized would report this as held, having read half of it.
         AssertNotYetPlayable(
             Match(_hello, """{ "said": { "speaker": "Alice", "speech": "Hi" }, "frobnicate": true }"""),
-            "frobnicate");
+            "nothing checks frobnicate yet");
     }
 
     [Fact]
@@ -54,7 +53,7 @@ public sealed class ExpectationMatchersTests
     {
         AssertDiverged(
             Match(_hello, """{ "said": { "speaker": "Bob", "speech": "Hi" }, "frobnicate": true }"""),
-            "expected Bob to speak");
+            "expected Bob to speak, but Alice did");
     }
 
     [Fact]
@@ -65,8 +64,10 @@ public sealed class ExpectationMatchersTests
             _hello,
             """{ "said": { "speaker": "Bob", "speech": "Hi" }, "refused": { "reason": "already-ended" } }""");
 
-        AssertDiverged(outcome, "expected Bob to speak", "expected the run to refuse");
-        Assert.Equal(2, outcome.Reasons.Length);
+        AssertDiverged(
+            outcome,
+            "expected Bob to speak, but Alice did",
+            "expected the run to refuse, but it heard Alice speak");
     }
 
     [Fact]
@@ -75,8 +76,10 @@ public sealed class ExpectationMatchersTests
         // So one run lists every claim the harness cannot check yet.
         var outcome = Match(_hello, """{ "frobnicate": true, "describe": true }""");
 
-        AssertNotYetPlayable(outcome, "frobnicate", "describe");
-        Assert.Equal(2, outcome.Reasons.Length);
+        AssertNotYetPlayable(
+            outcome,
+            "nothing checks frobnicate yet",
+            "nothing checks describe yet");
     }
 
     [Fact]
@@ -96,10 +99,9 @@ public sealed class ExpectationMatchersTests
     {
         AssertDiverged(
             ExpectationMatchers.Match(null, Expected(SaidHi)),
-            "the run fell silent",
-            "Alice");
+            """the run fell silent, but the session still expects {"said":{"speaker":"Alice","speech":"Hi"}}""");
     }
 
     private static SessionOutcome Match(Event happened, string expectation) =>
-        ExpectationMatchers.Match(happened, JsonNode.Parse(expectation)!.AsObject());
+        ExpectationMatchers.Match(happened, Json(expectation).AsObject());
 }

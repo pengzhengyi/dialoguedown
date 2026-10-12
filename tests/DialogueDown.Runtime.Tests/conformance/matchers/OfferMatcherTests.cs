@@ -1,6 +1,6 @@
-using System.Text.Json.Nodes;
 using DialogueDown.Conformance;
 using DialogueDown.Runtime.Protocol;
+using static DialogueDown.Runtime.Tests.Conformance.SessionEntries;
 using static DialogueDown.Runtime.Tests.Conformance.SessionOutcomeAssert;
 using static DialogueDown.TestSupport.SpeechFactory;
 
@@ -25,8 +25,12 @@ public sealed class OfferMatcherTests
         // Every menu is offered in the order written, so a bulleted menu is held to that order too.
         AssertDiverged(
             Match(Bulleted(Option("Go west"), Option("Go east")), TwoWays),
-            "option 0: expected \"Go east\", but heard \"Go west\"",
-            "option 1: expected \"Go west\", but heard \"Go east\"");
+            """
+            option 0: expected "Go east", but heard "Go west"
+            """,
+            """
+            option 1: expected "Go west", but heard "Go east"
+            """);
 
     [Fact]
     public void AMenuOfTheOtherKindDiverges() =>
@@ -48,14 +52,16 @@ public sealed class OfferMatcherTests
 
     [Fact]
     public void AnythingButAnOfferDiverges() =>
-        AssertDiverged(Match(new Ended(), TwoWays), "expected a menu to be offered", "ended");
+        AssertDiverged(Match(new Ended(), TwoWays), "expected a menu to be offered, but the run ended");
 
     [Fact]
     public void OfferingIsDescribedByItsLabelsWhenSomethingElseWasExpected() =>
         // Each label is quoted, so a label holding a comma still reads as one option.
         AssertDiverged(
-            new EndedMatcher().Match(Numbered(Option("Go east"), Option("Wait, listen")), JsonNode.Parse("{}")!),
-            "offered a menu: \"Go east\", \"Wait, listen\"");
+            new EndedMatcher().Match(Numbered(Option("Go east"), Option("Wait, listen")), Json("{}")),
+            """
+            expected the run to end, but it offered a menu: "Go east", "Wait, listen"
+            """);
 
     [Fact]
     public void AnOfferThatDoesNotSayWhetherItIsOrderedIsAFixtureBug() =>
@@ -80,5 +86,5 @@ public sealed class OfferMatcherTests
         new([Text(label)], available);
 
     private SessionOutcome Match(Event happened, string expected) =>
-        _matcher.Match(happened, JsonNode.Parse(expected)!);
+        _matcher.Match(happened, Json(expected));
 }

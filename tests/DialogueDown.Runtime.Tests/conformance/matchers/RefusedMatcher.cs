@@ -1,4 +1,3 @@
-using System.Text.Json;
 using System.Text.Json.Nodes;
 using DialogueDown.Conformance;
 using DialogueDown.Runtime.Protocol;
@@ -39,7 +38,7 @@ internal sealed class RefusedMatcher : IExpectationMatcher
     }
 
     private static string ReadClaimedReason(JsonObject expected) =>
-        expected["reason"]?.GetValueKind() is JsonValueKind.String
-            ? expected["reason"]!.GetValue<string>()
+        expected["reason"] is JsonValue reason && reason.TryGetValue(out string? claimed)
+            ? claimed
             : throw new InvalidFixtureException("A refused needs the reason it expects, as a string.");
 }
