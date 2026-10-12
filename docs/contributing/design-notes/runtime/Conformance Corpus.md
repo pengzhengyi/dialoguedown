@@ -62,8 +62,7 @@ written either as an **array** — the playbook's fragments, verbatim — or as 
 **string**, which asserts the flattening defined by
 [Speech as Plain Text](./Speech%20as%20Plain%20Text.md). The C# harness sends
 everything but `start` and `describe`, and checks everything but `invalidated`. A
-case that uses one of those is not yet playable, and so is a case whose menu asks
-the world, which the C# runner does not offer yet.
+case that uses one of those is not yet playable.
 
 ## What the corpus covers
 
@@ -98,7 +97,12 @@ rather than a script.
 | `a-choice-the-menu-did-not-offer` | Is a choice past the last option refused, with the menu still open? | yes |
 | `a-choice-after-the-menu-is-left` | Is a second choice refused once an option has been taken? | yes |
 | `a-next-at-a-menu` | Is `next` refused at a menu, which still takes a choice afterwards? | yes |
-| `an-unavailable-option` | Is a false option **shown but unavailable**, not hidden? | not yet |
+| `an-unavailable-option` | Is a false option **shown but unavailable**, not hidden? | yes |
+| `a-choice-of-an-unavailable-option` | Is a choice of an option offered as unavailable refused, with the menu still open? | yes |
+| `a-choice-onto-the-fall-through` | Is a choice one past the options refused, rather than taking the fall-through the menu never offered? | yes |
+| `a-query-in-a-label` | Is a label's query asked before the menu is offered, and the label shown with the answer? | yes |
+| `a-menu-asking-truths-and-words` | Are a menu's conditions asked before its labels' queries, in one request? | yes |
+| `a-menu-with-nothing-available` | Is a menu whose every option the world withholds walked past by its fall-through? | yes |
 
 The `readable/` half covers every refusal the reader makes — version, capability,
 node position, the four dangling references, and the

@@ -5,7 +5,7 @@
 > branches, menus, and the end of a run. It waits on the host for each effect and
 > on the player at each menu, asks the world about conditions and queries (see
 > [Asking the World](./Asking%20the%20World.md)), and refuses what it cannot play
-> yet: random choices, and menus whose options ask the world. It applies the
+> yet: random choices. It applies the
 > cross-cutting decisions of the
 > [Dialogue Runtime Architecture](./Dialogue%20Runtime%20Architecture.md).
 
@@ -82,7 +82,7 @@ flowchart LR
     NS["NotStarted"] -->|Start| AT["AtNode(i)"]
     AT -->|Next| AT2["AtNode(j)"]
     AT -->|"Next, arriving at a guarded node"| AS["AwaitingSupply(k, keys, moment)"]
-    AT -->|"Next, arriving at a menu"| AC["AwaitingChoice(k)"]
+    AT -->|"Next, arriving at a menu"| AC["AwaitingChoice(k, available)"]
     AT -->|"Next, arriving at a control node"| AD["AwaitingDone(k)"]
     AS -->|Supply| AT2
     AC -->|Choose| AT2
@@ -120,7 +120,7 @@ What may be sent where is one matrix:
 | `AtNode` | arrive at the entry | leave by the way onward | refused: `misplaced` | refused: `misplaced` | refused: `misplaced` | refused: `misplaced` |
 | `AwaitingDone` | arrive at the entry | refused: `misplaced` | at a line, go on from where it stopped or give the player the turn; otherwise leave by the way onward | stand still, report nothing | refused: `misplaced` | refused: `misplaced` |
 | `AwaitingSupply` | arrive at the entry | refused: `misplaced` | refused: `misplaced` | refused: `misplaced` | play or leave the node, by its moment | refused: `misplaced` |
-| `AwaitingChoice` | arrive at the entry | refused: `misplaced` | refused: `misplaced` | refused: `misplaced` | refused: `misplaced` | arrive where the chosen option leads, or refused: `no-such-option` |
+| `AwaitingChoice` | arrive at the entry | refused: `misplaced` | refused: `misplaced` | refused: `misplaced` | refused: `misplaced` | arrive where the chosen option leads, or refused: `no-such-option` or `unavailable-option` |
 | `AtEnd` | arrive at the entry | refused: `already-ended` | refused: `misplaced` | refused: `misplaced` | refused: `misplaced` | refused: `misplaced` |
 
 The way onward is the node's `divert` when it carries one, otherwise its
@@ -143,13 +143,13 @@ nothing. The first node that asks for something is where the run stands.
 | `control` with no effects | nothing | walks on — this is a jump on its own line |
 | `branch` | nothing | leaves by the first arm, in the order written, whose condition holds |
 | `end` | `Ended` | waits on nobody |
-| `choice` | `Offer(ordered, options)`: every option in the order written, each label with its commands removed, each available | waits on the player — `Choose` |
-| `choice` with an option's condition or a query in a label | `Refused(unplayable-node)` | stands at that node |
+| `choice` | `Offer(ordered, options)`: every option in the order written, each label with its commands removed and its queries filled, each marked available or not | waits on the player — `Choose` |
+| `choice` with no option available | nothing | walks on by its fall-through, as past a branch |
 | `random-choice` | `Refused(unplayable-node)` | stands at that node |
 
 Before a node plays, the run asks the world, in one `Resolve`, every key the node
 needs to play: its own condition and the queries in its speech up to its first
-[stop](./Speaking%20a%20Line.md#s8--the-world-is-asked-once-per-stop). A line asks once more at each stop, once the host is done. Before it leaves, it
+[stop](./Speaking%20a%20Line.md#s8--the-world-is-asked-once-per-stop), or for a menu, its options' conditions and its labels' queries. A line asks once more at each stop, once the host is done. Before it leaves, it
 asks in one more `Resolve` about the conditions on its ways out. The `Moment` on
 `AwaitingSupply` says which of the two a `Supply` answers. A node whose own
 condition fails is stepped over by its succession; a guarded way out whose
@@ -174,7 +174,8 @@ flowchart TD
     Kind -->|"Control, with effects"| Ask["Perform, once per effect"] --> World(["Waits on the world"])
     Kind -->|"Control, no effects"| Onward{"Way onward?"}
     Kind -->|Choice| Offer["Offer"] --> Chooser(["Waits on the player to choose"])
-    Kind -->|"Choice that asks the world, random choice"| RefuseK(["Refused: unplayable-node"])
+    Kind -->|"Choice, nothing available"| Onward
+    Kind -->|"Random choice"| RefuseK(["Refused: unplayable-node"])
     Onward -->|"divert or succession"| Arrive
     Onward -->|none| RefuseN(["Refused: leads-nowhere"])
 ```
@@ -197,8 +198,9 @@ runtimes.
 | `unasked-key` | a `Supply` answers a key the run did not ask about |
 | `wrong-answer-kind` | an answer is the wrong kind for its question — words for a condition, or a truth for a query |
 | `key-needed-both-ways` | one node needs the same key as a truth and as words, which one answer cannot be |
-| `unplayable-node` | the node is one this build does not play: a random choice, or a menu whose options ask the world |
+| `unplayable-node` | the node is one this build does not play: a random choice |
 | `no-such-option` | a `Choose` names a position outside the options the menu offered: below 0, or past the last |
+| `unavailable-option` | a `Choose` names an option the menu offered as one the player cannot take |
 
 A refused command leaves the situation where it was; a walk refused at a node
 stands at that node (`AtNode`). The reason names what the driver did or what the
@@ -220,7 +222,7 @@ session and judging it are separate pieces, each tested alone:
 | Piece | Responsibility |
 | --- | --- |
 | `PlayableRun` | Reads one case's playbook, screens it, then holds its session against the runner |
-| `Playability` | What this build can play: every node but a random choice and a menu that asks the world, the sends a reader takes, and why a case is not there yet |
+| `Playability` | What this build can play: every node but a random choice, the sends a reader takes, and why a case is not there yet |
 | `SessionMatcher` | Walks the session, playing each entry against the state the one before it left |
 | `SessionOperator` | Steps the runner and holds the events nobody has read yet |
 | `Commands` | Reads what a `send` names, one reader per command |
@@ -350,6 +352,8 @@ because skipping is the silent wrong story the format refuses to tell.
 | A line whose speaker index is out of range | Cannot occur; refused by the reader |
 | An effect the host does not recognize | Not the runner's concern: it asks by the name the playbook gives |
 | `Choose` below 0 or past the last option | Refused as `no-such-option`; the menu stays open for another choice |
+| `Choose` of an option offered as unavailable | Refused as `unavailable-option`; the menu stays open for another choice |
+| A menu with no option available | Walked past by its fall-through; refused as `leads-nowhere` when it has none |
 | A hand-built `AwaitingChoice` at a node that is not a menu | `Choose` refused as `misplaced` |
 | A fixture the runner cannot play yet | Reported as not yet playable, naming what is missing |
 
@@ -359,12 +363,12 @@ because skipping is the silent wrong story the format refuses to tell.
 | --- | --- |
 | Unit — `Runner` | Each cell of the protocol matrix |
 | Unit — `Arrival` | Each node kind: what it reports, and which party the run then waits on |
-| Unit — `Choosing` | A menu offered, a menu that asks the world refused, a choice taken, a choice the menu did not offer refused |
+| Unit — `Choosing` | A menu offered with its labels filled and each option's availability, a choice taken, and a choice the menu did not offer, or offered as unavailable, refused |
 | Unit — traversal | Divert taken, succession fallen through to, neither available; a menu's options in the order written |
 | Unit — harness | Each piece alone: reading a send, driving a runner, matching one claim, walking a session |
 | Conformance | Every case the runner plays conforms; the rest are named as not yet playable |
 | Architecture | The runtime references only the playbook |
-| Property | A walk over any playbook `PlaybookGen` draws stands only at a node that playbook has, answering each stage as it reaches it and choosing at each menu |
+| Property | A walk over any playbook `PlaybookGen` draws stands only at a node that playbook has, answering each stage as it reaches it and choosing an available option at each menu |
 
 Unit tests build playbooks by hand; the corpus supplies compiled ones. A total
 function must handle shapes a compiler never emits — a line leading nowhere, a
@@ -375,10 +379,6 @@ runtime tests may not reference the compiler, and a test holds it and the harnes
 
 ## Open questions and deferred work
 
-- **A menu that asks the world.** An option's condition and a query in a label
-  need the world's answer before the menu can be offered, so the runner refuses
-  such a menu for now. [Offering a Choice](./Offering%20a%20Choice.md) designs how
-  it asks, and how an unavailable option is offered.
 - **Random choices.** Refused until the runner learns to pick one. Whether the
   runner draws by weight or the host supplies the draw is an
   [open question](./Dialogue%20Runtime%20Architecture.md#open-questions-and-deferred-work)

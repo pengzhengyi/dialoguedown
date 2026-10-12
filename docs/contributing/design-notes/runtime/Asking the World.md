@@ -4,8 +4,8 @@
 > Status: **implemented**. The pass that lets a run ask the world a question and
 > use the answer, so a condition is evaluated instead of refused. A node's own
 > condition, the queries standing in its speech, a jump's condition, and a block
-> condition's arms are asked and answered. An option's condition arrives with
-> choices.
+> condition's arms are asked and answered, and so are a menu's options' conditions
+> and its labels' queries (see [Offering a Choice](./Offering%20a%20Choice.md)).
 >
 > It extends the [Runner](./Runner.md)'s protocol and harness, and follows the
 > shape of its wait on the host. It applies the
@@ -69,7 +69,7 @@ note is about how the runner meets that contract.
 | `a-conditional-jump` | A jump with nothing to say still stops to ask: one `resolve` before the run walks past it, and a `supply` of `true` takes the jump, so the line after it is never said |
 | `a-conditional-block` | The arms are tried in the order written, and a satisfied first arm means the `else` is never reached |
 | `a-query-in-speech` | The supplied answer appears in the flattened speech: `Hello, Robin.` |
-| `an-unavailable-option` | A failing option is offered **unavailable** rather than hidden. Needs choices too, so it does not play yet |
+| `an-unavailable-option` | A failing option is offered **unavailable** rather than hidden |
 
 The schema also fixes the shapes: `resolve` is a non-empty array of key strings,
 and `supply` is an object keyed by those strings, whose values are whatever JSON
@@ -82,8 +82,8 @@ holds — `false` for a guard, `"Robin"` for a query.
       succession, never by its own jump.
 - [x] A jump or a block condition's arm whose condition fails is not taken; one
       whose condition holds is.
-- [ ] An option whose condition fails is offered unavailable. Deferred to choices
-      (C2b).
+- [x] An option whose condition fails is offered unavailable, as
+      [Offering a Choice](./Offering%20a%20Choice.md) designs.
 - [x] A branch node takes the first arm, in the order written, whose condition
       holds.
 - [x] A branch node with no satisfied arm and no `else` falls through to the
@@ -132,7 +132,14 @@ command has one more moment at each [stop](./Speaking%20a%20Line.md#s8--the-worl
 **Arriving** asks what decides whether the node plays and what it says: the
 node's own condition, answered with a truth, and the queries standing in its
 speech up to its first stop, answered with words. **Leaving** asks what decides which way out is
-taken: the conditions on its jump or on a block condition's arms.
+taken: the conditions on its jump or on a block condition's arms. A menu asks its
+options' conditions and its labels' queries on arriving, and nothing on leaving,
+because its options are taken by choosing.
+
+A request names its truths before its words, each in the order the node writes
+them, and each key once. For a line, that is also the order a reader meets them,
+since a guard is written before the line it guards; a menu follows the same rule,
+every condition before any label's query, so every runtime sends the same request.
 
 The two are kept apart because the node changes the world between them. A node
 that performs an effect has that effect carried out after it is played and before
@@ -366,9 +373,6 @@ nothing guards, and a guarded node stops the walk before the bound is reached.
 
 ## Open questions and deferred work
 
-- **An option's condition arrives with choices.** `an-unavailable-option` is the
-  one corpus case this pass touches without finishing; it stays named as not yet
-  runnable until C2b lands.
 - **No world interface exists yet.** Nothing in this pass reads a world directly:
   the runner asks the driver. So the world interface waits for C2g, where a driver
   answers `Resolve` from a world.
