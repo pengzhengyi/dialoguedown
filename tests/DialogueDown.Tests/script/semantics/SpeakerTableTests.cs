@@ -43,7 +43,7 @@ public sealed class SpeakerTableTests
 
         Assert.Same(
             alice,
-            table.Resolve(new PartialSpeakerDeclaration("A", [], SourceSpanFactory.Span())));
+            table.Resolve(PartialSpeakerDeclaration("A")));
     }
 
     [Fact]
@@ -108,10 +108,21 @@ public sealed class SpeakerTableTests
 
     private static SpeakerTable Table(params SpeakerSymbol[] symbols)
     {
-        var byName = symbols.Where(symbol => symbol.Name is not null)
-            .ToDictionary(symbol => symbol.Name!, symbol => symbol);
-        var byId = symbols.Where(symbol => symbol.Id is not null)
-            .ToDictionary(symbol => symbol.Id!, symbol => symbol);
+        var byName = new Dictionary<string, SpeakerSymbol>();
+        var byId = new Dictionary<string, SpeakerSymbol>();
+        foreach (var symbol in symbols)
+        {
+            if (symbol.Name is { } name)
+            {
+                byName.Add(name, symbol);
+            }
+
+            if (symbol.Id is { } id)
+            {
+                byId.Add(id, symbol);
+            }
+        }
+
         return new SpeakerTable(byName, byId, SpeakerSymbol.ForName("Default"));
     }
 

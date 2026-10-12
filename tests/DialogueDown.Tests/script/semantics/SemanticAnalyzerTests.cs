@@ -1,11 +1,11 @@
 using DialogueDown.Configuration;
 using DialogueDown.Diagnostics;
-using DialogueDown.Script.Ast;
-using DialogueDown.Script.Desugar;
 using DialogueDown.Script.Semantics;
 using DialogueDown.Tests.Support;
 using static DialogueDown.Tests.Support.ConfigurationFactory;
 using static DialogueDown.Tests.Support.DiagnosticsAssert;
+using static DialogueDown.Tests.Support.DialogueAstFactory;
+using static DialogueDown.Tests.Support.SpeakerSymbolAssert;
 
 namespace DialogueDown.Tests.Script.Semantics;
 
@@ -20,7 +20,7 @@ public sealed class SemanticAnalyzerTests
     [Fact]
     public void Analyze_NullContext_Throws() =>
         Assert.Throws<ArgumentNullException>(
-            () => _analyzer.Analyze(new DesugaredScriptDocument(new ScriptDocument([])), null!));
+            () => _analyzer.Analyze(DesugaredDocument(), null!));
 
     [Fact]
     public void Analyze_HoldsTheDesugaredTree()
@@ -37,11 +37,11 @@ public sealed class SemanticAnalyzerTests
     {
         var model = Analyze("Alice @A #happy ##default: Ready?");
 
-        var alice = model.Speakers.Resolve(new SpeakerNameReference("Alice", SourceSpanFactory.Span()));
+        var alice = model.Speakers.Resolve(SpeakerNameReference("Alice"));
         Assert.Equal("Alice", alice.Name);
         Assert.Equal("A", alice.Id);
         Assert.True(alice.IsDefault);
-        Assert.Contains(alice.Tags, tag => tag.Name == "happy");
+        AssertTags(alice, ("happy", null));
     }
 
     [Fact]
@@ -51,7 +51,7 @@ public sealed class SemanticAnalyzerTests
 
         var model = analyzer.Analyze(Pipeline.UntilDesugared("Hi."), DiagnosticsContextFactory.Context("Hi."));
 
-        var speaker = model.Speakers.Resolve(new DefaultSpeaker(SourceSpanFactory.Span()));
+        var speaker = model.Speakers.Resolve(DefaultSpeaker());
         Assert.Equal("Narrator", speaker.Name);
         Assert.True(speaker.IsDefault);
     }
@@ -64,7 +64,7 @@ public sealed class SemanticAnalyzerTests
 
         var model = analyzer.Analyze(Pipeline.UntilDesugared(source), DiagnosticsContextFactory.Context(source));
 
-        Assert.Equal("Bob", model.Speakers.Resolve(new DefaultSpeaker(SourceSpanFactory.Span())).Name);
+        Assert.Equal("Bob", model.Speakers.Resolve(DefaultSpeaker()).Name);
     }
 
     [Fact]

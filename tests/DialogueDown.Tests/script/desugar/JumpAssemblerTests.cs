@@ -43,20 +43,19 @@ public sealed class JumpAssemblerTests
 
         Assert.Equal(3, result.Count);
         AssertText(result[0], "=>");
-        Assert.IsType<LineBreak>(result[1]);
+        AssertLineBreak(result[1]);
         Assert.Same(link, result[2]);
     }
 
     [Fact]
     public void JumpSpan_ReachesFromIndicatorThroughLink()
     {
-        var indicator = new JumpIndicator(new SourceSpan(0, 2));
-        var link = new Link("#play", [Text("go")], new SourceSpan(5, 12));
+        var indicator = JumpIndicator() with { Span = new SourceSpan(0, 2) };
+        var link = Link("#play", Text("go")) with { Span = new SourceSpan(5, 12) };
 
         var jump = AssertJump(Assert.Single(Assemble([indicator, link])), "#play");
 
-        Assert.Equal(0, jump.Span.Start);
-        Assert.Equal(17, jump.Span.End);
+        Assert.Equal(new SourceSpan(0, 17), jump.Span);
     }
 
     [Fact]
@@ -192,7 +191,7 @@ public sealed class JumpAssemblerTests
     [Fact]
     public void DanglingArrow_ReportsADanglingJumpArrowWarningAtTheArrow()
     {
-        var indicator = new JumpIndicator(new SourceSpan(6, 2));
+        var indicator = JumpIndicator() with { Span = new SourceSpan(6, 2) };
 
         Assemble([Text("Go to "), indicator, Text(" the market")]);
 
@@ -214,7 +213,7 @@ public sealed class JumpAssemblerTests
     {
         // The condition is valid; the arrow is what failed to become a jump, so that is where the
         // writer must act.
-        var indicator = new JumpIndicator(new SourceSpan(10, 2));
+        var indicator = JumpIndicator() with { Span = new SourceSpan(10, 2) };
 
         Assemble([Condition("Ready"), Text(" "), indicator]);
 

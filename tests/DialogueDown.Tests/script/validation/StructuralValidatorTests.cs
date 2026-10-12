@@ -1,5 +1,4 @@
 using DialogueDown.Diagnostics;
-using DialogueDown.Script.Ast;
 using DialogueDown.Script.Desugar;
 using DialogueDown.Script.Validation;
 using NSubstitute;
@@ -23,7 +22,7 @@ public sealed class StructuralValidatorTests
             .Do(call => seenBySecond = call.Arg<DialogueTreeIndex>());
         var sink = new DiagnosticBag();
 
-        new StructuralValidator([first, second]).Validate(Document(), sink);
+        new StructuralValidator([first, second]).Validate(DesugaredDocument(), sink);
 
         first.Received(1).Check(Arg.Any<DialogueTreeIndex>(), sink);
         second.Received(1).Check(Arg.Any<DialogueTreeIndex>(), sink);
@@ -34,7 +33,7 @@ public sealed class StructuralValidatorTests
     [Fact]
     public void Validate_WithTheUnreachableAfterJumpRule_ReportsForContentAfterAJump()
     {
-        var document = Document(Line(Jump("#a"), Jump("#b")));
+        var document = DesugaredDocument(Line(Jump("#a"), Jump("#b")));
         var sink = new DiagnosticBag();
 
         new StructuralValidator([new UnreachableAfterJumpRule()]).Validate(document, sink);
@@ -49,7 +48,7 @@ public sealed class StructuralValidatorTests
     {
         var sink = new DiagnosticBag();
 
-        WithoutRules().Validate(Document(), sink);
+        WithoutRules().Validate(DesugaredDocument(), sink);
 
         Assert.Empty(sink.Diagnostics);
     }
@@ -69,9 +68,6 @@ public sealed class StructuralValidatorTests
     [Fact]
     public void Validate_NullDiagnostics_Throws()
     {
-        Assert.Throws<ArgumentNullException>(() => WithoutRules().Validate(Document(), null!));
+        Assert.Throws<ArgumentNullException>(() => WithoutRules().Validate(DesugaredDocument(), null!));
     }
-
-    private static DesugaredScriptDocument Document(params ScriptBlock[] blocks) =>
-        new(new ScriptDocument(blocks));
 }

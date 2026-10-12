@@ -1,6 +1,4 @@
-using DialogueDown.Script.Ast;
 using DialogueDown.Script.Desugar;
-using DialogueDown.Tests.Support;
 using static DialogueDown.Tests.Support.DialogueAstAssert;
 using static DialogueDown.Tests.Support.DialogueAstFactory;
 
@@ -23,12 +21,11 @@ public sealed class DefaultSpeakerRuleTests
     [Fact]
     public void Apply_LeavesAPresentSpeakerUnchanged()
     {
-        var document = Document(
-            new Line(SpeakerNameReference("Alice"), [Text("Hi")], SourceSpanFactory.Span()));
+        var document = Document(Line(SpeakerNameReference("Alice"), Text("Hi")));
 
         var line = AssertLine(_rule.Apply(document).Body[0]);
 
-        AssertSpeakerNameReference(line.Speaker!, "Alice");
+        AssertSpeakerNameReference(line.Speaker, "Alice");
     }
 
     [Fact]

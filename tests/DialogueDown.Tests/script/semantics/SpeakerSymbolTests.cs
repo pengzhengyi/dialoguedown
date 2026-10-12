@@ -1,6 +1,7 @@
 using DialogueDown.Common;
 using DialogueDown.Script.Ast;
 using DialogueDown.Script.Semantics;
+using static DialogueDown.Tests.Support.DialogueAstFactory;
 using static DialogueDown.Tests.Support.SpeakerSymbolAssert;
 
 namespace DialogueDown.Tests.Script.Semantics;
@@ -150,5 +151,5 @@ public sealed class SpeakerSymbolTests
     }
 
     private static CustomTag TagAt(string name, string? value, int start) =>
-        new(name, value, new SourceSpan(start, 1));
+        CustomTag(name, value) with { Span = new SourceSpan(start, 1) };
 }

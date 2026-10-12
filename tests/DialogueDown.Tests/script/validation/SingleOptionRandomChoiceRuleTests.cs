@@ -42,7 +42,7 @@ public sealed class SingleOptionRandomChoiceRuleTests
     private static IReadOnlyList<Diagnostic> Check(RandomChoices root)
     {
         var bag = new DiagnosticBag();
-        var document = new DesugaredScriptDocument(new ScriptDocument([root]));
+        var document = DesugaredDocument(root);
         new SingleOptionRandomChoiceRule().Check(DialogueTreeIndex.Build(document), bag);
         return bag.Diagnostics;
     }

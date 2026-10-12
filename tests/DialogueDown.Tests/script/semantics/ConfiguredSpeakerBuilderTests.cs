@@ -1,6 +1,6 @@
-using DialogueDown.Script.Ast;
 using DialogueDown.Script.Semantics;
 using static DialogueDown.Tests.Support.ConfigurationFactory;
+using static DialogueDown.Tests.Support.DialogueAstAssert;
 
 namespace DialogueDown.Tests.Script.Semantics;
 
@@ -21,9 +21,7 @@ public sealed class ConfiguredSpeakerBuilderTests
     {
         var declaration = ConfiguredSpeakerBuilder.ToDeclaration(DefaultConfiguredSpeaker("Narrator"));
 
-        var reserved = Assert.IsType<ReservedTag>(Assert.Single(declaration.Tags));
-        Assert.Equal("default", reserved.Name);
-        Assert.Null(reserved.Value);
+        AssertReservedTag(Assert.Single(declaration.Tags), "default");
     }
 
     [Fact]
@@ -32,9 +30,7 @@ public sealed class ConfiguredSpeakerBuilderTests
         var declaration = ConfiguredSpeakerBuilder.ToDeclaration(
             ConfiguredSpeaker("Alice", customTags: [ConfiguredTag("mood", "happy")]));
 
-        var custom = Assert.IsType<CustomTag>(Assert.Single(declaration.Tags));
-        Assert.Equal("mood", custom.Name);
-        Assert.Equal("happy", custom.Value);
+        AssertCustomTag(Assert.Single(declaration.Tags), "mood", "happy");
     }
 
     [Fact]

@@ -1,5 +1,4 @@
 using DialogueDown.Common;
-using DialogueDown.Script.Ast;
 using DialogueDown.Script.Desugar;
 using DialogueDown.Tests.Support;
 using static DialogueDown.Tests.Support.DialogueAstAssert;
@@ -12,12 +11,12 @@ public sealed class DefaultSpeakerFillerTests
     [Fact]
     public void Fill_LineWithoutSpeaker_GetsDefaultSpeaker()
     {
-        var line = Line(Text("Hello"));
+        var line = Line(Text("Hello")) with { Span = SourceSpanFactory.Span(7, 5) };
 
         var filled = DefaultSpeakerFiller.Fill(line);
 
         var speaker = AssertDefaultSpeaker(filled.Speaker);
-        Assert.Equal(SourceSpan.EmptyAt(line.Span.Start), speaker.Span);
+        Assert.Equal(SourceSpan.EmptyAt(7), speaker.Span);
         Assert.True(speaker.Span.IsEmpty);
         Assert.Same(line.Speech, filled.Speech);
     }
@@ -25,8 +24,7 @@ public sealed class DefaultSpeakerFillerTests
     [Fact]
     public void Fill_LineWithSpeaker_IsReturnedUnchanged()
     {
-        var line = new Line(
-            SpeakerNameReference("Alice"), [Text("Hello")], SourceSpanFactory.Span());
+        var line = Line(SpeakerNameReference("Alice"), Text("Hello"));
 
         Assert.Same(line, DefaultSpeakerFiller.Fill(line));
     }
@@ -36,7 +34,7 @@ public sealed class DefaultSpeakerFillerTests
     {
         // A silent command is a speaker-less line whose speech is a command; the same
         // fill covers it, with no special case.
-        var line = Line(new DefaultCommand("wave", SourceSpanFactory.Span()));
+        var line = Line(DefaultCommand("wave"));
 
         AssertDefaultSpeaker(DefaultSpeakerFiller.Fill(line).Speaker);
     }

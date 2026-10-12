@@ -48,7 +48,7 @@ public sealed class ChoiceLabelValidatorTests
     {
         var span = new SourceSpan(7, 3);
 
-        Assert.Equal(span, AssertReported(Diagnostics(new Choice([], span)), DiagnosticCatalog.OptionWithNothingToShow).Span);
+        Assert.Equal(span, AssertReported(Diagnostics(Choice() with { Span = span }), DiagnosticCatalog.OptionWithNothingToShow).Span);
     }
 
     [Fact]

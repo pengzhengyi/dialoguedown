@@ -10,13 +10,13 @@ public sealed class DesugarerTests
     [Fact]
     public void Desugar_RunsEachRuleInOrder_FeedingOutputToTheNext()
     {
-        var afterFirst = new ScriptDocument([Line(Text("first"))]);
-        var afterSecond = new ScriptDocument([Line(Text("second"))]);
+        var afterFirst = Document(Line(Text("first")));
+        var afterSecond = Document(Line(Text("second")));
         var first = Substitute.For<IDesugarRule>();
         var second = Substitute.For<IDesugarRule>();
         first.Apply(Arg.Any<ScriptDocument>()).Returns(afterFirst);
         second.Apply(Arg.Any<ScriptDocument>()).Returns(afterSecond);
-        var input = new ScriptDocument([]);
+        var input = Document();
 
         var result = new Desugarer([first, second]).Desugar(input);
 
@@ -31,7 +31,7 @@ public sealed class DesugarerTests
     [Fact]
     public void Desugar_NoRules_ReturnsTheDocumentUnchanged()
     {
-        var input = new ScriptDocument([Line(Text("hi"))]);
+        var input = Document(Line(Text("hi")));
 
         Assert.Same(input, new Desugarer([]).Desugar(input));
     }
