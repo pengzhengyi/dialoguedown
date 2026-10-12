@@ -1,5 +1,6 @@
 using DialogueDown.Play.Tests.Support;
 using DialogueDown.Play.Tui;
+using static DialogueDown.Play.Tests.Support.Consoles;
 
 namespace DialogueDown.Play.Tests.Tui;
 
@@ -26,7 +27,7 @@ public sealed class KeyPressTests
     [Fact]
     public async Task ReadAsync_WithoutAKey_AnswersNothing()
     {
-        var console = Consoles.WithoutAKey();
+        var console = WithoutAKey();
 
         var key = await KeyPress.ReadAsync(console, CancellationToken.None);
 

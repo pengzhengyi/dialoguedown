@@ -1,7 +1,7 @@
-using DialogueDown.Play.Tests.Support;
 using DialogueDown.Play.Tui;
 using DialogueDown.Playbook.Speech;
 using static DialogueDown.Play.Tests.Support.Consoles;
+using static DialogueDown.Play.Tests.Support.MenuOptionFactory;
 using static DialogueDown.Play.Tests.Support.OutputAssert;
 using static DialogueDown.TestSupport.SpeechFactory;
 
@@ -85,7 +85,10 @@ public sealed class PlayerConsoleTests
             "Alice  The market closes at dusk.",
             "",
             "       Come with me, then.");
-        Assert.IsType<TranscriptEntry.Continuation>(player.Transcript[1]);
+        Assert.Collection(
+            player.Transcript,
+            entry => Assert.IsType<TranscriptEntry.Line>(entry),
+            entry => Assert.IsType<TranscriptEntry.Continuation>(entry));
     }
 
     [Fact]
@@ -104,7 +107,7 @@ public sealed class PlayerConsoleTests
     }
 
     [Fact]
-    public void Notice_WritesACrossApaceFromSpeech()
+    public void Notice_WritesACrossApartFromSpeech()
     {
         var console = Plain();
         var player = new PlayerConsole(console);
@@ -280,7 +283,7 @@ public sealed class PlayerConsoleTests
     [Fact]
     public async Task AdvanceAsync_WithoutAKeyToGive_QuitsTheWait()
     {
-        var player = new PlayerConsole(Consoles.WithoutAKey());
+        var player = new PlayerConsole(WithoutAKey());
 
         var turn = await player.AdvanceAsync(TestContext.Current.CancellationToken);
 
@@ -351,9 +354,9 @@ public sealed class PlayerConsoleTests
         var turn = await player.TakeAsync(options, TestContext.Current.CancellationToken);
 
         Assert.Equal(2, Assert.IsType<PlayerTurn.Take>(turn).Index);
-        var menu = Assert.IsType<TranscriptEntry.Menu>(player.Transcript[^1]);
+        var menu = Assert.IsType<TranscriptEntry.Menu>(Assert.Single(player.Transcript));
         Assert.Equal(2, menu.Taken);
-        Assert.Equal(3, menu.Options.Length);
+        Assert.Equal(options, menu.Options);
     }
 
     [Fact]
@@ -367,7 +370,7 @@ public sealed class PlayerConsoleTests
         var turn = await player.TakeAsync(options, TestContext.Current.CancellationToken);
 
         Assert.IsType<PlayerTurn.Quit>(turn);
-        Assert.Null(Assert.IsType<TranscriptEntry.Menu>(player.Transcript[^1]).Taken);
+        Assert.Null(Assert.IsType<TranscriptEntry.Menu>(Assert.Single(player.Transcript)).Taken);
     }
 
     [Fact]
@@ -392,8 +395,4 @@ public sealed class PlayerConsoleTests
         // A large cast of speakers shares a handful of colors; collisions are the design.
         Assert.InRange(colors.Count, 2, 5);
     }
-
-    private static System.Collections.Immutable.ImmutableArray<MenuOption> Menu(
-        params (string Label, bool Available)[] options) =>
-        [.. options.Select(option => new MenuOption([Text(option.Label)], option.Available))];
 }
