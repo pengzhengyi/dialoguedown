@@ -35,12 +35,12 @@ internal static class UnionAssert
     private static List<string> DeclaredTags(Type kinds) =>
         [.. kinds.GetFields(BindingFlags.Public | BindingFlags.Static)
             .Where(field => field.IsLiteral && field.FieldType == typeof(string))
-            .Select(field => (string)field.GetRawConstantValue()!)
+            .Select(field => Assert.IsType<string>(field.GetRawConstantValue()))
             .Order()];
 
     private static Dictionary<string, Type> Registrations<TUnion>() =>
         typeof(TUnion).GetCustomAttributes<JsonDerivedTypeAttribute>()
             .ToDictionary(
-                attribute => (string)attribute.TypeDiscriminator!,
+                attribute => Assert.IsType<string>(attribute.TypeDiscriminator),
                 attribute => attribute.DerivedType);
 }

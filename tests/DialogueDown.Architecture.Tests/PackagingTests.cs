@@ -19,7 +19,7 @@ public sealed class PackagingTests
         var release = ReleaseVersion(Architecture.CliAssembly);
 
         var disagreeing = Architecture.AllAssemblies
-            .Select(assembly => (Name: assembly.GetName().Name!, Version: ReleaseVersion(assembly)))
+            .Select(assembly => (Name: assembly.GetName().Name, Version: ReleaseVersion(assembly)))
             .Where(assembly => assembly.Version != release)
             .Select(assembly => $"{assembly.Name} is {assembly.Version}")
             .ToList();
@@ -33,8 +33,9 @@ public sealed class PackagingTests
     // The informational version, without any build metadata a "+<commit>" suffix adds.
     private static string ReleaseVersion(Assembly assembly)
     {
-        var version = assembly
-            .GetCustomAttribute<AssemblyInformationalVersionAttribute>()!.InformationalVersion;
+        var attribute = assembly.GetCustomAttribute<AssemblyInformationalVersionAttribute>();
+        Assert.NotNull(attribute);
+        var version = attribute.InformationalVersion;
         var plus = version.IndexOf('+', StringComparison.Ordinal);
         return plus >= 0 ? version[..plus] : version;
     }

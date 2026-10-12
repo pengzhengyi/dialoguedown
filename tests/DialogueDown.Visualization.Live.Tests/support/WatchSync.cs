@@ -28,14 +28,14 @@ internal static class WatchSync
     private static readonly TimeSpan _pokeInterval = TimeSpan.FromMilliseconds(20);
 
     /// <summary>
-    /// Waits until <paramref name="watches"/> is delivering events for <paramref name="folder"/>.
-    /// Call this before the change a test is about to make.
+    /// Waits until <paramref name="watches"/> is delivering events for the folder holding
+    /// <paramref name="file"/>. Call this before the change a test is about to make.
     /// </summary>
-    public static async Task WaitUntilLiveAsync(TreeWatches watches, string folder)
+    public static async Task WaitUntilLiveAsync(TreeWatches watches, string file)
     {
         ArgumentNullException.ThrowIfNull(watches);
 
-        var sentinel = NewSentinel(folder);
+        var sentinel = NewSentinel(file);
         using var reported = new SemaphoreSlim(0);
         using var watch = watches.Watch(sentinel, () => reported.Release(), _probeDebounce);
 
@@ -63,19 +63,20 @@ internal static class WatchSync
     }
 
     /// <summary>
-    /// Waits until the watcher has been seen delivering after a change, giving a report of that
-    /// change one full quiet period to arrive. <paramref name="debounce"/> must match the watch
-    /// under test, so the window waited is the one that watch would need.
+    /// Waits until the watcher has been seen delivering in the folder holding
+    /// <paramref name="file"/> after a change, giving a report of that change one full quiet
+    /// period to arrive. <paramref name="debounce"/> must match the watch under test, so the
+    /// window waited is the one that watch would need.
     /// </summary>
     /// <remarks>
     /// Use it before a negative assertion: the sentinel confirms the watcher was delivering during
     /// the window, which a fixed delay cannot.
     /// </remarks>
-    public static async Task DrainAsync(TreeWatches watches, string folder, TimeSpan debounce)
+    public static async Task DrainAsync(TreeWatches watches, string file, TimeSpan debounce)
     {
         ArgumentNullException.ThrowIfNull(watches);
 
-        var sentinel = NewSentinel(folder);
+        var sentinel = NewSentinel(file);
         using var reported = new SemaphoreSlim(0);
         using var watch = watches.Watch(sentinel, () => reported.Release(), debounce);
 
@@ -99,8 +100,12 @@ internal static class WatchSync
         }
     }
 
-    private static string NewSentinel(string folder)
+    // The sentinel sits beside the file, in the folder the watcher must be delivering for.
+    private static string NewSentinel(string file)
     {
+        Assert.False(Directory.Exists(file), $"Pass the file a test watches, not a folder: {file}");
+        var folder = Path.GetDirectoryName(file);
+        Assert.NotNull(folder);
         var sentinel = Path.Combine(folder, $".watch-sync-{Guid.NewGuid():N}");
         Write(sentinel, 0);
         return sentinel;
