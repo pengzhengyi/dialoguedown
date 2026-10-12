@@ -30,7 +30,7 @@
         "supply": {
           "Hero.HasSword": true,
           "Hero.HasShield": false,
-          "WeaponName": "Ashbringer",
+          "WeaponName": "the old sword",
           "ShieldName": "Aegis"
         }
       }
@@ -41,7 +41,7 @@
           "ordered": false,
           "options": [
             {
-              "label": "Draw Ashbringer",
+              "label": "Draw the old sword",
               "available": true
             },
             {
@@ -67,14 +67,14 @@
     {
       "send": {
         "supply": {
-          "WeaponName": "Ashbringer"
+          "WeaponName": "the old sword"
         }
       }
     },
     {
       "expect": {
         "said": {
-          "speech": "Draw Ashbringer"
+          "speech": "Draw the old sword"
         }
       }
     },
