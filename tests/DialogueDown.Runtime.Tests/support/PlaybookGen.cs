@@ -125,18 +125,28 @@ internal static class PlaybookGen
             Gen.Int[0, speakers - 1],
             Gen.Int[0, nodes - 1],
             Gen.Int[0, nodes - 1],
-            Guard(),
-            Guard(),
-            Gen.OneOfConst([.. _truthKeys.Select(Condition (key) => new KeyCondition(key))]),
+            Gen.Select(Guard(), Guard(), ArmGuard()),
             Gen.Select(Gen.Bool, Gen.Enum<CommandAt>()),
-            (draws, speaker, onward, elsewhere, guard, jumpGuard, armGuard, speech) =>
+            (draws, speaker, onward, elsewhere, guards, speech) =>
                 new NodeDraft(
-                    draws, speaker, onward, elsewhere, guard, jumpGuard, armGuard, speech.Item1, speech.Item2));
+                    draws,
+                    speaker,
+                    onward,
+                    elsewhere,
+                    Guard: guards.Item1,
+                    JumpGuard: guards.Item2,
+                    ArmGuard: guards.Item3,
+                    Asks: speech.Item1,
+                    CommandAt: speech.Item2));
 
     // No guard is drawn as often as each key, so a walk still meets plenty of nodes it can pass
     // without asking.
     private static Gen<Condition?> Guard() =>
         Gen.OneOfConst<Condition?>([null, .. _truthKeys.Select(key => new KeyCondition(key))]);
+
+    // A block condition's arm is always guarded, so the walk meets both the arm and what follows it.
+    private static Gen<Condition> ArmGuard() =>
+        Gen.OneOfConst([.. _truthKeys.Select(Condition (key) => new KeyCondition(key))]);
 
     private static PlaybookDocument Document(NodeDraft[] drafts, int speakers, int entry) =>
         PlayContextFactory.Document(
