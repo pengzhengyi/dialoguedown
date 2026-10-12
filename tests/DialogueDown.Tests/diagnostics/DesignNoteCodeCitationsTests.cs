@@ -1,5 +1,5 @@
-using System.Runtime.CompilerServices;
 using System.Text.RegularExpressions;
+using DialogueDown.Tests.Support;
 
 namespace DialogueDown.Tests.Diagnostics;
 
@@ -18,7 +18,6 @@ public sealed partial class DesignNoteCodeCitationsTests
     /// </summary>
     private static readonly Dictionary<string, string> _namedButNotShipped = new(StringComparer.Ordinal)
     {
-        ["DLG1115"] = "Ignored Markdown Diagnostic names it in a rejected alternative.",
         ["DLG3001"] = "Choice Nesting Diagnostic names it as a code left unused.",
     };
 
@@ -28,7 +27,7 @@ public sealed partial class DesignNoteCodeCitationsTests
         var catalog = DiagnosticCatalogReflection.Descriptors()
             .Select(descriptor => descriptor.Code)
             .ToHashSet(StringComparer.Ordinal);
-        var root = RepositoryRoot();
+        var root = Repository.Root;
         var offenders = new List<string>();
 
         foreach (var path in Directory.EnumerateFiles(
@@ -48,6 +47,8 @@ public sealed partial class DesignNoteCodeCitationsTests
                 .Select(code => $"{Path.GetRelativePath(root, path)}: {code}"));
         }
 
+        // Assert.True rather than Assert.Empty: xUnit shortens each entry it prints, which would cut
+        // off the code at the end of a note's path.
         Assert.True(
             offenders.Count == 0,
             "A design note that ships cites a code the catalog cannot emit, so a reader who looks it "
@@ -71,20 +72,6 @@ public sealed partial class DesignNoteCodeCitationsTests
         var line = status.Groups[1].Value;
         return !line.Contains("Explored", StringComparison.OrdinalIgnoreCase)
             && !line.Contains("Proposed", StringComparison.OrdinalIgnoreCase);
-    }
-
-    // Walks up from this test's source location to the checkout root, identified by its solution
-    // file, so the notes are found wherever the runner places the compiled binaries.
-    private static string RepositoryRoot([CallerFilePath] string callerPath = "")
-    {
-        var directory = new DirectoryInfo(Path.GetDirectoryName(callerPath)!);
-        while (directory is not null && !File.Exists(Path.Combine(directory.FullName, "DialogueDown.sln")))
-        {
-            directory = directory.Parent;
-        }
-
-        return directory?.FullName
-            ?? throw new InvalidOperationException("Could not find the repository root (DialogueDown.sln).");
     }
 
     [GeneratedRegex(@"^> Status:\s*(.+)$", RegexOptions.Multiline)]

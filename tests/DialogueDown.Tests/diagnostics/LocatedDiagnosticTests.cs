@@ -9,8 +9,11 @@ public sealed class LocatedDiagnosticTests
     [Fact]
     public void Project_RendersTheMessageAndLocatesTheSpan()
     {
-        // "line one\nAlice: hi": "Alice" starts at offset 9 (line 2, column 1) and spans 5 chars.
-        var source = "line one\nAlice: hi";
+        // "Alice" starts at offset 9 (line 2, column 1) and spans 5 characters.
+        const string Source = """
+            line one
+            Alice: hi
+            """;
         var diagnostic = Diagnostic(
             descriptor: Descriptor(
                 code: "DLG2003",
@@ -20,7 +23,7 @@ public sealed class LocatedDiagnosticTests
             messageArguments: ["Alice"],
             severity: DiagnosticSeverity.Error);
 
-        var located = LocatedDiagnostic.Project(diagnostic, new LineMap(source));
+        var located = LocatedDiagnostic.Project(diagnostic, new LineMap(Source));
 
         Assert.Equal("DLG2003", located.Code);
         Assert.Equal(DiagnosticSeverity.Error, located.Severity);
@@ -51,11 +54,16 @@ public sealed class LocatedDiagnosticTests
     [Fact]
     public void Project_CarriesFixesWithTheirAbsoluteOffsets()
     {
+        // The fix inserts at offset 9, where "Alice" starts (line 2, column 1).
+        const string Source = """
+            line one
+            Alice: hi
+            """;
         var diagnostic = Diagnostic(
             span: SourceSpanFactory.Span(9, 5),
             fixes: [Fix(edits: [Edit(SourceSpanFactory.Span(9, 0))])]);
 
-        var located = LocatedDiagnostic.Project(diagnostic, new LineMap("line one\nAlice: hi"));
+        var located = LocatedDiagnostic.Project(diagnostic, new LineMap(Source));
 
         var fix = Assert.Single(located.Fixes);
         Assert.Equal("Escape as literal text", fix.Title);

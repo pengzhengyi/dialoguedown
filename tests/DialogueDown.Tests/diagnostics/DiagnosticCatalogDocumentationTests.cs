@@ -1,4 +1,4 @@
-using System.Runtime.CompilerServices;
+using DialogueDown.Tests.Support;
 
 namespace DialogueDown.Tests.Diagnostics;
 
@@ -19,7 +19,7 @@ public sealed class DiagnosticCatalogDocumentationTests
     [Fact]
     public void ErrorCodesPageStaysInSyncWithTheCatalog()
     {
-        var path = Path.Combine(RepositoryRoot(), "docs", "guide", "error-codes.md");
+        var path = Path.Combine(Repository.Root, "docs", "guide", "error-codes.md");
         var rendered = DiagnosticCatalogMarkdown.Render();
 
         if (ShouldUpdate())
@@ -28,6 +28,8 @@ public sealed class DiagnosticCatalogDocumentationTests
             return;
         }
 
+        // Assert.True rather than Assert.Equal, which takes no message: the failure should name the
+        // command that regenerates the page.
         Assert.True(File.Exists(path), $"{PagePath} is missing; regenerate it with `{RegenerateHint}`.");
         Assert.True(
             Normalize(File.ReadAllText(path)) == Normalize(rendered),
@@ -38,18 +40,4 @@ public sealed class DiagnosticCatalogDocumentationTests
         Environment.GetEnvironmentVariable(UpdateVariable) is "1" or "true";
 
     private static string Normalize(string text) => text.Replace("\r\n", "\n");
-
-    // Walks up from this test's source location to the checkout root, identified by its solution
-    // file, so the committed page is found wherever the runner places the compiled binaries.
-    private static string RepositoryRoot([CallerFilePath] string callerPath = "")
-    {
-        var directory = new DirectoryInfo(Path.GetDirectoryName(callerPath)!);
-        while (directory is not null && !File.Exists(Path.Combine(directory.FullName, "DialogueDown.sln")))
-        {
-            directory = directory.Parent;
-        }
-
-        return directory?.FullName
-            ?? throw new InvalidOperationException("Could not find the repository root (DialogueDown.sln).");
-    }
 }
