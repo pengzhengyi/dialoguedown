@@ -69,7 +69,7 @@ public sealed class ReportPayload
     /// <summary>Gets the names of the speakers the applied configuration declares.</summary>
     public IReadOnlyList<string> SpeakerNames =>
         Json["configuration"]?["speakers"] is JsonArray speakers
-            ? [.. speakers.Select(speaker => speaker!["name"]!.GetValue<string>())]
+            ? [.. speakers.Select(NameOf)]
             : [];
 
     /// <summary>
@@ -116,6 +116,14 @@ public sealed class ReportPayload
         using var report = JsonDocument.ParseValue(ref reader);
 
         return Parse(report.RootElement.GetRawText());
+    }
+
+    // A speaker entry's name, which every entry carries.
+    private static string NameOf(JsonNode? speaker)
+    {
+        var name = speaker?["name"]?.GetValue<string>();
+        Assert.NotNull(name);
+        return name;
     }
 
     private string? Text(string field) => Json[field]?.GetValue<string>();

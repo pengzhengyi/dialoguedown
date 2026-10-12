@@ -23,6 +23,7 @@ public static class UnionCoverageAssert
     /// </param>
     public static void AssertCoversEveryMember<TUnion>(
         IEnumerable<TUnion> samples, params Type[] except)
+        where TUnion : class
     {
         ArgumentNullException.ThrowIfNull(samples);
         ArgumentNullException.ThrowIfNull(except);
@@ -30,7 +31,7 @@ public static class UnionCoverageAssert
         var excluded = except.Select(type => type.Name).Order().ToList();
         Assert.Equal(excluded, ConcreteMembers<TUnion>().Intersect(excluded).Order());
 
-        var covered = samples.Select(sample => sample!.GetType().Name).Distinct().Order();
+        var covered = samples.Select(sample => sample.GetType().Name).Distinct().Order();
 
         Assert.Equal(ConcreteMembers<TUnion>().Except(excluded), covered);
     }

@@ -34,6 +34,7 @@ public sealed class CliConfiguratorTests
 
         CliConfigurator.Configure(config);
 
-        Assert.Same(Console.Error, settings.Console!.Profile.Out.Writer);
+        Assert.NotNull(settings.Console);
+        Assert.Same(Console.Error, settings.Console.Profile.Out.Writer);
     }
 }

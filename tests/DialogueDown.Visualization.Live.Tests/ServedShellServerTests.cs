@@ -77,7 +77,7 @@ public sealed class ServedShellServerTests
         var open = await Open(client, "proj/scene.dialogue.md", "view");
 
         Assert.Equal(HttpStatusCode.SeeOther, open.StatusCode);
-        Assert.Equal("/r/proj/", open.Headers.Location!.ToString());
+        Assert.Equal("/r/proj/", open.Headers.Location?.ToString());
 
         var html = await client.GetStringAsync("/r/proj/", TestContext.Current.CancellationToken);
         Assert.StartsWith("<!doctype html", html, StringComparison.OrdinalIgnoreCase);
@@ -140,7 +140,7 @@ public sealed class ServedShellServerTests
 
         // Per-session HTML is rebuilt each launch, so it must not be cached (no stale reports).
         Assert.Equal(HttpStatusCode.OK, report.StatusCode);
-        Assert.True(report.Headers.CacheControl!.NoStore);
+        Assert.True(report.Headers.CacheControl?.NoStore);
     }
 
     [Fact]
@@ -156,9 +156,10 @@ public sealed class ServedShellServerTests
             var response = await client.GetAsync(asset.Path, TestContext.Current.CancellationToken);
 
             Assert.Equal(HttpStatusCode.OK, response.StatusCode);
-            Assert.Equal(asset.ContentType, response.Content.Headers.ContentType!.MediaType);
+            Assert.Equal(asset.ContentType, response.Content.Headers.ContentType?.MediaType);
             // The name carries a hash of the content, so this body can never go stale.
-            Assert.True(response.Headers.CacheControl!.Public);
+            Assert.NotNull(response.Headers.CacheControl);
+            Assert.True(response.Headers.CacheControl.Public);
             Assert.Equal(TimeSpan.FromDays(365), response.Headers.CacheControl.MaxAge);
         }
     }
@@ -281,7 +282,7 @@ public sealed class ServedShellServerTests
 
         var open = await Open(client, "scene.dialogue.md", "view");
 
-        Assert.Equal("/r/", open.Headers.Location!.ToString());
+        Assert.Equal("/r/", open.Headers.Location?.ToString());
         Assert.Equal("view", (await ReportAt(client, "/r/")).Mode);
     }
 
@@ -372,7 +373,7 @@ public sealed class ServedShellServerTests
         var create = await client.PostAsJsonAsync("/api/create", new { path = "draft.dialogue.md" }, TestContext.Current.CancellationToken);
 
         Assert.Equal(HttpStatusCode.SeeOther, create.StatusCode);
-        Assert.Equal("/r/", create.Headers.Location!.ToString());
+        Assert.Equal("/r/", create.Headers.Location?.ToString());
         var created = Path.Combine(tree.Dir("root"), "draft.dialogue.md");
         Assert.True(File.Exists(created));
         Assert.Equal(string.Empty, await File.ReadAllTextAsync(created, TestContext.Current.CancellationToken));
@@ -495,7 +496,7 @@ public sealed class ServedShellServerTests
         Assert.Equal("/r/proj/", reportPath);
         var landing = await client.GetAsync("/", TestContext.Current.CancellationToken);
         Assert.Equal(HttpStatusCode.SeeOther, landing.StatusCode);
-        Assert.Equal("/r/proj/", landing.Headers.Location!.ToString());
+        Assert.Equal("/r/proj/", landing.Headers.Location?.ToString());
 
         Assert.Equal("proj/scene.dialogue.md", (await ReportAt(client, "/r/proj/")).ActivePath);
     }

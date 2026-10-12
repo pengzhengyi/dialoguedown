@@ -19,7 +19,7 @@ public sealed class TreeWatchesTests
         using var watches = new TreeWatches(tree.Root);
         using var fired = new SemaphoreSlim(0);
         using var watch = watches.Watch(document, () => fired.Release(), _debounce);
-        await WatchSync.WaitUntilLiveAsync(watches, Path.GetDirectoryName(document)!);
+        await WatchSync.WaitUntilLiveAsync(watches, document);
 
         File.WriteAllText(document, "# Second");
 
@@ -39,7 +39,7 @@ public sealed class TreeWatchesTests
             () => Interlocked.Increment(ref count),
             _debounce,
             time);
-        await WatchSync.WaitUntilLiveAsync(watches, Path.GetDirectoryName(document)!);
+        await WatchSync.WaitUntilLiveAsync(watches, document);
 
         for (var i = 0; i < 5; i++)
         {
@@ -69,10 +69,10 @@ public sealed class TreeWatchesTests
         using var watches = new TreeWatches(tree.Root);
         var count = 0;
         using var watch = watches.Watch(watched, () => Interlocked.Increment(ref count), _debounce);
-        await WatchSync.WaitUntilLiveAsync(watches, Path.GetDirectoryName(watched)!);
+        await WatchSync.WaitUntilLiveAsync(watches, watched);
 
         File.WriteAllText(other, "# Changed");
-        await WatchSync.DrainAsync(watches, Path.GetDirectoryName(other)!, _debounce);
+        await WatchSync.DrainAsync(watches, other, _debounce);
 
         Assert.Equal(0, count);
     }
@@ -85,12 +85,12 @@ public sealed class TreeWatchesTests
         using var watches = new TreeWatches(tree.Root);
         var count = 0;
         var watch = watches.Watch(document, () => Interlocked.Increment(ref count), _debounce);
-        await WatchSync.WaitUntilLiveAsync(watches, Path.GetDirectoryName(document)!);
+        await WatchSync.WaitUntilLiveAsync(watches, document);
 
         watch.Dispose();
         watch.Dispose(); // releasing twice is not an error
         File.WriteAllText(document, "# Second");
-        await WatchSync.DrainAsync(watches, Path.GetDirectoryName(document)!, _debounce);
+        await WatchSync.DrainAsync(watches, document, _debounce);
 
         Assert.Equal(0, count);
     }
@@ -105,7 +105,7 @@ public sealed class TreeWatchesTests
         using var second = new SemaphoreSlim(0);
         using var watchOne = watches.Watch(document, () => first.Release(), _debounce);
         using var watchTwo = watches.Watch(document, () => second.Release(), _debounce);
-        await WatchSync.WaitUntilLiveAsync(watches, Path.GetDirectoryName(document)!);
+        await WatchSync.WaitUntilLiveAsync(watches, document);
 
         File.WriteAllText(document, "# Second");
 
@@ -124,7 +124,7 @@ public sealed class TreeWatchesTests
         using var watches = new TreeWatches(tree.Root);
         using var fired = new SemaphoreSlim(0);
         using var watch = watches.Watch(document, () => fired.Release(), _debounce);
-        await WatchSync.WaitUntilLiveAsync(watches, Path.GetDirectoryName(document)!);
+        await WatchSync.WaitUntilLiveAsync(watches, document);
 
         File.WriteAllText(document, "# Second");
 
@@ -143,7 +143,7 @@ public sealed class TreeWatchesTests
         using var watches = new TreeWatches(tree.Root);
         using var fired = new SemaphoreSlim(0);
         using var watch = watches.Watch(SymlinkResolver.Resolve(link), () => fired.Release(), _debounce);
-        await WatchSync.WaitUntilLiveAsync(watches, tree.Root);
+        await WatchSync.WaitUntilLiveAsync(watches, real);
 
         File.WriteAllText(real, "# Second");
 
@@ -160,7 +160,7 @@ public sealed class TreeWatchesTests
         using var watches = new TreeWatches(tree.Root);
         using var fired = new SemaphoreSlim(0);
         using var watch = watches.Watch(document, () => fired.Release(), _debounce);
-        await WatchSync.WaitUntilLiveAsync(watches, Path.GetDirectoryName(document)!);
+        await WatchSync.WaitUntilLiveAsync(watches, document);
 
         File.WriteAllText(document, "# Second");
 
