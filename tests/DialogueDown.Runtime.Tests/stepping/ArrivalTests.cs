@@ -54,6 +54,33 @@ public sealed class ArrivalTests
     }
 
     [Fact]
+    public void Supplied_WhenAMenuWithNoOptionAvailableHasNoFallThrough_RefusesAsLeadingNowhere() =>
+        AssertRefused(
+            Arrival.Supplied(
+                AMenuWhoseOnlyOptionIsConditionalWithNoFallThrough(),
+                Waiting(0, "Alice.HasKey"),
+                Answering(("Alice.HasKey", false))),
+            RefusalReason.LeadsNowhere,
+            "Node 0 leads nowhere.");
+
+    [Fact]
+    public void At_AMenuWithNoOptions_WalksPastItAsOneWithNoOptionAvailable()
+    {
+        var result = Arrival.At(AMenuWithNoOptions(), 0);
+
+        AssertSaid(result, "Alice", "Onward.");
+        AssertAt(result, 1);
+    }
+
+    [Fact]
+    public void At_AMenuWithNoOptionsFallingThroughToItself_RefusesRatherThanWalkingForever() =>
+        // A menu is walked past inside the walk, so the walk's bound stops a loop of them too.
+        AssertRefused(
+            Arrival.At(AMenuWithNoOptionsFallingThroughToItself(), 0),
+            RefusalReason.EndlessLoop,
+            "Node 0 sits in a loop of nodes that hand the host nothing, so a run entering it would never come out.");
+
+    [Fact]
     public void Supplied_WhenTheWorldAllowsTheLine_SpeaksIt()
     {
         var context = AConditionalLine();
@@ -497,4 +524,30 @@ public sealed class ArrivalTests
                 End(id: 3),
             ],
             ["Alice"]);
+
+    /// <summary>A menu whose only option the world must allow, with no fall-through beside it.</summary>
+    /// <remarks>
+    /// Built by hand rather than written: the reader requires a fall-through beside a menu whose
+    /// every option has a condition, so a written menu always leads somewhere.
+    /// </remarks>
+    /// <returns>A context whose menu leads nowhere once the world withholds its option.</returns>
+    private static PlayContext AMenuWhoseOnlyOptionIsConditionalWithNoFallThrough() =>
+        PlayContextFactory.Of([Choice(Option("Open the door", condition: "Alice.HasKey", target: 1)), End(id: 1)]);
+
+    /// <summary>A menu with no options, then a line.</summary>
+    /// <remarks>
+    /// Built by hand rather than written, because no script writes a menu without options. Its
+    /// fall-through leads to the line.
+    /// </remarks>
+    /// <returns>A context whose entry has nothing to offer.</returns>
+    private static PlayContext AMenuWithNoOptions() =>
+        PlayContextFactory.Of(
+            [Choice(new SuccessionEdge(1)), Line("Onward.", id: 1, next: 2), End(id: 2)],
+            ["Alice"]);
+
+    /// <summary>A menu with no options whose fall-through leads back to itself.</summary>
+    /// <remarks>Built by hand rather than written, because no script writes a menu without options.</remarks>
+    /// <returns>A context whose only node is walked past forever.</returns>
+    private static PlayContext AMenuWithNoOptionsFallingThroughToItself() =>
+        PlayContextFactory.Of([Choice(new SuccessionEdge(0))]);
 }
