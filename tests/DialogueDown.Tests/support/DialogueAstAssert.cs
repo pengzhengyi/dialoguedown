@@ -94,7 +94,7 @@ internal static class DialogueAstAssert
         AssertTag<ReservedTag>(actual, name, value);
 
     public static SpeakerDeclaration AssertSpeakerDeclaration(
-        Speaker actual, string name, string? id = null, params Tag[] tags)
+        Speaker? actual, string name, string? id = null, params Tag[] tags)
     {
         var declaration = Assert.IsType<SpeakerDeclaration>(actual);
         Assert.Equal(name, declaration.Name);
@@ -112,7 +112,7 @@ internal static class DialogueAstAssert
     }
 
     public static PartialSpeakerDeclaration AssertPartialSpeakerDeclaration(
-        Speaker actual, string id, params Tag[] tags)
+        Speaker? actual, string id, params Tag[] tags)
     {
         var partial = Assert.IsType<PartialSpeakerDeclaration>(actual);
         Assert.Equal(id, partial.Id);
