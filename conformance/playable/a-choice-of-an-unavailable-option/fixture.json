@@ -1,0 +1,82 @@
+{
+  "$schema": "https://pengzhengyi.github.io/dialoguedown/schema/fixture-0.schema.json",
+  "name": "choosing an option offered as unavailable is refused, and the menu stays open",
+  "playbook": "playbook.json",
+  "because": "the menu shows the option, so a host may let the player pick it; the run must refuse rather than take it, and still accept a choice it can take",
+  "session": [
+    {
+      "expect": {
+        "said": {
+          "speaker": "Alice",
+          "speech": "Ready?"
+        }
+      }
+    },
+    {
+      "send": "next"
+    },
+    {
+      "expect": {
+        "resolve": [
+          "Alice.HasKey"
+        ]
+      }
+    },
+    {
+      "send": {
+        "supply": {
+          "Alice.HasKey": false
+        }
+      }
+    },
+    {
+      "expect": {
+        "offer": {
+          "ordered": true,
+          "options": [
+            {
+              "label": "Open the door",
+              "available": false
+            },
+            {
+              "label": "Wait here",
+              "available": true
+            }
+          ]
+        }
+      }
+    },
+    {
+      "send": {
+        "choose": 0
+      }
+    },
+    {
+      "expect": {
+        "refused": {
+          "reason": "unavailable-option"
+        }
+      }
+    },
+    {
+      "send": {
+        "choose": 1
+      }
+    },
+    {
+      "expect": {
+        "said": {
+          "speech": "Wait here"
+        }
+      }
+    },
+    {
+      "send": "next"
+    },
+    {
+      "expect": {
+        "ended": {}
+      }
+    }
+  ]
+}

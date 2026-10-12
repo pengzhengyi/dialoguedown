@@ -1,0 +1,101 @@
+{
+  "$schema": "https://pengzhengyi.github.io/dialoguedown/schema/fixture-0.schema.json",
+  "name": "a menu asks its conditions before its labels' queries, in one request",
+  "playbook": "playbook.json",
+  "because": "every node names its truths before its words, which is what lets two ports send the same request; an unavailable option's label is filled too, because the host decides how to show it",
+  "session": [
+    {
+      "expect": {
+        "said": {
+          "speaker": "Alice",
+          "speech": "What now?"
+        }
+      }
+    },
+    {
+      "send": "next"
+    },
+    {
+      "expect": {
+        "resolve": [
+          "Hero.HasSword",
+          "Hero.HasShield",
+          "WeaponName",
+          "ShieldName"
+        ]
+      }
+    },
+    {
+      "send": {
+        "supply": {
+          "Hero.HasSword": true,
+          "Hero.HasShield": false,
+          "WeaponName": "Ashbringer",
+          "ShieldName": "Aegis"
+        }
+      }
+    },
+    {
+      "expect": {
+        "offer": {
+          "ordered": false,
+          "options": [
+            {
+              "label": "Draw Ashbringer",
+              "available": true
+            },
+            {
+              "label": "Raise Aegis",
+              "available": false
+            }
+          ]
+        }
+      }
+    },
+    {
+      "send": {
+        "choose": 0
+      }
+    },
+    {
+      "expect": {
+        "resolve": [
+          "WeaponName"
+        ]
+      }
+    },
+    {
+      "send": {
+        "supply": {
+          "WeaponName": "Ashbringer"
+        }
+      }
+    },
+    {
+      "expect": {
+        "said": {
+          "speech": "Draw Ashbringer"
+        }
+      }
+    },
+    {
+      "send": "next"
+    },
+    {
+      "expect": {
+        "said": {
+          "speaker": "Alice",
+          "speech": "Steady."
+        }
+      }
+    },
+    {
+      "send": "next"
+    },
+    {
+      "expect": {
+        "ended": {}
+      }
+    }
+  ]
+}

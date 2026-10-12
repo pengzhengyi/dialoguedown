@@ -1,0 +1,84 @@
+{
+  "$schema": "https://pengzhengyi.github.io/dialoguedown/schema/fixture-0.schema.json",
+  "name": "a label's query is asked before the menu is offered, and the label shows the answer",
+  "playbook": "playbook.json",
+  "because": "a label is words the player reads to decide, so its query must be filled before the menu is offered; the option's own line asks again when it plays, because the runner remembers no answer",
+  "session": [
+    {
+      "expect": {
+        "said": {
+          "speaker": "Alice",
+          "speech": "Who should I call?"
+        }
+      }
+    },
+    {
+      "send": "next"
+    },
+    {
+      "expect": {
+        "resolve": [
+          "playerName"
+        ]
+      }
+    },
+    {
+      "send": {
+        "supply": {
+          "playerName": "Ada"
+        }
+      }
+    },
+    {
+      "expect": {
+        "offer": {
+          "ordered": false,
+          "options": [
+            {
+              "label": "Call Ada over",
+              "available": true
+            },
+            {
+              "label": "Wait here",
+              "available": true
+            }
+          ]
+        }
+      }
+    },
+    {
+      "send": {
+        "choose": 0
+      }
+    },
+    {
+      "expect": {
+        "resolve": [
+          "playerName"
+        ]
+      }
+    },
+    {
+      "send": {
+        "supply": {
+          "playerName": "Ada"
+        }
+      }
+    },
+    {
+      "expect": {
+        "said": {
+          "speech": "Call Ada over"
+        }
+      }
+    },
+    {
+      "send": "next"
+    },
+    {
+      "expect": {
+        "ended": {}
+      }
+    }
+  ]
+}
