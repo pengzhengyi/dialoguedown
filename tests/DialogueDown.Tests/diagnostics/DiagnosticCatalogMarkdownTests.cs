@@ -6,17 +6,16 @@ public sealed class DiagnosticCatalogMarkdownTests
 {
     private static readonly string _rendered = DiagnosticCatalogMarkdown.Render();
 
+    // The page's headings, in order. Example scripts carry their own "# Scene" lines inside <pre>
+    // blocks; those are script text, not headings, so they are left out.
+    private static readonly IReadOnlyList<string> _headings =
+        [.. WithoutPreBlocks(_rendered).Split('\n').Where(line => line.StartsWith('#'))];
+
     [Fact]
     public void OpensWithASingleErrorCodesTitle()
     {
         Assert.StartsWith("# Error codes\n", _rendered);
-
-        // Example scripts contain their own "# Scene" heading lines inside <pre> blocks; those are
-        // literal script text, not document headings, so exclude them before counting the H1.
-        var topLevelHeadings = WithoutPreBlocks(_rendered)
-            .Split('\n')
-            .Count(line => line.StartsWith("# ", StringComparison.Ordinal));
-        Assert.Equal(1, topLevelHeadings);
+        Assert.Single(_headings, heading => heading.StartsWith("# ", StringComparison.Ordinal));
     }
 
     [Fact]
@@ -53,39 +52,62 @@ public sealed class DiagnosticCatalogMarkdownTests
     [Fact]
     public void GroupsCodesUnderTheirCategoryHeadingInReportingOrder()
     {
-        var syntaxHeading = _rendered.IndexOf("## Syntax (`DLG1xxx`)", StringComparison.Ordinal);
-        var semanticHeading = _rendered.IndexOf("## Semantic (`DLG2xxx`)", StringComparison.Ordinal);
-        var styleHeading = _rendered.IndexOf("## Style (`DLG3xxx`)", StringComparison.Ordinal);
+        var sectionOf = new Dictionary<DiagnosticCategory, string>
+        {
+            [DiagnosticCategory.Syntax] = "## Syntax (`DLG1xxx`)",
+            [DiagnosticCategory.Semantic] = "## Semantic (`DLG2xxx`)",
+            [DiagnosticCategory.Style] = "## Style (`DLG3xxx`)",
+        };
+        var sections = CodesBySection();
 
-        Assert.True(syntaxHeading >= 0, "the Syntax section is present");
-        Assert.True(semanticHeading > syntaxHeading, "Semantic follows Syntax");
-        Assert.True(styleHeading > semanticHeading, "Style follows Semantic");
-        Assert.True(_rendered.IndexOf("### DLG1003", StringComparison.Ordinal) < semanticHeading);
-        Assert.True(_rendered.IndexOf("### DLG2001", StringComparison.Ordinal) > semanticHeading);
-        Assert.True(_rendered.IndexOf("### DLG3002", StringComparison.Ordinal) > styleHeading);
+        Assert.Equal(
+            ["## Syntax (`DLG1xxx`)", "## Semantic (`DLG2xxx`)", "## Style (`DLG3xxx`)"],
+            sections.Select(section => section.Heading));
+        var codesUnder = sections.ToDictionary(section => section.Heading, section => section.Codes);
+        Assert.All(
+            Enum.GetValues<DiagnosticCategory>(),
+            category => Assert.Equal(
+                DiagnosticCatalogReflection.Descriptors()
+                    .Where(descriptor => descriptor.Category == category)
+                    .Select(descriptor => descriptor.Code)
+                    .Order(StringComparer.Ordinal),
+                codesUnder[sectionOf[category]].Order(StringComparer.Ordinal)));
     }
 
     [Fact]
     public void OrdersCodesWithinACategoryAscending()
     {
-        var semanticCodes = DiagnosticCatalogReflection.Descriptors()
-            .Where(descriptor => descriptor.Category == DiagnosticCategory.Semantic)
-            .Select(descriptor => descriptor.Code)
-            .OrderBy(code => code, StringComparer.Ordinal)
-            .ToList();
-
-        var positions = semanticCodes
-            .Select(code => _rendered.IndexOf($"### {code}\n", StringComparison.Ordinal))
-            .ToList();
-
-        Assert.DoesNotContain(-1, positions);
-        Assert.Equal(positions.OrderBy(position => position).ToList(), positions);
+        Assert.All(
+            CodesBySection(),
+            section => Assert.Equal(section.Codes.Order(StringComparer.Ordinal), section.Codes));
     }
 
     [Fact]
     public void IsDeterministic()
     {
         Assert.Equal(_rendered, DiagnosticCatalogMarkdown.Render());
+    }
+
+    // Each "##" heading, in page order, with the "###" codes beneath it, in page order. A code
+    // above the first section belongs to none and is left out.
+    private static List<(string Heading, List<string> Codes)> CodesBySection()
+    {
+        List<(string Heading, List<string> Codes)> sections = [];
+        List<string> codes = [];
+        foreach (var heading in _headings)
+        {
+            if (heading.StartsWith("## ", StringComparison.Ordinal))
+            {
+                codes = [];
+                sections.Add((heading, codes));
+            }
+            else if (heading.StartsWith("### ", StringComparison.Ordinal))
+            {
+                codes.Add(heading["### ".Length..]);
+            }
+        }
+
+        return sections;
     }
 
     private static string WithoutPreBlocks(string markdown) =>

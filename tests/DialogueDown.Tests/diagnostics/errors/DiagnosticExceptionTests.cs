@@ -29,7 +29,7 @@ public sealed class DiagnosticExceptionTests
     }
 
     [Fact]
-    public void Message_CarriesTheCodeAndTitle()
+    public void Message_IsTheCodeThenTheTitle()
     {
         var diagnostic = Diagnostic(
             descriptor: Descriptor(
@@ -39,8 +39,7 @@ public sealed class DiagnosticExceptionTests
 
         var message = new DiagnosticException(diagnostic).Message;
 
-        Assert.Contains("DLG2009", message);
-        Assert.Contains("Jump to a missing anchor", message);
+        Assert.Equal("DLG2009: Jump to a missing anchor", message);
     }
 
     [Fact]

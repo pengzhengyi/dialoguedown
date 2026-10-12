@@ -222,8 +222,20 @@ internal static class DiagnosticDocs
                 >
                 > Alice: Try downstairs.
                 """,
-                ["`else`\n>\n> Alice: Welcome back."],
-                ["`elseif` `Known?`\n>\n> Alice: Welcome back."])),
+                [
+                    """
+                    `else`
+                    >
+                    > Alice: Welcome back.
+                    """,
+                ],
+                [
+                    """
+                    `elseif` `Known?`
+                    >
+                    > Alice: Welcome back.
+                    """,
+                ])),
         new(
             DiagnosticCatalog.ControlMarkerNotAlone,
             "A branch marker is its own paragraph. Keep the blockquote connected, but add a quoted "
@@ -238,8 +250,19 @@ internal static class DiagnosticDocs
                 >
                 > Alice: Welcome upstairs.
                 """,
-                ["`Rich?`\n> Alice"],
-                ["`Rich?`\n>\n> Alice"])),
+                [
+                    """
+                    `Rich?`
+                    > Alice
+                    """,
+                ],
+                [
+                    """
+                    `Rich?`
+                    >
+                    > Alice
+                    """,
+                ])),
         new(
             DiagnosticCatalog.MissingControlBranchCondition,
             "An `if` or `elseif` marker needs its condition in a second code span. Add a condition such "
@@ -255,7 +278,12 @@ internal static class DiagnosticDocs
                 >
                 > Alice: Welcome upstairs.
                 """,
-                ["> `if`\n>"],
+                [
+                    """
+                    > `if`
+                    >
+                    """,
+                ],
                 ["> `if` `Rich?`"])),
         new(
             DiagnosticCatalog.UnexpectedElseCondition,
