@@ -7,7 +7,6 @@ using static DialogueDown.Tests.Support.DialogueAstAssert;
 using static DialogueDown.Tests.Support.MarkdownAstFactory;
 using EmphasisKind = DialogueDown.Markdown.EmphasisKind;
 using MarkdownInline = DialogueDown.Markdown.MarkdownInline;
-using TextInline = DialogueDown.Markdown.TextInline;
 
 namespace DialogueDown.Tests.Script.Transpiler.Builders;
 
@@ -29,7 +28,7 @@ public sealed class LineBuilderTests
     {
         var line = Build([Text("Alice: Hello there.")]);
 
-        AssertSpeakerNameReference(line.Speaker!, "Alice");
+        AssertSpeakerNameReference(line.Speaker, "Alice");
         AssertSpeechText(line, "Hello there.");
     }
 
@@ -39,7 +38,7 @@ public sealed class LineBuilderTests
         var line = Build(
             [Text("Alice: I said "), Emphasis(EmphasisKind.Italic, Text("hi"))]);
 
-        AssertSpeakerNameReference(line.Speaker!, "Alice");
+        AssertSpeakerNameReference(line.Speaker, "Alice");
         Assert.Equal(2, line.Speech.Count);
         AssertText(line.Speech[0], "I said ");
         AssertStyledText(line.Speech[1], SpeechStyle.Italic);
@@ -50,7 +49,7 @@ public sealed class LineBuilderTests
     {
         var line = Build([Text("Alice:")]);
 
-        AssertSpeakerNameReference(line.Speaker!, "Alice");
+        AssertSpeakerNameReference(line.Speaker, "Alice");
         Assert.Empty(line.Speech);
     }
 
@@ -77,9 +76,9 @@ public sealed class LineBuilderTests
     {
         var line = Build([CodeSpan("\"Angry\"?"), Text(" Guard: You again?")]);
 
-        AssertCondition(line.Condition!, "Angry");
+        AssertCondition(line.Condition, "Angry");
         Assert.True(line.IsConditional());
-        AssertSpeakerNameReference(line.Speaker!, "Guard");
+        AssertSpeakerNameReference(line.Speaker, "Guard");
         AssertSpeechText(line, "You again?");
     }
 
@@ -88,7 +87,7 @@ public sealed class LineBuilderTests
     {
         var line = Build([CodeSpan("\"Returned\"?"), Text(" Welcome back.")]);
 
-        AssertCondition(line.Condition!, "Returned");
+        AssertCondition(line.Condition, "Returned");
         Assert.Null(line.Speaker);
         AssertSpeechText(line, "Welcome back.");
     }
@@ -123,7 +122,7 @@ public sealed class LineBuilderTests
         var line = Build([Text("Guard: You "), CodeSpan("\"Angry\"?"), Text(" there")]);
 
         Assert.Null(line.Condition);
-        AssertSpeakerNameReference(line.Speaker!, "Guard");
+        AssertSpeakerNameReference(line.Speaker, "Guard");
         AssertCondition(line.Speech[1], "Angry");
     }
 
@@ -157,11 +156,11 @@ public sealed class LineBuilderTests
         // Mimics a leading literal whose backslash was stripped: the raw span starts at 0
         // (counting the '\'), but the content "Alice: hi" starts at 1. The speaker and the
         // leftover speech must anchor from the content, not the raw span.
-        var leading = new TextInline("Alice: hi", Span(0, 10), Span(1, 9));
+        var leading = Text("Alice: hi", Span(0, 10), Span(1, 9));
 
         var line = Build([leading]);
 
-        var speaker = AssertSpeakerNameReference(line.Speaker!, "Alice");
+        var speaker = AssertSpeakerNameReference(line.Speaker, "Alice");
         Assert.Equal(1, speaker.Span.Start); // "Alice" starts at the content, not at 0
         Assert.Equal(8, AssertText(Assert.Single(line.Speech), "hi").Span.Start); // 1 + "Alice: "
     }
@@ -172,8 +171,7 @@ public sealed class LineBuilderTests
         // "\#tag: hi" — the escape makes the leading '#' literal, so there is no speaker
         // prefix, and the tag-without-a-speaker diagnostic must not fire.
         var diagnostics = new DiagnosticBag();
-        var leading = new TextInline(
-            "#tag: hi", Span(0, 9), Span(1, 8), isFirstCharacterEscaped: true);
+        var leading = TextEscaped("#tag: hi", Span(0, 9));
 
         var line = _builder.Build([leading], diagnostics);
 
@@ -187,12 +185,11 @@ public sealed class LineBuilderTests
     {
         // "`Ready?`\=> go" (no space) — the escaped arrow is prose, not a jump, so the
         // condition guards the line instead of being left for jump binding.
-        var arrow = new TextInline(
-            "=> go", Span(0, 6), Span(1, 5), isFirstCharacterEscaped: true);
+        var arrow = TextEscaped("=> go", Span(0, 6));
 
         var line = Build([CodeSpan("\"Ready\"?"), arrow]);
 
-        AssertCondition(line.Condition!, "Ready");
+        AssertCondition(line.Condition, "Ready");
         AssertSingleText(line.Speech, "=> go");
     }
 
@@ -213,7 +210,7 @@ public sealed class LineBuilderTests
         // "Alice\: Hello" — escaping the colon declines the prefix: Markdig splits the text at the
         // escape, so the prefix parser never sees a colon; the speech reads "Alice: Hello".
         var line = Build(
-            [Text("Alice"), new TextInline(": Hello", Span(5, 8), Span(6, 7), isFirstCharacterEscaped: true)]);
+            [Text("Alice"), TextEscaped(": Hello", Span(5, 8))]);
 
         Assert.Null(line.Speaker);
         Assert.Collection(
@@ -227,7 +224,7 @@ public sealed class LineBuilderTests
     {
         // "\@alice: Hi" — the escaped '@' is literal, so the id sigil cannot begin here.
         var line = Build(
-            [new TextInline("@alice: Hi", Span(0, 11), Span(1, 10), isFirstCharacterEscaped: true)]);
+            [TextEscaped("@alice: Hi", Span(0, 11))]);
 
         Assert.Null(line.Speaker);
         AssertSpeechText(line, "@alice: Hi");
@@ -239,7 +236,7 @@ public sealed class LineBuilderTests
         // "Alice \@alice: Hi" — the escaped '@' splits the text, so the prefix parser sees
         // only "Alice ", which is no prefix; the line is speech, not a declaration.
         var line = Build(
-            [Text("Alice "), new TextInline("@alice: Hi", Span(6, 11), Span(7, 10), isFirstCharacterEscaped: true)]);
+            [Text("Alice "), TextEscaped("@alice: Hi", Span(6, 11))]);
 
         Assert.Null(line.Speaker);
         Assert.Collection(
@@ -256,7 +253,7 @@ public sealed class LineBuilderTests
     public void Span_CoversTheWholeGroup()
     {
         var line = Build(
-            [new TextInline("Hi ", Span(0, 3)), new TextInline("there", Span(3, 5))]);
+            [Text("Hi ", Span(0, 3)), Text("there", Span(3, 5))]);
 
         Assert.Equal(0, line.Span.Start);
         Assert.Equal(8, line.Span.End);

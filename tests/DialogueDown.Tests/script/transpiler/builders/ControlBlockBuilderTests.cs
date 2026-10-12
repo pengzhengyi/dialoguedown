@@ -50,12 +50,12 @@ public sealed class ControlBlockBuilderTests
             control.Branches,
             branch =>
             {
-                AssertCondition(branch.Condition!, "Rich");
+                AssertCondition(branch.Condition, "Rich");
                 AssertSpeechText(AssertLine(Assert.Single(branch.Body)), "Welcome upstairs.");
             },
             branch =>
             {
-                AssertCondition(branch.Condition!, "Known");
+                AssertCondition(branch.Condition, "Known");
                 AssertSpeechText(AssertLine(Assert.Single(branch.Body)), "Welcome back.");
             },
             branch =>
@@ -90,9 +90,9 @@ public sealed class ControlBlockBuilderTests
         var control = Build(quote);
 
         var trusted = control.Branches[0];
-        AssertCondition(trusted.Condition!, "Trusted");
+        AssertCondition(trusted.Condition, "Trusted");
         var inner = AssertControlBlock(Assert.Single(trusted.Body));
-        AssertCondition(inner.Branches[0].Condition!, "HasKey");
+        AssertCondition(inner.Branches[0].Condition, "HasKey");
         Assert.Null(inner.Branches[1].Condition);
 
         var untrusted = control.Branches[1];
@@ -137,7 +137,7 @@ public sealed class ControlBlockBuilderTests
         Assert.Single(diagnostics.Diagnostics);
         Assert.Equal(Assert.IsType<Paragraph>(quote.Blocks[0]).Inlines[0].Span, diagnostic.Span);
         var branch = Assert.Single(control.Branches);
-        AssertCondition(branch.Condition!, "Known");
+        AssertCondition(branch.Condition, "Known");
         AssertSpeechText(AssertLine(Assert.Single(branch.Body)), "Welcome back.");
     }
 
