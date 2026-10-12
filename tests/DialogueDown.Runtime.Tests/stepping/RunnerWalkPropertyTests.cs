@@ -84,6 +84,31 @@ public sealed class RunnerWalkPropertyTests
     }
 
     /// <summary>
+    /// Some walk is offered an option it cannot take.
+    /// </summary>
+    /// <remarks>
+    /// This checks the walk rather than the runner. If every option offered could be taken, the walk
+    /// would never have to choose around one, and the check below that the run accepts its choices
+    /// would pass without testing that.
+    /// </remarks>
+    [Fact]
+    public void SomeWalk_IsOfferedAnOptionItCannotTake()
+    {
+        var withheld = 0;
+
+        ForEveryWalk(
+            (_, stepped) =>
+            {
+                if (stepped.Events.OfType<Offer>().Any(offer => offer.Options.Any(option => !option.Available)))
+                {
+                    Interlocked.Increment(ref withheld);
+                }
+            });
+
+        Assert.True(withheld > 0, "No walk was offered an option it cannot take.");
+    }
+
+    /// <summary>
     /// Every answer a walk gives is one the run accepts.
     /// </summary>
     /// <remarks>
