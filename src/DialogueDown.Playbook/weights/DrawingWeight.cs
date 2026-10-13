@@ -72,6 +72,12 @@ public abstract record DrawingWeight
         return total;
     }
 
+    /// <summary>Whether a number can be a weight: finite and not negative.</summary>
+    /// <param name="percentage">The number.</param>
+    /// <returns><see langword="true"/> when the number can be a weight.</returns>
+    internal static bool IsNonNegativeAndFinite(double percentage) =>
+        double.IsFinite(percentage) && percentage >= 0;
+
     // What the numbers leave of 100, added up in the order written.
     private static double Leftover(IEnumerable<DrawingWeight> weights) =>
         Math.Max(0, OneHundredPercent - Total(weights.OfType<Number>().Select(number => number.Percentage)));
@@ -79,7 +85,7 @@ public abstract record DrawingWeight
     private static int AutoShareCount(IEnumerable<DrawingWeight> weights) => weights.Count(weight => weight is Auto);
 
     private static double AssertNonNegativeAndFinite(double percentage) =>
-        double.IsFinite(percentage) && percentage >= 0
+        IsNonNegativeAndFinite(percentage)
             ? percentage
             : throw new ArgumentOutOfRangeException(
                 nameof(percentage),
