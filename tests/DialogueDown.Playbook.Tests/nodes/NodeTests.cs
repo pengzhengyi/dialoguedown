@@ -1,6 +1,7 @@
-using DialogueDown.Playbook.Edges;
 using DialogueDown.Playbook.Nodes;
 using DialogueDown.Playbook.Tests.Support;
+using static DialogueDown.TestSupport.PlaybookNodeFactory;
+
 namespace DialogueDown.Playbook.Tests.Nodes;
 
 public sealed class NodeTests
@@ -14,8 +15,8 @@ public sealed class NodeTests
     [Fact]
     public void Equality_EqualWaysOut_AreEqual()
     {
-        var left = new ChoiceNode(0, false, [new SuccessionEdge(1)]);
-        var right = new ChoiceNode(0, false, [new SuccessionEdge(1)]);
+        var left = new ChoiceNode(0, false, [Succession(1)]);
+        var right = new ChoiceNode(0, false, [Succession(1)]);
 
         EqualityAssert.AssertValueEqual(left, right);
     }
@@ -23,8 +24,8 @@ public sealed class NodeTests
     [Fact]
     public void Equality_DifferentWaysOut_AreNotEqual()
     {
-        var left = new ChoiceNode(0, false, [new SuccessionEdge(1)]);
-        var right = new ChoiceNode(0, false, [new SuccessionEdge(2)]);
+        var left = new ChoiceNode(0, false, [Succession(1)]);
+        var right = new ChoiceNode(0, false, [Succession(2)]);
 
         EqualityAssert.AssertValueUnequal(left, right);
     }

@@ -1,4 +1,3 @@
-using DialogueDown.Playbook.Edges;
 using DialogueDown.Playbook.Nodes;
 using DialogueDown.Runtime.Stepping;
 using static DialogueDown.Runtime.Tests.World;
@@ -131,7 +130,7 @@ public sealed class NodeTraversalExtensionsTests
     {
         // A reader refuses such a node, so a run never meets one. Throwing here, rather than taking
         // the first succession, shows when that guarantee breaks.
-        var node = ControlOf([], id: 0, ways: [new SuccessionEdge(4), new SuccessionEdge(9)]);
+        var node = ControlOf([], id: 0, ways: [Succession(4), Succession(9)]);
 
         Assert.Throws<InvalidOperationException>(() => node.SuccessionTarget());
     }
@@ -145,7 +144,7 @@ public sealed class NodeTraversalExtensionsTests
     [Fact]
     public void Options_AMenuWithAFallThrough_AreOnlyItsOptionsInTheOrderListed()
     {
-        var menu = Choice(Option("Go east", target: 7), new SuccessionEdge(4), Option("Go west", target: 8));
+        var menu = Choice(Option("Go east", target: 7), Succession(4), Option("Go west", target: 8));
 
         Assert.Equal([7, 8], menu.Options().Select(option => option.Target));
     }
@@ -184,5 +183,5 @@ public sealed class NodeTraversalExtensionsTests
     /// </remarks>
     /// <returns>The node.</returns>
     private static BranchNode ABranchWithoutAnElse() =>
-        Branch(Arm("Alice.HasKey", target: 7), new SuccessionEdge(4));
+        Branch(Arm("Alice.HasKey", target: 7), Succession(4));
 }

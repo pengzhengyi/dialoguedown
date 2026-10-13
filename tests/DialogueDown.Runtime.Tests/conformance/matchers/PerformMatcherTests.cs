@@ -1,5 +1,5 @@
-using System.Text.Json.Nodes;
 using DialogueDown.Runtime.Protocol;
+using static DialogueDown.Runtime.Tests.Conformance.SessionEntries;
 using static DialogueDown.Runtime.Tests.Conformance.SessionOutcomeAssert;
 using static DialogueDown.TestSupport.SpeechFactory;
 
@@ -23,19 +23,22 @@ public sealed class PerformMatcherTests
     public void AnEffectRenamedOnTheWayOutDiverges() =>
         AssertDiverged(
             Match(Performed("Bow"), Waving),
-            """expected {"kind":"custom-command","name":"Wave","args":[]} to be performed""",
-            """but {"kind":"custom-command","name":"Bow","args":[]} was asked for""");
+            """
+            expected {"kind":"custom-command","name":"Wave","args":[]} to be performed, but {"kind":"custom-command","name":"Bow","args":[]} was asked for
+            """);
 
     [Fact]
     public void AnythingButAPerformDiverges() =>
-        AssertDiverged(Match(new Ended(), Waving), "expected the host to be asked to perform something", "ended");
+        AssertDiverged(
+            Match(new Ended(), Waving),
+            "expected the host to be asked to perform something, but the run ended");
 
     [Fact]
     public void PerformingIsDescribedByTheEffectWhenSomethingElseWasExpected() =>
         // The effect is written as a fixture claims it, so a reader can set the two side by side.
         AssertDiverged(
-            new EndedMatcher().Match(Performed("Wave"), JsonNode.Parse("{}")!),
-            """asked the host to perform {"kind":"custom-command","name":"Wave","args":[]}""");
+            new EndedMatcher().Match(Performed("Wave"), Json("{}")),
+            """expected the run to end, but it asked the host to perform {"kind":"custom-command","name":"Wave","args":[]}""");
 
     /// <summary>A run asking the host to perform a named command that takes no arguments.</summary>
     /// <param name="command">The command's name.</param>
@@ -43,5 +46,5 @@ public sealed class PerformMatcherTests
     private static Perform Performed(string command) => new(CustomCommand(command));
 
     private SessionOutcome Match(Event happened, string expected) =>
-        _matcher.Match(happened, JsonNode.Parse(expected)!);
+        _matcher.Match(happened, Json(expected));
 }

@@ -53,8 +53,9 @@ public sealed class AppTests
 
     private static string ReleaseVersion()
     {
-        var version = typeof(ExitCodes).Assembly
-            .GetCustomAttribute<AssemblyInformationalVersionAttribute>()!.InformationalVersion;
+        var attribute = typeof(ExitCodes).Assembly.GetCustomAttribute<AssemblyInformationalVersionAttribute>();
+        Assert.NotNull(attribute);
+        var version = attribute.InformationalVersion;
         var plus = version.IndexOf('+', StringComparison.Ordinal);
         return plus >= 0 ? version[..plus] : version;
     }

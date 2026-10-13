@@ -67,7 +67,7 @@ public sealed class SpeechMarkupTests
             Enum.GetValues<SpeechStyle>(),
             style => Assert.Equal(
                 $"[{_emphasis[style]}]words[/]",
-                SpeechMarkup.Of([new StyledTextFragment(style, [Text("words")])])));
+                SpeechMarkup.Of([Styled(style, Text("words"))])));
     }
 
     [Fact]

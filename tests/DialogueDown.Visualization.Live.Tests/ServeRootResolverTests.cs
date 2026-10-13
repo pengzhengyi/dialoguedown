@@ -9,8 +9,8 @@ public sealed class ServeRootResolverTests
     public void Resolve_ImagesInsideFolder_HostsDocumentFolderWithoutPrompting()
     {
         using var tree = new TempTree();
+        var documentDirectory = Path.GetFullPath(tree.Dir("proj"));
         var document = tree.File("proj/scene.dialogue.md");
-        var documentDirectory = Path.GetDirectoryName(Path.GetFullPath(document))!;
         var error = new StringWriter();
 
         var serveRoot = Assert.NotNull(ServeRootResolver.Resolve(
@@ -57,8 +57,8 @@ public sealed class ServeRootResolverTests
     public void Resolve_ImageOutsideFolder_DeclinedFallsBackToDocumentFolder()
     {
         using var tree = new TempTree();
+        var documentDirectory = Path.GetFullPath(tree.Dir("proj"));
         var document = tree.File("proj/scene.dialogue.md");
-        var documentDirectory = Path.GetDirectoryName(Path.GetFullPath(document))!;
 
         var serveRoot = Assert.NotNull(ServeRootResolver.Resolve(
             document, ["../shared/painting.png"], explicitServeRoot: null, new StubConsent(allow: false), new StringWriter()));

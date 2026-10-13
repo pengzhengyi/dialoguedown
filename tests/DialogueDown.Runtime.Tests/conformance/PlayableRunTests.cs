@@ -15,7 +15,9 @@ public sealed class PlayableRunTests
     public void Match_ACaseTheBuildCannotPlay_NamesWhatItHasNotLearned()
     {
         // End to end: the send nothing reads is named before the run starts.
-        AssertNotYetPlayable(PlayableRun.Match(ACaseThatAsksWhereTheRunStands()), "nothing sends describe yet");
+        AssertNotYetPlayable(
+            PlayableRun.Match(ACaseThatAsksWhereTheRunStands()),
+            "nothing sends describe yet");
     }
 
     /// <summary>A corpus playbook, held to a session that asks where the run stands.</summary>

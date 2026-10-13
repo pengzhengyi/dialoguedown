@@ -1,4 +1,5 @@
 using System.Collections.Immutable;
+using System.Text.Json.Nodes;
 using DialogueDown.Playbook.Nodes;
 using DialogueDown.Playbook.Speakers;
 using DialogueDown.Playbook.Tests.Support;
@@ -87,10 +88,9 @@ public sealed class PlaybookDocumentTests
 
         var json = PlaybookJsonAssert.Serialize(document);
 
-        Assert.True(
-            json.IndexOf("a-market", StringComparison.Ordinal)
-                < json.IndexOf("the-inn", StringComparison.Ordinal),
-            "anchors should be written in sorted order");
+        Assert.Equal(
+            ["a-market", "the-inn"],
+            Assert.IsType<JsonObject>(JsonNode.Parse(json)?["anchors"]).Select(anchor => anchor.Key));
     }
 
     [Fact]

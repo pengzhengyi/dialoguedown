@@ -476,7 +476,10 @@ public sealed class SemanticTokenProjectionTests
             var start = ordered[i].Range.Start;
             var startsAfterPrevious = start.Line > previousEnd.Line
                 || (start.Line == previousEnd.Line && start.Character >= previousEnd.Character);
-            Assert.True(startsAfterPrevious, "semantic tokens must not overlap");
+            Assert.True(
+                startsAfterPrevious,
+                $"The token at {start.Line}:{start.Character} starts before the one before it ends, "
+                    + $"at {previousEnd.Line}:{previousEnd.Character}.");
         }
     }
 

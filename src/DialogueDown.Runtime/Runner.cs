@@ -63,7 +63,7 @@ public static class Runner
             _ => Refuse(
                 state,
                 ReasonFor(command),
-                $"A run at {state.Situation.Describe()} cannot take {command.GetType().Name}."),
+                $"A run cannot take {command.GetType().Name} {state.Situation.Describe()}."),
         };
     }
 

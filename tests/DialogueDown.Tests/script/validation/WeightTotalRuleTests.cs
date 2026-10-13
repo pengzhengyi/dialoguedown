@@ -23,10 +23,9 @@ public sealed class WeightTotalRuleTests
     [Fact]
     public void Check_WeightsBelowOneHundred_WarnsAtTheGroupStart_WithTheTotal()
     {
-        var random = RandomChoices(
-            12,
-            RandomOption(NumberWeight(50), Line(Text("heads"))),
-            RandomOption(NumberWeight(30), Line(Text("tails"))));
+        var heads = RandomOption(NumberWeight(50), Line(Text("heads")));
+        var tails = RandomOption(NumberWeight(30), Line(Text("tails")));
+        var random = RandomChoices(heads, tails) with { Span = new SourceSpan(12, 1) };
 
         var diagnostic = Assert.Single(Check(random));
 
@@ -52,10 +51,9 @@ public sealed class WeightTotalRuleTests
     [Fact]
     public void Check_WeightsSumToZero_ReportsAnError()
     {
-        var random = RandomChoices(
-            7,
-            RandomOption(NumberWeight(0), Line(Text("heads"))),
-            RandomOption(NumberWeight(0), Line(Text("tails"))));
+        var heads = RandomOption(NumberWeight(0), Line(Text("heads")));
+        var tails = RandomOption(NumberWeight(0), Line(Text("tails")));
+        var random = RandomChoices(heads, tails) with { Span = new SourceSpan(7, 1) };
 
         var diagnostic = Assert.Single(Check(random));
 

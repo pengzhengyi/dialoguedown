@@ -72,7 +72,8 @@ public sealed class AnswerJsonConverterTests
     private static Answer? Read(string json) => JsonSerializer.Deserialize<Answer>(json, _options);
 
     private static Dictionary<string, Answer> ReadSupply(string json) =>
-        JsonSerializer.Deserialize<Dictionary<string, Answer>>(json, _options)!;
+        Assert.IsType<Dictionary<string, Answer>>(
+            JsonSerializer.Deserialize<Dictionary<string, Answer>>(json, _options));
 
     private static string Write(Answer answer) => JsonSerializer.Serialize(answer, _options);
 }

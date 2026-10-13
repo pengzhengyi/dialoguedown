@@ -24,13 +24,13 @@ public sealed class CorpusFolder
     }
 
     /// <summary>Gets the folder's name, such as <c>readable</c> or <c>playable</c>.</summary>
-    public string Name => Path.GetFileName(_folder)!;
+    public string Name => Path.GetFileName(_folder);
 
     /// <summary>Every case, by folder name, in a stable order.</summary>
     /// <returns>The case names.</returns>
     public IEnumerable<string> Cases() =>
         Directory.EnumerateDirectories(_folder)
-            .Select(folder => Path.GetFileName(folder)!)
+            .Select(folder => Path.GetFileName(folder))
             .Order(StringComparer.Ordinal);
 
     /// <summary>Whether a case ships a file.</summary>
