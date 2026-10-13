@@ -67,13 +67,13 @@ describe("baseLabel", () => {
 
 describe("edgeTooltipHtml", () => {
     it("names the kind of route and what it means", () => {
-        expect(edgeTooltipHtml("Choice", "One arm of a choice.", null)).toBe(
-            "<strong>Choice</strong><div>One arm of a choice.</div>",
+        expect(edgeTooltipHtml("Choice", "One option of a choice.", null)).toBe(
+            "<strong>Choice</strong><div>One option of a choice.</div>",
         );
     });
 
     it("adds the writer's own words for a route that has any", () => {
-        // A jump and a choice arm are named by the writer; hovering should say so without
+        // A jump and a choice option are named by the writer; hovering should say so without
         // making the reader click through to the details panel.
         expect(
             edgeTooltipHtml("Jump", "Control leaves the written order.", "through the gate"),

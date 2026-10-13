@@ -1,16 +1,16 @@
-<!-- broken: the else is listed before the gated arms
+<!-- broken: a second conditionless branch is added
 
-     > `else`
-     >
-     > Alice: You have neither.
-     >
      > `if` `Alice.HasMap?`
      >
      > Alice: You have the map.
      >
-     > `elseif` `Alice.HasLantern?`
+     > `else`
      >
      > Alice: You have the lantern.
+     >
+     > `else`
+     >
+     > Alice: You have neither.
 -->
 > `if` `Alice.HasMap?`
 >

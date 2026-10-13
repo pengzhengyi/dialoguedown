@@ -86,7 +86,7 @@ public sealed class PlaybookNodeSummarySegmentTests
     [Fact]
     public void SegmentsOf_ABranch_PairsEachConditionWithTheNodeItReaches() =>
         AssertSegments(
-            Branch(Arm("Alice.HasMap", target: 16), Else(target: 18)),
+            Branch(Gated("Alice.HasMap", target: 16), Else(target: 18)),
             [
                 ("keyword", "IF "),
                 ("query", "Alice.HasMap?"),
@@ -97,7 +97,7 @@ public sealed class PlaybookNodeSummarySegmentTests
             ]);
 
     [Fact]
-    public void SegmentsOf_ARandomChoice_ReportsEachArmsOdds() =>
+    public void SegmentsOf_ARandomChoice_ReportsEachRandomOptionsOdds() =>
         AssertSegments(
             RandomChoice(Chance(50), Chance(50)),
             [
@@ -225,7 +225,7 @@ public sealed class PlaybookNodeSummarySegmentTests
     [Fact]
     public void SegmentsOf_ThePieces_JoinBackToTheLineTheTableShows()
     {
-        var branch = Branch(Arm("Alice.HasMap", target: 16), Else(target: 18));
+        var branch = Branch(Gated("Alice.HasMap", target: 16), Else(target: 18));
 
         Assert.Equal(
             "IF Alice.HasMap? THEN 16 ELSE 18",
@@ -272,23 +272,23 @@ public sealed class PlaybookNodeSummarySegmentTests
     [Fact]
     public void SegmentsOf_AConditionKeyEndingInTheSigil_ReadsWithTwo() =>
         AssertSegments(
-            Branch(Arm("Rainy?", target: 16)),
+            Branch(Gated("Rainy?", target: 16)),
             [("keyword", "IF "), ("query", "Rainy??"), ("keyword", " THEN "), ("target", "16")]);
 
     // A branch's number and a jump's words are both a way to a node, so each carries the node it
     // names rather than leaving the reader to match digits against the table.
     [Fact]
-    public void SegmentsOf_ABranch_NamesTheNodesItsArmsReach() =>
+    public void SegmentsOf_ABranch_NamesTheNodesItsBranchesReach() =>
         AssertTargets(
-            Branch(Arm("Alice.HasMap", target: 16), Else(target: 18)),
+            Branch(Gated("Alice.HasMap", target: 16), Else(target: 18)),
             [("16", 16), ("18", 18)]);
 
     [Fact]
     public void SegmentsOf_ADivert_NamesTheNodeItLeadsTo() =>
         AssertTargets(Diverting("The Mountain Road", target: 7), [("The Mountain Road", 7)]);
 
-    // An arm's words are what the reader picks, so they name where the pick leads. The arm's guard
-    // is a question about it rather than a way to it, so the guard carries nothing.
+    // An option's words are what the reader picks, so they name where the pick leads. The option's
+    // guard is a question about it rather than a way to it, so the guard carries nothing.
     [Fact]
     public void SegmentsOf_AMenusOptions_NameTheNodesTheyLeadTo() =>
         AssertTargets(
@@ -302,7 +302,7 @@ public sealed class PlaybookNodeSummarySegmentTests
         AssertTargets(Choice(UnlabeledOption(target: 5)), [("<no label>", 5)]);
 
     [Fact]
-    public void SegmentsOf_ARandomChoicesOdds_NameTheNodesTheirArmsLeadTo() =>
+    public void SegmentsOf_ARandomChoicesOdds_NameTheNodesTheirRandomOptionsLeadTo() =>
         AssertTargets(
             RandomChoice(Chance(50, target: 6), Chance(50, target: 7)),
             [("50%", 6), ("50%", 7)]);

@@ -123,7 +123,7 @@ public sealed class SuccessionPassTests
     }
 
     [Fact]
-    public void Apply_AChoiceWhoseArmsAreAllConditional_AlsoFallsThrough()
+    public void Apply_AChoiceWhoseOptionsAreAllConditional_AlsoFallsThrough()
     {
         var graph = Build("""
             - `"HasKey"?` Alice: Use the key.

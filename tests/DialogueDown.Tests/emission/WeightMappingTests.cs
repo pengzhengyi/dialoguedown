@@ -19,7 +19,7 @@ public sealed class WeightMappingTests
     [Fact]
     public void Write_AnAutomaticShare_CarriesNothing()
     {
-        // What the share works out to depends on the arms offered alongside it, which only a
+        // What the share works out to depends on the options offered alongside it, which only a
         // runtime knows, so the playbook says "auto" rather than a number.
         Assert.IsType<AutoWeight>(WeightMapping.Write(AutoWeight()));
     }

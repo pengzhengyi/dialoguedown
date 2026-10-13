@@ -5,9 +5,9 @@ namespace DialogueDown.Playbook.Tests.Nodes;
 public sealed class BranchNodeTests
 {
     [Fact]
-    public void RoundTrip_ABranch_CarriesOnlyItsArms()
+    public void RoundTrip_ABranch_CarriesOnlyItsBranches()
     {
-        // The arms hold the conditions; the branch itself only fans out.
+        // The branches hold the conditions; the branch node itself only fans out.
         const string Json = """
             {
               "kind": "branch",

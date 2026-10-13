@@ -31,7 +31,7 @@ public sealed class ScriptGenOutwardShapeCoverageTests
     private const string ScriptName = "generated.dialogue.md";
 
     // A line whose way out is a divert, plus the two node kinds that get a succession only because
-    // all of their arms are gated.
+    // all of their edges are gated.
     private enum OutwardShape
     {
         LineLeavesByDivert,

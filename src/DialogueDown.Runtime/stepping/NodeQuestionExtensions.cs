@@ -91,9 +91,9 @@ internal static class NodeQuestionExtensions
     /// <param name="node">The node being left.</param>
     /// <returns>The keys its ways out ask about, each named once. Empty when none is guarded.</returns>
     /// <remarks>
-    /// A run leaves a node by a jump or by one of a block condition's arms, so only those are asked
-    /// about. A succession carries no condition, being the fall-through a run takes when nothing
-    /// else is available, and a menu's options are taken by choosing, never by leaving.
+    /// A run leaves a node by a jump or by one of a block condition's branches, so only those are
+    /// asked about. A succession carries no condition, being the fall-through a run takes when
+    /// nothing else is available, and a menu's options are taken by choosing, never by leaving.
     /// </remarks>
     public static ImmutableArray<string> FindTruthsForLeaving(this Node node)
     {

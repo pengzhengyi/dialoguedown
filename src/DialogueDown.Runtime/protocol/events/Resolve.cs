@@ -10,8 +10,8 @@ namespace DialogueDown.Runtime.Protocol;
 /// guarding the node and the keys in its first words: a line reading
 /// <c>`Alice.HasKey?` Alice: Hello, `"playerName"`.</c> produces one request naming both. Before a
 /// line continues after a command, it names the keys in the words that follow. Before a run leaves
-/// a node, it names the keys guarding its ways out: every arm of a block condition, though only
-/// the first arm that holds is taken.
+/// a node, it names the keys guarding its ways out: every branch of a block condition, though
+/// only the first branch that holds is taken.
 /// <para>
 /// So a request can name a key whose answer ends up deciding nothing. Answering a key must not
 /// change the world. The keys may be answered in any order, one at a time or all at once; the run

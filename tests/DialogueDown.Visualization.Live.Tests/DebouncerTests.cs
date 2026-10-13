@@ -58,12 +58,12 @@ public sealed class DebouncerTests
         Assert.Throws<InvalidOperationException>(timer.Fire); // the throwing run propagates
         Assert.Equal(1, runs);
 
-        // A later change re-arms the timer...
-        var armed = timer.ChangeCount;
+        // A later change restarts the timer...
+        var changesBefore = timer.ChangeCount;
         debouncer.Trigger();
-        Assert.True(timer.ChangeCount > armed);
+        Assert.True(timer.ChangeCount > changesBefore);
 
-        // ...and that re-armed fire actually runs the action again.
+        // ...and that restarted timer's fire actually runs the action again.
         timer.Fire();
         Assert.Equal(2, runs);
     }
@@ -148,7 +148,7 @@ public sealed class DebouncerTests
     }
 
     [Fact]
-    public void Trigger_AfterDispose_DoesNotRearmTheDisposedTimer()
+    public void Trigger_AfterDispose_DoesNotRestartTheDisposedTimer()
     {
         var provider = new ManualTimeProvider();
         var runs = 0;
@@ -180,10 +180,10 @@ public sealed class DebouncerTests
     }
 
     [Fact]
-    public void Dispose_DuringARun_SkipsTheCoalescedRearm()
+    public void Dispose_DuringARun_SkipsTheCoalescedRestart()
     {
         // A change arrives mid-run (coalesced into a follow-up), but Dispose lands before the run
-        // finishes: the follow-up rearm must be skipped rather than call Change on a disposed timer.
+        // finishes: the follow-up restart must be skipped rather than call Change on a disposed timer.
         var provider = new ManualTimeProvider();
         var runs = 0;
         Debouncer debouncer = null!; // assigned below, before its action can run
@@ -202,7 +202,7 @@ public sealed class DebouncerTests
         timer.Fire();
 
         Assert.Equal(1, runs); // no follow-up run
-        Assert.Equal(changesBefore, timer.ChangeCount); // the pending follow-up never re-arms
+        Assert.Equal(changesBefore, timer.ChangeCount); // the pending follow-up never restarts it
         Assert.False(timer.ChangedWhileDisposed);
     }
 
@@ -237,7 +237,7 @@ public sealed class DebouncerTests
     }
 
     // A time provider whose single timer fires only when the test calls Fire(), and that records
-    // how many times it was (re-)armed — enough to drive the debounce deterministically, including
+    // how many times it was started or restarted — enough to drive the debounce deterministically, including
     // a callback that throws, without depending on a fake clock's post-throw behavior.
     private sealed class ManualTimeProvider : TimeProvider
     {

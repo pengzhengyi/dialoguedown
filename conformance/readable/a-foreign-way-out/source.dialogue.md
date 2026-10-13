@@ -1,4 +1,4 @@
-<!-- broken: the line's out carries a branch arm a line cannot act on
+<!-- broken: the line's out carries a branch a line cannot act on
 
      "out": [
        { "kind": "branch", "target": 1 }

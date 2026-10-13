@@ -46,7 +46,7 @@ export interface Neighbor {
 export interface Neighbors {
     /** The nodes that lead here, in the order the stage lists their edges. */
     incoming: Neighbor[];
-    /** The nodes this one leads to, in that same order — for a choice, its arms in order. */
+    /** The nodes this one leads to, in that same order — for a choice, its options in order. */
     outgoing: Neighbor[];
 }
 

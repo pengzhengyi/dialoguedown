@@ -141,7 +141,7 @@ nothing. The first node that asks for something is where the run stands.
 | `line` with commands | `Said`, then a `Perform` per command and a `Continued` for the words after it, in the order written, up to a query written after a command | waits on the world — `Done` goes on with the line if it stopped, otherwise gives the player the turn; `Failed` holds |
 | `control` with effects | one `Perform` per effect, in order | waits on the world — `Done` moves on, `Failed` holds |
 | `control` with no effects | nothing | walks on — this is a jump on its own line |
-| `branch` | nothing | leaves by the first arm, in the order written, whose condition holds |
+| `branch` | nothing | leaves by the first branch, in the order written, whose condition holds |
 | `end` | `Ended` | waits on nobody |
 | `choice` | `Offer(ordered, options)`: every option in the order written, each label with its commands removed and its queries filled, each marked available or not | waits on the player — `Choose` |
 | `choice` with no option available | nothing | walks on by its fall-through, as past a branch |
@@ -307,7 +307,7 @@ control node with no effects, so it concerns nobody and the run walks past it.
 ### D11 — An effect is a request, not a report
 
 The runner branches on what it reads, so an effect still in flight would send the
-run down a different arm. `Perform` is answered by `Done`, and the run does not go
+run a different way. `Perform` is answered by `Done`, and the run does not go
 past it until `Done` lands — the *read your own writes* guarantee. A driver that
 does not care answers at once; one awaiting a database awaits it. `Next` while the
 run waits is refused as `misplaced`, so a fast-forward cannot skip a causal wait.
@@ -392,7 +392,7 @@ runtime tests may not reference the compiler, and a test holds it and the harnes
 - **The playbook fingerprint.** A state resumed against a recompiled script would
   address the wrong node. Recording the fingerprint in `PlayState`, so `Step` can
   refuse the pair, arrives with saves.
-- **A writer cannot react to a failed effect.** A failure arm on a control block
+- **A writer cannot react to a failed effect.** A failure branch on a control block
   would be a language construct of its own; the held situation is where it attaches.
 - **The playbook format may change.** It stays at `version: 0` until a runner plays
   every construct, so this runner can still fix what it uncovers.

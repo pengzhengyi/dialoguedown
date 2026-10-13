@@ -100,7 +100,7 @@ public sealed class GraphProjectionTests
     }
 
     [Fact]
-    public void Project_AChoice_FansOutAnEdgePerArm()
+    public void Project_AChoice_FansOutAnEdgePerOption()
     {
         var graph = Project("""
             Guide: Pick.
@@ -174,9 +174,9 @@ public sealed class GraphProjectionTests
     }
 
     [Fact]
-    public void Project_ALineNestedInAChoiceArm_StillBelongsToTheSceneItWasWrittenUnder()
+    public void Project_ALineNestedInAChoiceOption_StillBelongsToTheSceneItWasWrittenUnder()
     {
-        // A scene owns only the blocks directly beneath its heading, so a line inside a choice arm
+        // A scene owns only the blocks directly beneath its heading, so a line inside a choice option
         // is not among them — but a reader plainly reads it as part of the scene.
         var graph = Project("""
             # The Market
@@ -227,9 +227,9 @@ public sealed class GraphProjectionTests
     }
 
     [Fact]
-    public void Project_ARandomChoice_IsLabeledByItsKindAloneRatherThanItsArmCount()
+    public void Project_ARandomChoice_IsLabeledByItsKindAloneRatherThanItsRandomOptionCount()
     {
-        // The graph already draws one edge per arm; counting them in the label only says twice
+        // The graph already draws one edge per random option; counting them in the label only says twice
         // what the picture says once.
         var graph = Project("""
             - `80%` Alice: Heads.
@@ -355,7 +355,7 @@ public sealed class GraphProjectionTests
     }
 
     [Fact]
-    public void Project_ArmsRejoiningANode_TheSecondIsAReference()
+    public void Project_OptionsRejoiningANode_TheSecondIsAReference()
     {
         var graph = Project("""
             Guide: Pick.
@@ -367,7 +367,7 @@ public sealed class GraphProjectionTests
             Guide: Done.
             """);
 
-        // Both arms continue at the same node; only the first to reach it can parent it.
+        // Both options continue at the same node; only the first to reach it can parent it.
         var joins = graph.Edges.Where(edge => edge.ToId == "n4").ToArray();
         Assert.Equal(2, joins.Length);
         Assert.Single(joins, edge => edge.Kind == DisplayEdgeKind.Child);
@@ -439,9 +439,9 @@ public sealed class GraphProjectionTests
     }
 
     [Fact]
-    public void Edges_AChoiceArm_CarriesTheWordingItsMenuShows()
+    public void Edges_AChoiceOption_CarriesTheWordingItsMenuShows()
     {
-        // Choosing an arm in the report should answer "what does the player pick here?" without
+        // Choosing an option in the report should answer "what does the player pick here?" without
         // following it to the node it leads to.
         var graph = Project("""
             Guide: Which way?
@@ -457,9 +457,9 @@ public sealed class GraphProjectionTests
     }
 
     [Fact]
-    public void Edges_AChoiceArmWithNothingToShow_HasNoLabel()
+    public void Edges_AChoiceOptionWithNothingToShow_HasNoLabel()
     {
-        // An arm whose option shows no words: the route reports nothing rather than an empty
+        // An option that shows no words: the route reports nothing rather than an empty
         // string the panel would render as a blank line.
         var graph = Project("""
             Guide: Which way?

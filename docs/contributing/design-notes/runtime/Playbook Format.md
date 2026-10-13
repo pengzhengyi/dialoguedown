@@ -208,15 +208,15 @@ The writer's whole job is this mapping. Every row is one test.
 | `DivertEdge`       | `divert`        | `target`, `label`, `condition?`  |
 
 **Where an order matters, it is the order of `out`.** JSON keeps the order of an
-array, so a branch's arms are tried as its `if`/`elseif`/`else` chain was written,
+array, so a branch node's branches are tried as its `if`/`elseif`/`else` chain was written,
 and a menu's options are offered in the order written, numbered or not — see
 [D4](./Playbook%20Reader%20Rules.md#d4--the-array-is-the-order).
 
 **Both label-bearing edges carry their own text**, rather than deriving it from the
 node they lead to. For an option that is a correctness matter as much as a
-convenience: an arm with an empty body leads straight past the choice, so a label
+convenience: an option with an empty body leads straight past the choice, so a label
 read back off the target would be another line's words. Only `ChoicePass`, which
-still holds the arm's body, can know. `DivertPass` carries a jump's label for a
+still holds the option's body, can know. `DivertPass` carries a jump's label for a
 different reason — nothing else keeps it, since a jump is written inside a line but
 is no part of what that line says.
 
@@ -287,7 +287,7 @@ to a **checker** — one rule, one class — and returns only what passes.
 | `NodePositionChecker` | a node whose `id` is not its position (`nodes[i].id != i`) |
 | `ReferenceChecker` | an `entry`, anchor, edge target, or speaker index that lands nowhere |
 | `OutwardShapeChecker` | a node whose ways out break the outward-shape rule — see [Playbook Reader Rules](./Playbook%20Reader%20Rules.md#outward-shape) |
-| `BranchArmOrderChecker` | a `branch` that lacks a gated arm or puts its else before another arm — see [Playbook Reader Rules](./Playbook%20Reader%20Rules.md#branch-arm-order) |
+| `BranchOrderChecker` | a `branch` that lacks a gated branch or puts its else before another branch — see [Playbook Reader Rules](./Playbook%20Reader%20Rules.md#branch-order) |
 
 The version settles before the capabilities, because a document of an unknown
 shape may describe its capabilities in terms an older build would misread. Each

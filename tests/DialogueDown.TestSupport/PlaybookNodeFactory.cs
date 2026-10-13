@@ -67,7 +67,7 @@ public static class PlaybookNodeFactory
     /// <summary>Where play stops.</summary>
     public static EndNode End(int id = 0) => new(id);
 
-    /// <summary>A block condition with the arms it tries in order.</summary>
+    /// <summary>A block condition with the branches it tries in order.</summary>
     /// <remarks>
     /// <code>
     /// > `if` `"Rich"?`
@@ -79,13 +79,13 @@ public static class PlaybookNodeFactory
     /// > Alice: Side door.
     /// </code>
     /// </remarks>
-    public static BranchNode Branch(params Edge[] arms) => new(0, [.. arms]);
+    public static BranchNode Branch(params Edge[] branches) => new(0, [.. branches]);
 
-    /// <summary>An arm of a block condition, taken when the world allows the condition.</summary>
-    public static BranchEdge Arm(string condition, int target = 0) =>
+    /// <summary>A gated branch of a block condition, taken when the world allows the condition.</summary>
+    public static BranchEdge Gated(string condition, int target = 0) =>
         new(target, new KeyCondition(condition));
 
-    /// <summary>The else of a block condition, taken when no arm before it is.</summary>
+    /// <summary>The else of a block condition, taken when no branch before it is.</summary>
     public static BranchEdge Else(int target = 0) => new(target, Condition: null);
 
     /// <summary>An effect-only line: something the host performs, attributed to nobody.</summary>
@@ -167,7 +167,7 @@ public static class PlaybookNodeFactory
     public static ChoiceNode NumberedChoice(int id, params Edge[] options) =>
         new(id, true, [.. options]);
 
-    /// <summary>One arm of a menu, carrying the words the menu shows for it.</summary>
+    /// <summary>One option of a menu, carrying the words the menu shows for it.</summary>
     public static OptionEdge Option(string words, string? condition = null, int target = 0) =>
         new(target, Speech(words), If(condition));
 
@@ -189,21 +189,21 @@ public static class PlaybookNodeFactory
     /// - `20%` Alice: Tails.
     /// </code>
     /// </remarks>
-    public static RandomChoiceNode RandomChoice(params Edge[] arms) => new(0, [.. arms]);
+    public static RandomChoiceNode RandomChoice(params Edge[] options) => new(0, [.. options]);
 
     /// <summary>A random choice at the id given.</summary>
-    public static RandomChoiceNode RandomChoice(int id, params Edge[] arms) => new(id, [.. arms]);
+    public static RandomChoiceNode RandomChoice(int id, params Edge[] options) => new(id, [.. options]);
 
-    /// <summary>One arm of a random choice, at odds the writer fixed in the script.</summary>
+    /// <summary>One random option, at odds the writer fixed in the script.</summary>
     public static RandomOptionEdge Chance(
         double percentage, string? condition = null, int target = 0) =>
         new(target, new NumberWeight(percentage), If(condition));
 
-    /// <summary>One arm of a random choice, at odds the world supplies at play time.</summary>
+    /// <summary>One random option, at odds the world supplies at play time.</summary>
     public static RandomOptionEdge Chance(string key, string? condition = null, int target = 0) =>
         new(target, new QueryWeight(key), If(condition));
 
-    /// <summary>One arm of a random choice, sharing evenly in whatever the rest leave.</summary>
+    /// <summary>One random option, sharing evenly in whatever the rest leave.</summary>
     public static RandomOptionEdge EvenChance(string? condition = null, int target = 0) =>
         new(target, new AutoWeight(), If(condition));
 

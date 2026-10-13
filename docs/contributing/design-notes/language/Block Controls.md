@@ -3,8 +3,8 @@
 > [!NOTE]
 > Status: **implemented**. A block `if`/`elseif`/`else` —
 > grouped, mutually exclusive branches with an optional fallback — compiles to a
-> `branch` node whose arms carry conditions. The runner tries the arms in order and
-> takes the first whose condition holds (see
+> `branch` node whose branches carry conditions. The runner tries the branches in
+> order and takes the first whose condition holds (see
 > [Asking the World](../runtime/Asking%20the%20World.md)).
 
 ## Table of contents
@@ -62,10 +62,10 @@ first.
 | --- | --- |
 | **Condition** | The game-state boolean, `` `key?` `` (see [Conditions](./Conditions.md)). |
 | **Marker** | The token that opens a branch: `` `if` `` / `` `elseif` `` (each with a condition) or `` `else` ``. A *control line* (see [Control Line](./Control%20Line.md)). |
-| **Branch** | One arm — an `if`, an `elseif`, or the `else` — a guarding condition (none for `else`) plus its body. |
+| **Branch** | One part of the block — an `if`, an `elseif`, or the `else` — a guarding condition (none for `else`) plus its body. |
 | **Branch body** | The blocks a branch plays when taken; may hold a nested control block. |
 | **Control block** | The whole construct: an ordered list of branches, held in one connected blockquote. |
-| **Connected blockquote** | A single `>` container holding every branch, continued across arm boundaries by a bare `>` line; a nested branch is a `> >` container. |
+| **Connected blockquote** | A single `>` container holding every branch, continued across branch boundaries by a bare `>` line; a nested branch is a `> >` container. |
 
 ## Prior art
 
@@ -111,18 +111,18 @@ and completion. It composes even with spaces: `` `if` `` `` `Is Alice rich?` ``.
 ### Grouping — one connected blockquote
 
 Every branch lives in **one connected blockquote**: `` `if` ``, each `` `elseif` ``,
-and the `` `else` `` share a single `>` container, continued across arm boundaries by a
-bare `>` line; a nested conditional is a nested `> >` blockquote.
+and the `` `else` `` share a single `>` container, continued across branch boundaries by
+a bare `>` line; a nested conditional is a nested `> >` blockquote.
 
 **Chosen for readability and visuals.** A rendered comparison was decisive — three
 *separate* blockquotes read as independent asides, while **one connected** blockquote
-reads as a single mutually-exclusive construct: one left bar spans all arms, a nested
-`if` is *visibly* nested, and a bare jump returning to the outer arm sits at the outer
-bar, so a reader sees which branch owns it. The container also supplies the boundary
+reads as a single mutually-exclusive construct: one left bar spans all branches, a nested
+`if` is *visibly* nested, and a bare jump returning to the outer branch sits at the
+outer bar, so a reader sees which branch owns it. The container also supplies the boundary
 for free, so **no terminator keyword** (and no `#END` clash) is needed.
 
 **The authoring cost is real but offset by editor support.** Connectedness couples the
-arms through unbroken `>`, so each utterance's blank-line separator must be a bare `>`
+branches through unbroken `>`, so each utterance's blank-line separator must be a bare `>`
 line, and reflowing means maintaining `>` (and `> >` when nested). DialogueDown already
 projects editor semantics from the compiler (see
 [Compiler-Projected Editor Semantics](../visualization/editor/Compiler-Projected%20Editor%20Semantics.md)
@@ -182,12 +182,12 @@ The construct is expressed over Markdown block structure: a blockquote whose blo
 marker paragraphs and branch bodies.
 
 ```ebnf
-(* One connected blockquote: an if-arm, then elseif-arms, then an optional else-arm. *)
-ControlBlock = BlockQuote , IfArm , { ElseIfArm } , [ ElseArm ] ;
+(* One connected blockquote: an if-branch, then elseif-branches, then an optional else-branch. *)
+ControlBlock = BlockQuote , IfBranch , { ElseIfBranch } , [ ElseBranch ] ;
 
-IfArm        = IfMarker     , BranchBody ;
-ElseIfArm    = ElseIfMarker , BranchBody ;
-ElseArm      = ElseMarker   , BranchBody ;
+IfBranch     = IfMarker     , BranchBody ;
+ElseIfBranch = ElseIfMarker , BranchBody ;
+ElseBranch   = ElseMarker   , BranchBody ;
 
 IfMarker     = "`" , "if" , "`"     , Condition ;   (* two spans: keyword + condition *)
 ElseIfMarker = "`" , "elseif" , "`" , Condition ;
@@ -242,7 +242,7 @@ internal sealed record Branch(
 
 Because a `Branch.Body` is a list of `ScriptBlock`, every downstream pass reaches inside
 it by recursing — the `DialogueAstRewriter`, the `ScriptNodeExtensions` traversal, the
-report projection, and the validation rules each gain a `ControlBlock` arm. Each switch
+report projection, and the validation rules each gain a `ControlBlock` case. Each switch
 throws on an unknown kind, so the compiler will not build until all handle it — the
 completeness the [Control Line](./Control%20Line.md) note relied on.
 
@@ -255,7 +255,7 @@ completeness the [Control Line](./Control%20Line.md) note relied on.
 | `MarkerRecognition` | Read a paragraph as an `` `if` ``/`` `elseif` `` + condition, or `` `else` ``. |
 | `BlockBuilder` | Dispatch a quote to control construction or transparently transpile its inner blocks. |
 | `ControlBlockBuilder` | Validate and split markers, build branches, and recurse through `BlockBuilder`. |
-| `ControlBlock` / `Branch` (AST) | Model the construct and its arms; carry spans and each arm's condition. |
+| `ControlBlock` / `Branch` (AST) | Model the construct and its branches; carry spans and each branch's condition. |
 | `DialogueAstRewriter` | Rewrite a `ControlBlock` and each branch body. |
 | `ScriptNodeExtensions` | Enumerate a `ControlBlock`'s branches and each branch's children. |
 | `DialogueAstProjection` | Project a `ControlBlock` to a report node. |
@@ -280,7 +280,7 @@ untouched. See [Chosen shape](#marker-spelling--two-spans).
 
 ### D3 — One connected blockquote, enforced; a severed chain is an error
 
-Every arm shares one blockquote. Because the arms are coupled by unbroken `>`, an
+Every branch shares one blockquote. Because the branches are coupled by unbroken `>`, an
 accidental plain (non-`>`) blank line **severs** the chain into separate blockquotes —
 a break that is *source-invisible*. A severed `` `elseif` ``/`` `else` `` — one that
 opens its own blockquote instead of continuing the `` `if` ``'s — is a **strict error**,
@@ -333,7 +333,7 @@ separators and documented with a before/after example in the guide.
 
 A **marker-headed** blockquote becomes a `ControlBlock`; every other blockquote is a
 **transparent wrapper** whose inner blocks are read in place as ordinary content, so a
-plain `> aside` reads as narration rather than literal `> aside` text. Arms are joined by
+plain `> aside` reads as narration rather than literal `> aside` text. Branches are joined by
 a bare `>` line and nested by `> >` — both standard CommonMark, so no Markdig extension is
 needed. The marker spans are ordinary inline code, so a stock preview renders them as
 chips.
@@ -397,7 +397,7 @@ checks recurse into branch bodies.
   flat (nesting read by matching `if`/`endif`) and needs a terminator keyword that dodges
   the `#END` clash; the connected blockquote grouping was preferred for its visible
   nesting and free boundary.
-- **Separate (disconnected) blockquotes per arm** — reads as independent asides and needs
+- **Separate (disconnected) blockquotes per branch** — reads as independent asides and needs
   sibling-chain re-linking; the single connected blockquote reads as one construct
   ([D3](#d3--one-connected-blockquote-enforced-a-severed-chain-is-an-error)).
 - **One-span marker** `` `if Rich?` `` — collides with an unquoted key

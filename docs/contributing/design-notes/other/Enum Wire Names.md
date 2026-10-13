@@ -164,7 +164,7 @@ knob is needed because nothing lenient is reachable.
 
 A generic `NamedEnumConverter<TEnum>` plus per-enum dictionaries is possible,
 but two small switches read better, produce the exact error copy, and match the
-existing one-converter-per-shape pattern. The write switch's default arm throws,
+existing one-converter-per-shape pattern. The write switch's default case throws,
 so a new member added without a wire name fails on first use; the
 exhaustiveness test catches it earlier, at test time.
 
@@ -187,9 +187,9 @@ as [Target Frameworks](./Target%20Frameworks.md) records.
 | Wrong case (`"Italic"`) | Same rejection; the format is case-sensitive by design. |
 | Number (`"style": 1`) | Rejected in `Read`; the schema also disallows it. |
 | `null` in a nullable position | Handled by the serializer before the converter, unchanged from today. |
-| A new member with no wire name | The write switch's default arm throws; the exhaustiveness test fails first. |
+| A new member with no wire name | The write switch's default case throws; the exhaustiveness test fails first. |
 | A converter registered twice (attribute and options) | Not done: each enum has exactly one registration site, as today. |
-| A name reused by two members | Impossible to express in a switch; the compiler rejects the duplicate arm. |
+| A name reused by two members | Impossible to express in a switch; the compiler rejects the duplicate case. |
 
 ## Demonstrable runs
 

@@ -572,7 +572,7 @@ describe("createPlaybookView Nodes table", () => {
 
     // A piece that names a node is a way to reach it, so it is a control rather than a stretch of
     // text: it carries the jump, the key that lights the node up elsewhere, and what it means.
-    it("offers a branch arm's target as a jump", () => {
+    it("offers a branch's target as a jump", () => {
         const report = compiled();
         report.nodes[3].segments = [
             { text: "IF ", role: "keyword" },

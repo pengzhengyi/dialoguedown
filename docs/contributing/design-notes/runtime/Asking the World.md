@@ -4,7 +4,7 @@
 > Status: **implemented**. The pass that lets a run ask the world a question and
 > use the answer, so a condition is evaluated instead of refused. A node's own
 > condition, the queries standing in its speech, a jump's condition, and a block
-> condition's arms are asked and answered, and so are a menu's options' conditions
+> condition's branches are asked and answered, and so are a menu's options' conditions
 > and its labels' queries (see [Offering a Choice](./Offering%20a%20Choice.md)).
 >
 > It extends the [Runner](./Runner.md)'s protocol and harness, and follows the
@@ -36,7 +36,7 @@ rather than three — each asks the driver about state and reads back an answer.
 | Construct | The question | What the answer decides |
 | --- | --- | --- |
 | A guarded line or control block | Does this key hold? | Whether the node plays at all |
-| A guarded jump or branch arm, and an option once choices play | Does this key hold? | Whether that way out is taken |
+| A guarded jump or branch, and an option once choices play | Does this key hold? | Whether that way out is taken |
 | A query in speech | What is this key's value? | What the line says |
 
 In scope:
@@ -46,8 +46,8 @@ In scope:
 - gathering the keys a node needs into one ask per moment: one before the node
   plays, and one before the run leaves it;
 - evaluating a `key` condition on a node, on a jump, and on a block condition's
-  arm;
-- `BranchNode`, whose arms are tried in order until one holds;
+  branch;
+- `BranchNode`, whose branches are tried in order until one holds;
 - substituting a `QueryFragment` in speech with what the world said;
 - retiring `UnansweredCondition`.
 
@@ -67,7 +67,7 @@ note is about how the runner meets that contract.
 | --- | --- |
 | `a-conditional-line` | One `resolve` naming one key, a `supply` of `false`, and then the **next** line is said — a failing condition steps over the node rather than stopping at it |
 | `a-conditional-jump` | A jump with nothing to say still stops to ask: one `resolve` before the run walks past it, and a `supply` of `true` takes the jump, so the line after it is never said |
-| `a-conditional-block` | The arms are tried in the order written, and a satisfied first arm means the `else` is never reached |
+| `a-conditional-block` | The branches are tried in the order written, and a satisfied first branch means the `else` is never reached |
 | `a-query-in-speech` | The supplied answer appears in the flattened speech: `Hello, Robin.` |
 | `an-unavailable-option` | A failing option is offered **unavailable** rather than hidden |
 
@@ -80,13 +80,13 @@ holds — `false` for a guard, `"Robin"` for a query.
 - [x] A node carrying a condition asks the world about it rather than refusing.
 - [x] A node whose condition fails is stepped over, and the run carries on by its
       succession, never by its own jump.
-- [x] A jump or a block condition's arm whose condition fails is not taken; one
+- [x] A jump or a block condition's branch whose condition fails is not taken; one
       whose condition holds is.
 - [x] An option whose condition fails is offered unavailable, as
       [Offering a Choice](./Offering%20a%20Choice.md) designs.
-- [x] A branch node takes the first arm, in the order written, whose condition
+- [x] A branch node takes the first branch, in the order written, whose condition
       holds.
-- [x] A branch node with no satisfied arm and no `else` falls through to the
+- [x] A branch node with no satisfied branch and no `else` falls through to the
       succession beneath the block, so the block is skipped; one with no
       succession either leads nowhere, and says so.
 - [x] Every key a moment needs is asked for in a single `Resolve`: one on the way
@@ -117,7 +117,7 @@ holds — `false` for a guard, `"Robin"` for a query.
 | `ConditionEvaluationExtensions` | Answers whether a condition holds, and whether a guarded node or way out is allowed | `Arrival`, `NodeTraversalExtensions` |
 | `Arrival` | Arriving at a node: asks what playing it needs, then plays it or walks past it | `Runner`, `Departure` |
 | `Departure` | Leaving a node: asks which way out when its ways out are guarded, then arrives where it leads | `Runner`, `Arrival` |
-| `NodeTraversalExtensions` | Where a node leads: the first jump or arm taken, then the succession | `Arrival`, `Departure` |
+| `NodeTraversalExtensions` | Where a node leads: the first jump or branch taken, then the succession | `Arrival`, `Departure` |
 | `StepResults` | The ask and the refusal both halves produce | `Arrival`, `Departure` |
 | `SpeechTemplate` | Names the keys standing in speech, and fills them with words (in the playbook package) | `NodeQuestionExtensions`, `Arrival` |
 
@@ -132,7 +132,7 @@ command has one more moment at each [stop](./Speaking%20a%20Line.md#s8--the-worl
 **Arriving** asks what decides whether the node plays and what it says: the
 node's own condition, answered with a truth, and the queries standing in its
 speech up to its first stop, answered with words. **Leaving** asks what decides which way out is
-taken: the conditions on its jump or on a block condition's arms. A menu asks its
+taken: the conditions on its jump or on a block condition's branches. A menu asks its
 options' conditions and its labels' queries on arriving, and nothing on leaving,
 because its options are taken by choosing.
 
@@ -143,8 +143,8 @@ every condition before any label's query, so every runtime sends the same reques
 
 The two are kept apart because the node changes the world between them. A node
 that performs an effect has the host perform it after it is played and before
-the run reads on, so an arm guarded by a key the effect touches must be judged
-against the world the effect left behind. Asking on the way in would read the
+the run reads on, so a jump or branch guarded by a key the effect touches must be
+judged against the world the effect left behind. Asking on the way in would read the
 world as it was before, and the run would take a way out the writer did not mean.
 This is the same read-your-own-writes guarantee `Perform` already buys, applied
 to the keys that decide succession.
@@ -245,7 +245,7 @@ bound only ever meets nodes that nothing guards.
 
 An edge's condition is a different question with a different answer: a way out
 whose condition fails is simply not among the ways out. Where a node leads is one
-rule, read with the answers or without them: the first jump or arm taken, then
+rule, read with the answers or without them: the first jump or branch taken, then
 the succession. With answers, a way out is taken when the world allows it. Without
 them, only a way out that nothing guards is taken, because nobody asked the world
 about the rest.
@@ -265,18 +265,18 @@ because one key can be asked at both moments of one node.
 
 ### A8 — A branch node is walked past, not stood at
 
-A branch says nothing and asks the host for nothing. It exists to choose an arm.
+A branch says nothing and asks the host for nothing. It exists to choose a branch.
 So it belongs to the same family as the empty control node: the walk resolves its
-arms, takes the first that holds, and carries on to the target without the player
+branches, takes the first that holds, and carries on to the target without the player
 ever being asked to advance past it.
 
-The arms' order is not this pass's to decide. A branch's arms are tried in the order
-they appear in `out`, and the reader already guarantees that at least one is gated
-and that a conditionless `else` comes last, so the runner tries them as it finds
-them.
+The branches' order is not this pass's to decide. A branch node's branches are
+tried in the order they appear in `out`, and the reader already guarantees that at
+least one is gated and that a conditionless `else` comes last, so the runner tries
+them as it finds them.
 
 A branch has nothing to ask on the way in, so all of its reading happens on the way
-out: one ask carrying every arm's key, then the first arm the answers allow. When
+out: one ask carrying every branch's key, then the first branch the answers allow. When
 none holds and there is no `else`, the run falls through to the succession the
 compiler writes beneath the block, so the block is skipped, as the guide describes.
 
@@ -304,7 +304,7 @@ replays. It also leaves `SpeechText` with nothing new to know.
 | A key that was asked and not answered | `UnansweredKey`, naming the key |
 | A key answered that was not asked | `UnaskedKey`, naming the key |
 | An answer of the wrong kind for its use — text where a guard needs a truth | `WrongAnswerKind`, naming the key and both kinds |
-| A branch whose arms all fail, with no `else` | Falls through to the succession beneath the block, so the block is skipped. Leads nowhere only when there is no succession either, which no script compiles to |
+| A branch node whose branches all fail, with no `else` | Falls through to the succession beneath the block, so the block is skipped. Leads nowhere only when there is no succession either, which no script compiles to |
 | A skipped node whose succession leads nowhere | Leads nowhere |
 | A guarded node with nothing to say or perform, once the world allows it | Walked past, as an unguarded one is. No script compiles to this, but a reader accepts it |
 | A loop the world keeps withholding every guarded node of | Each guarded node is asked about again as the walk comes back to it; the loop bound is never reached |
@@ -337,7 +337,7 @@ keep testing for no one.
 | `Arrival` | Asks what playing a node needs; steps over a node the world withholds; walks past a branch and a jump on its own line, asking about their ways out inside the walk |
 | `Departure`, `StepResults` | New: leaving a node, asking first when its ways out are guarded; and the ask and the refusal it shares with `Arrival` |
 | `NodeQuestions`, `Questions`, `AnswerCheck`, `ConditionEvaluationExtensions` | New, and each testable without a playbook |
-| `NodeTraversalExtensions` | One rule for where a node leads: the first jump or arm taken, then the succession |
+| `NodeTraversalExtensions` | One rule for where a node leads: the first jump or branch taken, then the succession |
 | `Runner.Step` | `Next` and `Done` leave through `Departure`; `Supply` goes to `Arrival` or `Departure` by the moment the run asked at |
 | Harness | A `ResolveMatcher`, and a `SupplyReader` so `supply` is among the commands a session can send |
 | `PlayableConformanceTests` | `a-conditional-line`, `a-conditional-jump`, `a-conditional-block`, and `a-query-in-speech` join the conforming list |
@@ -357,8 +357,8 @@ reminder a pass is owed.
 | Unit — answers | The set matching; a key missing; a key nobody asked about; a key read as the wrong kind |
 | Unit — reading a supply | Each kind read and written back; a number, a null, and a structure all refused |
 | Unit — evaluation | A condition that holds, and one that fails |
-| Unit — arrival and departure | A withheld node stepped over by its succession, not its jump; an allowed node with nothing to hand the host walked past; a loop asked about again; a withheld jump not taken; a block asking about every arm at once |
-| Unit — ways out | The first jump or arm taken, then the `else`, then the succession, read with answers and without |
+| Unit — arrival and departure | A withheld node stepped over by its succession, not its jump; an allowed node with nothing to hand the host walked past; a loop asked about again; a withheld jump not taken; a block asking about every branch at once |
+| Unit — ways out | The first jump or branch taken, then the `else`, then the succession, read with answers and without |
 | Unit — speech | A query substituted; a line with text and a query together; a query whose answer is empty |
 | Unit — the protocol | `Supply` where nothing was asked; `Next` while awaiting a supply |
 | Property | The walk property, widened: the generator draws guards, jumps the world must allow, block conditions, and queries, and a world drawn beside each playbook answers every wait. A run still only ever stands where the playbook has a node, and never turns an answer away |
@@ -366,8 +366,8 @@ reminder a pass is owed.
 
 Three are worth naming because they are easy to leave out. A node with a condition
 **and** a query must produce **one** `Resolve` carrying both keys, which is the
-half of A1 a single-key fixture cannot show. A branch whose arms all fail with no
-`else` must skip the block rather than hang. And a loop that comes back to a
+half of A1 a single-key fixture cannot show. A branch node whose branches all fail
+with no `else` must skip the block rather than hang. And a loop that comes back to a
 guarded node must ask about it again: the loop bound was written for nodes that
 nothing guards, and a guarded node stops the walk before the bound is reached.
 

@@ -63,7 +63,7 @@ public sealed class ChoicePassTests
     {
         // "- => [Take the east road](#END)" is the ordinary way to write a branching menu. Those
         // words are the writer's name for the option, so a menu has to be able to show them
-        // without reading the node the arm leads to.
+        // without reading the node the option leads to.
         var graph = Build("""
             Guide: Which way?
 
@@ -91,8 +91,8 @@ public sealed class ChoicePassTests
     [Fact]
     public void Apply_AnOptionWithNeitherWordsNorAJump_IsNamedByNothing()
     {
-        // Nothing the writer wrote names this arm, and the words of the node it leads to belong to
-        // another line, so the compile leaves the arm unnamed.
+        // Nothing the writer wrote names this option, and the words of the node it leads to belong
+        // to another line, so the compile leaves the option unnamed.
         var graph = Build("""
             - `("fade out")`
 
@@ -133,7 +133,7 @@ public sealed class ChoicePassTests
     }
 
     [Fact]
-    public void Apply_ARandomChoice_CarriesEachArmsWeight()
+    public void Apply_ARandomChoice_CarriesEachRandomOptionsWeight()
     {
         var graph = Build("""
             - `80%` Alice: Heads.
@@ -148,7 +148,7 @@ public sealed class ChoicePassTests
     }
 
     [Fact]
-    public void Apply_AConditionalOption_CarriesItsConditionOnTheArm()
+    public void Apply_AConditionalOption_CarriesItsConditionOnItsEdge()
     {
         var graph = Build("""
             - `"HasKey"?` Alice: Use the key.
@@ -171,9 +171,9 @@ public sealed class ChoicePassTests
             - `50%` Alice: Waved through.
             """);
 
-        var arm = graph.Nodes[0].Out[0];
-        AssertConditional(arm, "IsAngry");
-        AssertNumberWeight(arm, 50);
+        var option = graph.Nodes[0].Out[0];
+        AssertConditional(option, "IsAngry");
+        AssertNumberWeight(option, 50);
     }
 
     // Node creation assigns the ids the option edges point at.

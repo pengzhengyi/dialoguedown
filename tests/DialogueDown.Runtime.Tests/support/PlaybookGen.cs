@@ -20,7 +20,7 @@ namespace DialogueDown.Runtime.Tests;
 /// runner gains belongs here too, so a walk covers everything a run can meet.
 /// <para>
 /// Any of them may ask the world something. A line or a control block may be guarded, a jump may
-/// fire only when the world allows it, a block condition's first arm is always guarded, a menu's
+/// fire only when the world allows it, a block condition's first branch is always guarded, a menu's
 /// options may be guarded, and a line or an option's label may have a query in what it says. A
 /// guard and a query never read the same key, so a world drawn beside the playbook can answer each
 /// key in the kind it needs. A menu whose every option is guarded has a fall-through beside them,
@@ -61,10 +61,10 @@ internal static class PlaybookGen
         /// <summary>A line carrying a jump, with a succession beside it to fall through to.</summary>
         LineThatJumps,
 
-        /// <summary>A block condition with one arm, skipped when the world withholds it.</summary>
+        /// <summary>A block condition with one branch, skipped when the world withholds it.</summary>
         Block,
 
-        /// <summary>A block condition with one arm and an else.</summary>
+        /// <summary>A block condition with one gated branch and an else.</summary>
         BlockWithAnElse,
 
         /// <summary>
@@ -129,7 +129,7 @@ internal static class PlaybookGen
             Gen.Int[0, speakers - 1],
             Gen.Int[0, nodes - 1],
             Gen.Int[0, nodes - 1],
-            Gen.Select(Guard(), Guard(), ArmGuard()),
+            Gen.Select(Guard(), Guard(), BranchGuard()),
             Gen.Select(Gen.Bool, Gen.Enum<CommandAt>()),
             Menu(),
             (draws, speaker, onward, elsewhere, guards, speech, menu) =>
@@ -140,7 +140,7 @@ internal static class PlaybookGen
                     elsewhere,
                     Guard: guards.Item1,
                     JumpGuard: guards.Item2,
-                    ArmGuard: guards.Item3,
+                    BranchGuard: guards.Item3,
                     Asks: speech.Item1,
                     CommandAt: speech.Item2,
                     Menu: menu));
@@ -150,8 +150,9 @@ internal static class PlaybookGen
     private static Gen<Condition?> Guard() =>
         Gen.OneOfConst<Condition?>([null, .. _truthKeys.Select(key => new KeyCondition(key))]);
 
-    // A block condition's arm is always guarded, so the walk meets both the arm and what follows it.
-    private static Gen<Condition> ArmGuard() =>
+    // A block condition's first branch is always guarded, so the walk meets both the branch and
+    // what follows it.
+    private static Gen<Condition> BranchGuard() =>
         Gen.OneOfConst([.. _truthKeys.Select(Condition (key) => new KeyCondition(key))]);
 
     private static Gen<MenuDraft> Menu() =>
@@ -182,7 +183,7 @@ internal static class PlaybookGen
     /// <param name="Elsewhere">Where a jump leads, when the node carries one.</param>
     /// <param name="Guard">What the world must allow for a line or control block to play.</param>
     /// <param name="JumpGuard">What the world must allow for a jump to fire.</param>
-    /// <param name="ArmGuard">What the world must allow for a block condition's arm to be taken.</param>
+    /// <param name="BranchGuard">What the world must allow for a block condition's branch to be taken.</param>
     /// <param name="Asks">Whether a line has a query in what it says.</param>
     /// <param name="CommandAt">Where a line holds a command in what it says.</param>
     /// <param name="Menu">What a menu's options ask of the world.</param>
@@ -193,7 +194,7 @@ internal static class PlaybookGen
         int Elsewhere,
         Condition? Guard,
         Condition? JumpGuard,
-        Condition ArmGuard,
+        Condition BranchGuard,
         bool Asks,
         CommandAt CommandAt,
         MenuDraft Menu)
@@ -211,8 +212,8 @@ internal static class PlaybookGen
                 Guard,
                 [new SuccessionEdge(Onward)]),
             Draws.LineThatJumps => Speaks(id, [Jump(), new SuccessionEdge(Onward)]),
-            Draws.Block => new BranchNode(id, [Arm(), new SuccessionEdge(Onward)]),
-            Draws.BlockWithAnElse => new BranchNode(id, [Arm(), new BranchEdge(Onward, Condition: null)]),
+            Draws.Block => new BranchNode(id, [GatedBranch(), new SuccessionEdge(Onward)]),
+            Draws.BlockWithAnElse => new BranchNode(id, [GatedBranch(), new BranchEdge(Onward, Condition: null)]),
             Draws.Menu => new ChoiceNode(id, Ordered: false, Options()),
             _ => Speaks(id, [new SuccessionEdge(Onward)]),
         };
@@ -246,7 +247,7 @@ internal static class PlaybookGen
 
         private DivertEdge Jump() => new(Elsewhere, [], JumpGuard);
 
-        private BranchEdge Arm() => new(Elsewhere, ArmGuard);
+        private BranchEdge GatedBranch() => new(Elsewhere, BranchGuard);
 
         // A menu whose every option the world may withhold falls through past them, which is how a
         // script compiles one, so the walk goes on when the world withholds both.

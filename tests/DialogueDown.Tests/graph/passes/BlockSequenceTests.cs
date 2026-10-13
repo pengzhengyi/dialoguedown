@@ -24,9 +24,9 @@ public sealed class BlockSequenceTests
         Assert.Empty(Walk(""));
 
     [Fact]
-    public void AllContinuations_Choice_GivesEveryArmTheChoicesOwnContinuation()
+    public void AllContinuations_Choice_GivesEveryOptionTheChoicesOwnContinuation()
     {
-        // n0 question, n1 choice, n2/n3 the arms, n4 what follows, n5 End. Both arms continue
+        // n0 question, n1 choice, n2/n3 the options, n4 what follows, n5 End. Both options continue
         // at n4, and the choice does too, so picking either leads to the same place.
         Assert.Equal(
             [(0, 1), (1, 4), (2, 4), (3, 4), (4, 5)],
@@ -42,9 +42,9 @@ public sealed class BlockSequenceTests
     }
 
     [Fact]
-    public void AllContinuations_ArmWithSeveralBlocks_ChainsInsideTheArmBeforeWeavingBack()
+    public void AllContinuations_OptionWithSeveralBlocks_ChainsInsideTheOptionBeforeRejoining()
     {
-        // n1 the choice, n2 ▶ n3 within the arm, then n3 continues at n4.
+        // n1 the choice, n2 ▶ n3 within the option, then n3 continues at n4.
         Assert.Equal(
             [(0, 1), (1, 4), (2, 3), (3, 4), (4, 5)],
             Walk("""
@@ -59,9 +59,9 @@ public sealed class BlockSequenceTests
     }
 
     [Fact]
-    public void AllContinuations_NestedChoice_WeavesTheInnerArmsPastTheOuterOne()
+    public void AllContinuations_NestedChoice_ContinuesTheInnerOptionsPastTheOuterOne()
     {
-        // n1 outer choice, n2 its arm, n3 the inner choice, n4/n5 the inner arms — all of which
+        // n1 outer choice, n2 its option, n3 the inner choice, n4/n5 the inner options — all of which
         // continue at n6, where the outer body itself continues.
         Assert.Equal(
             [(0, 1), (1, 6), (2, 3), (3, 6), (4, 6), (5, 6), (6, 7)],
