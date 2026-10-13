@@ -150,7 +150,7 @@
           "label": [
             {
               "kind": "text",
-              "text": "Grab the laptop and the photos first "
+              "text": "Grab the laptop and the photos first"
             },
             {
               "kind": "tag",
@@ -201,7 +201,7 @@
       "speech": [
         {
           "kind": "text",
-          "text": "Grab the laptop and the photos first "
+          "text": "Grab the laptop and the photos first"
         },
         {
           "kind": "tag",
@@ -310,7 +310,7 @@
       "speech": [
         {
           "kind": "text",
-          "text": "You reach for the handle. "
+          "text": "You reach for the handle."
         },
         {
           "kind": "default-command",
@@ -543,7 +543,7 @@
           "label": [
             {
               "kind": "text",
-              "text": "Stand tall and run through the smoke "
+              "text": "Stand tall and run through the smoke"
             },
             {
               "kind": "tag",
@@ -594,7 +594,7 @@
       "speech": [
         {
           "kind": "text",
-          "text": "Stand tall and run through the smoke "
+          "text": "Stand tall and run through the smoke"
         },
         {
           "kind": "tag",
@@ -871,7 +871,7 @@
           "label": [
             {
               "kind": "text",
-              "text": "Throw the windows wide open "
+              "text": "Throw the windows wide open"
             },
             {
               "kind": "tag",
@@ -905,7 +905,7 @@
       "speech": [
         {
           "kind": "text",
-          "text": "Throw the windows wide open "
+          "text": "Throw the windows wide open"
         },
         {
           "kind": "tag",

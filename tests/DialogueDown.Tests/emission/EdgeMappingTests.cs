@@ -12,31 +12,47 @@ namespace DialogueDown.Tests.Emission;
 
 public sealed class EdgeMappingTests
 {
-    // Ids that are not positions, so a target copied straight off the graph would be wrong.
-    private static readonly NodeNumbering _numbering = NodeNumbering.Of([EndNode(12), EndNode(3)]);
+    // The playbook names a node by its position, not its graph id. Each id here differs from its
+    // position, so a target copied straight off the graph would be wrong.
+    private const int FirstId = 12;
+    private const int FirstPosition = 0;
+    private const int SecondId = 3;
+    private const int SecondPosition = 1;
+
+    private static readonly NodeNumbering _numbering =
+        NodeNumbering.Of([EndNode(FirstId), EndNode(SecondId)]);
 
     [Fact]
     public void Write_AnEdge_NamesItsTargetByPosition()
     {
-        AssertLeadsTo<SuccessionEdge>(Write(SuccessionEdge(NodeId(3))), 1);
+        AssertLeadsTo<SuccessionEdge>(Write(SuccessionEdge(NodeId(SecondId))), SecondPosition);
     }
 
     [Fact]
     public void Write_AnOption_KeepsItsLabelAndCondition()
     {
-        var option = OptionEdge(NodeId(3), "Ask about the inn", Condition("IsCurious"));
+        var option = OptionEdge(NodeId(SecondId), "Ask about the inn", Condition("IsCurious"));
 
-        var written = AssertLeadsTo<OptionEdge>(Write(option), 1);
+        var written = AssertLeadsTo<OptionEdge>(Write(option), SecondPosition);
 
         AssertSays(written.Label, "Ask about the inn");
         Assert.NotNull(written.Condition);
     }
 
     [Fact]
+    public void Write_AnOption_HasTheTypedSpacingOfItsLabelCollapsed()
+    {
+        var written = AssertLeadsTo<OptionEdge>(
+            Write(OptionEdge(NodeId(SecondId), "Ask  about the inn ")), SecondPosition);
+
+        AssertSays(written.Label, "Ask about the inn");
+    }
+
+    [Fact]
     public void Write_ARandomOption_KeepsItsWeight()
     {
         var written = AssertLeadsTo<RandomOptionEdge>(
-            Write(RandomOptionEdge(NodeId(12), NumberWeight(25.0))), 0);
+            Write(RandomOptionEdge(NodeId(FirstId), NumberWeight(25.0))), FirstPosition);
 
         Assert.Equal(25.0, Assert.IsType<NumberWeight>(written.Weight).Percentage);
         Assert.Null(written.Condition);
@@ -46,7 +62,7 @@ public sealed class EdgeMappingTests
     public void Write_ABranchArm_KeepsItsCondition()
     {
         var written = AssertLeadsTo<BranchEdge>(
-            Write(BranchEdge(NodeId(3), Condition("IsBrave"))), 1);
+            Write(BranchEdge(NodeId(SecondId), Condition("IsBrave"))), SecondPosition);
 
         Assert.NotNull(written.Condition);
     }
@@ -54,9 +70,19 @@ public sealed class EdgeMappingTests
     [Fact]
     public void Write_ADivert_KeepsWhatTheWriterCalledIt()
     {
-        var written = AssertLeadsTo<DivertEdge>(Write(DivertEdge(NodeId(3), "the inn")), 1);
+        var written = AssertLeadsTo<DivertEdge>(
+            Write(DivertEdge(NodeId(SecondId), "the inn")), SecondPosition);
 
         AssertSays(written.Label, "the inn");
+    }
+
+    [Fact]
+    public void Write_ADivert_HasTheTypedSpacingOfItsLabelCollapsed()
+    {
+        var written = AssertLeadsTo<DivertEdge>(
+            Write(DivertEdge(NodeId(SecondId), " Back  home ")), SecondPosition);
+
+        AssertSays(written.Label, "Back home");
     }
 
     [Fact]
@@ -69,9 +95,9 @@ public sealed class EdgeMappingTests
     public void Write_EveryWayOutOfANode_KeepsTheirOrder()
     {
         var edges = EdgeMapping.Write(
-            [SuccessionEdge(NodeId(12)), SuccessionEdge(NodeId(3))], _numbering);
+            [SuccessionEdge(NodeId(FirstId)), SuccessionEdge(NodeId(SecondId))], _numbering);
 
-        AssertLeadTo(edges, 0, 1);
+        AssertLeadTo(edges, FirstPosition, SecondPosition);
     }
 
     [Fact]
@@ -85,17 +111,17 @@ public sealed class EdgeMappingTests
     public void Write_NoNumbering_IsRejected()
     {
         Assert.Throws<ArgumentNullException>(
-            () => EdgeMapping.Write(SuccessionEdge(NodeId(3)), null!));
+            () => EdgeMapping.Write(SuccessionEdge(NodeId(SecondId)), null!));
     }
 
     private static Edge Write(GraphEdges.Edge edge) => EdgeMapping.Write(edge, _numbering);
 
     private static IReadOnlyList<GraphEdges.Edge> Samples() =>
     [
-        SuccessionEdge(NodeId(3)),
-        OptionEdge(NodeId(3)),
-        RandomOptionEdge(NodeId(3)),
-        BranchEdge(NodeId(3)),
-        DivertEdge(NodeId(3)),
+        SuccessionEdge(NodeId(SecondId)),
+        OptionEdge(NodeId(SecondId)),
+        RandomOptionEdge(NodeId(SecondId)),
+        BranchEdge(NodeId(SecondId)),
+        DivertEdge(NodeId(SecondId)),
     ];
 }

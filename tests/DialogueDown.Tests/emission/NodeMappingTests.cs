@@ -40,6 +40,14 @@ public sealed class NodeMappingTests
     }
 
     [Fact]
+    public void Write_ALine_HasTheTypedSpacingOfItsSpeechCollapsed()
+    {
+        var written = Assert.IsType<LineNode>(Write(LineNode(12, _alice, Text("Hello,   Bob. "))));
+
+        AssertSays(written.Speech, "Hello, Bob.");
+    }
+
+    [Fact]
     public void Write_AConditionalLine_KeepsWhatMustHold()
     {
         var line = ConditionalLineNode(12, _alice, Condition("IsCurious"), Text("Hello."));

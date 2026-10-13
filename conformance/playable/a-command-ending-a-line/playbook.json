@@ -24,7 +24,7 @@
       "speech": [
         {
           "kind": "text",
-          "text": "Hello. "
+          "text": "Hello."
         },
         {
           "kind": "custom-command",
