@@ -12,7 +12,7 @@ const PNG_1x1 = Buffer.from(
 );
 
 // Writes the document and waits for the recompile it triggers to *land* before the test drives the
-// page. The write arms a debounced rebuild (150 ms) that broadcasts to every open page; navigating
+// page. The write starts a debounced rebuild (150 ms) that broadcasts to every open page; navigating
 // straight away wins the race for content but not for that broadcast, which then arrives mid-test,
 // re-renders the report, and drops whatever was chosen — emptying the detail panel that a retrying
 // assertion is waiting on. `beforeEach` leaves a page open showing the previous document, so the
@@ -1650,20 +1650,20 @@ test("hovering a route says what it is and what the writer called it", async ({ 
     await page.locator(".tab", { hasText: "Dialogue Graph" }).click();
     await expect(page.locator("section.stage.active path.edge-hit")).not.toHaveCount(0);
 
-    // A twin is drawn per route, in the same order, so the choice arm's target is the twin at the
-    // choice route's index. The script offers one arm, so there is exactly one.
-    const arm = await page
+    // A twin is drawn per route, in the same order, so the choice option's target is the twin at the
+    // choice route's index. The script offers one option, so there is exactly one.
+    const option = await page
         .locator("section.stage.active path.link.routed")
         .evaluateAll((routes) =>
             routes.findIndex((route) => route.querySelector("title")?.textContent === "Choice"),
         );
-    expect(arm).toBeGreaterThanOrEqual(0);
+    expect(option).toBeGreaterThanOrEqual(0);
 
     // A route is a hairline path, which Playwright will not treat as hoverable on its own.
-    await page.locator("section.stage.active path.edge-hit").nth(arm).hover({ force: true });
+    await page.locator("section.stage.active path.edge-hit").nth(option).hover({ force: true });
 
     const tip = page.locator(".tippy-content");
     await expect(tip).toContainText("Choice");
-    await expect(tip).toContainText("One arm of a choice");
+    await expect(tip).toContainText("One option of a choice");
     await expect(tip).toContainText("Brave the west road");
 });

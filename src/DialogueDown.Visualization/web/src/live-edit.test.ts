@@ -103,7 +103,7 @@ const savedOutcome = (source: string): SaveOutcome => ({
 });
 
 describe("createLiveEdit — editing and dirty", () => {
-    it("marks dirty on the first edit, arms the unload guard, and reports Unsaved", () => {
+    it("marks dirty on the first edit, sets the unload guard, and reports Unsaved", () => {
         const h = harness();
         const live = h.make("manual");
 
@@ -127,7 +127,7 @@ describe("createLiveEdit — editing and dirty", () => {
 });
 
 describe("createLiveEdit — Auto debounce", () => {
-    it("arms an idle save 1s after an edit and saves the latest buffer", async () => {
+    it("starts an idle save 1s after an edit and saves the latest buffer", async () => {
         const h = harness();
         const live = h.make("auto");
 

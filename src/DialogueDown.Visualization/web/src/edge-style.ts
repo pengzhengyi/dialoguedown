@@ -52,13 +52,13 @@ export const EDGE_STYLES: Readonly<Record<string, EdgeStyle>> = {
         cursor: "alias",
         meaning: "A divert (`=>`): control leaves the written order and resumes at the target.",
     },
-    // Dotted: one arm among several. The hand is the pointer for something the player picks.
+    // Dotted: one option among several. The hand is the pointer for something the player picks.
     choice: {
         label: "Choice",
         dash: "2 3",
         isRoute: true,
         cursor: "pointer",
-        meaning: "One arm of a choice: taken only if the player picks it.",
+        meaning: "One option of a choice: taken only if the player picks it.",
     },
     // Dashed: taken only when its condition holds, so the pointer asks the question.
     control: {
