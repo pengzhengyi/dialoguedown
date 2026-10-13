@@ -23,11 +23,7 @@ public sealed class PlaybookGenTests
     // Node and edge kinds the generator leaves out, each with a note on what must change first.
     // The test below checks the note on every node kind. An edge kind stays out for as long as the
     // node kind it belongs to does, because that node is the only place it can appear.
-    private static readonly Dictionary<string, string> _notDrawn = new(StringComparer.Ordinal)
-    {
-        [nameof(RandomChoiceNode)] = "nothing draws a random choice yet",
-        [nameof(RandomOptionEdge)] = "a random-option edge appears only on a random-choice node",
-    };
+    private static readonly Dictionary<string, string> _notDrawn = new(StringComparer.Ordinal);
 
     [Fact]
     public void EveryKindTheFormatDefines_IsDrawnOrLeftOutOnPurpose()

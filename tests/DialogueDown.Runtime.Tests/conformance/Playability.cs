@@ -1,6 +1,8 @@
 using System.Collections.Immutable;
 using DialogueDown.Conformance;
+using DialogueDown.Playbook.Edges;
 using DialogueDown.Playbook.Nodes;
+using DialogueDown.Playbook.Weights;
 using DialogueDown.Runtime.Tests.Conformance.Matchers;
 
 namespace DialogueDown.Runtime.Tests.Conformance;
@@ -14,8 +16,9 @@ namespace DialogueDown.Runtime.Tests.Conformance;
 /// playable rather than as a divergence. The screen restates what the runner can play, so a test
 /// checks that the two agree.
 /// <para>
-/// A node is playable by its kind. A send is playable when a reader owns it, and an expectation
-/// when the harness can check every claim in it.
+/// A node is playable by its kind, except a random choice, which is playable only while it asks
+/// the world nothing. A send is playable when a reader owns it, and an expectation when the harness
+/// can check every claim in it.
 /// </para>
 /// </remarks>
 internal static class Playability
@@ -23,7 +26,12 @@ internal static class Playability
     /// <summary>Whether this build can play a node.</summary>
     /// <param name="node">The node to ask about.</param>
     /// <returns><see langword="true"/> when arriving at the node is something this build does.</returns>
-    public static bool CanPlay(Node node) => node is LineNode or EndNode or ControlNode or BranchNode or ChoiceNode;
+    public static bool CanPlay(Node node) => node switch
+    {
+        LineNode or EndNode or ControlNode or BranchNode or ChoiceNode => true,
+        RandomChoiceNode random => AsksTheWorldNothing(random),
+        _ => false,
+    };
 
     /// <summary>Whether this build can take a session entry at all.</summary>
     /// <param name="entry">The entry to ask about.</param>
@@ -75,4 +83,10 @@ internal static class Playability
     /// <returns>The reasons, in the order the session names them, each named once.</returns>
     public static IEnumerable<string> WhyNotPlayable(ImmutableArray<SessionEntry> session) =>
         session.SelectMany(WhyNotPlayable).Distinct(StringComparer.Ordinal);
+
+    // Written out here rather than asked of the runner, so the test that the two agree checks
+    // something.
+    private static bool AsksTheWorldNothing(RandomChoiceNode random) =>
+        random.Out.OfType<RandomOptionEdge>()
+            .All(option => option.Condition is null && option.Weight is not QueryWeight);
 }
