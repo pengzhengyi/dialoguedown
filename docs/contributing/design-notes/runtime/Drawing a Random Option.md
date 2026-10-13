@@ -159,7 +159,8 @@ that node needs, walking past a jump, or saying a line.
 | `AwaitingDraw(node, shares)` | Waiting for the host at a random choice, and the shares the open `Draw` named | `Situation` |
 | `NumberAnswer(value)` | An answer: a number, as a key weight needs | `Answer` |
 | `NodeQuestions` | For a random choice, its arms' conditions as truths and its key weights as numbers; the same whether read for the whole node or from its start | `Arrival` |
-| `WeightShares` | Resolves weights, each a number or auto, to shares, and sums them; the one definition the compiler and the runner share | `Drawing`, the compiler's weight checks |
+| `DrawingWeight` | A weight ready for the draw, `Number` or `Auto`, and the arithmetic over them: `Shares` and `Total`. The one definition the compiler and the runner share | The compiler's weight checks, `WeightShares` |
+| `WeightShares` | The playbook's adapter: turns a playbook's weights into drawing weights, refusing a key; M2 and M3 give it the arms in play and the world's answers | `Drawing` |
 | `Drawing` | Works out the shares and sends `Draw`; takes `Drawn`, finds the arm it lands on, and arrives there | `Playing`, `Runner`, `Arrival` |
 | `Arrival` | Walks past a random choice with no drawable arm, as it walks past a menu with nothing available | `Drawing` |
 | `DrawnReader`, `DrawMatcher` | Read a fixture's `drawn` send, and hold a `Draw` to its `draw` expectation | The harness |
@@ -356,23 +357,34 @@ Which one it makes is the driver's policy; the runner has no answer meaning unbo
 
 ### R9 — The compiler and the runner share one definition of a share
 
-The compiler resolves static weights to warn about their total, and the runner
-resolves them to draw. The language's
+The compiler works out static shares to warn about their total, and the runner works
+them out to draw. The language's
 [D9](../language/Random%20Choice.md#d9--weight-normalization-is-an-injectable-strategy)
-wants one definition of that arithmetic, but today it lives in the compiler, over
-the compiler's own syntax types, and the runtime may depend only on the playbook
-library.
+wants one definition of that arithmetic, and the runtime may depend only on the
+playbook library, so the arithmetic lives there, on `DrawingWeight`.
 
-So the share arithmetic moves to the playbook library as `WeightShares`, over plain
-numbers: each weight is a number or an auto weight, and the result is the shares and
-their total. Normalizing those shares into probabilities stays in the compiler,
-behind `IWeightNormalization`, with its uniform recovery from a zero total that keeps
-later checks from dividing by zero. The runner never normalizes: R2 draws against the
+A drawing weight is a weight ready for the draw: a number, or an auto weight. There
+is none for a key, because a key has no number until the world answers it, so an
+unanswered key cannot reach the arithmetic. `DrawingWeight.Shares` gives each number
+its own share and each auto weight an equal part of what the numbers leave of 100,
+and `DrawingWeight.Total` adds the shares up in the order written, as R2 requires.
+
+Each side turns its own weights into drawing weights, so neither builds the other's
+types to reach the arithmetic:
+
+| Side | A number | An auto weight | A key weight | An excluded arm |
+| --- | --- | --- | --- | --- |
+| Compiler | `Number` | `Auto` | Refused: it has no compile-time value | Not met: a guarded random choice is not checked |
+| Runner | `Number` | `Auto` | `Number` holding the answer, once R8's checks pass | `Number(0)`, which adds nothing to the numbers and takes no part of the rest, as R5 requires |
+
+The runner reaches the arithmetic through `WeightShares`, the playbook library's
+adapter for a playbook's own weights. M2 and M3 give it the arms in play and the
+world's answers, as `SpeechTemplate.Fill` takes an answer for each query.
+
+Normalizing shares into probabilities stays in the compiler, behind
+`IWeightNormalization`, with its uniform recovery from a zero total that keeps later
+checks from dividing by zero. The runner never normalizes: R2 draws against the
 total directly.
-
-The compiler maps its weights onto `WeightShares`. The runner maps the arms in play,
-after replacing each key weight with the world's answer, and gives each excluded arm
-a share of zero, as R5 requires.
 
 ### R10 — The reader refuses a weight no share can have
 
@@ -417,9 +429,9 @@ The runner can then trust a static share, and checks only what the world supplie
 
 | Seam | Change |
 | --- | --- |
-| Playbook library | `WeightShares`, beside the weight types; the reader refuses a number weight no share can have |
+| Playbook library | `DrawingWeight` and the `WeightShares` adapter, beside the weight types; the reader refuses a number weight no share can have |
 | Playbook schema | A number weight's `percentage` gains `minimum: 0` |
-| Compiler | The weight checks resolve shares through `WeightShares`; normalizing, and its recovery from a zero total, stay. The zero-total check covers a single arm, and the single-option warning passes over one that weighs `0%` |
+| Compiler | The weight checks turn their weights into drawing weights and take the shares from `DrawingWeight`; normalizing, and its recovery from a zero total, stay. The zero-total check covers a single arm, and the single-option warning passes over one that weighs `0%` |
 | `protocol` | `Draw` joins the requests and `Drawn` the commands; `NumberAnswer` joins the answers, and a JSON number in `supply` now reads as one; `RefusalReason` gains `InvalidDraw` and `InvalidWeight` |
 | `situations` | `AwaitingDraw`, with its wording in a refusal |
 | `stepping` | `Drawing` sends and takes the draw, and `Playing` hands it a random choice; `Arrival` walks past a random choice with no drawable arm; a random choice's questions are its conditions, then its key weights, asked on arrival and never on leaving; `NodeQuestions` gains the numbers, and its both-ways check covers any two kinds |
@@ -438,7 +450,8 @@ The runner can then trust a static share, and checks only what the world supplie
 
 | Level | What it covers |
 | --- | --- |
-| Unit — `WeightShares` | Numbers, autos, the leftover, totals over 100, and an empty list, as plain arithmetic |
+| Unit — `DrawingWeight` | Numbers, autos, the leftover, an auto weight written first, totals over 100, a number of zero beside the others, and an empty list, as plain arithmetic; the total added from the first share |
+| Unit — `WeightShares` | Each kind of playbook weight turned into a drawing weight, and a key weight refused |
 | Unit — the compiler's weight checks | A single `0%` arm reported with `DLG2010` and not `DLG3004`; a single arm of any other weight with `DLG3004` alone |
 | Unit — `Drawing` | `Draw` sent with the right shares; a draw landing at the start, inside, and at the end of each span, and at `1`; a zero share skipped; each refusal, with the run left where it keeps waiting |
 | Unit — `Arrival` | Asking about a random choice's conditions and key weights; walking past one with no drawable arm, with and without a fall-through |
