@@ -299,4 +299,43 @@ internal static class DiagnosticCatalog
             + "effect. Remove the weight to make it a plain line, or add more options.",
         DiagnosticCategory.Style,
         DiagnosticSeverity.Warning);
+
+    /// <summary>
+    /// Every descriptor above, in declaration order. Listed by hand rather than found by
+    /// reflection, so it survives trimming; a test keeps it complete.
+    /// </summary>
+    public static readonly IReadOnlyList<DiagnosticDescriptor> All =
+    [
+        UnreachableContentAfterJump,
+        TagsWithoutSpeaker,
+        NotAGameCall,
+        CommandInLabel,
+        MissingChoiceWeight,
+        InvalidChoiceWeight,
+        OrphanCondition,
+        StyledSpeakerPrefix,
+        SeveredControlBranch,
+        MalformedControlBranchOrder,
+        ControlMarkerNotAlone,
+        MissingControlBranchCondition,
+        UnexpectedElseCondition,
+        DanglingJumpArrow,
+        IgnoredUnmodeledMarkdown,
+        DuplicateAnchor,
+        HeadingWithoutAnchor,
+        SpeakerNameIdConflict,
+        IdBoundToAnotherName,
+        NameBoundToAnotherId,
+        MultipleDefaultSpeakers,
+        UnnamedSpeakerId,
+        UnknownReservedTag,
+        MissingScene,
+        ZeroChoiceWeightTotal,
+        ExternalJumpNotResolved,
+        OptionWithNothingToShow,
+        SceneHeadingInsideBranch,
+        DeeplyNestedChoiceBranch,
+        ChoiceWeightsNotOneHundred,
+        SingleOptionRandomChoice,
+    ];
 }
