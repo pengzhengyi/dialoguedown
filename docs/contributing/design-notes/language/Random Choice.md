@@ -167,9 +167,11 @@ At runtime:
 6. **Normalize:** divide every resolved weight by the total so the probabilities
    sum to 1. Weights remain relative; they need not total 100 to work.
 
-The injectable normalization policy is the single definition of auto
-distribution and sum normalization; a runtime resolves `QueryWeight` values
-before invoking it.
+The playbook library's `WeightShares` is the single definition of steps 1 to 3:
+a number as written, an equal part of the leftover for each auto, and the total,
+added in the order written. The compiler and a runtime both use it; a runtime
+replaces each `QueryWeight` with its value first. The compiler's injectable
+normalization policy builds step 6 on those shares.
 
 ## Prior art
 
@@ -215,7 +217,8 @@ flowchart LR
     RC -->|static only| Rule["WeightTotalRule"]
     RC -->|contains query| Runtime["Runtime query resolution"]
     Rule --> Norm["IWeightNormalization"]
-    Runtime --> Norm
+    Norm --> Shares["WeightShares<br/>(playbook library)"]
+    Runtime --> Shares
 ```
 
 Recognition happens in the **transpiler**. `RandomChoiceRecognition` removes a
@@ -231,8 +234,8 @@ before its body.
 
 The **weight-total** rules run at compile time only for a fully static group.
 When a `QueryWeight` is present, the group is structurally valid but unresolved;
-a runtime resolves every query, validates the values, and invokes the same
-normalization policy.
+a runtime resolves every query, validates the values, and works out the shares
+with the same `WeightShares` the compiler uses.
 
 ## Interfaces and responsibilities
 
@@ -245,7 +248,8 @@ normalization policy.
 | `NumberWeight` | A finite, non-negative literal percentage plus its source span. |
 | `AutoWeight` | A bare `%` plus its source span; resolved after explicit numeric and query weights. |
 | `QueryWeight` | A game-state query key plus its source span. The runtime numeric result becomes an explicit weight. |
-| `IWeightNormalization` | The injectable policy that fills autos, normalizes resolved values, and reports the raw total; shared by static validation and a runtime. |
+| `WeightShares` | In the playbook library: works out each weight's share, a number as written or an auto's equal part of what the numbers leave of 100, and adds the shares up in the order written. The one definition the compiler and a runtime share. |
+| `IWeightNormalization` | The compiler's injectable policy that divides the shares `WeightShares` works out by their total, recovers to a uniform distribution from a zero total, and reports the raw total. |
 | `ChoiceWeightReader` | Reads all three weight forms; a key goes through `QueryKeyReader`. |
 | `SemanticTokenProjection` | A weight is a Markdown code span the editor already colors, so no dedicated weight token is projected. Query-key completion stays deferred until a game-state symbol source exists. |
 | `DiagnosticCatalog` | Own `DLG1104`, `DLG1105`, `DLG2010`, `DLG3003`, and `DLG3004`. |
@@ -348,13 +352,17 @@ node because a weight is not an inline game call and must participate in the
 
 ### D9 — Weight normalization is an injectable strategy
 
-Turning weights into probabilities — summing, filling autos, normalizing by the
-total, and the uniform recovery the compiler uses after reporting a zero total
-(`DLG2010`) — lives behind an `IWeightNormalization`
-seam, not inline in `BlockBuilder` or `WeightTotalRule`. This keeps the arithmetic
-a pure, table-testable unit independent of parsing, lets the compile-time warning
-and a runtime share one definition, and leaves room to swap the policy
-(for example, a strict "must total 100" variant) without touching recognition.
+Turning weights into probabilities — normalizing by the total, and the uniform
+recovery the compiler uses after reporting a zero total (`DLG2010`) — lives behind
+an `IWeightNormalization` seam, not inline in `BlockBuilder` or `WeightTotalRule`.
+This keeps the arithmetic a pure, table-testable unit independent of parsing, and
+leaves room to swap the policy (for example, a strict "must total 100" variant)
+without touching recognition.
+
+The shares the policy normalizes, with each auto weight's part worked out and the
+total added up, come from the playbook library's `WeightShares`. The runtime may depend only
+on that library, so keeping the share arithmetic there is what lets the
+compile-time warning and a runtime share one definition.
 
 The strategy takes finite, non-negative weights as a precondition — recognition
 rejects a negative or an infinite weight as `DLG1105` before it reaches the AST —

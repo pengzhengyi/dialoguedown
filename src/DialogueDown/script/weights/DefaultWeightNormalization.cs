@@ -1,13 +1,14 @@
 using DialogueDown.Script.Ast;
+using PlaybookWeights = DialogueDown.Playbook.Weights;
 
 namespace DialogueDown.Script.Weights;
 
 /// <summary>
-/// The default weight-normalization strategy: explicit percentages are taken as written, each
-/// auto weight claims an equal share of the percentage they leave, and every resolved weight is
-/// divided by their total so the probabilities sum to 1. A zero weight total is reported as an
-/// error by validation; the normalizer still recovers to a uniform distribution, so no consumer
-/// ever divides by zero.
+/// The default weight-normalization strategy: each weight's share is worked out by the
+/// playbook's <see cref="PlaybookWeights.WeightShares"/>, the same arithmetic a runner draws by,
+/// and every share is divided by their total so the probabilities sum to 1. A zero weight total is
+/// reported as an error by validation; the normalizer still recovers to a uniform distribution, so
+/// no consumer ever divides by zero.
 /// </summary>
 /// <remarks>
 /// <c>`50%`</c>, <c>`%`</c>, <c>`%`</c> resolve to 50, 25, and 25, giving 0.5, 0.25, and 0.25.
@@ -15,51 +16,31 @@ namespace DialogueDown.Script.Weights;
 /// </remarks>
 internal sealed class DefaultWeightNormalization : IWeightNormalization
 {
-    private const double OneHundredPercent = 100;
-
     public WeightDistribution Normalize(IReadOnlyList<ChoiceWeight> weights)
     {
-        RequireNonNegativePercentages(weights);
+        ArgumentNullException.ThrowIfNull(weights);
 
         if (weights.Count == 0)
         {
             return new WeightDistribution([], 0);
         }
 
-        var explicitSum = weights.OfType<NumberWeight>().Sum(number => number.Percentage);
-        var autoCount = weights.OfType<AutoWeight>().Count();
-        var autoShare = autoCount > 0 ? Math.Max(0, OneHundredPercent - explicitSum) / autoCount : 0;
-
-        var resolved = weights.Select(weight => Resolve(weight, autoShare)).ToList();
-        var rawTotal = resolved.Sum();
+        var shares = PlaybookWeights.WeightShares.Of(weights.Select(ToPlaybookWeight));
+        var rawTotal = PlaybookWeights.WeightShares.Total(shares);
 
         var probabilities = rawTotal > 0
-            ? resolved.Select(value => value / rawTotal).ToList()
-            : Enumerable.Repeat(1.0 / weights.Count, weights.Count).ToList();
+            ? shares.Select(share => share / rawTotal).ToList()
+            : Enumerable.Repeat(1.0 / shares.Length, shares.Length).ToList();
 
         return new WeightDistribution(probabilities, rawTotal);
     }
 
-    // A negative percentage cannot mean a probability, and recognition reports one instead of
-    // building it, so one here is a caller bug.
-    private static void RequireNonNegativePercentages(IReadOnlyList<ChoiceWeight> weights)
+    // The shares are worked out over the playbook's weights. A negative or an infinite number is
+    // refused there; a query weight is refused here, because it has no compile-time value.
+    private static PlaybookWeights.ChoiceWeight ToPlaybookWeight(ChoiceWeight weight) => weight switch
     {
-        foreach (var number in weights.OfType<NumberWeight>())
-        {
-            if (number.Percentage < 0)
-            {
-                throw new ArgumentOutOfRangeException(
-                    nameof(weights), number.Percentage,
-                    "A choice weight percentage must be non-negative; reject negative weights "
-                    + "before normalizing.");
-            }
-        }
-    }
-
-    private static double Resolve(ChoiceWeight weight, double autoShare) => weight switch
-    {
-        NumberWeight number => number.Percentage,
-        AutoWeight => autoShare,
+        NumberWeight number => new PlaybookWeights.NumberWeight(number.Percentage),
+        AutoWeight => new PlaybookWeights.AutoWeight(),
         QueryWeight => throw new ArgumentOutOfRangeException(
             nameof(weight), weight.GetType(),
             "A query weight has no compile-time value; resolve it at runtime before normalizing."),
