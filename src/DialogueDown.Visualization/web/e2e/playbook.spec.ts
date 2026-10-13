@@ -276,21 +276,21 @@ test.describe("Playbook tab — a compiled script", () => {
         await expect(tooltip).toContainText("Answered while the game runs");
     });
 
-    // A branch arm's number is the node it reaches, so pressing it goes there rather than leaving
+    // A branch's number is the node it reaches, so pressing it goes there rather than leaving
     // the reader to hunt for that id in the JSON beside the table.
-    test("follows a branch arm's number to the node it names", async ({ page }) => {
+    test("follows a branch's number to the node it names", async ({ page }) => {
         await page.click(playbookTab);
 
-        const arm = panel(page, "Nodes")
+        const branch = panel(page, "Nodes")
             .locator("tbody tr")
             .nth(3)
             .locator("td")
             .nth(2)
             .locator("button.dd-jump")
-            // Both arms are reachable, and this test follows the one the THEN names.
+            // Both branches are reachable, and this test follows the one the THEN names.
             .first();
-        await expect(arm).toHaveAttribute("data-ref-key", "node:8");
-        await arm.click();
+        await expect(branch).toHaveAttribute("data-ref-key", "node:8");
+        await branch.click();
 
         const below = await lineBelowActive(page, 2);
         expect(below).toContain('"id": 8');

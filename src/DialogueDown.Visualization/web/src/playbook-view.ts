@@ -351,14 +351,14 @@ const SUMMARY_SEGMENT_TIP: Partial<Record<SummaryRole, PieceTip>> = {
 
 /**
  * What a piece that names a node means, named for the way out it stands for. The kind decides,
- * because the same shape — a piece carrying a target — is a conditional arm in one node, a jump in
+ * because the same shape — a piece carrying a target — is a conditional branch in one node, a jump in
  * another, and the pick a menu offers in a third, and the reader is owed the word the graph would
  * use for it.
  */
 const TARGET_TIP: Readonly<Record<string, PieceTip>> = {
     branch: {
         name: "Conditional",
-        meaning: "This arm's target: taken only while its condition holds.",
+        meaning: "This branch's target: taken only while its condition holds.",
     },
     control: {
         name: "Jump",
@@ -366,11 +366,11 @@ const TARGET_TIP: Readonly<Record<string, PieceTip>> = {
     },
     choice: {
         name: "Choice",
-        meaning: "One arm of a menu: taken when the player picks it.",
+        meaning: "One option of a menu: taken when the player picks it.",
     },
     "random-choice": {
         name: "Random choice",
-        meaning: "One arm of a draw: taken when its odds come up.",
+        meaning: "One random option of a draw: taken when its odds come up.",
     },
 };
 

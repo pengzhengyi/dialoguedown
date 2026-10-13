@@ -287,9 +287,9 @@ public sealed class ArrivalTests
             Arrival.At(PlayContextFactory.AGuardedJumpOnItsOwnLine(), 0), node: 0, Moment.BeforeLeaving, "Rainy");
 
     [Fact]
-    public void At_AConditionalBlock_AsksTheWorldWhichArmToTake() =>
-        // A block says nothing, so the run walks into it and on to choosing an arm, asking about
-        // every arm at once.
+    public void At_AConditionalBlock_AsksTheWorldWhichBranchToTake() =>
+        // A block says nothing, so the run walks into it and on to choosing a branch, asking about
+        // every branch at once.
         AssertAsked(
             Arrival.At(PlayContextFactory.AConditionalBlock(), 0),
             node: 0,
@@ -565,8 +565,8 @@ public sealed class ArrivalTests
     /// Alice: It stays shut.
     /// </code>
     /// The compiler writes the menu's fall-through, which leads to the line after it, because every
-    /// option has a condition. The option's own arm is an end here, so taking it and falling through
-    /// lead to different places.
+    /// option has a condition. The option itself leads to an end here, so taking it and falling
+    /// through lead to different places.
     /// </remarks>
     /// <returns>A context that asks about <c>Alice.HasKey</c> before offering anything.</returns>
     private static PlayContext AMenuWhoseOnlyOptionIsConditionalThenALine() =>

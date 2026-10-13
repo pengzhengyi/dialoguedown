@@ -401,10 +401,10 @@ describe("createTreeView — folding a scene", () => {
 
 /**
  * A graph whose flow crosses between scenes, as a branching script's does: the Market's own
- * choice keeps one arm for itself and sends the other into the Forest, which fans out in three.
+ * choice keeps one option for itself and sends the other into the Forest, which fans out in three.
  *
  * Laid out by subtree extent alone, the Market's choice sinks towards the Forest's fan while the
- * Forest's band reaches up to hold its first arm, and the two bands cross.
+ * Forest's band reaches up to hold its first option, and the two bands cross.
  */
 function crossSceneStage(): Stage {
     const line = (id: string, label: string, region?: string): DisplayNode => ({
@@ -782,7 +782,7 @@ describe("createTreeView — keyboard navigation follows the edges", () => {
     });
 
     it("counts a folded scene's box among its siblings in the drawing", () => {
-        // The Forest's box stands where its first node stood: the Market's choice has two arms,
+        // The Forest's box stands where its first node stood: the Market's choice has two children,
         // `m2` and the box, so ↓ from one lands on the other like any pair of siblings.
         const chosen: DisplayNode[] = [];
         const view = createTreeView(crossSceneStage(), (node) => chosen.push(node), {

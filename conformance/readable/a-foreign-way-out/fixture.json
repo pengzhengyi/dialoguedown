@@ -3,5 +3,5 @@
   "name": "a foreign way out is refused",
   "playbook": "playbook.json",
   "verdict": "refuse",
-  "because": "a line's ways out are diverts, but this one carries a branch arm it cannot act on"
+  "because": "a line takes a divert, but this one carries a branch it cannot act on"
 }

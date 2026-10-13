@@ -156,7 +156,7 @@
       "description": "What must hold. An object rather than a bare key, so negation and expressions stay additive."
     },
     "weight": {
-      "description": "How often a random arm is taken. An object rather than a number, because two of the three kinds have no number to write.",
+      "description": "How often a random option is taken. An object rather than a number, because two of the three kinds have no number to write.",
       "oneOf": [
         {
           "type": "object",
@@ -168,7 +168,7 @@
               "const": "auto"
             }
           },
-          "description": "An equal share of whatever the numbered arms leave."
+          "description": "An equal share of whatever the numbered random options leave."
         },
         {
           "type": "object",
@@ -426,7 +426,7 @@
               "$ref": "#/$defs/condition"
             }
           },
-          "description": "One arm a player may pick. The label is compiled in, so a menu never reads the node it leads to."
+          "description": "One option a player may pick. The label is compiled in, so a menu never reads the node it leads to."
         },
         {
           "type": "object",
@@ -449,7 +449,7 @@
               "$ref": "#/$defs/condition"
             }
           },
-          "description": "One arm the engine may pick. No label: nothing is shown."
+          "description": "One random option the engine may pick. No label: nothing is shown."
         },
         {
           "type": "object",
@@ -468,7 +468,7 @@
               "$ref": "#/$defs/condition"
             }
           },
-          "description": "One arm of a conditional block, or its else when it has no condition."
+          "description": "One branch of a conditional block, or its else when it has no condition."
         },
         {
           "type": "object",
@@ -574,7 +574,7 @@
     },
     "randomChoiceOut": {
       "type": "array",
-      "description": "A random choice's arms, plus at most one succession to fall through to.",
+      "description": "A random choice's random options, plus at most one succession to fall through to.",
       "items": {
         "$ref": "#/$defs/edge",
         "properties": {
@@ -611,7 +611,7 @@
     },
     "branchOut": {
       "type": "array",
-      "description": "A branch's arms, in the order they are tried: at least one gated and at most one else, which comes last, plus at most one succession. Whether the else comes last is checked on load: a schema cannot compare positions.",
+      "description": "A branch node's branches, in the order they are tried: at least one gated and at most one else, which comes last, plus at most one succession. Whether the else comes last is checked on load: a schema cannot compare positions.",
       "items": {
         "$ref": "#/$defs/edge",
         "properties": {
@@ -757,7 +757,7 @@
               "$ref": "#/$defs/branchOut"
             }
           },
-          "description": "A conditional block: its arms are tried in order."
+          "description": "A conditional block: its branches are tried in order."
         },
         {
           "type": "object",

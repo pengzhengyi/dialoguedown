@@ -19,7 +19,7 @@ public sealed class PlaybookNodeSummaryCoverageTests
         (Line("Take a torch."), NodeKinds.Line),
         (Choice(Option("Go left")), NodeKinds.Choice),
         (RandomChoice(Chance(100)), NodeKinds.RandomChoice),
-        (Branch(Arm("Hero.IsBrave")), NodeKinds.Branch),
+        (Branch(Gated("Hero.IsBrave")), NodeKinds.Branch),
         (Control(DefaultCommand("fade out")), NodeKinds.Control),
         (End(), NodeKinds.End),
     ];

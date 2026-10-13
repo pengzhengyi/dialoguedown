@@ -39,18 +39,18 @@ internal static class ScriptNodeExtensions
     };
 
     /// <summary>
-    /// The words a menu shows for an option arm, or empty when the writer wrote nothing that could
+    /// The words a menu shows for an option, or empty when the writer wrote nothing that could
     /// name it.
     /// </summary>
     /// <remarks>
-    /// The label comes from the arm's own first block: the words its line speaks or, when that
+    /// The label comes from the option's own first block: the words its line speaks or, when that
     /// block only jumps, the jump's own text.
     /// <code>
     /// - Alice: I'll wait here.
     /// - =&gt; [Take the east road](#the-market)
     /// </code>
-    /// labels the arms <c>I'll wait here.</c> and <c>Take the east road</c>. An arm with no body
-    /// has no label: the block after the choice is not its own.
+    /// labels the options <c>I'll wait here.</c> and <c>Take the east road</c>. An option with no
+    /// body has no label: the block after the choice is not its own.
     /// </remarks>
     internal static IReadOnlyList<InlineFragment> Label(this Choice option)
     {

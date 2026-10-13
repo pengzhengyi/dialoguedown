@@ -19,7 +19,7 @@ public static class PlaybookCheckerFactory
             new NodePositionChecker(),
             new ReferenceChecker(),
             new OutwardShapeChecker(),
-            new BranchArmOrderChecker(),
+            new BranchOrderChecker(),
             new NumberWeightChecker());
 
     /// <summary>

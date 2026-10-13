@@ -35,7 +35,7 @@ public sealed class ChoosingTests
 
     [Fact]
     public void Offer_AMenuWhoseLabelHoldsACommand_OffersTheWordsAroundItAndPerformsNothing() =>
-        // The command is performed when the option's arm plays, not when the menu is offered.
+        // The command is performed when the path the option leads to plays, not when the menu is offered.
         AssertEvents(Offering(AMenuWithACommandInALabel()), "offer 'Say goodbye  and go'");
 
     [Fact]

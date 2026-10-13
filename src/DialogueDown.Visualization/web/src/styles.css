@@ -4385,7 +4385,7 @@ body.zen .playbook-view > .playbook-source {
 }
 
 /* A marker is drawn only for a list-item box. The framework's reset makes every `li` a plain
-   block, which silently swallows the bullets and turns a choice's arms into loose paragraphs —
+   block, which silently swallows the bullets and turns a choice's options into loose paragraphs —
    the one thing the preview of a list has to show. */
 .preview li {
     display: list-item;

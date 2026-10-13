@@ -134,7 +134,7 @@ the buffer.
 
 The action dispatches all of its edits in a single transaction tagged
 `userEvent: "input"`, exactly as typing would. Undo restores the previous text in
-one step, the live-edit state machine sees a dirty buffer, autosave arms, and the
+one step, the live-edit state machine sees a dirty buffer, autosave starts its timer, and the
 recompile clears the warning through the normal path. No special-case save or
 notification exists.
 

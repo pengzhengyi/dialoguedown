@@ -4,16 +4,20 @@ using DialogueDown.Playbook.Nodes;
 namespace DialogueDown.Playbook.Checking;
 
 /// <summary>
-/// The static shape rule for a node kind: which edge kind its arms are, how many it may carry,
+/// The static shape rule for a node kind: which edge kind it takes, how many of them it may carry,
 /// and — read from the node — whether the node itself is conditional.
 /// </summary>
+/// <remarks>
+/// <see cref="MinEdges"/> and <see cref="MaxEdges"/> count only the edges of
+/// <see cref="EdgeKind"/>; the succession is not counted.
+/// </remarks>
 internal readonly record struct NodeShape(
-    string Kind, System.Type ArmEdge, int MinArms, int MaxArms, bool NodeIsConditional)
+    string Kind, System.Type EdgeKind, int MinEdges, int MaxEdges, bool NodeIsConditional)
 {
     private const int Unbounded = int.MaxValue;
 
     /// <summary>
-    /// The rule for this node's kind. An <see cref="EndNode"/> has no arms and never reaches
+    /// The rule for this node's kind. An <see cref="EndNode"/> has no edges and never reaches
     /// here — the checker returns before asking.
     /// </summary>
     public static NodeShape For(Node node) => node switch

@@ -48,7 +48,7 @@ public sealed class DepartureTests
             text: "Here.");
 
     [Fact]
-    public void Supplied_AtABlockWhoseFirstArmIsWithheld_ArrivesWhereTheNextLeads() =>
+    public void Supplied_AtABlockWhoseFirstBranchIsWithheld_ArrivesWhereTheNextLeads() =>
         AssertSaid(
             Departure.Supplied(
                 PlayContextFactory.AConditionalBlock(),
@@ -58,7 +58,7 @@ public sealed class DepartureTests
             text: "The pick clicks.");
 
     [Fact]
-    public void Supplied_AtABlockWithoutAnElseWhoseArmIsWithheld_ReadsOnPastTheBlock() =>
+    public void Supplied_AtABlockWithoutAnElseWhoseBranchIsWithheld_ReadsOnPastTheBlock() =>
         AssertSaid(
             Departure.Supplied(
                 AConditionalBlockWithoutAnElse(), Waiting(0, "Alice.HasKey"), Answering(("Alice.HasKey", false))),
@@ -108,11 +108,11 @@ public sealed class DepartureTests
     /// Alice: Onward.
     /// </code>
     /// </remarks>
-    /// <returns>A context whose block is skipped when its one arm is withheld.</returns>
+    /// <returns>A context whose block is skipped when its one branch is withheld.</returns>
     private static PlayContext AConditionalBlockWithoutAnElse() =>
         PlayContextFactory.Of(
             [
-                Branch(Arm("Alice.HasKey", target: 1), Succession(2)),
+                Branch(Gated("Alice.HasKey", target: 1), Succession(2)),
                 Line("The key turns.", id: 1, next: 2),
                 Line("Onward.", id: 2, next: 3),
                 End(id: 3),

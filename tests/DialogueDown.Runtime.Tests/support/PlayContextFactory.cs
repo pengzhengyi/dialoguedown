@@ -321,11 +321,11 @@ internal static class PlayContextFactory
     /// &gt; Alice: The door stays shut.
     /// </code>
     /// </remarks>
-    /// <returns>A context whose entry says nothing, and whose every arm says a different line.</returns>
+    /// <returns>A context whose entry says nothing, and whose every branch says a different line.</returns>
     public static PlayContext AConditionalBlock() =>
         Of(
             [
-                Branch(Arm("Alice.HasKey", target: 1), Arm("Alice.HasPick", target: 2), Else(target: 3)),
+                Branch(Gated("Alice.HasKey", target: 1), Gated("Alice.HasPick", target: 2), Else(target: 3)),
                 Line("The key turns.", id: 1, next: 4),
                 Line("The pick clicks.", id: 2, next: 4),
                 Line("The door stays shut.", id: 3, next: 4),

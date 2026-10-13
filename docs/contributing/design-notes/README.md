@@ -124,7 +124,7 @@ flowchart LR
 | --- | --- | --- | --- |
 | 1 | [Dialogue Runtime Architecture](./runtime/Dialogue%20Runtime%20Architecture.md) | The umbrella: the portable playbook, the runner that plays it, and the protocol and seams a host implements | Partially implemented |
 | 2 | [Playbook Format](./runtime/Playbook%20Format.md) | Graph → a versioned JSON playbook, and the reader that loads one back | Implemented |
-| 3 | [Playbook Reader Rules](./runtime/Playbook%20Reader%20Rules.md) | The reader's structural rules beyond the schema: a node's ways out, and a `branch`'s arm order | Implemented |
+| 3 | [Playbook Reader Rules](./runtime/Playbook%20Reader%20Rules.md) | The reader's structural rules beyond the schema: a node's ways out, and the order a `branch` node tries its branches | Implemented |
 | 4 | [Conformance Corpus](./runtime/Conformance%20Corpus.md) | Language-neutral fixtures every runtime must reproduce, and the harness that runs them against the reference reader and runner | Implemented |
 | 5 | [Speech as Plain Text](./runtime/Speech%20as%20Plain%20Text.md) | One public flattening of a line's fragments to plain text, shared by the conformance harness, the report, and a host's fallback rendering | Implemented |
 | 6 | [Runner](./runtime/Runner.md) | The C# runner: the play state, the step that advances it, waiting on the host for a command, and the refusals | Partially implemented |

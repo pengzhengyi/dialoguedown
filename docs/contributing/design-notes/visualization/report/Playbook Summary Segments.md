@@ -78,13 +78,13 @@ so speech needs no quotation marks.
 | `control`, a bare jump | `⇒ The Mountain Road` |
 | `control`, neither | `CONTINUE` |
 | `choice` | Its options as a bulleted list; a conditional option ends `IF Alice.HasMap?` |
-| `random-choice` | `DRAW 1 FROM 2:` then each arm's odds, as a bulleted list |
+| `random-choice` | `DRAW 1 FROM 2:` then each random option's odds, as a bulleted list |
 | `branch` | `IF FoundKey? THEN 12 ELSE 14` |
 | `end` | `END` |
 | A node with its own condition | Led by it: `IF Hero.IsBrave? THEN Keeper: …` |
 
 A branch pairs each condition with its node, which `Leads to` cannot express. A random choice shows
-odds rather than words, because an arm carries no words: the engine picks. A summary is capped at
+odds rather than words, because a random option carries no words: the engine picks. A summary is capped at
 200 characters.
 
 ## Roles
@@ -101,7 +101,7 @@ A role is assigned where the projection knows the part's job; nothing is inferre
 | `command` | `(fade in)`, `ShowBackground(tavern, firelit)` | `.dd-sum-command` |
 | `query` | A `{Key}` for a real `QueryFragment`, and every condition key | `.dd-sum-query` |
 | `absent` | `<no speech>`, `<no label>` | `.dd-sum-absent` (muted italic) |
-| `target` | A node the summary names: a branch arm's number, a jump's words | A control that reveals the node |
+| `target` | A node the summary names: a branch's number, a jump's words | A control that reveals the node |
 
 The set is the `SummaryRole` union in `model.ts` and `SummaryRoles` in C#; every role is a key of
 `SUMMARY_SEGMENT_CLASS`.
@@ -118,7 +118,7 @@ segmentsOf(node, speakers):
     control       -> items(commands) if there are any
                      otherwise -> separator("⇒ ") target(jump words) | keyword("CONTINUE")
     choice        -> items(option per option)
-    random-choice -> keyword("DRAW 1 FROM n") separator(": ") items(odds per arm)
+    random-choice -> keyword("DRAW 1 FROM n") separator(": ") items(odds per random option)
     branch        -> keyword("IF") condition keyword("THEN") target(node), and so on
     end           -> keyword("END")
 
@@ -216,7 +216,7 @@ A `boundary` is a role, not a character, so the client draws it as a break: a me
 bulleted list (alternatives) and a control's commands as a numbered list (order is meaning). The
 cell's text joins the lines with newlines, so search, sort, and copy still read every item and the
 highlight lands on the item that holds the match. A branch's `IF`/`THEN`/`ELSE` keeps one line,
-because its arms are read together.
+because its branches are read together.
 
 ### D8 — A piece that names a node carries that node
 
@@ -225,9 +225,9 @@ node on the piece. The client draws it like any other way out: a control that re
 the JSON and tints its row on hover.
 
 **The role says what a piece is; the target says where it goes.** A branch number and a jump's
-words are `target` pieces, because naming a node is all they do. A menu option and a random arm keep
+words are `target` pieces, because naming a node is all they do. A menu option and a random option keep
 their own role — `plain`, `query`, `absent` — and carry the target beside it. The Dialogue Graph
-draws options and random arms as one kind of route, so both are followable here.
+draws options and random options as one kind of route, so both are followable here.
 
 ### D9 — What a piece means is the client's to say
 
@@ -258,7 +258,7 @@ same awkwardness the value placeholder accepts.
 | A control with one command | No boundary, so it reads as a line. |
 | A conditional list, or a draw's header | Its pieces come before the opening boundary, as the introduction. |
 | A `target` segment cut by the cap | Keeps its node. |
-| An option's condition | A `query` segment with no target: a question about the arm, not a way to it. |
+| An option's condition | A `query` segment with no target: a question about the option, not a way to it. |
 | Two adjacent pieces naming different nodes | Never merged. |
 | An unknown node kind | An empty segment list, so an empty cell. |
 
@@ -267,10 +267,10 @@ same awkwardness the value placeholder accepts.
 | Level | Covers |
 | --- | --- |
 | xUnit — `PlaybookNodeSummary` | Per node kind, the segments' text and roles, and the joined line; a writer's separator, semicolon, colon, keyword, and marker each stay one `plain` segment; the stand-ins. |
-| xUnit — queries and conditions | A real `QueryFragment` is `query`, inside styled and linked words; literal braces are `plain`; a condition carries `?` as a branch arm, a node prefix, and an option condition. |
+| xUnit — queries and conditions | A real `QueryFragment` is `query`, inside styled and linked words; literal braces are `plain`; a condition carries `?` as a branch condition, a node prefix, and an option condition. |
 | xUnit — the cap | A cut inside a segment, at a boundary, with no space, and with a leading condition. |
 | xUnit — boundaries and targets | Opening and between boundaries; none for a lone command; which pieces name which node, including after the cap. |
 | xUnit — union coverage | Every node kind yields segments; the speech walk handles every fragment kind. |
 | Vitest — `playbook-view` | Role classes; a menu bulleted and a command list numbered with the introduction first; tips; a target is a button carrying the jump and reference key; every role has a class. |
 | Vitest — `semantic-table` | List items, numbering, search highlight across items, and a target piece as a control. |
-| Playwright | A real playbook's menu, command list, query tooltip, and an arm followed to its node; axe passes. |
+| Playwright | A real playbook's menu, command list, query tooltip, and a branch followed to its node; axe passes. |

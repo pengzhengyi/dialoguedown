@@ -175,7 +175,7 @@ internal static class Arrival
 
     // A node that hands the host nothing is walked past rather than stood at. A jump written on
     // its own line compiles to one of these: nothing said, nothing performed, one way out. A block
-    // condition is another, which only chooses the arm the run goes on by. Standing at either
+    // condition is another, which only chooses the branch the run goes on by. Standing at either
     // would ask the player to advance past something they were never shown. A menu with no option
     // the player can take is walked past too, by its fall-through, because standing there would
     // wait for a choice the player cannot make.

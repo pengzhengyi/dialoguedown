@@ -46,12 +46,12 @@ changes easy to categorize.
 
 - **A run asks the world what it needs to know** — `Resolve(keys)` joins `Perform` as a request the
   run stops for, answered by `Supply(answers)`: a truth for a guard, words for a query. A line or
-  control block the world withholds is stepped over; a jump or a block condition's arm is taken only
-  when the world allows it, and a block with no arm taken and no `else` is skipped; a query in a line
-  is said as the words that answered it, and an answer of no words leaves nothing in its place. A
-  node is asked about before it plays and again before the run leaves it, so a way out is judged
-  against the world an effect left behind. An answer that does not fit what was asked is refused and
-  the run keeps waiting, so the driver can answer again. See
+  control block the world withholds is stepped over; a jump or a block condition's branch is taken
+  only when the world allows it, and a block with no branch taken and no `else` is skipped; a query
+  in a line is said as the words that answered it, and an answer of no words leaves nothing in its
+  place. A node is asked about before it plays and again before the run leaves it, so a way out is
+  judged against the world an effect left behind. An answer that does not fit what was asked is
+  refused and the run keeps waiting, so the driver can answer again. See
   [Asking the world](docs/contributing/design-notes/runtime/Asking%20the%20World.md).
 
 - **A line carries out the commands written in it** — a line with a command in its speech reaches
@@ -98,26 +98,26 @@ changes easy to categorize.
   [Speech as plain text](docs/contributing/design-notes/runtime/Speech%20as%20Plain%20Text.md).
 
 - **A node's ways out are checked when a playbook loads** — the reader refuses a playbook where a
-  node carries an edge kind it cannot act on, more than one succession, no arm where one is
-  required, or no way onward at all; the schema and the conformance corpus enforce the same as far
-  as they reach. This catches a hand-edited or tool-written playbook that would play differently
-  between two conformant runtimes. See
+  node carries an edge kind it cannot act on, more than one succession, no option, random option,
+  or branch where one is required, or no way onward at all; the schema and the conformance corpus
+  enforce the same as far as they reach. This catches a hand-edited or tool-written playbook that
+  would play differently between two conformant runtimes. See
   [Node outward shape](docs/contributing/design-notes/runtime/Playbook%20Reader%20Rules.md).
 
-- **A branch's arms are checked for order when a playbook loads** — the reader refuses a branch whose
-  arms do not ascend by `order`, whose `else` is not the last arm, or that carries no gated arm, and
-  the schema requires at least one gated arm and allows at most one `else`. This keeps a reordered or
-  hand-edited if/elseif/else from telling a different story to two conformant runtimes. See
-  [Branch arm order](docs/contributing/design-notes/runtime/Playbook%20Reader%20Rules.md).
+- **A branch node's branches are checked for order when a playbook loads** — the reader refuses a
+  branch node whose `else` is not the last branch, or that carries no gated branch, and the schema
+  requires at least one gated branch and allows at most one `else`. This keeps a reordered or hand-edited if/elseif/else from telling a different story to two
+  conformant runtimes. See
+  [Branch order](docs/contributing/design-notes/runtime/Playbook%20Reader%20Rules.md).
 
 - **Jump from a playbook table into the JSON** — in the Playbook tab, clicking a node number,
   a speaker's name, or the entry node scrolls the serialized playbook to that element and centers
   it, so reading `#the-market → 33` no longer means hunting for node 33 by hand. See
   [Jumping into the Playbook](docs/contributing/design-notes/visualization/report/Navigating%20the%20Playbook.md).
 
-- **`DLG2017` warns about an option a player cannot read** — an arm with neither words nor a named
-  jump compiles to a blank line in the menu, which the compiler now points at instead of leaving
-  for a playtest to find. See
+- **`DLG2017` warns about an option a player cannot read** — an option with neither words nor a
+  named jump compiles to a blank line in the menu, which the compiler now points at instead of
+  leaving for a playtest to find. See
   [the error catalog](docs/guide/error-codes.md#dlg2017).
 
 - **A query in a label** — a link's text, an image's alt text, or a menu option written as a jump
@@ -154,7 +154,7 @@ changes easy to categorize.
 
 - **The Playbook tab's summary column is drawn as what each node actually is** — a menu's options
   and a control's commands are lists now, numbered when their order is meaning; a piece that names
-  a node (a branch arm's number, a jump's own words, an option's label) is a button that reveals
+  a node (a branch's number, a jump's own words, an option's label) is a button that reveals
   that node in the JSON beside the table, and hovering it lights the node's row; and a piece whose
   words do not carry its meaning explains itself on hover. A condition also reads as the query it
   is: `IF FoundKey? THEN 12`. See
@@ -208,9 +208,9 @@ changes easy to categorize.
   table, and a click copies it verbatim. See
   [Tag Capsules](docs/contributing/design-notes/visualization/report/Table%20Cell%20Conventions.md).
 
-- **Choosing a choice arm in the Dialogue Graph shows what the player would read** — the details
-  panel named the two nodes an arm joins but not the wording it offers, so answering "what is
-  picked here?" meant following the arm to find out. The drawing is unchanged.
+- **Choosing a choice's option in the Dialogue Graph shows what the player would read** — the
+  details panel named the two nodes an option joins but not the wording it offers, so answering
+  "what is picked here?" meant following the option to find out. The drawing is unchanged.
 
 - **A table cell with nothing in it is now empty** — the report wrote an absent speaker id, an
   empty tag list, or a speaker that is not the default as `—` or `N/A`, so a playbook where one
@@ -218,6 +218,12 @@ changes easy to categorize.
   Every table now says nothing when there is nothing to say, marks the default speaker with a
   tick, and names the nameless one `(anonymous)` in all three tabs rather than three ways. See
   [Saying Nothing Across the Report](docs/contributing/design-notes/visualization/report/Table%20Cell%20Conventions.md).
+
+- **The playbook names each way forward by its kind** — the reader's refusal messages, the
+  schema's descriptions, and the conformance cases `two-else-arms` and `else-arm-not-last` (now
+  `two-else-branches` and `else-branch-not-last`) say "option", "random option", "branch", or
+  "edge" instead of "arm". Wire names are unchanged, so every playbook reads as before. See
+  [Playbook Reader Rules](docs/contributing/design-notes/runtime/Playbook%20Reader%20Rules.md).
 
 ### Removed
 
@@ -312,7 +318,7 @@ changes easy to categorize.
 - **A menu option written as a jump is offered by the words the writer gave it** — `- => [Take the
   east road](#the-market)`, the ordinary way to write a branching menu, compiled to a blank option
   label, so a runtime building a menu drew an empty row unless it read the words off the node the
-  arm led to. Those words now name the option as well as the jump. This filled 18 of the 52 option
+  option led to. Those words now name the option as well as the jump. This filled 18 of the 52 option
   labels across the shipped examples, and their playbooks change accordingly.
 
 ## [0.2.0] - 2026-08-25

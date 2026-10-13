@@ -85,11 +85,11 @@ rather than a script.
 | `a-command-too-late` | Is a command after the end refused with the reason the session names? | yes |
 | `a-conditional-line` | Is a line skipped without ending the run? | yes |
 | `a-conditional-jump` | Is a jump taken when its condition holds? | yes |
-| `a-conditional-block` | Are the arms tried in the order written? | yes |
+| `a-conditional-block` | Are the branches tried in the order written? | yes |
 | `a-query-in-speech` | Is `resolve` raised, and the supplied answer spoken? | yes |
 | `a-query-after-a-command` | Is a query written after a command asked only once the command is done? | yes |
 | `a-query-in-a-link` | Is a query in a link's label resolved, and the answer spoken as part of the line? | yes |
-| `a-player-choice` | Is the menu offered, and does a choice lead into its arm? | yes |
+| `a-player-choice` | Is the menu offered, and does a choice lead into its option's body? | yes |
 | `a-divert-option` | Does a menu written as jumps (`- => [Label](#anchor)`) lead where it says? | yes |
 | `a-numbered-menu` | Is a numbered menu offered as ordered, its positions counted in the order written? | yes |
 | `two-options-with-the-same-label` | Are two options with one label both offered, and told apart by position? | yes |

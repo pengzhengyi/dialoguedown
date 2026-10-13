@@ -5,7 +5,7 @@ namespace DialogueDown.Playbook.Tests.Edges;
 public sealed class BranchEdgeTests
 {
     [Fact]
-    public void RoundTrip_AGatedArm_KeepsItsCondition()
+    public void RoundTrip_AGatedBranch_KeepsItsCondition()
     {
         const string Json = """
             {
@@ -31,8 +31,8 @@ public sealed class BranchEdgeTests
             }
             """;
 
-        var arm = PlaybookJsonAssert.AssertRoundTrip<Edge, BranchEdge>(Json);
+        var branch = PlaybookJsonAssert.AssertRoundTrip<Edge, BranchEdge>(Json);
 
-        Assert.Null(arm.Condition);
+        Assert.Null(branch.Condition);
     }
 }

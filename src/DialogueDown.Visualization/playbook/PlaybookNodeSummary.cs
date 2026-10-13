@@ -51,7 +51,7 @@ internal static class PlaybookNodeSummary
     private const string NoLabel = "<no label>";
 
     /// <summary>
-    /// How a random arm with a bare <c>%</c> weight reads: an equal share of what is left.
+    /// How a random option with a bare <c>%</c> weight reads: an equal share of what is left.
     /// </summary>
     private const string Evenly = "evenly";
 
@@ -136,38 +136,38 @@ internal static class PlaybookNodeSummary
             ? speakers[speaker].Name ?? AnonymousSpeaker
             : UnknownSpeaker;
 
-    private static ImmutableArray<PlaybookSegmentView> Branch(BranchNode branch)
+    private static ImmutableArray<PlaybookSegmentView> Branch(BranchNode node)
     {
-        var arms = ImmutableArray.CreateBuilder<PlaybookSegmentView>();
+        var segments = ImmutableArray.CreateBuilder<PlaybookSegmentView>();
 
-        foreach (var (arm, index) in branch.Out.OfType<BranchEdge>().Select((arm, index) => (arm, index)))
+        foreach (var (branch, index) in node.Out.OfType<BranchEdge>().Select((branch, index) => (branch, index)))
         {
-            arms.AddRange(Arm(arm, index == 0));
+            segments.AddRange(BranchSegments(branch, index == 0));
         }
 
-        return arms.ToImmutable();
+        return segments.ToImmutable();
     }
 
-    // The first arm is read as a plain IF and every arm after it is introduced by ELSE. An
-    // unguarded arm has no IF of its own, so that introduction is all it carries.
-    private static ImmutableArray<PlaybookSegmentView> Arm(BranchEdge arm, bool isFirst) =>
-        (isFirst, arm.Condition) switch
+    // The first branch is read as a plain IF and every branch after it is introduced by ELSE. An
+    // unguarded branch has no IF of its own, so that introduction is all it carries.
+    private static ImmutableArray<PlaybookSegmentView> BranchSegments(BranchEdge branch, bool isFirst) =>
+        (isFirst, branch.Condition) switch
         {
             (true, KeyCondition key) =>
             [
                 PlaybookSegmentView.Keyword(NodeCondition),
                 Condition(key.Key),
                 PlaybookSegmentView.Keyword(NodeConsequence),
-                Reaches(arm.Target),
+                Reaches(branch.Target),
             ],
             (false, KeyCondition key) =>
             [
                 PlaybookSegmentView.Keyword(BranchElseIf),
                 Condition(key.Key),
                 PlaybookSegmentView.Keyword(NodeConsequence),
-                Reaches(arm.Target),
+                Reaches(branch.Target),
             ],
-            _ => [PlaybookSegmentView.Keyword(BranchElse), Reaches(arm.Target)],
+            _ => [PlaybookSegmentView.Keyword(BranchElse), Reaches(branch.Target)],
         };
 
     // A host only performs commands, so the other speech kinds render as nothing and drop out of
@@ -196,9 +196,10 @@ internal static class PlaybookNodeSummary
             _ => string.Empty,
         };
 
-    // An arm's words are what the reader picks, or what the dice fall on, so every piece of them
-    // names the node the arm leads to: where a label goes is part of what the label says. The
-    // arm's guard is left alone — it is a question about the arm, not a way to its target.
+    // The words of an option or a random option are what the reader picks, or what the dice fall
+    // on, so every piece of them names the node the edge leads to: where a label goes is part of
+    // what the label says. The edge's guard is left alone — it is a question about the edge, not a
+    // way to its target.
     private static ImmutableArray<PlaybookSegmentView> Reaching(
         ImmutableArray<PlaybookSegmentView> pieces, int target) =>
         [.. pieces.Select(piece => piece with { Target = target })];
@@ -263,19 +264,19 @@ internal static class PlaybookNodeSummary
 
     private static ImmutableArray<PlaybookSegmentView> RandomChoice(RandomChoiceNode random)
     {
-        var arms = random.Out.OfType<RandomOptionEdge>().ToImmutableArray();
+        var options = random.Out.OfType<RandomOptionEdge>().ToImmutableArray();
 
         return
         [
             PlaybookSegmentView.Keyword(
-                $"{DrawPrefix}{arms.Length.ToString(CultureInfo.InvariantCulture)}"),
+                $"{DrawPrefix}{options.Length.ToString(CultureInfo.InvariantCulture)}"),
             PlaybookSegmentView.Separator(OddsDivider),
-            .. Items([.. arms.Select(Odds)], OptionSeparator),
+            .. Items([.. options.Select(Odds)], OptionSeparator),
         ];
     }
 
-    private static ImmutableArray<PlaybookSegmentView> Odds(RandomOptionEdge arm) =>
-        [.. Reaching(Share(arm.Weight), arm.Target), .. Guarded(arm.Condition)];
+    private static ImmutableArray<PlaybookSegmentView> Odds(RandomOptionEdge option) =>
+        [.. Reaching(Share(option.Weight), option.Target), .. Guarded(option.Condition)];
 
     private static ImmutableArray<PlaybookSegmentView> Share(ChoiceWeight weight) =>
         weight switch
@@ -287,7 +288,7 @@ internal static class PlaybookNodeSummary
             _ => [],
         };
 
-    // An option and a random arm both carry their condition after their own text, so the shape is
+    // An option and a random option both carry their condition after their own text, so the shape is
     // written once.
     private static ImmutableArray<PlaybookSegmentView> Guarded(Condition? condition) =>
         condition is KeyCondition key ? [PlaybookSegmentView.Keyword(Guard), Condition(key.Key)] : [];

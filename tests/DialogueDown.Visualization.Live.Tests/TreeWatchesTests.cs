@@ -48,7 +48,7 @@ public sealed class TreeWatchesTests
 
         // The quiet period runs on the injected clock, so a report fires only when the test
         // advances it, whenever the operating system delivers the writes. The loop stops at the
-        // first report, so a write delivered later can only re-arm a clock that no longer moves.
+        // first report, so a write delivered later can only restart a clock that no longer moves.
         var deadline = DateTime.UtcNow + _patience;
         while (Volatile.Read(ref count) == 0 && DateTime.UtcNow < deadline)
         {

@@ -2,7 +2,7 @@
   "$schema": "https://pengzhengyi.github.io/dialoguedown/schema/fixture-0.schema.json",
   "name": "two options with the same label are both offered, and a choice tells them apart by position",
   "playbook": "playbook.json",
-  "because": "nothing stops two options saying the same thing while leading to different arms, so a label cannot name an option -- a runner that keyed options by label would merge the two or always take the first; choosing 1 must reach the second arm",
+  "because": "nothing stops two options saying the same thing while leading to different places, so a label cannot name an option -- a runner that keyed options by label would merge the two or always take the first; choosing 1 must reach the second option's path",
   "session": [
     { "expect": { "said": { "speaker": "Alice", "speech": "Pick a box." } } },
     { "send": "next" },

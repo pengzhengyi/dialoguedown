@@ -61,7 +61,7 @@ export interface DisplayEdge {
     fromId: string;
     toId: string;
     kind: DisplayEdgeKind;
-    /** What the link means — a fall-through, a jump, a chosen arm — driving its color. */
+    /** What the link means — a fall-through, a jump, a chosen option — driving its color. */
     category?: string;
     /**
      * What the writer called this route, for a link that carries words of its own. A jump becomes

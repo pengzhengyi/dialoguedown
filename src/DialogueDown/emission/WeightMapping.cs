@@ -4,11 +4,11 @@ using Ast = DialogueDown.Script.Ast;
 namespace DialogueDown.Emission;
 
 /// <summary>
-/// Writes how often a random arm should be taken.
+/// Writes how often a random option should be taken.
 /// </summary>
 /// <remarks>
 /// A weight is written as an object with a kind rather than as a bare number, because two of the
-/// three kinds have no number to write: an automatic share depends on the arms offered alongside
+/// three kinds have no number to write: an automatic share depends on the options offered alongside
 /// it, and a queried one is whatever the game says at the moment of asking.
 /// </remarks>
 internal static class WeightMapping

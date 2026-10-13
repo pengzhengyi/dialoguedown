@@ -115,7 +115,7 @@ jobs:
           if failures:
               raise SystemExit("\n".join(failures))
 
-          # Not every line can be reached: a closed union's default arm, a `break` the language
+          # Not every line can be reached: a closed union's default case, a `break` the language
           # requires after a call that throws, a constructor no subclass calls. The aspirational
           # target therefore leaves room for them rather than asking for the impossible.
           if line < 95:
