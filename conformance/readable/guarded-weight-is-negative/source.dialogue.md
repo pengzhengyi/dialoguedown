@@ -1,4 +1,4 @@
-<!-- broken: the guarded arm's weight is negative
+<!-- broken: the guarded random option's weight is negative
 
      "percentage": -10
 -->

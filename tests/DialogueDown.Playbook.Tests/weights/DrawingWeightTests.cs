@@ -95,12 +95,12 @@ public sealed class DrawingWeightTests
     [Fact]
     public void Shares_GiveANumberOfZeroNothing_AndTheRestWhatTheyWouldWithoutIt()
     {
-        // An arm left out of a draw is a number of zero: the others share the draw as they would
-        // if it had never been written.
-        var withTheArm = DrawingWeight.Shares([new Number(0), new Number(30), new Auto()]);
+        // A random option left out of a draw is a number of zero: the others share the draw as they
+        // would if it had never been written.
+        var withIt = DrawingWeight.Shares([new Number(0), new Number(30), new Auto()]);
         var withoutIt = DrawingWeight.Shares([new Number(30), new Auto()]);
 
-        Assert.Equal([0.0, .. withoutIt], withTheArm);
+        Assert.Equal([0.0, .. withoutIt], withIt);
     }
 
     [Fact]

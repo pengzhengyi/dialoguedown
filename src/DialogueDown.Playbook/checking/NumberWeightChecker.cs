@@ -15,8 +15,8 @@ namespace DialogueDown.Playbook.Checking;
 /// <c>1e400</c>, which reads as infinite. A draw is made against the total of the shares, so
 /// either would leave the draw without meaning. Checking here lets a runtime trust every number
 /// a playbook carries; only the numbers the world supplies for key weights are left to check at
-/// play time. A guarded arm's number is checked like any other, because a guard decides whether
-/// an arm is drawn, not what its weight means.
+/// play time. A guarded random option's number is checked like any other, because a guard decides
+/// whether a random option is drawn, not what its weight means.
 /// </remarks>
 public sealed class NumberWeightChecker : IPlaybookChecker
 {
@@ -38,7 +38,7 @@ public sealed class NumberWeightChecker : IPlaybookChecker
     {
         var numbers = random.Out
             .OfType<RandomOptionEdge>()
-            .Select(arm => arm.Weight)
+            .Select(option => option.Weight)
             .OfType<NumberWeight>()
             .Select(number => number.Percentage)
             .ToList();
@@ -48,7 +48,7 @@ public sealed class NumberWeightChecker : IPlaybookChecker
             if (!DrawingWeight.IsNonNegativeAndFinite(percentage))
             {
                 Refuse(
-                    $"Node {random.Id}, a random choice, has an arm weighted "
+                    $"Node {random.Id}, a random choice, has a random option weighted "
                         + $"{percentage.ToString(CultureInfo.InvariantCulture)}%; a number weight must be "
                         + "finite and not negative.");
             }

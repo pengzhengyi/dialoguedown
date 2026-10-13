@@ -1,4 +1,4 @@
-<!-- broken: an arm's weight is negative
+<!-- broken: a random option's weight is negative
 
      "percentage": -10
 -->

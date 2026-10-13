@@ -3,5 +3,5 @@
   "name": "weights adding up past a double are refused",
   "playbook": "playbook.json",
   "verdict": "refuse",
-  "because": "two arms weigh 1e308 each, which is finite, but their total is more than a double holds, so no draw can be made against it"
+  "because": "two random options weigh 1e308 each, which is finite, but their total is more than a double holds, so no draw can be made against it"
 }

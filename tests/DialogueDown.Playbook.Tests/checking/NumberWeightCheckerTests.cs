@@ -36,14 +36,15 @@ public sealed class NumberWeightCheckerTests
         var error = Assert.Throws<InvalidPlaybookException>(() => _checker.Check(playbook));
 
         Assert.Equal(
-            $"Node 0, a random choice, has an arm weighted {written}; a number weight must be finite and not negative.",
+            $"Node 0, a random choice, has a random option weighted {written}; a number weight must be finite "
+                + "and not negative.",
             error.Message);
     }
 
     [Fact]
-    public void Check_AGuardedArmsNumber_IsCheckedToo()
+    public void Check_AGuardedRandomOptionsNumber_IsCheckedToo()
     {
-        // A guard decides whether the arm is drawn, not whether its weight makes sense.
+        // A guard decides whether the random option is drawn, not whether its weight makes sense.
         var playbook = PlaybookFactory.Document(
             nodes:
             [

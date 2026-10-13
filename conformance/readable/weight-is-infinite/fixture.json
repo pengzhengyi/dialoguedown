@@ -3,5 +3,5 @@
   "name": "an infinite weight is refused",
   "playbook": "playbook.json",
   "verdict": "refuse",
-  "because": "an arm weighs 1e400, which reads as infinity, so the total of the weights is infinite and no draw can be made against it"
+  "because": "a random option weighs 1e400, which reads as infinity, so the total of the weights is infinite and no draw can be made against it"
 }

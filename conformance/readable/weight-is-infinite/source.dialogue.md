@@ -1,4 +1,4 @@
-<!-- broken: an arm's weight is too large for a double, so it reads as infinite
+<!-- broken: a random option's weight is too large for a double, so it reads as infinite
 
      "percentage": 1e400
 -->
