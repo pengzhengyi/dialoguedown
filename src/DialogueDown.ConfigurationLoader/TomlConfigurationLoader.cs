@@ -8,7 +8,7 @@ namespace DialogueDown.ConfigurationLoader;
 /// <summary>
 /// Reads a DialogueDown project's <c>dialogue.toml</c> into a <see cref="CompilerOptions"/> so the
 /// engine-agnostic core never takes a TOML dependency. It reads the speakers, the compilation
-/// mode, and how unmodeled Markdown is handled; a config that sets none of them yields
+/// mode, how unmodeled Markdown is handled, and which diagnostics are disabled; a config that sets none of them yields
 /// <see cref="CompilerOptions.Default"/>.
 /// </summary>
 public static class TomlConfigurationLoader
@@ -39,8 +39,9 @@ public static class TomlConfigurationLoader
         CompilationMode? mode = new ConfiguredModeReader().Read(document);
         IReadOnlyDictionary<UnmodeledNodeKind, UnmodeledNodeHandling> unmodeled =
             new ConfiguredUnmodeledReader().Read(document);
+        IReadOnlyList<string> disabled = new ConfiguredDiagnosticsReader().Read(document);
 
-        if (speakers.Count == 0 && mode is null && unmodeled.Count == 0)
+        if (speakers.Count == 0 && mode is null && unmodeled.Count == 0 && disabled.Count == 0)
         {
             return CompilerOptions.Default;
         }
@@ -48,6 +49,7 @@ public static class TomlConfigurationLoader
         return new CompilerOptions(
             mode ?? CompilerOptions.Default.Mode,
             speakers,
-            unmodeled);
+            unmodeled,
+            disabled);
     }
 }

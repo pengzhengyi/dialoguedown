@@ -170,4 +170,33 @@ public sealed class TomlConfigurationLoaderTests
             [markdown.unmodeled]
             footnote = "ignore"
             """, SourceName));
+
+    [Fact]
+    public void Parse_WithDisabledDiagnostics_WrapsThemInOptions()
+    {
+        CompilerOptions options = TomlConfigurationLoader.Parse("""
+            [diagnostics]
+            disable = ["dlg3002", "DLG1114"]
+            """, SourceName);
+
+        Assert.Equal(["DLG1114", "DLG3002"], options.DisabledDiagnostics.Order());
+        Assert.Equal(CompilerOptions.Default.Mode, options.Mode);
+    }
+
+    [Fact]
+    public void Parse_NoDiagnosticsSection_DisablesNothing() =>
+        Assert.Empty(TomlConfigurationLoader.Parse("""
+            mode = "best-effort"
+            """, SourceName).DisabledDiagnostics);
+
+    [Theory]
+    [InlineData("DLG302")]
+    [InlineData("DLG2001")]
+    public void Parse_CodeThatCannotBeDisabled_ThrowsAConfigurationError(string code) =>
+        // The reader rejects it before CompilerOptions would, so the writer sees a located config
+        // error rather than an ArgumentException.
+        Assert.Throws<DialogueConfigurationException>(() => TomlConfigurationLoader.Parse($"""
+            [diagnostics]
+            disable = ["{code}"]
+            """, SourceName));
 }
