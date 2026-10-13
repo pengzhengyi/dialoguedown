@@ -102,6 +102,18 @@ public sealed class RunnerTests
     }
 
     [Fact]
+    public void Step_DrawnAtARandomChoice_ArrivesWhereTheRandomOptionItPicksLeads()
+    {
+        var context = PlayContextFactory.ARandomChoice();
+        var waiting = new PlayState(new AwaitingDraw(0, [50, 30, 20]));
+
+        var result = Runner.Step(context, waiting, new Drawn(0.7));
+
+        AssertSaid(result, speaker: "Guard", text: "Move along.");
+        AssertAt(result, 2);
+    }
+
+    [Fact]
     public void Step_DrawnAwayFromARandomChoice_IsMisplacedRatherThanUnknown()
     {
         var context = PlayContextFactory.OneLine();

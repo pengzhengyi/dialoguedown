@@ -51,6 +51,7 @@ public static class Runner
             (AwaitingDone waiting, Done) => Playing.Performed(context, waiting),
             (AwaitingSupply waiting, Supply supply) => Supplied(context, waiting, supply),
             (AwaitingChoice waiting, Choose choose) => Choosing.Chosen(context, waiting, choose),
+            (AwaitingDraw waiting, Drawn drawn) => Drawing.Drawn(context, waiting, drawn),
             (AwaitingDone, Failed) => Hold(state),
             (AtEnd, Next) => Refuse(
                 state,

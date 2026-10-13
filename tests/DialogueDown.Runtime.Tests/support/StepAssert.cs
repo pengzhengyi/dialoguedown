@@ -113,6 +113,19 @@ internal static class StepAssert
         return waiting;
     }
 
+    /// <summary>Asserts a step left the run at a random choice, waiting for the host to draw.</summary>
+    /// <param name="result">What the step produced.</param>
+    /// <param name="node">Where it should be waiting.</param>
+    /// <returns>The wait, so a test can check the shares it kept.</returns>
+    public static AwaitingDraw AssertAwaitingDraw(StepResult result, int node)
+    {
+        var waiting = Assert.IsType<AwaitingDraw>(result.State.Situation);
+
+        Assert.Equal(node, waiting.Node);
+
+        return waiting;
+    }
+
     /// <summary>Asserts a step asked the world about keys, and waits at a node for the answers.</summary>
     /// <param name="result">What the step produced.</param>
     /// <param name="node">Where it should be waiting.</param>

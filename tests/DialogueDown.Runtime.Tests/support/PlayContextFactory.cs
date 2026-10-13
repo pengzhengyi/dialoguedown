@@ -178,6 +178,26 @@ internal static class PlayContextFactory
             ],
             [null]);
 
+    /// <summary>A random choice among three lines, each said as it is drawn, then the end.</summary>
+    /// <remarks>
+    /// <code>
+    /// - `50%` Guard: Halt!
+    /// - `30%` Guard: Move along.
+    /// - `%` Guard: Lovely day.
+    /// </code>
+    /// </remarks>
+    /// <returns>A context that begins at the random choice.</returns>
+    public static PlayContext ARandomChoice() =>
+        Of(
+            [
+                RandomChoice(Chance(50, target: 1), Chance(30, target: 2), EvenChance(target: 3)),
+                Line("Halt!", id: 1, next: 4),
+                Line("Move along.", id: 2, next: 4),
+                Line("Lovely day.", id: 3, next: 4),
+                End(id: 4),
+            ],
+            ["Guard"]);
+
     /// <summary>A random choice, which is a node kind the runner cannot play.</summary>
     /// <remarks>
     /// <code>
