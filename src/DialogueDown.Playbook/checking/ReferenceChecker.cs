@@ -1,5 +1,6 @@
 using System.Globalization;
 using DialogueDown.Playbook.Nodes;
+using static DialogueDown.Playbook.Checking.PlaybookRefusal;
 
 namespace DialogueDown.Playbook.Checking;
 
@@ -54,7 +55,7 @@ public sealed class ReferenceChecker : IPlaybookChecker
     {
         if (reference >= count)
         {
-            throw new InvalidPlaybookException(
+            Refuse(
                 $"{what} points at {Position(reference)}, but there are only {Position(count)}.");
         }
     }
