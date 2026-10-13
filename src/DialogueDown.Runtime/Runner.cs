@@ -88,7 +88,7 @@ public static class Runner
     // A known command sent in the wrong situation is misplaced; any other command is unknown.
     // Conformance tests compare this reason, never the explanation's wording.
     private static RefusalReason ReasonFor(Command command) =>
-        command is Next or Done or Failed or Supply or Choose
+        command is Next or Done or Failed or Supply or Choose or Drawn
             ? RefusalReason.Misplaced
             : RefusalReason.UnknownCommand;
 

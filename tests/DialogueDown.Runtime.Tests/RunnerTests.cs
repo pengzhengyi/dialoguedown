@@ -102,6 +102,17 @@ public sealed class RunnerTests
     }
 
     [Fact]
+    public void Step_DrawnAwayFromARandomChoice_IsMisplacedRatherThanUnknown()
+    {
+        var context = PlayContextFactory.OneLine();
+
+        var result = Runner.Step(context, Started(context), new Drawn(0.5));
+
+        AssertRefused(result, RefusalReason.Misplaced, "A run cannot take Drawn at node 0.");
+        AssertAt(result, 0);
+    }
+
+    [Fact]
     public void Step_DoneAfterALinesCommand_GivesThePlayerTheTurn()
     {
         // Nothing is left for the host to answer, so the driver waits for the player's Next.

@@ -34,6 +34,7 @@ internal static class SituationExtensions
             AwaitingSupply { Moment: Moment.ToLeave } waiting =>
                 $"at node {waiting.Node}, waiting for the world before it leaves",
             AwaitingChoice waiting => $"at node {waiting.Node}, waiting for the player to choose",
+            AwaitingDraw waiting => $"at node {waiting.Node}, waiting for the host to draw",
             AtEnd => "at the end",
 
             // Every situation is named above, so one added later arrives here as a failure rather
