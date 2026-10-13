@@ -323,7 +323,8 @@
                 "key-needed-both-ways",
                 "unplayable-node",
                 "no-such-option",
-                "unavailable-option"
+                "unavailable-option",
+                "invalid-draw"
               ]
             }
           },
