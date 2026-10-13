@@ -2,6 +2,7 @@ using System.Globalization;
 using DialogueDown.Playbook.Edges;
 using DialogueDown.Playbook.Nodes;
 using DialogueDown.Playbook.Weights;
+using static DialogueDown.Playbook.Checking.PlaybookRefusal;
 
 namespace DialogueDown.Playbook.Checking;
 
@@ -60,7 +61,4 @@ public sealed class NumberWeightChecker : IPlaybookChecker
                     + "double holds; their total must be finite.");
         }
     }
-
-    [System.Diagnostics.CodeAnalysis.DoesNotReturn]
-    private static void Refuse(string message) => throw new InvalidPlaybookException(message);
 }

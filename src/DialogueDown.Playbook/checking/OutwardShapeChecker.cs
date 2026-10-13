@@ -1,5 +1,6 @@
 using DialogueDown.Playbook.Edges;
 using DialogueDown.Playbook.Nodes;
+using static DialogueDown.Playbook.Checking.PlaybookRefusal;
 
 namespace DialogueDown.Playbook.Checking;
 
@@ -124,7 +125,4 @@ public sealed class OutwardShapeChecker : IPlaybookChecker
         : edgeKind == typeof(BranchEdge) ? EdgeKinds.Branch
         : edgeKind == typeof(DivertEdge) ? EdgeKinds.Divert
         : edgeKind.Name;
-
-    [System.Diagnostics.CodeAnalysis.DoesNotReturn]
-    private static void Refuse(string message) => throw new InvalidPlaybookException(message);
 }

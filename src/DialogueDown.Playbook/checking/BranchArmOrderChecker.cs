@@ -1,5 +1,6 @@
 using DialogueDown.Playbook.Edges;
 using DialogueDown.Playbook.Nodes;
+using static DialogueDown.Playbook.Checking.PlaybookRefusal;
 
 namespace DialogueDown.Playbook.Checking;
 
@@ -70,7 +71,4 @@ public sealed class BranchArmOrderChecker : IPlaybookChecker
                     + "the else is tried last.");
         }
     }
-
-    [System.Diagnostics.CodeAnalysis.DoesNotReturn]
-    private static void Refuse(string message) => throw new InvalidPlaybookException(message);
 }
