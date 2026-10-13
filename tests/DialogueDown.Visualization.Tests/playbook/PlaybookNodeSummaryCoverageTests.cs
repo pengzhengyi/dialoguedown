@@ -64,7 +64,7 @@ public sealed class PlaybookNodeSummaryCoverageTests
             Line(string.Join(" ", Enumerable.Repeat("word", 200))), Speakers("Alice"));
 
         Assert.EndsWith("word…", summary, StringComparison.Ordinal);
-        Assert.True(summary.Length <= 201, $"The summary ran to {summary.Length} characters.");
+        Assert.InRange(summary.Length, 0, 201);
         Assert.StartsWith("Alice: word word", summary, StringComparison.Ordinal);
     }
 
@@ -78,6 +78,6 @@ public sealed class PlaybookNodeSummaryCoverageTests
             Speakers());
 
         Assert.EndsWith("…", summary, StringComparison.Ordinal);
-        Assert.True(summary.Length <= 201, $"The summary ran to {summary.Length} characters.");
+        Assert.InRange(summary.Length, 0, 201);
     }
 }

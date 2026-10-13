@@ -53,8 +53,9 @@ public sealed class PlaybookProjectionTests
         // so it is not asserted.
         Assert.Contains("core", metadata.Requires);
         Assert.Equal(0, metadata.Entry);
-        Assert.True(metadata.NodeCount > 0, "A compiled script has nodes to play.");
-        Assert.True(metadata.AnchorCount > 0, "The script has a heading, so it has an anchor.");
+        // Alice's line, the menu, the line each option echoes, and the end.
+        Assert.Equal(5, metadata.NodeCount);
+        Assert.Equal(1, metadata.AnchorCount);
     }
 
     [Fact]
