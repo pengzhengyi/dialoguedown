@@ -6,11 +6,12 @@ using static DialogueDown.Runtime.Tests.StepAssert;
 namespace DialogueDown.Runtime.Tests.Stepping;
 
 /// <summary>
-/// How a random choice takes the host's draw, asked of the random choice alone.
+/// How a random choice asks the host for a draw and takes it, asked of the random choice alone.
 /// </summary>
 /// <remarks>
-/// Each test starts from a wait for a draw at <see cref="PlayContextFactory.ARandomChoice"/>, whose
-/// three random options lead to the lines at nodes 1, 2, and 3.
+/// Each test of <see cref="Drawing.Drawn"/> starts from a wait for a draw at
+/// <see cref="PlayContextFactory.ARandomChoice"/>, whose three random options lead to the lines at
+/// nodes 1, 2, and 3.
 /// </remarks>
 public sealed class DrawingTests
 {
@@ -20,6 +21,10 @@ public sealed class DrawingTests
         { 1.5, "1.5" },
         { double.NaN, "NaN" },
     };
+
+    [Fact]
+    public void AskForADraw_ShowsTheHostTheSharesAndWaitsWithThem() =>
+        AssertAskedForADraw(Drawing.AskForADraw(3, [50, 30, 20]), 3, 50, 30, 20);
 
     [Fact]
     public void Drawn_InsideASpan_ArrivesWhereItsRandomOptionLeads()

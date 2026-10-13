@@ -5,7 +5,7 @@ using static DialogueDown.TestSupport.PlaybookNodeFactory;
 namespace DialogueDown.Runtime.Tests.Stepping;
 
 /// <summary>
-/// Whether a random choice has anything to draw, worked out from its weights.
+/// What a random choice's shares come to, and whether it has anything to draw.
 /// </summary>
 public sealed class RandomChoiceSharesTests
 {
@@ -46,6 +46,40 @@ public sealed class RandomChoiceSharesTests
     [Fact]
     public void AnyDrawable_OfNoShares_IsFalse() =>
         Assert.False(RandomChoiceShares.AnyDrawable([]));
+
+    [Fact]
+    public void TryWorkOut_NumbersAndAnAutoWeight_ComeToTheirShares()
+    {
+        var workedOut = RandomChoiceShares.TryWorkOut(ARandomChoiceOfTwoNumbersAndAnAutoWeight(), out var shares);
+
+        // The auto weight takes what the numbers leave of 100.
+        Assert.True(workedOut);
+        Assert.Equal([50.0, 30.0, 20.0], shares);
+    }
+
+    [Fact]
+    public void TryWorkOut_WhenARandomOptionIsGuarded_FailsBecauseOnlyTheWorldCanSay() =>
+        Assert.False(RandomChoiceShares.TryWorkOut(ARandomChoiceWithAGuardedZero(), out _));
+
+    [Fact]
+    public void TryWorkOut_WhenARandomOptionIsWeightedByAKey_FailsBecauseOnlyTheWorldCanSay() =>
+        Assert.False(RandomChoiceShares.TryWorkOut(ARandomChoiceWithAKeyWeightBesideAZero(), out _));
+
+    [Fact]
+    public void TryWorkOut_OfNoRandomChoice_IsRejected() =>
+        Assert.Throws<ArgumentNullException>(() => RandomChoiceShares.TryWorkOut(null!, out _));
+
+    /// <summary>A random choice of two numbers and an auto weight.</summary>
+    /// <remarks>
+    /// <code>
+    /// - `50%` Guard: Halt!
+    /// - `30%` Guard: Move along.
+    /// - `%` Guard: Lovely day.
+    /// </code>
+    /// </remarks>
+    /// <returns>The random choice.</returns>
+    private static RandomChoiceNode ARandomChoiceOfTwoNumbersAndAnAutoWeight() =>
+        RandomChoice(Chance(50, target: 1), Chance(30, target: 2), EvenChance(target: 3));
 
     /// <summary>A random choice whose random options all weigh nothing.</summary>
     /// <remarks>

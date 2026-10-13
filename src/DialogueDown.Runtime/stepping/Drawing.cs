@@ -9,10 +9,13 @@ using DialogueDown.Runtime.Situations;
 namespace DialogueDown.Runtime.Stepping;
 
 /// <summary>
-/// What a random choice does: taking the host's draw, and arriving where the random option it picks
-/// leads.
+/// What a random choice does: asking the host for a draw, taking it, and arriving where the random
+/// option it picks leads.
 /// </summary>
 /// <remarks>
+/// Drawing reads only the shares, never the weights: <see cref="RandomChoiceShares"/> works them
+/// out, and a wait keeps the ones the host was shown.
+/// <para>
 /// A draw is a number from 0 to 1. The shares are laid end to end in the order written, and the
 /// draw times their total falls inside one random option's span:
 /// <code>
@@ -23,9 +26,21 @@ namespace DialogueDown.Runtime.Stepping;
 /// Each span includes its start and not its end, so a draw at the end of one span picks the next
 /// random option, and a random option with a share of zero is never picked. A draw of 1 stands at
 /// the total and picks the last random option with a share.
+/// </para>
 /// </remarks>
 internal static class Drawing
 {
+    /// <summary>Asks the host for a draw at a random choice, and waits for it.</summary>
+    /// <param name="position">The random choice's position in the playbook.</param>
+    /// <param name="shares">Every random option's share, in the order written.</param>
+    /// <returns>Where the run now stands, and what it has to say.</returns>
+    /// <remarks>
+    /// A draw is asked for even when one random option holds the whole total, so the host meets
+    /// every random choice the same way.
+    /// </remarks>
+    public static StepResult AskForADraw(int position, ImmutableArray<double> shares) =>
+        new(new PlayState(new AwaitingDraw(position, shares)), [new Draw(shares)]);
+
     /// <summary>Takes the host's draw, and arrives where the random option it picks leads.</summary>
     /// <param name="context">What the run needs and never changes.</param>
     /// <param name="waiting">The random choice waiting for the draw, and the shares the host was shown.</param>

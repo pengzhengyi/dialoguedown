@@ -126,6 +126,21 @@ internal static class StepAssert
         return waiting;
     }
 
+    /// <summary>
+    /// Asserts a step asked the host for a draw, and waits at a random choice for it, keeping the
+    /// shares the host was shown.
+    /// </summary>
+    /// <param name="result">What the step produced.</param>
+    /// <param name="node">The random choice it should be waiting at.</param>
+    /// <param name="shares">Every random option's share the host should have been shown, in the order written.</param>
+    public static void AssertAskedForADraw(StepResult result, int node, params double[] shares)
+    {
+        var draw = Assert.IsType<Draw>(Assert.Single(result.Events));
+
+        Assert.Equal(shares, draw.Shares);
+        Assert.Equal(shares, AssertAwaitingDraw(result, node).Shares);
+    }
+
     /// <summary>Asserts a step asked the world about keys, and waits at a node for the answers.</summary>
     /// <param name="result">What the step produced.</param>
     /// <param name="node">Where it should be waiting.</param>

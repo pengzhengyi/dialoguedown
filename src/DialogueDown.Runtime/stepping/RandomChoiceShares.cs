@@ -34,7 +34,7 @@ internal static class RandomChoiceShares
     {
         ArgumentNullException.ThrowIfNull(random);
 
-        return SharesWithoutAsking(random) is { } shares && !AnyDrawable(shares);
+        return TryWorkOut(random, out var shares) && !AnyDrawable(shares);
     }
 
     /// <summary>Whether a draw could land on any of these shares.</summary>
@@ -42,14 +42,30 @@ internal static class RandomChoiceShares
     /// <returns><see langword="true"/> when at least one share is above zero.</returns>
     public static bool AnyDrawable(ImmutableArray<double> shares) => shares.Any(share => share > 0);
 
-    // The shares a random choice comes to without asking the world, or none when a random option
-    // is guarded or weighted by a key, because only the world can say what those come to.
-    private static ImmutableArray<double>? SharesWithoutAsking(RandomChoiceNode random)
+    /// <summary>
+    /// Works out the share each random option comes to, when the world need not be asked.
+    /// </summary>
+    /// <param name="random">The random choice.</param>
+    /// <param name="shares">
+    /// One share per random option, in the order written; unset when the world must be asked.
+    /// </param>
+    /// <returns>
+    /// <see langword="true"/> when no random option is guarded or weighted by a key; otherwise
+    /// <see langword="false"/>, because only the world can say what those come to.
+    /// </returns>
+    public static bool TryWorkOut(RandomChoiceNode random, out ImmutableArray<double> shares)
     {
+        ArgumentNullException.ThrowIfNull(random);
+
         var randomOptions = random.RandomOptions();
 
-        return randomOptions.Any(option => option.Condition is not null || option.Weight is QueryWeight)
-            ? null
-            : WeightShares.Of(randomOptions.Select(option => option.Weight));
+        if (randomOptions.Any(option => option.Condition is not null || option.Weight is QueryWeight))
+        {
+            shares = default;
+            return false;
+        }
+
+        shares = WeightShares.Of(randomOptions.Select(option => option.Weight));
+        return true;
     }
 }
