@@ -1,72 +1,58 @@
 using DialogueDown.Playbook.Weights;
+using DialogueDown.TestSupport;
 
 namespace DialogueDown.Playbook.Tests.Weights;
 
 public sealed class WeightSharesTests
 {
     [Fact]
-    public void Of_Numbers_AreTheirOwnShares()
+    public void Of_DecidesAboutEveryKindOfPlaybookWeight()
     {
-        var shares = WeightShares.Of([new NumberWeight(30), new NumberWeight(50)]);
+        ChoiceWeight[] samples = [new NumberWeight(50), new AutoWeight(), new QueryWeight("Guard.Mood")];
 
-        Assert.Equal([30.0, 50.0], shares);
+        // Checked first, because the walk below is only as complete as the list it walks: a kind
+        // added to the format and left out here would have no drawing weight and nothing to say so.
+        UnionCoverageAssert.AssertCoversEveryMember<ChoiceWeight>(samples);
+
+        foreach (var weight in samples)
+        {
+            Assert.IsNotType<NotSupportedException>(Record.Exception(() => WeightShares.Of([weight])));
+        }
     }
 
     [Fact]
-    public void Of_AnAutoWeight_TakesWhatTheNumbersLeaveOfOneHundred()
+    public void Of_PlaybookWeights_ComeToTheSharesTheirDrawingWeightsDo()
     {
-        var shares = WeightShares.Of([new NumberWeight(70), new AutoWeight()]);
+        var shares = WeightShares.Of([new NumberWeight(30), new AutoWeight(), new NumberWeight(20), new AutoWeight()]);
 
-        Assert.Equal([70.0, 30.0], shares);
+        Assert.Equal(
+            DrawingWeight.Shares(
+                [new DrawingWeight.Number(30), new DrawingWeight.Auto(), new DrawingWeight.Number(20), new DrawingWeight.Auto()]),
+            shares);
     }
 
     [Fact]
-    public void Of_SeveralAutoWeights_SplitWhatTheNumbersLeaveEvenly()
+    public void Of_AKeyWeight_IsRefusedNamingTheKey_BecauseOnlyTheWorldKnowsItsNumber()
     {
-        var shares = WeightShares.Of([new AutoWeight(), new NumberWeight(50), new AutoWeight()]);
+        static void UnansweredKey() => _ = WeightShares.Of([new QueryWeight("Guard.Mood"), new AutoWeight()]);
 
-        Assert.Equal([25.0, 50.0, 25.0], shares);
+        var error = Assert.Throws<ArgumentException>(UnansweredKey);
+        Assert.Contains("Guard.Mood", error.Message, StringComparison.Ordinal);
     }
 
     [Fact]
-    public void Of_AutoWeightsAlone_SplitOneHundredEvenly()
-    {
-        var shares = WeightShares.Of([new AutoWeight(), new AutoWeight(), new AutoWeight(), new AutoWeight()]);
-
-        Assert.Equal([25.0, 25.0, 25.0, 25.0], shares);
-    }
-
-    [Fact]
-    public void Of_NumbersOverOneHundred_LeaveAutoWeightsNothing()
-    {
-        var shares = WeightShares.Of([new NumberWeight(70), new NumberWeight(50), new AutoWeight()]);
-
-        Assert.Equal([70.0, 50.0, 0.0], shares);
-    }
-
-    [Fact]
-    public void Of_AZeroNumber_HasNoShare_AndLeavesAutoWeightsTheWholeHundred()
-    {
-        var shares = WeightShares.Of([new NumberWeight(0), new AutoWeight()]);
-
-        Assert.Equal([0.0, 100.0], shares);
-    }
+    public void Of_ANumberNoShareCanBe_IsRefused() =>
+        Assert.Throws<ArgumentOutOfRangeException>(() => WeightShares.Of([new NumberWeight(-10), new AutoWeight()]));
 
     [Fact]
     public void Of_NoWeights_HaveNoShares() =>
         Assert.Empty(WeightShares.Of([]));
 
     [Fact]
-    public void Total_AddsTheSharesOneAtATime_FromTheFirst()
-    {
-        // Floating-point addition depends on order: from the last, these shares come to 0.6.
-        // Adding from the first is what lets every runtime reach the same total.
-        var total = WeightShares.Total([0.1, 0.2, 0.3]);
-
-        Assert.Equal(0.1 + 0.2 + 0.3, total);
-    }
+    public void Of_RejectsAMissingWeight() =>
+        Assert.Throws<ArgumentNullException>(() => WeightShares.Of([new NumberWeight(50), null!]));
 
     [Fact]
-    public void Total_OfNoShares_IsZero() =>
-        Assert.Equal(0, WeightShares.Total([]));
+    public void Total_IsTheDrawingWeightsTotal() =>
+        Assert.Equal(DrawingWeight.Total([0.1, 0.2, 0.3]), WeightShares.Total([0.1, 0.2, 0.3]));
 }
