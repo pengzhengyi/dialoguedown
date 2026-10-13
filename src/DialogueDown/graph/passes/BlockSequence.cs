@@ -8,10 +8,10 @@ namespace DialogueDown.Graph.Passes;
 /// block's branch), pairing each block with its <b>continuation</b>: the node control reaches
 /// once that block is done, which is the next block in its own sequence, or the sequence's own
 /// continuation when it is the last. Because an option's body continues where the choice itself
-/// would have, the arms of a choice meet again:
+/// would have, the options of a choice meet again:
 /// <code>
 /// Guide: Pick.        n0
-/// - Alice: Left.      n1 is the choice group; n2 is this arm's first block
+/// - Alice: Left.      n1 is the choice group; n2 is this option's first block
 ///   Alice: Onward.    n3
 /// - Alice: Right.     n4
 /// Guide: Done.        n5
@@ -21,8 +21,8 @@ namespace DialogueDown.Graph.Passes;
 ///                                                           ▼
 ///                                         n5 ──succession──▶ End
 /// </code>
-/// Both arms continue at <c>n5</c>, the choice's own continuation. A nested group does the same
-/// one level down, so its arms meet again wherever the enclosing body continues.
+/// Both options continue at <c>n5</c>, the choice's own continuation. A nested group does the same
+/// one level down, so its options meet again wherever the enclosing body continues.
 /// </summary>
 internal static class BlockSequence
 {

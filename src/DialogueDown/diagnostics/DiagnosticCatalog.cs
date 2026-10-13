@@ -251,7 +251,7 @@ internal static class DiagnosticCatalog
         DiagnosticCategory.Semantic,
         DiagnosticSeverity.Warning);
 
-    /// <summary>DLG2017 — a player-choice arm carries nothing a menu could show for it.</summary>
+    /// <summary>DLG2017 — a player-choice option carries nothing a menu could show for it.</summary>
     public static readonly DiagnosticDescriptor OptionWithNothingToShow = new(
         "DLG2017",
         "Option with nothing to show",

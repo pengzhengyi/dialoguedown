@@ -46,12 +46,12 @@ public sealed class OutwardShapeCheckerTests
         var error = Assert.Throws<InvalidPlaybookException>(() => _checker.Check(playbook));
 
         Assert.Equal(
-            "Node 0, a line, carries a way out of kind 'option'; its arms are 'divert' edges.",
+            "Node 0, a line, carries a way out of kind 'option'; it takes 'divert' edges.",
             error.Message);
     }
 
     [Fact]
-    public void Check_AChoiceMixingOptionAndBranchArms_IsRefused()
+    public void Check_AChoiceMixingOptionsAndBranches_IsRefused()
     {
         var playbook = PlaybookFactory.Document(
             nodes: [Choice(Option("Go east", target: 1), Else(target: 1)), End(id: 1)]);
@@ -59,7 +59,7 @@ public sealed class OutwardShapeCheckerTests
         var error = Assert.Throws<InvalidPlaybookException>(() => _checker.Check(playbook));
 
         Assert.Equal(
-            "Node 0, a choice, carries a way out of kind 'branch'; its arms are 'option' edges.",
+            "Node 0, a choice, carries a way out of kind 'branch'; it takes 'option' edges.",
             error.Message);
     }
 
@@ -83,7 +83,7 @@ public sealed class OutwardShapeCheckerTests
 
         var error = Assert.Throws<InvalidPlaybookException>(() => _checker.Check(playbook));
 
-        Assert.Equal("Node 0, a choice, carries 0 arms; it needs at least 1.", error.Message);
+        Assert.Equal("Node 0, a choice, carries 0 'option' edges; it needs at least 1.", error.Message);
     }
 
     [Fact]
@@ -124,7 +124,7 @@ public sealed class OutwardShapeCheckerTests
     public void Check_AnIfWithNoElseAndNoSuccession_LeadsNowhere_AndIsRefused()
     {
         var playbook = PlaybookFactory.Document(
-            nodes: [Branch(Arm("HasMap", target: 1)), End(id: 1)]);
+            nodes: [Branch(Gated("HasMap", target: 1)), End(id: 1)]);
 
         var error = Assert.Throws<InvalidPlaybookException>(() => _checker.Check(playbook));
 
@@ -211,7 +211,7 @@ public sealed class OutwardShapeCheckerTests
     }
 
     [Fact]
-    public void Check_ARandomChoiceWhereEveryArmIsGated_AndNoSuccession_IsRefused()
+    public void Check_ARandomChoiceWhereEveryRandomOptionIsGated_AndNoSuccession_IsRefused()
     {
         var playbook = PlaybookFactory.Document(
             nodes: [RandomChoice(EvenChance(condition: "HasMap", target: 1)), End(id: 1)]);
@@ -234,7 +234,7 @@ public sealed class OutwardShapeCheckerTests
     }
 
     [Fact]
-    public void Check_ARandomChoiceWithAnOpenArm_IsAccepted()
+    public void Check_ARandomChoiceWithAnOpenRandomOption_IsAccepted()
     {
         var playbook = PlaybookFactory.Document(
             nodes: [RandomChoice(EvenChance(target: 1)), End(id: 1)]);
@@ -243,11 +243,11 @@ public sealed class OutwardShapeCheckerTests
     }
 
     [Fact]
-    public void Check_ABranchWithAnElseArm_IsAccepted()
+    public void Check_ABranchWithAnElseBranch_IsAccepted()
     {
-        // The else arm carries no condition, so the branch always resolves and needs no succession.
+        // The else carries no condition, so the branch node always resolves and needs no succession.
         var playbook = PlaybookFactory.Document(
-            nodes: [Branch(Arm("HasMap", target: 1), Else(target: 1)), End(id: 1)]);
+            nodes: [Branch(Gated("HasMap", target: 1), Else(target: 1)), End(id: 1)]);
 
         _checker.Check(playbook);
     }

@@ -97,21 +97,21 @@ public sealed class NodeQuestionExtensionsTests
             SilentLine(next: 2, ways: [Divert("Hero.HasSword", target: 1)]).FindTruthsForLeaving());
 
     [Fact]
-    public void FindTruthsForLeaving_OfABlockCondition_NameWhatEveryGuardedArmAsks() =>
+    public void FindTruthsForLeaving_OfABlockCondition_NameWhatEveryGatedBranchAsks() =>
         Assert.Equal(
             ["Hero.HasSword", "Hero.HasShield"],
             Branch(
-                Arm("Hero.HasSword", target: 1),
-                Arm("Hero.HasShield", target: 2),
+                Gated("Hero.HasSword", target: 1),
+                Gated("Hero.HasShield", target: 2),
                 Succession(3))
                 .FindTruthsForLeaving());
 
     [Fact]
     public void FindTruthsForLeaving_NameARepeatedKeyOnce() =>
-        // One reading of the world decides every way out, so two arms on one key cannot disagree.
+        // One reading of the world decides every way out, so two branches on one key cannot disagree.
         Assert.Equal(
             ["Hero.HasSword"],
-            Branch(Arm("Hero.HasSword", target: 1), Arm("Hero.HasSword", target: 2)).FindTruthsForLeaving());
+            Branch(Gated("Hero.HasSword", target: 1), Gated("Hero.HasSword", target: 2)).FindTruthsForLeaving());
 
     [Fact]
     public void FindTruthsForLeaving_OfAMenu_AreNone() =>

@@ -1,8 +1,8 @@
 namespace DialogueDown.Script.Ast;
 
 /// <summary>
-/// Queries over a <see cref="ControlBlock"/> that read it as a group of arms, the shape it shares
-/// with a <see cref="ChoiceGroup"/>.
+/// Queries over a <see cref="ControlBlock"/> that read it as a group of branches, each owning a
+/// body — the shape it shares with a <see cref="ChoiceGroup"/> and its options.
 /// </summary>
 internal static class ControlBlockExtensions
 {

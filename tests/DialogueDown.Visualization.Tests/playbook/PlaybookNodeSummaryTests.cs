@@ -36,27 +36,27 @@ public sealed class PlaybookNodeSummaryTests
     {
         AssertSummary(
             "IF Alice.HasMap? THEN 16 ELSE 18",
-            Branch(Arm("Alice.HasMap", target: 16), Else(target: 18)));
+            Branch(Gated("Alice.HasMap", target: 16), Else(target: 18)));
     }
 
     [Fact]
-    public void Of_ABranchOfSeveralArms_ChainsThemAsWrittenAndEndsWithTheElse()
+    public void Of_ABranchOfSeveralBranches_ChainsThemAsWrittenAndEndsWithTheElse()
     {
         AssertSummary(
             "IF Hero.IsBrave? THEN 5 ELSE IF Hero.HasMap? THEN 9 ELSE 14",
             Branch(
-                Arm("Hero.IsBrave", target: 5),
-                Arm("Hero.HasMap", target: 9),
+                Gated("Hero.IsBrave", target: 5),
+                Gated("Hero.HasMap", target: 9),
                 Else(target: 14)));
     }
 
-    // A branch with every arm guarded has no else to fall to, so the chain simply stops.
+    // A branch node with every branch guarded has no else to fall to, so the chain simply stops.
     [Fact]
-    public void Of_ABranchWithNoElseArm_EndsOnItsLastCondition()
+    public void Of_ABranchWithNoElse_EndsOnItsLastCondition()
     {
         AssertSummary(
             "IF Hero.IsBrave? THEN 5 ELSE IF Hero.HasMap? THEN 9",
-            Branch(Arm("Hero.IsBrave", target: 5), Arm("Hero.HasMap", target: 9)));
+            Branch(Gated("Hero.IsBrave", target: 5), Gated("Hero.HasMap", target: 9)));
     }
 
     // A condition on the node governs everything it holds rather than one way out of it, so it

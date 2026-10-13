@@ -140,8 +140,8 @@ internal static class ScriptGen
                 _key, _speaker, speech, _word, anchor,
                 (k, s, t, w, target) => $"`{k}?` {s}: {t}. => [{w}]({target})");
 
-        // A choice whose options are all gated, and an `if` with no `else`: both gain a succession
-        // taken when every arm is declined.
+        // A choice whose options are all gated, and an `if` with no `else`: both gain a succession,
+        // taken when no option is offered and no branch's condition holds.
         var gatedChoice =
             Gen.Select(
                 _key, _key, _prose, _prose,

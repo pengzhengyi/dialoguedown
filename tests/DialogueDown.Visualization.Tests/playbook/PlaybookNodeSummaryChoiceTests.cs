@@ -92,10 +92,10 @@ public sealed class PlaybookNodeSummaryChoiceTests
             Choice(Option("Ask the guide for advice first "), Option("Go left")));
     }
 
-    // A random choice's arms carry no words at all — the engine picks, so nobody is shown a menu.
+    // A random choice's random options carry no words at all — the engine picks, so nobody is shown a menu.
     // Their odds are the only thing they hold, so the odds are what the row reports.
     [Fact]
-    public void Of_ARandomChoice_SaysHowManyArmsItDrawsFromAndTheirOdds()
+    public void Of_ARandomChoice_SaysHowManyRandomOptionsItDrawsFromAndTheirOdds()
     {
         AssertSummary(
             "DRAW 1 FROM 3: 50% || 25% || 25%",
@@ -111,13 +111,13 @@ public sealed class PlaybookNodeSummaryChoiceTests
     }
 
     [Fact]
-    public void Of_ARandomChoiceArmWithNoWeightOfItsOwn_SaysItSharesEvenly()
+    public void Of_ARandomOptionWithNoWeightOfItsOwn_SaysItSharesEvenly()
     {
         AssertSummary("DRAW 1 FROM 2: 50% || evenly", RandomChoice(Chance(50), EvenChance()));
     }
 
     [Fact]
-    public void Of_ARandomChoiceArmInThePoolOnlyOnACondition_MarksItAfterTheOdds()
+    public void Of_ARandomOptionInThePoolOnlyOnACondition_MarksItAfterTheOdds()
     {
         AssertSummary(
             "DRAW 1 FROM 2: 50% IF Hero.HasMap? || 50%",

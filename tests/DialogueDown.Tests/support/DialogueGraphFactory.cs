@@ -32,12 +32,12 @@ internal static class DialogueGraphFactory
         new(NodeId(id), new SourceSpan(0, 0), ordered, options);
 
     /// <summary>A random choice node the engine picks from.</summary>
-    public static RandomChoiceNode RandomChoiceNode(int id, params Edge[] arms) =>
-        new(NodeId(id), new SourceSpan(0, 0), arms);
+    public static RandomChoiceNode RandomChoiceNode(int id, params Edge[] options) =>
+        new(NodeId(id), new SourceSpan(0, 0), options);
 
-    /// <summary>A conditional block, whose arms are tried in order.</summary>
-    public static BranchNode BranchNode(int id, params Edge[] arms) =>
-        new(NodeId(id), new SourceSpan(0, 0), arms);
+    /// <summary>A conditional block, whose branches are tried in order.</summary>
+    public static BranchNode BranchNode(int id, params Edge[] branches) =>
+        new(NodeId(id), new SourceSpan(0, 0), branches);
 
     /// <summary>A control node running <paramref name="effects"/> and nothing else.</summary>
     public static ControlNode ControlNode(int id, params GameCall[] effects) =>
@@ -71,12 +71,12 @@ internal static class DialogueGraphFactory
         NodeId target, string label = "that one", Condition? condition = null) =>
         new(target, [DialogueAstFactory.Text(label)], condition);
 
-    /// <summary>One arm of a random choice, weighted by an even share unless told otherwise.</summary>
+    /// <summary>A random option, weighted by an even share unless told otherwise.</summary>
     public static RandomOptionEdge RandomOptionEdge(
         NodeId target, ChoiceWeight? weight = null, Condition? condition = null) =>
         new(target, weight ?? DialogueAstFactory.AutoWeight(), condition);
 
-    /// <summary>One arm of a conditional block; with no condition, it is the else.</summary>
+    /// <summary>One branch of a conditional block; with no condition, it is the else.</summary>
     public static BranchEdge BranchEdge(NodeId target, Condition? condition = null) =>
         new(target, condition);
 

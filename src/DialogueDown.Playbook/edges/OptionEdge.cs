@@ -8,7 +8,7 @@ using Generator.Equals;
 namespace DialogueDown.Playbook.Edges;
 
 /// <summary>
-/// One arm of a player's choice, carrying the text the menu shows.
+/// One option of a player's choice, carrying the text the menu shows.
 /// </summary>
 /// <param name="Target">The node this option leads to.</param>
 /// <param name="Label">The speech the menu shows for this option.</param>

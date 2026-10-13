@@ -53,14 +53,14 @@ public sealed class PlaybookCheckerFactoryTests
     }
 
     [Fact]
-    public void CreateDefault_AlsoChecksABranchsArmOrder()
+    public void CreateDefault_AlsoChecksBranchOrder()
     {
         // A branch whose else comes first is valid by the format check and well shaped; only the
-        // wider set cares which arm is tried first.
+        // wider set cares which branch is tried first.
         var playbook = PlaybookFactory.Document(
-            nodes: [Branch(Else(target: 1), Arm("HasMap", target: 1)), End(id: 1)]);
+            nodes: [Branch(Else(target: 1), Gated("HasMap", target: 1)), End(id: 1)]);
 
-        AssertReaderRefuses(playbook, "else arm before another arm");
+        AssertReaderRefuses(playbook, "else before another branch");
     }
 
     /// <summary>

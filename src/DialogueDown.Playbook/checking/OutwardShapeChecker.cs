@@ -8,18 +8,18 @@ namespace DialogueDown.Playbook.Checking;
 /// </summary>
 /// <remarks>
 /// <para>
-/// Each node kind takes one kind of arm — a divert for a line or a control, an option for a
-/// choice, a random option for a random choice, a branch arm for a branch — within a count given
-/// by <see cref="NodeShape.For"/>. The compiler always writes nodes of this shape; a hand-edited
-/// or tool-written playbook may carry a line with two ways forward, or a choice whose every option
-/// may be withheld with nowhere to fall through, and a runtime would then play whichever edge came
-/// first in the array.
+/// Each node kind takes one kind of edge besides the succession — a divert for a line or a
+/// control, an option for a choice, a random option for a random choice, a branch for a branch
+/// node — within a count given by <see cref="NodeShape.For"/>. The compiler always writes nodes of
+/// this shape; a hand-edited or tool-written playbook may carry a line with two ways forward, or a
+/// choice whose every option may be withheld with nowhere to fall through, and a runtime would
+/// then play whichever edge came first in the array.
 /// </para>
 /// <para>
-/// A node also needs a succession to fall through to unless it is sure to leave by an arm: the
-/// node has no condition of its own and has an arm without one. A node that could reach a dead
-/// end, or that carries an edge kind it cannot act on, is refused. A succession that can never be
-/// taken is accepted, since it changes nothing in play.
+/// A node also needs a succession to fall through to unless it is sure to leave by another edge:
+/// the node has no condition of its own and has an open edge, one without a condition. A node
+/// that could reach a dead end, or that carries an edge kind it cannot act on, is refused. A
+/// succession that can never be taken is accepted, since it changes nothing in play.
 /// </para>
 /// </remarks>
 public sealed class OutwardShapeChecker : IPlaybookChecker
@@ -46,43 +46,43 @@ public sealed class OutwardShapeChecker : IPlaybookChecker
 
         var shape = NodeShape.For(node);
 
-        var arms = node.Out.Where(edge => edge is not SuccessionEdge).ToArray();
-        var successionEdgeCount = node.Out.Length - arms.Length;
+        var edges = node.Out.Where(edge => edge is not SuccessionEdge).ToArray();
+        var successionEdgeCount = node.Out.Length - edges.Length;
 
-        RefuseForeignArm(node, shape, arms);
-        RefuseArmCountOutOfRange(node, shape, arms);
-        RefuseBadFallThrough(node, shape, arms, successionEdgeCount);
+        RefuseForeignEdge(node, shape, edges);
+        RefuseEdgeCountOutOfRange(node, shape, edges);
+        RefuseBadFallThrough(node, shape, edges, successionEdgeCount);
     }
 
-    private static void RefuseForeignArm(Node node, NodeShape shape, Edge[] arms)
+    private static void RefuseForeignEdge(Node node, NodeShape shape, Edge[] edges)
     {
-        if (arms.FirstOrDefault(edge => edge.GetType() != shape.ArmEdge) is { } foreign)
+        if (edges.FirstOrDefault(edge => edge.GetType() != shape.EdgeKind) is { } foreign)
         {
             Refuse(
                 $"Node {node.Id}, a {shape.Kind}, carries a way out of kind '{NameOf(foreign.GetType())}'; "
-                    + $"its arms are '{NameOf(shape.ArmEdge)}' edges.");
+                    + $"it takes '{NameOf(shape.EdgeKind)}' edges.");
         }
     }
 
-    private static void RefuseArmCountOutOfRange(Node node, NodeShape shape, Edge[] arms)
+    private static void RefuseEdgeCountOutOfRange(Node node, NodeShape shape, Edge[] edges)
     {
-        if (arms.Length < shape.MinArms)
+        if (edges.Length < shape.MinEdges)
         {
             Refuse(
-                $"Node {node.Id}, a {shape.Kind}, carries {arms.Length} arms; "
-                    + $"it needs at least {shape.MinArms}.");
+                $"Node {node.Id}, a {shape.Kind}, carries {edges.Length} '{NameOf(shape.EdgeKind)}' edges; "
+                    + $"it needs at least {shape.MinEdges}.");
         }
 
-        if (arms.Length > shape.MaxArms)
+        if (edges.Length > shape.MaxEdges)
         {
             Refuse(
-                $"Node {node.Id}, a {shape.Kind}, carries {arms.Length} '{NameOf(shape.ArmEdge)}' edges; "
-                    + $"it takes at most {shape.MaxArms}.");
+                $"Node {node.Id}, a {shape.Kind}, carries {edges.Length} '{NameOf(shape.EdgeKind)}' edges; "
+                    + $"it takes at most {shape.MaxEdges}.");
         }
     }
 
     private static void RefuseBadFallThrough(
-        Node node, NodeShape shape, Edge[] arms, int successionEdgeCount)
+        Node node, NodeShape shape, Edge[] edges, int successionEdgeCount)
     {
         switch (successionEdgeCount)
         {
@@ -97,8 +97,9 @@ public sealed class OutwardShapeChecker : IPlaybookChecker
                 Refuse(CannotLeave(node, shape));
                 break;
 
-            // Every arm has a condition, or there are no arms, so none may be taken.
-            case 0 when arms.All(edge => IsGated(edge)):
+            // Every edge other than the succession has a condition, or there are none, so none
+            // may be taken.
+            case 0 when edges.All(edge => IsGated(edge)):
                 Refuse(CannotLeave(node, shape));
                 break;
         }

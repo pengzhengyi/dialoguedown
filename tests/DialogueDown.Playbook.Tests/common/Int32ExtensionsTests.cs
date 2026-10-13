@@ -9,7 +9,7 @@ public sealed class Int32ExtensionsTests
     [InlineData(int.MaxValue)]
     public void AssertNotNegative_APosition_ReturnsIt(int value)
     {
-        // Zero is the boundary that matters: the first node and the first branch arm both sit
+        // Zero is the boundary that matters: the first node and the first speaker both sit
         // there, so a guard that rejected it would refuse every playbook.
         Assert.Equal(value, value.AssertNotNegative("target"));
     }

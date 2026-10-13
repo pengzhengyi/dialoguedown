@@ -20,7 +20,7 @@ public static class NodeKinds
     /// <summary>A choice the engine makes at random, by weight.</summary>
     public const string RandomChoice = "random-choice";
 
-    /// <summary>A block condition fanning out to its arms.</summary>
+    /// <summary>A block condition fanning out to its branches.</summary>
     public const string Branch = "branch";
 
     /// <summary>An effect-only line, with no speaker.</summary>

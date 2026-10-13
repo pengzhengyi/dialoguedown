@@ -10,7 +10,7 @@ namespace DialogueDown.Runtime.Stepping;
 /// Which way out of a node a run takes.
 /// </summary>
 /// <remarks>
-/// A jump and a block condition's arms are taken as the world allows, the first allowed in the
+/// A jump and a block condition's branches are taken as the world allows, the first allowed in the
 /// order written; when none is allowed, the run falls through to the succession. A menu's options
 /// are taken as the player chooses.
 /// </remarks>
@@ -44,9 +44,9 @@ internal static class NodeTraversalExtensions
 
     /// <summary>Where a node leads on to, when no way out needs the world's answer.</summary>
     /// <remarks>
-    /// A jump and a block condition's arms are the ways out a writer chose, and they come before
-    /// the succession, which is where the run lands when none of them is taken. So a node carrying
-    /// a jump to 9 beside a succession to 4 leads to 9, and the 4 is unreachable.
+    /// A jump and a block condition's branches are the ways out a writer chose, and they come
+    /// before the succession, which the run takes when none of them is. So a node
+    /// carrying a jump to 9 beside a succession to 4 leads to 9, and the 4 is unreachable.
     /// <para>
     /// Without answers, only a way out that nothing guards is taken. A node with a guarded way out
     /// is asked about before it is left, and left once the answers arrive.
@@ -63,10 +63,10 @@ internal static class NodeTraversalExtensions
 
     /// <summary>Where a node leads on to, once the world has answered its ways out.</summary>
     /// <remarks>
-    /// The first way out the world allows is taken. A block condition's arms are tried in the order
-    /// written, and its else is always allowed. A way out the world withholds is not a way out at
-    /// all, so when none is allowed the run falls through to the succession written beneath them.
-    /// That is how a withheld jump, or a block with no arm taken and no else, is skipped.
+    /// The first way out the world allows is taken. A block condition's branches are tried in the
+    /// order written, and its else is always allowed. A way out the world withholds is not a way
+    /// out at all, so when none is allowed the run falls through to the succession written beneath
+    /// them. That is how a withheld jump, or a block with no branch taken and no else, is skipped.
     /// </remarks>
     /// <param name="node">The node being left.</param>
     /// <param name="supply">What the world said about the keys its ways out asked about.</param>
@@ -79,7 +79,8 @@ internal static class NodeTraversalExtensions
         return node.FirstWayOutTaken(supply.Allows) ?? node.SuccessionTarget();
     }
 
-    // A branch's arms are tried in the order they appear, so the first one allowed is the arm taken.
+    // A branch node's branches are tried in the order they appear, so the first one allowed is
+    // taken.
     private static int? FirstWayOutTaken(this Node node, Func<IConditional, bool> isTaken) =>
         node.Out
             .FirstOrDefault(way => way is DivertEdge or BranchEdge && isTaken((IConditional)way))

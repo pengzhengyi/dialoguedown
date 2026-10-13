@@ -29,7 +29,7 @@ internal sealed class GraphProjection
 
     internal const string StageDescription =
         "The compiled flow a runtime walks: every block as a node, joined by the edges that lead "
-        + "between them — fall-through, jumps, choice arms, and conditional branches. A node "
+        + "between them — fall-through, jumps, choice options, and conditional branches. A node "
         + "nothing points at is content the script never reaches.";
 
     private const string SpeechCategory = "speech";
@@ -166,9 +166,9 @@ internal sealed class GraphProjection
     }
 
     // An edge the walk followed to first reach its target is that node's parent in the layout;
-    // every other edge — an arm rejoining the flow, a jump to an earlier scene — is drawn as a
+    // every other edge — an option rejoining the flow, a jump to an earlier scene — is drawn as a
     // reference so the tree stays a tree while the flow stays complete. Its category says what
-    // kind of route it is, so a reader tells a fall-through from a jump or a chosen arm by color.
+    // kind of route it is, so a reader tells a fall-through from a jump or a chosen option by color.
     private static DisplayEdge Describe(DialogueNode from, Edge edge, SpanningTree layout) =>
         new(
             DisplayId(from.Id),
@@ -187,8 +187,8 @@ internal sealed class GraphProjection
         };
 
     // A route carries the words the writer gave it, which the details panel shows when the route is
-    // selected. Only a jump and a choice arm have any: a jump is named by its link text, an arm by
-    // what the player is offered. A fall-through was never written down, and a random arm is picked
+    // selected. Only a jump and a choice option have any: a jump is named by its link text, an option by
+    // what the player is offered. A fall-through was never written down, and a random option is picked
     // by the engine rather than read, so neither has words to report.
     private static string? LabelOf(Edge edge) => Written(edge) switch
     {
@@ -245,7 +245,7 @@ internal sealed class GraphProjection
     /// </summary>
     /// <remarks>
     /// A scene owns the blocks written directly beneath its heading, so a line nested inside a
-    /// choice arm is not among its <c>OwnNodes</c> — yet a reader plainly considers it part of the
+    /// choice option is not among its <c>OwnNodes</c> — yet a reader plainly considers it part of the
     /// scene it was written under. Document order settles it: a heading opens a scene and
     /// everything after it belongs there until the next heading, so an unowned node inherits the
     /// scene of the text above it. Nodes written before any heading belong to no scene, and say so
