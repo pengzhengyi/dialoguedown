@@ -67,7 +67,7 @@ integer, but not which versions a build reads.
 
 | Refusal | Caught by |
 | --- | --- |
-| A target written as text; a truncated file; a foreign arm kind; two successions on one node; a lone else; a second else | the schema |
+| A target written as text; a truncated file; a foreign edge kind; two successions on one node; a lone else; a second else | the schema |
 | A version too new, an unknown capability, a node out of position, all four kinds of dangling reference, a node with no way out, and a branch led by its else | only a reader |
 
 So validating against the schema is necessary but not sufficient, and that gap is

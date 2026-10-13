@@ -1,7 +1,7 @@
 {
   "$schema": "https://pengzhengyi.github.io/dialoguedown/schema/fixture-0.schema.json",
-  "name": "an else with no gated arm is refused",
+  "name": "an else with no gated branch is refused",
   "playbook": "playbook.json",
   "verdict": "refuse",
-  "because": "the gated arm is removed, leaving only the else; an else falls back from the gated arms, so with none the branch is not a condition"
+  "because": "the gated branch is removed, leaving only the else; an else falls back from the gated branches, so with none the branch node is not a condition"
 }
