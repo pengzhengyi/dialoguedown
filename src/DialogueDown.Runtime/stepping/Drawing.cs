@@ -65,7 +65,7 @@ internal static class Drawing
                     + $"draw was asked for {waiting.Shares.Length} shares, so there is no Drawn to take there.");
         }
 
-        if (!waiting.Shares.Any(share => share > 0))
+        if (!RandomChoiceShares.AnyDrawable(waiting.Shares))
         {
             return RefuseDrawn(
                 waiting,

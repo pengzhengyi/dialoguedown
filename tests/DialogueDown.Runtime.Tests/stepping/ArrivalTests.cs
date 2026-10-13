@@ -91,6 +91,23 @@ public sealed class ArrivalTests
             "Node 0 sits in a loop of nodes that hand the host nothing, so a run entering it would never come out.");
 
     [Fact]
+    public void At_ARandomChoiceWithNothingDrawable_WalksOnByItsFallThrough()
+    {
+        // No draw could land anywhere, so the run goes on to where the script carries on after it.
+        var result = Arrival.At(ARandomChoiceWithNothingDrawableThenALine(), 0);
+
+        AssertSaid(result, "Guard", "The guard says nothing.");
+        AssertAt(result, 2);
+    }
+
+    [Fact]
+    public void At_ARandomChoiceWithNothingDrawableAndNoFallThrough_RefusesAsLeadingNowhere() =>
+        AssertRefused(
+            Arrival.At(ARandomChoiceWithNothingDrawable(), 0),
+            RefusalReason.LeadsNowhere,
+            "Node 0 leads nowhere.");
+
+    [Fact]
     public void Supplied_WhenTheWorldAllowsTheLine_SpeaksIt()
     {
         var context = AConditionalLine();
@@ -598,6 +615,39 @@ public sealed class ArrivalTests
         PlayContextFactory.Of(
             [Choice(Succession(1)), Line("Onward.", id: 1, next: 2), End(id: 2)],
             ["Alice"]);
+
+    /// <summary>A random choice whose only random option weighs nothing, then a line.</summary>
+    /// <remarks>
+    /// <code>
+    /// - `0%` Guard: Halt!
+    ///
+    /// The guard says nothing.
+    /// </code>
+    /// Built by hand rather than written: the compiler reports this random choice as a zero total,
+    /// and writes a fall-through only beside random options that are all guarded.
+    /// </remarks>
+    /// <returns>A context whose entry has nothing to draw.</returns>
+    private static PlayContext ARandomChoiceWithNothingDrawableThenALine() =>
+        PlayContextFactory.Of(
+            [
+                RandomChoice(Chance(0, target: 1), Succession(2)),
+                Line("Halt!", id: 1, next: 3),
+                Line("The guard says nothing.", id: 2, next: 3),
+                End(id: 3),
+            ],
+            ["Guard"]);
+
+    /// <summary>A random choice whose only random option weighs nothing, with no fall-through.</summary>
+    /// <remarks>
+    /// <code>
+    /// - `0%` Guard: Halt!
+    /// </code>
+    /// Built by hand rather than written, because the compiler reports this random choice as a
+    /// zero total.
+    /// </remarks>
+    /// <returns>A context whose entry has nothing to draw and nowhere to go.</returns>
+    private static PlayContext ARandomChoiceWithNothingDrawable() =>
+        PlayContextFactory.Of([RandomChoice(Chance(0, target: 1)), Line("Halt!", id: 1, next: 2), End(id: 2)], ["Guard"]);
 
     /// <summary>A menu with no options whose fall-through leads back to itself.</summary>
     /// <remarks>Built by hand rather than written, because no script writes a menu without options.</remarks>
