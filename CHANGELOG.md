@@ -223,6 +223,11 @@ changes easy to categorize.
 
 ### Fixed
 
+- **An infinite weight is reported instead of stopping the compiler** — `` `Infinity%` ``, or a
+  weight written with more digits than a double holds, read as an infinite number, and the
+  compiler stopped with an error when it wrote the playbook. It is now reported as an invalid
+  weight (`DLG1105`), as a negative one is.
+
 - **A disabled action stays readable in the light theme** — the Discard button, and the
   Explorer's New file and New folder while in View, dimmed their labels to about 2:1 against
   white, where the text all but vanished. The muted color now carries the label in full, and the

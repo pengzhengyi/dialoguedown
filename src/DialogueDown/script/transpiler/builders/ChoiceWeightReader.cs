@@ -10,7 +10,7 @@ namespace DialogueDown.Script.Transpiler.Builders;
 /// call, none of which ends in <c>%</c>. The value before the sign is a non-negative number
 /// (<see cref="NumberWeight"/>), a key the runtime computes into a weight
 /// (<see cref="QueryWeight"/>, written quoted or unquoted), empty (<see cref="AutoWeight"/>), or
-/// an invalid number such as a negative one, in which case the caller reports
+/// an invalid number, one that is negative or infinite, in which case the caller reports
 /// <see cref="DialogueDown.Diagnostics.DiagnosticCatalog.InvalidChoiceWeight"/>.
 /// </summary>
 internal static class ChoiceWeightReader
@@ -21,7 +21,7 @@ internal static class ChoiceWeightReader
     public static bool IsWeight(string content) => content.Trim().EndsWith('%');
 
     // Reads the weight into a spanned node; null when the value is a number the weight cannot
-    // use (a negative one), so the caller can report the invalid weight and recover.
+    // use (a negative or an infinite one), so the caller can report the invalid weight and recover.
     public static ChoiceWeight? Read(string content, SourceSpan span)
     {
         var value = content.Trim();
@@ -31,11 +31,12 @@ internal static class ChoiceWeightReader
             return new AutoWeight(span);
         }
 
-        // A number is a static weight; only a non-negative one is valid. Trying the number first
+        // A number is a static weight; only a finite, non-negative one is valid. `Infinity%`, and
+        // a number with more digits than a double holds, read as infinite. Trying the number first
         // keeps `50%` the number 50 rather than a key named "50".
         if (double.TryParse(value, WeightNumberStyles, CultureInfo.InvariantCulture, out var percentage))
         {
-            return percentage >= 0 ? new NumberWeight(percentage, span) : null;
+            return double.IsFinite(percentage) && percentage >= 0 ? new NumberWeight(percentage, span) : null;
         }
 
         // Any other non-empty text is a key — quoted or unquoted — the runtime computes.

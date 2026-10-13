@@ -356,9 +356,9 @@ a pure, table-testable unit independent of parsing, lets the compile-time warnin
 and a runtime share one definition, and leaves room to swap the policy
 (for example, a strict "must total 100" variant) without touching recognition.
 
-The strategy takes non-negative weights as a precondition — recognition rejects a
-negative weight as `DLG1105` before it reaches the AST — and fails fast on a
-violation, so its output probabilities are always valid.
+The strategy takes finite, non-negative weights as a precondition — recognition
+rejects a negative or an infinite weight as `DLG1105` before it reaches the AST —
+and fails fast on a violation, so its output probabilities are always valid.
 
 For a dynamic group, the runtime first resolves each `QueryWeight` to a numeric
 explicit value and validates that it is finite and non-negative. Only then does
@@ -387,7 +387,7 @@ it so the code span is no longer the option's weight prefix.
 | Code | Title | Category | Severity | When |
 | --- | --- | --- | --- | --- |
 | `DLG1104` | Missing weight in a random choice | Syntax | Error | An option in a random choice has no leading weight span. |
-| `DLG1105` | Invalid choice weight | Syntax | Error | A weight value is a negative number (`` `-10%` ``). Any non-numeric text is a key. |
+| `DLG1105` | Invalid choice weight | Syntax | Error | A weight value is a negative number (`` `-10%` ``), or an infinite one (`` `Infinity%` ``, or more digits than a double holds). Any non-numeric text is a key. |
 | `DLG2010` | Random choice weights sum to zero | Semantic | Error | A fully static, unconditional random choice's weights all resolve to 0, so no option can be selected. |
 | `DLG3003` | Choice weights do not total 100% | Style | Warning | A fully static, unconditional random choice's weights do not total ≈100% (within 0.5, and not all zero); the odds are normalized anyway. |
 | `DLG3004` | Single-option random choice | Style | Warning | A random choice offers only one option, so it is always selected and the weight has no effect. |
@@ -410,6 +410,7 @@ one, so it takes a semantic (`DLG2xxx`) code. `DLG3003` and `DLG3004` are style
 | Explicit total > 100 | Autos resolve to 0%; `DLG3003`; normalize by the sum. |
 | Every weight 0 (`` `0%` ``), sum 0 | `DLG2010` error; the strategy recovers to a uniform distribution. |
 | Negative weight (`` `-10%` ``) | `DLG1105`. |
+| Infinite weight (`` `Infinity%` ``, or more digits than a double holds) | `DLG1105`. |
 | Non-numeric value (`` `abc%` ``) | A `QueryWeight` on the key `abc`. |
 | Non-integer (`` `33.3%` ``) | Allowed; normalized. |
 | Key weight (`` `q%` `` or `` `"q"%` ``) | Accepted as `QueryWeight`; compile-time total checks are deferred. |

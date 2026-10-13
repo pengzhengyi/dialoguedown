@@ -6,6 +6,13 @@ namespace DialogueDown.Tests.Script.Transpiler.Builders;
 
 public sealed class ChoiceWeightReaderTests
 {
+    /// <summary>
+    /// Weights that read as an infinite number: the word <c>Infinity</c>, and a number written
+    /// out with more digits than a double can hold.
+    /// </summary>
+    public static TheoryData<string> InfiniteNumbers() =>
+        new() { "Infinity%", "1" + new string('0', 400) + "%" };
+
     [Theory]
     [InlineData("50%")]
     [InlineData("%")]
@@ -47,6 +54,12 @@ public sealed class ChoiceWeightReaderTests
     [InlineData("-10%")]   // a negative number is not a valid weight
     [InlineData("-0.5%")]
     public void Read_ANegativeNumber_YieldsNull(string content) =>
+        Assert.Null(ChoiceWeightReader.Read(content, new SourceSpan(0, content.Length)));
+
+    [Theory]
+    [MemberData(nameof(InfiniteNumbers))]
+    public void Read_AnInfiniteNumber_YieldsNull(string content) =>
+        // No share can be infinite, and a playbook has no way to write one.
         Assert.Null(ChoiceWeightReader.Read(content, new SourceSpan(0, content.Length)));
 
     [Theory]
