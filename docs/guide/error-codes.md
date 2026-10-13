@@ -2,6 +2,8 @@
 
 DialogueDown reports each problem it finds as a **diagnostic** with a stable `DLG####` code, so a message is easy to look up. A code's leading digit names its category — `DLG1xxx` syntax, `DLG2xxx` semantic, `DLG3xxx` style — and each diagnostic has a default severity: <span class="dd-sev dd-sev--error">Error</span> (must be fixed), <span class="dd-sev dd-sev--warning">Warning</span> (compiles but is suspect), or <span class="dd-sev dd-sev--info">Info</span> (a neutral note). Placeholders such as `{0}` are filled with specifics — a name, a count — when the message is shown.
 
+A project can disable any Warning or Info code it does not want to hear about, in [`dialogue.toml`](configuration.md#disabling-diagnostics) or with `ddown compile --disable`. An Error cannot be disabled, because the script cannot compile until it is fixed.
+
 ## Syntax (`DLG1xxx`)
 
 The script's surface: text that does not parse as intended, or Markdown that never becomes dialogue.

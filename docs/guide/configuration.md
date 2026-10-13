@@ -2,14 +2,15 @@
 
 A `dialogue.toml` file configures how DialogueDown compiles the scripts in your
 project — the **speakers** your dialogue uses (and which one is the **default**),
-the **compilation mode**, and how **unmodeled Markdown** is handled. It sits at
+the **compilation mode**, how **unmodeled Markdown** is handled, and which
+**diagnostics are disabled**. It sits at
 your project root, and the `ddown` CLI finds it automatically, so your scripts
 stay free of project-wide setup.
 
 > [!NOTE]
 > DialogueDown is in early development. Configuration currently covers speakers,
-> the compilation mode, and unmodeled-Markdown handling; more knobs (documented
-> in the design notes) will follow.
+> the compilation mode, unmodeled-Markdown handling, and disabled diagnostics;
+> more knobs (documented in the design notes) will follow.
 
 ## Table of contents
 
@@ -21,6 +22,7 @@ stay free of project-wide setup.
   - [Tags](#tags)
   - [Compilation mode](#compilation-mode)
   - [Unmodeled Markdown](#unmodeled-markdown)
+  - [Disabling diagnostics](#disabling-diagnostics)
   - [Using it with the CLI](#using-it-with-the-cli)
   - [Autocompletion in the report](#autocompletion-in-the-report)
 
@@ -170,6 +172,35 @@ For the rationale and the full model, see the
 [Unmodeled Markdown Handling](../contributing/design-notes/core/Unmodeled%20Markdown%20Handling.md)
 design note.
 
+## Disabling diagnostics
+
+A project that does not want to hear about a warning or an info, such as the note
+that a divider is left out of the script, can **disable** its code under
+`[diagnostics]`:
+
+```toml
+# dialogue.toml
+
+[diagnostics]
+disable = ["DLG3002", "DLG1114"]   # any order and any case; duplicates collapse
+```
+
+A disabled diagnostic is still found, but neither `ddown compile` nor the report
+shows it, and `--fix` leaves its text alone. The compile ends with a line that
+counts what was disabled, so the decision is not forgotten:
+
+```text
+2 disabled: 1 DLG1114, 1 DLG3002
+```
+
+Only `Warning` and `Info` codes can be disabled; an `Error` must be fixed for the
+script to compile. A misspelled code, an error code, or anything other than an
+array of codes is a configuration error, reported with its file, line, and column.
+Each code's severity is listed in the [error-code reference](error-codes.md).
+
+The CLI's [`--disable`](#using-it-with-the-cli) option disables more codes for a
+single run. It only adds to this list, so a run cannot turn a code back on.
+
 ## Using it with the CLI
 
 Both commands pick up the configuration automatically:
@@ -186,11 +217,12 @@ Use `--config` to name a specific file, overriding discovery:
 ddown compile intro.dialogue.md --config config/dialogue.toml
 ```
 
-| Option            | Behavior                                                              |
-| ----------------- | --------------------------------------------------------------------- |
-| *(none)*          | Discover the nearest `dialogue.toml` from the script's folder upward. |
-| `--config <path>` | Use exactly this file; a missing path is a usage error.               |
-| `--mode <mode>`   | Override the configured mode for this run.                            |
+| Option              | Behavior                                                               |
+| ------------------- | ---------------------------------------------------------------------- |
+| *(none)*            | Discover the nearest `dialogue.toml` from the script's folder upward.  |
+| `--config <path>`   | Use exactly this file; a missing path is a usage error.                |
+| `--mode <mode>`     | Override the configured mode for this run.                             |
+| `--disable <codes>` | Disable more diagnostic codes for this run, adding to `[diagnostics]`. |
 
 > [!NOTE]
 > For `visualize`, discovery stays within `--root` (the served folder), so a report
