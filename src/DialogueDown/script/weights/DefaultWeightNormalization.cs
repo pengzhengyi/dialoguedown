@@ -1,14 +1,14 @@
 using DialogueDown.Script.Ast;
-using PlaybookWeights = DialogueDown.Playbook.Weights;
+using DrawingWeight = DialogueDown.Playbook.Weights.DrawingWeight;
 
 namespace DialogueDown.Script.Weights;
 
 /// <summary>
-/// The default weight-normalization strategy: each weight's share is worked out by the
-/// playbook's <see cref="PlaybookWeights.WeightShares"/>, the same arithmetic a runner draws by,
-/// and every share is divided by their total so the probabilities sum to 1. A zero weight total is
-/// reported as an error by validation; the normalizer still recovers to a uniform distribution, so
-/// no consumer ever divides by zero.
+/// The default weight-normalization strategy: each weight becomes a <see cref="DrawingWeight"/>,
+/// whose shares are the same arithmetic a runner draws by, and every share is divided by their
+/// total so the probabilities sum to 1. A zero weight total is reported as an error by
+/// validation; the normalizer still recovers to a uniform distribution, so no consumer ever
+/// divides by zero.
 /// </summary>
 /// <remarks>
 /// <c>`50%`</c>, <c>`%`</c>, <c>`%`</c> resolve to 50, 25, and 25, giving 0.5, 0.25, and 0.25.
@@ -25,8 +25,8 @@ internal sealed class DefaultWeightNormalization : IWeightNormalization
             return new WeightDistribution([], 0);
         }
 
-        var shares = PlaybookWeights.WeightShares.Of(weights.Select(ToPlaybookWeight));
-        var rawTotal = PlaybookWeights.WeightShares.Total(shares);
+        var shares = DrawingWeight.Shares(weights.Select(ToDrawingWeight));
+        var rawTotal = DrawingWeight.Total(shares);
 
         var probabilities = rawTotal > 0
             ? shares.Select(share => share / rawTotal).ToList()
@@ -35,12 +35,12 @@ internal sealed class DefaultWeightNormalization : IWeightNormalization
         return new WeightDistribution(probabilities, rawTotal);
     }
 
-    // The shares are worked out over the playbook's weights. A negative or an infinite number is
-    // refused there; a query weight is refused here, because it has no compile-time value.
-    private static PlaybookWeights.ChoiceWeight ToPlaybookWeight(ChoiceWeight weight) => weight switch
+    // A negative or an infinite number is refused by the drawing weight; a query weight is refused
+    // here, because it has no compile-time value.
+    private static DrawingWeight ToDrawingWeight(ChoiceWeight weight) => weight switch
     {
-        NumberWeight number => new PlaybookWeights.NumberWeight(number.Percentage),
-        AutoWeight => new PlaybookWeights.AutoWeight(),
+        NumberWeight number => new DrawingWeight.Number(number.Percentage),
+        AutoWeight => new DrawingWeight.Auto(),
         QueryWeight => throw new ArgumentOutOfRangeException(
             nameof(weight), weight.GetType(),
             "A query weight has no compile-time value; resolve it at runtime before normalizing."),

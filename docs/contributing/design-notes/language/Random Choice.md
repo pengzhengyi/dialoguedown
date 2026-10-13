@@ -167,11 +167,12 @@ At runtime:
 6. **Normalize:** divide every resolved weight by the total so the probabilities
    sum to 1. Weights remain relative; they need not total 100 to work.
 
-The playbook library's `WeightShares` is the single definition of steps 1 to 3:
+The playbook library's `DrawingWeight` is the single definition of steps 1 to 3:
 a number as written, an equal part of the leftover for each auto, and the total,
-added in the order written. The compiler and a runtime both use it; a runtime
-replaces each `QueryWeight` with its value first. The compiler's injectable
-normalization policy builds step 6 on those shares.
+added in the order written. The compiler and a runtime each turn their own weights
+into drawing weights, a runtime turning each `QueryWeight` into the number the
+world answered. The compiler's injectable normalization policy builds step 6 on
+the shares.
 
 ## Prior art
 
@@ -217,8 +218,8 @@ flowchart LR
     RC -->|static only| Rule["WeightTotalRule"]
     RC -->|contains query| Runtime["Runtime query resolution"]
     Rule --> Norm["IWeightNormalization"]
-    Norm --> Shares["WeightShares<br/>(playbook library)"]
-    Runtime --> Shares
+    Norm --> Drawing["DrawingWeight<br/>(playbook library)"]
+    Runtime --> Drawing
 ```
 
 Recognition happens in the **transpiler**. `RandomChoiceRecognition` removes a
@@ -235,7 +236,7 @@ before its body.
 The **weight-total** rules run at compile time only for a fully static group.
 When a `QueryWeight` is present, the group is structurally valid but unresolved;
 a runtime resolves every query, validates the values, and works out the shares
-with the same `WeightShares` the compiler uses.
+with the same `DrawingWeight` arithmetic the compiler uses.
 
 ## Interfaces and responsibilities
 
@@ -248,8 +249,8 @@ with the same `WeightShares` the compiler uses.
 | `NumberWeight` | A finite, non-negative literal percentage plus its source span. |
 | `AutoWeight` | A bare `%` plus its source span; resolved after explicit numeric and query weights. |
 | `QueryWeight` | A game-state query key plus its source span. The runtime numeric result becomes an explicit weight. |
-| `WeightShares` | In the playbook library: works out each weight's share, a number as written or an auto's equal part of what the numbers leave of 100, and adds the shares up in the order written. The one definition the compiler and a runtime share. |
-| `IWeightNormalization` | The compiler's injectable policy that divides the shares `WeightShares` works out by their total, recovers to a uniform distribution from a zero total, and reports the raw total. |
+| `DrawingWeight` | In the playbook library: a weight ready for the draw, a number or an auto weight, and the arithmetic over them. Each number is its own share, each auto takes an equal part of what the numbers leave of 100, and the shares are added up in the order written. The one definition the compiler and a runtime share. |
+| `IWeightNormalization` | The compiler's injectable policy that divides the shares of its drawing weights by their total, recovers to a uniform distribution from a zero total, and reports the raw total. |
 | `ChoiceWeightReader` | Reads all three weight forms; a key goes through `QueryKeyReader`. |
 | `SemanticTokenProjection` | A weight is a Markdown code span the editor already colors, so no dedicated weight token is projected. Query-key completion stays deferred until a game-state symbol source exists. |
 | `DiagnosticCatalog` | Own `DLG1104`, `DLG1105`, `DLG2010`, `DLG3003`, and `DLG3004`. |
@@ -360,9 +361,9 @@ leaves room to swap the policy (for example, a strict "must total 100" variant)
 without touching recognition.
 
 The shares the policy normalizes, with each auto weight's part worked out and the
-total added up, come from the playbook library's `WeightShares`. The runtime may depend only
-on that library, so keeping the share arithmetic there is what lets the
-compile-time warning and a runtime share one definition.
+total added up, come from the playbook library's `DrawingWeight`. The runtime may
+depend only on that library, so keeping the share arithmetic there is what lets
+the compile-time warning and a runtime share one definition.
 
 The strategy takes finite, non-negative weights as a precondition — recognition
 rejects a negative or an infinite weight as `DLG1105` before it reaches the AST —
