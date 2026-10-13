@@ -75,11 +75,23 @@ public sealed class WeightTotalRuleTests
     }
 
     [Fact]
-    public void Check_ASingleOption_IsAlwaysSelected_SoReportsNothing()
+    public void Check_ASingleOption_IsSparedTheWarningAboutItsTotal()
     {
+        // A lone option with any weight above zero is always selected, so its total is moot.
         var random = RandomChoices(RandomOption(NumberWeight(50), Line(Text("only"))));
 
         Assert.Empty(Check(random));
+    }
+
+    [Fact]
+    public void Check_ASingleZeroWeightOption_ReportsAnError_BecauseItIsNeverSelected()
+    {
+        var random = RandomChoices(5, RandomOption(NumberWeight(0), Line(Text("never"))));
+
+        var diagnostic = Assert.Single(Check(random));
+
+        Assert.Equal(DiagnosticCatalog.ZeroChoiceWeightTotal.Code, diagnostic.Descriptor.Code);
+        Assert.Equal(SourceSpan.EmptyAt(5), diagnostic.Span);
     }
 
     [Fact]

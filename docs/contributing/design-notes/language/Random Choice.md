@@ -255,7 +255,7 @@ with the same `DrawingWeight` arithmetic the compiler uses.
 | `SemanticTokenProjection` | A weight is a Markdown code span the editor already colors, so no dedicated weight token is projected. Query-key completion stays deferred until a game-state symbol source exists. |
 | `DiagnosticCatalog` | Own `DLG1104`, `DLG1105`, `DLG2010`, `DLG3003`, and `DLG3004`. |
 | `WeightTotalRule` | Validates only fully static, unconditional groups. A group containing a `QueryWeight` or a conditional option defers zero/drift checks to runtime. |
-| `SingleOptionRandomChoiceRule` | A structural rule that warns (`DLG3004`) when a random choice offers only one option, since it is always selected and the weight has no effect. |
+| `SingleOptionRandomChoiceRule` | A structural rule that warns (`DLG3004`) when a random choice offers only one option, since it is always selected and the weight has no effect. A lone, unguarded `` `0%` `` option is left to `DLG2010`. |
 
 ## Key design decisions
 
@@ -399,7 +399,7 @@ it so the code span is no longer the option's weight prefix.
 | `DLG1105` | Invalid choice weight | Syntax | Error | A weight value is a negative number (`` `-10%` ``), or an infinite one (`` `Infinity%` ``, or more digits than a double holds). Any non-numeric text is a key. |
 | `DLG2010` | Random choice weights sum to zero | Semantic | Error | A fully static, unconditional random choice's weights all resolve to 0, so no option can be selected. |
 | `DLG3003` | Choice weights do not total 100% | Style | Warning | A fully static, unconditional random choice's weights do not total ≈100% (within 0.5, and not all zero); the odds are normalized anyway. |
-| `DLG3004` | Single-option random choice | Style | Warning | A random choice offers only one option, so it is always selected and the weight has no effect. |
+| `DLG3004` | Single-option random choice | Style | Warning | A random choice offers only one option, so it is always selected and the weight has no effect. A lone, unguarded `` `0%` `` option is `DLG2010` instead. |
 
 `DLG1104`/`DLG1105` sit in the `DLG11xx` line/inline-surface band alongside the
 game-call diagnostics. A zero total is a meaning-level fault, not a token-level
@@ -412,7 +412,8 @@ one, so it takes a semantic (`DLG2xxx`) code. `DLG3003` and `DLG3004` are style
 | --- | --- |
 | No option weighted | Ordinary player choice; unchanged. |
 | Some options weighted, one bare | `DLG1104` on the bare option; recover it as an auto. |
-| Single weighted option | Valid, but always selected, so `DLG3004` warns that the weight has no effect. |
+| Single weighted option | Valid, but always selected while its weight is above zero, so `DLG3004` warns that the weight has no effect. |
+| Single `` `0%` `` option, unguarded | `DLG2010`: it is never selected. |
 | All auto (`` `%` `` everywhere) | Uniform random. |
 | Explicit total < 100, no autos | `DLG3003`; normalize by the sum. |
 | Explicit total within 0.5 of 100 (e.g. three `` `33.3%` `` → 99.9) | No warning. |

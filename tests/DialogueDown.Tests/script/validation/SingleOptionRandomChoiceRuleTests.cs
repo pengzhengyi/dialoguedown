@@ -22,9 +22,22 @@ public sealed class SingleOptionRandomChoiceRuleTests
     }
 
     [Fact]
-    public void Check_ASingleZeroWeightOption_AlsoWarns()
+    public void Check_ASingleZeroWeightOption_IsLeftToTheZeroTotalError()
     {
-        var random = RandomChoices(RandomOption(NumberWeight(0), Line(Text("never?"))));
+        // The option is never selected, which the zero-total error says; a warning that it is
+        // always selected would contradict it.
+        var random = RandomChoices(RandomOption(NumberWeight(0), Line(Text("never"))));
+
+        Assert.Empty(Check(random));
+    }
+
+    [Fact]
+    public void Check_AGuardedSingleZeroWeightOption_StillWarns()
+    {
+        // The zero-total error leaves a guarded random choice to the runtime, so this warning is
+        // the one thing that points at it.
+        var random = RandomChoices(
+            ConditionalRandomOption(Condition("IsAngry"), NumberWeight(0), Line(Text("never"))));
 
         AssertReported(Check(random), DiagnosticCatalog.SingleOptionRandomChoice);
     }

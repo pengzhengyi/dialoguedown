@@ -13,9 +13,10 @@ namespace DialogueDown.Script.Validation;
 /// (<see cref="DiagnosticCatalog.ZeroChoiceWeightTotal"/>) when the weights sum to zero, so no
 /// option can be selected; otherwise a warning
 /// (<see cref="DiagnosticCatalog.ChoiceWeightsNotOneHundred"/>) when they do not total
-/// approximately 100%. A single-option group is skipped: its lone option is always selected, so
-/// its total is moot, as is a group containing a <see cref="QueryWeight"/> or a conditional
-/// option — the achievable total is only known at runtime.
+/// approximately 100%. A single-option group is spared the warning, because its lone option is
+/// always selected while its weight is above zero, but a lone <c>`0%`</c> option is never
+/// selected, so its zero total is still an error. A group containing a <see cref="QueryWeight"/>
+/// or a conditional option is skipped: the achievable total is only known at runtime.
 /// </summary>
 internal sealed class WeightTotalRule(IWeightNormalization normalization) : IDiagnosticRule
 {
@@ -34,13 +35,13 @@ internal sealed class WeightTotalRule(IWeightNormalization normalization) : IDia
         }
     }
 
+    /// <summary>Whether a static total is zero, so no option can be selected.</summary>
+    /// <param name="total">The total of a random choice's static weights.</param>
+    /// <returns><see langword="true"/> when the total is zero.</returns>
+    internal static bool IsZeroTotal(double total) => total < NearZeroThreshold;
+
     private void Inspect(RandomChoices random, IDiagnosticSink diagnostics)
     {
-        if (random.Options.Count <= 1)
-        {
-            return;
-        }
-
         // A query weight has no compile-time value, and a conditional option may be excluded, so
         // the achievable total is only known at runtime — the runtime resolves and re-normalizes it.
         if (random.Options.Any(option => option.Weight is QueryWeight || option.IsConditional()))
@@ -53,11 +54,11 @@ internal sealed class WeightTotalRule(IWeightNormalization normalization) : IDia
             .RawTotal;
         var location = SourceSpan.EmptyAt(random.Span.Start);
 
-        if (total < NearZeroThreshold)
+        if (IsZeroTotal(total))
         {
             diagnostics.Report(new Diagnostic(DiagnosticCatalog.ZeroChoiceWeightTotal, location, []));
         }
-        else if (Math.Abs(total - HundredPercent) > NearHundredTolerance)
+        else if (random.Options.Count > 1 && Math.Abs(total - HundredPercent) > NearHundredTolerance)
         {
             diagnostics.Report(new Diagnostic(
                 DiagnosticCatalog.ChoiceWeightsNotOneHundred,

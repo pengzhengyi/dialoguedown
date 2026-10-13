@@ -720,7 +720,7 @@ The coin spins.
 
 This random choice has a single option, so it is always selected and the weight has no effect. Remove the weight to make it a plain line, or add more options.
 
-A random choice with only one option always selects it — the weight has no effect and the list is not really random. This usually means a plain line was given a weight, or the other options are missing.
+A random choice with only one option always selects it — the weight has no effect and the list is not really random. This usually means a plain line was given a weight, or the other options are missing. A lone `0%` option is never selected, so it is reported as a zero total (DLG2010) instead.
 
 <span class="dd-eg-bad">Triggering example</span>
 

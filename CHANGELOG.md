@@ -129,6 +129,11 @@ changes easy to categorize.
 
 ### Changed
 
+- **A random choice whose only option weighs `0%` is an error** — it compiled with a warning
+  that the option is always selected, but an option with no weight is never selected. It is now
+  reported as a zero total (`DLG2010`), as two `0%` options already were, and the warning stays
+  quiet for it.
+
 - **The conformance harness reports every divergence a case has** — an outcome carries a list of
   reasons rather than only the first, so a contributor meets every fault a fixture found in one run
   instead of fixing one and re-running to meet the next. The verdict each case gets is unchanged.
