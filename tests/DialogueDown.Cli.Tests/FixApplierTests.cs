@@ -155,4 +155,16 @@ public sealed class FixApplierTests
         Assert.Equal([true, false, true], application.Outcomes.Select(outcome => outcome.Applied));
         Assert.Equal("aXe!f", application.Text);
     }
+    [Fact]
+    public void Apply_ADisabledDiagnosticsFix_IsNotACandidate()
+    {
+        const string Source = "The rule is simple => the lever opens.";
+        var arrow = Source.IndexOf("=>", StringComparison.Ordinal);
+        var disabled = Spanning("DLG1113", arrow, arrow + 2, Escape(arrow)) with { IsDisabled = true };
+
+        var application = FixApplier.Apply(Source, [disabled]);
+
+        Assert.Equal(Source, application.Text);
+        Assert.False(application.HasCandidates);
+    }
 }

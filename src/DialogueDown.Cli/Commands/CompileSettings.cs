@@ -1,5 +1,6 @@
 using System.ComponentModel;
 using DialogueDown.Configuration;
+using DialogueDown.Diagnostics;
 using DialogueDown.Visualization.Render;
 using Spectre.Console;
 using Spectre.Console.Cli;
@@ -32,6 +33,10 @@ internal sealed class CompileSettings : CommandSettings
     [Description("Where the emitted text goes, by convention <script>.playbook.json. Default: standard output.")]
     public string? Output { get; init; }
 
+    [CommandOption("--disable <codes>")]
+    [Description("Disable an info or warning diagnostic code for this run, in addition to those dialogue.toml disables. Repeat it, or separate codes with commas.")]
+    public string[] Disable { get; init; } = [];
+
     [CommandOption("--fix")]
     [Description("Correct the script in place by applying each diagnostic's preferred fix, then recompile it.")]
     public bool Fix { get; init; }
@@ -39,6 +44,10 @@ internal sealed class CompileSettings : CommandSettings
     /// <summary>The compilation mode from <c>--mode</c>, or null to inherit the resolved options'
     /// mode. Only valid after <see cref="Validate"/> succeeds.</summary>
     public CompilationMode? ResolvedMode => Mode is null ? null : CompilationModes.TryParse(Mode);
+
+    /// <summary>The codes <c>--disable</c> names, split at commas and trimmed, in the case written.
+    /// Only valid after <see cref="Validate"/> succeeds.</summary>
+    public IReadOnlyList<string> DisabledCodes => [.. Disable.SelectMany(SplitCodes)];
 
     /// <summary>Whether this compile writes a playbook.</summary>
     /// <remarks>
@@ -91,6 +100,12 @@ internal sealed class CompileSettings : CommandSettings
                 $"Unknown --mode '{Mode}'. Use {CompilationModes.SettableNamesDescription}.");
         }
 
+        var disable = ValidateDisable();
+        if (!disable.Successful)
+        {
+            return disable;
+        }
+
         var fix = ValidateFix();
         if (!fix.Successful)
         {
@@ -98,6 +113,49 @@ internal sealed class CompileSettings : CommandSettings
         }
 
         return ValidateEmit();
+    }
+
+    private static string? DisableProblem(string code)
+    {
+        var info = DiagnosticCodes.Find(code);
+        if (info is null)
+        {
+            return $"Unknown diagnostic code '{code}'. Check the code against the error-code reference: "
+                + DiagnosticCodes.ReferencePage;
+        }
+
+        return info.IsOptional
+            ? null
+            : $"{info.Code} is an error and cannot be disabled; only info and warning codes can.";
+    }
+
+    // A trailing or doubled comma leaves an empty entry, which is dropped.
+    private static List<string> SplitCodes(string value) =>
+        [.. value.Split(',', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries)];
+
+    // Each `--disable` value must name at least one code, and every code must be one a project
+    // could disable in dialogue.toml, so a typo never silently disables nothing.
+    private ValidationResult ValidateDisable()
+    {
+        foreach (var value in Disable)
+        {
+            var codes = SplitCodes(value);
+            if (codes.Count == 0)
+            {
+                return ValidationResult.Error("--disable needs a diagnostic code, such as --disable DLG3002.");
+            }
+
+            foreach (var code in codes)
+            {
+                var problem = DisableProblem(code);
+                if (problem is not null)
+                {
+                    return ValidationResult.Error($"--disable {code}: {problem}");
+                }
+            }
+        }
+
+        return ValidationResult.Success();
     }
 
     // Fix mode writes the corrected script and no emission, so naming a format or a destination

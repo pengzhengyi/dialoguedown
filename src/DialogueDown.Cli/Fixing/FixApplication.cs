@@ -15,7 +15,8 @@ internal sealed record FixApplication(string Text, IReadOnlyList<FixOutcome> Out
     public int AppliedCount => Outcomes.Count(outcome => outcome.Applied);
 
     /// <summary>
-    /// The diagnostics of the corrected script that the script as found did not have.
+    /// The diagnostics of the corrected script that the script as found did not have, leaving out
+    /// disabled ones.
     /// </summary>
     /// <remarks>
     /// A diagnostic is matched by its code and by where it starts in the script as found, so one
@@ -38,7 +39,8 @@ internal sealed record FixApplication(string Text, IReadOnlyList<FixOutcome> Out
         return
         [
             .. corrected.Where(diagnostic =>
-                !remaining.Contains((diagnostic.Code, OriginalOffset(diagnostic.StartOffset)))),
+                !diagnostic.IsDisabled
+                && !remaining.Contains((diagnostic.Code, OriginalOffset(diagnostic.StartOffset)))),
         ];
     }
 

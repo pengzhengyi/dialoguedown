@@ -11,8 +11,9 @@ namespace DialogueDown.Cli;
 /// <see href="https://github.com/spectreconsole/errata">Errata</see> library to draw a rich block
 /// per diagnostic — the source line with a colored caret under the offending range — and otherwise
 /// writes a greppable <c>file(line,column): severity CODE: message</c> one-liner. Both paths end
-/// with a summary line and, when any diagnostic carries a fix, a fixable-count hint; the fix
-/// section follows.
+/// with a summary line and, when any diagnostic carries a fix, a fixable-count hint. A disabled
+/// diagnostic is never shown or counted there; a last line counts them by code instead, as in
+/// <c>2 disabled: 1 DLG1114, 1 DLG3002</c>. The fix section follows.
 /// </summary>
 internal sealed class ErrataRenderer(IAnsiConsole console) : IErrataRenderer
 {
@@ -26,15 +27,22 @@ internal sealed class ErrataRenderer(IAnsiConsole console) : IErrataRenderer
         ArgumentNullException.ThrowIfNull(source);
         ArgumentNullException.ThrowIfNull(diagnostics);
 
-        if (diagnostics.Count > 0)
+        var shown = diagnostics.Where(diagnostic => !diagnostic.IsDisabled).ToList();
+        if (shown.Count > 0)
         {
-            RenderDiagnostics(console, file, source, diagnostics);
-            console.MarkupLineInterpolated($"[grey]{Summarize(diagnostics)}[/]");
-            var fixable = diagnostics.Count(diagnostic => diagnostic.Fixes.Count > 0);
+            RenderDiagnostics(console, file, source, shown);
+            console.MarkupLineInterpolated($"[grey]{Summarize(shown)}[/]");
+            var fixable = shown.Count(diagnostic => diagnostic.Fixes.Count > 0);
             if (fixable > 0)
             {
                 console.MarkupLineInterpolated($"[grey]{fixable} fixable with --fix[/]");
             }
+        }
+
+        var disabled = diagnostics.Where(diagnostic => diagnostic.IsDisabled).ToList();
+        if (disabled.Count > 0)
+        {
+            console.MarkupLineInterpolated($"[grey]{CountByCode(disabled)}[/]");
         }
 
         if (fix is not null)
@@ -139,10 +147,24 @@ internal sealed class ErrataRenderer(IAnsiConsole console) : IErrataRenderer
         _ => throw new ArgumentOutOfRangeException(nameof(reason), reason, "Unknown fix skip reason."),
     };
 
-    private static string Remaining(IReadOnlyList<LocatedDiagnostic> remaining) =>
-        remaining.Count == 0
+    // Disabled diagnostics are left out of the count, as they are out of the summary.
+    private static string Remaining(IReadOnlyList<LocatedDiagnostic> remaining)
+    {
+        var shown = remaining.Where(diagnostic => !diagnostic.IsDisabled).ToList();
+        return shown.Count == 0
             ? string.Empty
-            : $"; {Summarize(remaining)} {(remaining.Count == 1 ? "remains" : "remain")}";
+            : $"; {Summarize(shown)} {(shown.Count == 1 ? "remains" : "remain")}";
+    }
+
+    // "2 disabled: 1 DLG1114, 1 DLG3002": count first, in code order, like Ruff's --statistics.
+    private static string CountByCode(IReadOnlyList<LocatedDiagnostic> disabled)
+    {
+        var byCode = disabled
+            .GroupBy(diagnostic => diagnostic.Code)
+            .OrderBy(group => group.Key, StringComparer.Ordinal)
+            .Select(group => $"{group.Count()} {group.Key}");
+        return $"{disabled.Count} disabled: {string.Join(", ", byCode)}";
+    }
 
     private static string FixesCount(int applied) => applied == 1 ? "1 fix" : $"{applied} fixes";
 
