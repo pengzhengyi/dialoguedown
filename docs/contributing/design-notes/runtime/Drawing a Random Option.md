@@ -2,8 +2,8 @@
 
 > [!NOTE]
 > Status: **proposed**. The pass that lets the runner play a random choice: it asks
-> the world what decides the odds, asks the host for a draw, and follows the arm the
-> draw lands on. It settles the entropy question the
+> the world what decides the odds, asks the host for a draw, and follows the random
+> option the draw lands on. It settles the entropy question the
 > [dialogue runtime architecture](./Dialogue%20Runtime%20Architecture.md#open-questions-and-deferred-work)
 > leaves open, plays the weights the [random choice](../language/Random%20Choice.md)
 > note defines, and reuses [asking the world](./Asking%20the%20World.md) and the
@@ -23,7 +23,7 @@
 
 ## Goal and scope
 
-A writer lets the engine pick one of several arms with a weighted list:
+A writer lets the engine pick one of several random options with a weighted list:
 
 ```markdown
 The guard looks up.
@@ -35,31 +35,30 @@ The guard looks up.
 
 The runner refuses a `random-choice` node, which is the last kind of node it cannot
 play. This pass plays one: the runner asks the world what decides the odds, works
-out each arm's share, asks the host for a draw, and arrives at the arm the draw
-lands on. The player sees no menu.
+out each random option's share, asks the host for a draw, and follows the random
+option the draw lands on. The player sees no menu.
 
 The pass has three milestones:
 
 | Milestone | What it delivers |
 | --- | --- |
-| **M1 — static weights** | Number and auto weights resolved to shares; the `Draw` request, the `Drawn` command, and the wait between them; the draw mapped onto the shares; the reader refuses a weight no share can have; the compiler reports a random choice whose only arm weighs `0%` |
-| **M2 — guarded arms** | An arm's condition asked on arrival; an excluded arm left out before the shares are worked out; a random choice with no arm left to draw walked past by its fall-through, or refused as `leads-nowhere` without one |
+| **M1 — static weights** | Number and auto weights resolved to shares; the `Draw` request, the `Drawn` command, and the wait between them; the draw mapped onto the shares; the reader refuses a weight no share can have; the compiler reports a random choice whose only random option weighs `0%` |
+| **M2 — guarded random options** | A random option's condition asked on arrival; an excluded random option left out before the shares are worked out; a random choice with nothing left to draw walked past by its fall-through, or refused as `leads-nowhere` without one |
 | **M3 — key weights** | A key weight asked on arrival and answered with a number; a number joins the answers; an answer no weight can have refused |
 
 Each milestone refuses what the next one adds: until M2 a random choice with a
-guarded arm, and until M3 one with a key weight, is refused as `unplayable-node`, so
-a run never draws against odds it has not read from the world.
+guarded random option, and until M3 one with a key weight, is refused as
+`unplayable-node`, so a run never draws against odds it has not read from the world.
 
 In scope:
 
 - playing a `random-choice` node and the `random-option` edges out of it;
-- the source of randomness, and how a draw becomes an arm;
-- reading the world once for a random choice: its arms' conditions and its key
-  weights;
+- the source of randomness, and how a draw picks a random option;
+- reading the world once for a random choice: its conditions and its key weights;
 - a number among the world's answers;
 - refusals for a draw out of range and a weight no share can have;
 - a reader rule for a number weight;
-- the compiler's report of a random choice whose only arm weighs `0%`;
+- the compiler's report of a random choice whose only random option weighs `0%`;
 - a `drawn` send and a `draw` matcher in the harness, and corpus cases;
 - random choices in `PlaybookGen`, so the walk property draws them.
 
@@ -72,45 +71,45 @@ language rules out.
 
 | Term | Meaning |
 | --- | --- |
-| **Random choice** | A `random-choice` node: arms the engine picks among by weight, with no menu |
-| **Arm** | One `random-option` edge: the node it leads to, a weight, and an optional condition. A random choice's `succession`, when it has one, is not an arm |
+| **Random choice** | A `random-choice` node: random options the engine picks among by weight, with no menu |
+| **Random option** | One `random-option` edge: the node it leads to, a weight, and an optional condition. A random choice's `succession`, when it has one, is not a random option |
 | **Weight** | What the writer wrote: a number (`` `30%` ``), an auto weight (`` `%` ``), or a key weight (`` `Guard.Mood%` ``) |
-| **Share** | What an arm's weight comes to: its number, the world's answer for a key weight, or, for an auto weight, an equal part of what the arms in play leave of 100. An excluded arm's share is zero |
-| **Excluded** | An arm whose condition the world withholds. Every other arm is **in play** |
-| **Drawable** | An arm whose share is above zero, so a draw can land on it |
-| **Total** | The sum of every arm's share |
+| **Share** | What a random option's weight comes to: its number, the world's answer for a key weight, or, for an auto weight, an equal part of what the random options in play leave of 100. An excluded random option's share is zero |
+| **Excluded** | A random option whose condition the world withholds. Every other random option is **in play** |
+| **Drawable** | A random option whose share is above zero, so a draw can land on it |
+| **Total** | The sum of every random option's share |
 | **Draw** | A number from `0` to `1` the host supplies, and the `Draw` request that asks for it |
-| **Drawn arm** | The arm whose span of the total the draw lands in |
+| **Drawn random option** | The random option whose span of the total the draw lands in |
 
 ## Functionality checklist
 
 M1:
 
-- [ ] A random choice, once arrived at, sends `Draw` with every arm's share, in the
-      order written, and waits for `Drawn`.
+- [ ] A random choice, once arrived at, sends `Draw` with every random option's
+      share, in the order written, and waits for `Drawn`.
 - [ ] Number and auto weights resolve to shares as the language defines: an auto
       weight takes an equal part of what the numbers leave of 100.
-- [ ] A draw lands on the arm whose span holds it, the spans laid end to end in the
-      order written; the run arrives at that arm's node.
+- [ ] A draw lands on the random option whose span holds it, the spans laid end to
+      end in the order written; the run arrives where that random option leads.
 - [ ] A draw below `0`, above `1`, or not a number is refused as `invalid-draw`, and
       the run keeps waiting for another.
 - [ ] `Drawn` anywhere else, and `Next`, `Done`, `Failed`, `Supply`, or `Choose`
       while a draw is awaited, is refused as misplaced.
 - [ ] The reader refuses a number weight that is negative or not finite, and a
       random choice whose number weights sum to more than a double can hold.
-- [ ] The compiler reports a random choice whose only arm weighs `0%` with `DLG2010`,
-      as it reports any zero total, and not with `DLG3004`, which says the arm is
-      always taken.
-- [ ] A random choice with a guarded arm or a key weight is refused as
+- [ ] The compiler reports a random choice whose only random option weighs `0%` with
+      `DLG2010`, as it reports any zero total, and not with `DLG3004`, which says the
+      random option is always taken.
+- [ ] A random choice with a guarded random option or a key weight is refused as
       `unplayable-node`, until M2 and M3.
 
 M2:
 
-- [ ] A random choice's arms' conditions are asked on arrival, in one request.
-- [ ] An excluded arm keeps no share, and the arms in play share the draw as if it
-      were not written: an auto weight takes an equal part of what their numbers
-      leave of 100.
-- [ ] A random choice with no drawable arm is walked past by its fall-through, and
+- [ ] A random choice's conditions are asked on arrival, in one request.
+- [ ] An excluded random option keeps no share, and the random options in play share
+      the draw as if it were not written: an auto weight takes an equal part of what
+      their numbers leave of 100.
+- [ ] A random choice with nothing drawable is walked past by its fall-through, and
       one with no fall-through is refused as `leads-nowhere`.
 
 M3:
@@ -138,57 +137,58 @@ sequenceDiagram
     R-->>D: Draw [0, 30, 20]
     Note over R: AwaitingDraw
     D->>R: Drawn 0.7
-    Note over R: 0.7 × 50 = 35, inside the third arm's span
+    Note over R: 0.7 × 50 = 35, inside the third span
     R-->>D: Said Guard "Lovely day."
 ```
 
-The angry arm is excluded, so its share is zero. Laid end to end in the order
-written, the shares take the spans `[0, 0)`, `[0, 30)`, and `[30, 50)` of the total
-of `50`. A draw of `0.7` stands at `35`, inside the third arm's span. An empty span
-is never landed on.
+The angry guard's random option is excluded, so its share is zero. Laid end to end
+in the order written, the shares take the spans `[0, 0)`, `[0, 30)`, and `[30, 50)`
+of the total of `50`. A draw of `0.7` stands at `35`, inside the third span. An empty
+span is never landed on.
 
-After the draw, the run arrives at the arm's node as it arrives anywhere: asking what
-that node needs, walking past a jump, or saying a line.
+After the draw, the run arrives where the random option leads, as it arrives
+anywhere: asking what that node needs, walking past a jump, or saying a line.
 
 ## Interfaces and abstractions
 
 | Type | Responsibility | Collaborators |
 | --- | --- | --- |
-| `Draw(shares)` | A request answered by `Drawn`: every arm's share in the order written, and a draw wanted from `0` to `1` | `Request` |
+| `Draw(shares)` | A request answered by `Drawn`: every random option's share in the order written, and a draw wanted from `0` to `1` | `Request` |
 | `Drawn(value)` | A command: the draw the host made | `Command` |
 | `AwaitingDraw(node, shares)` | Waiting for the host at a random choice, and the shares the open `Draw` named | `Situation` |
 | `NumberAnswer(value)` | An answer: a number, as a key weight needs | `Answer` |
-| `NodeQuestions` | For a random choice, its arms' conditions as truths and its key weights as numbers; the same whether read for the whole node or from its start | `Arrival` |
+| `NodeQuestions` | For a random choice, its conditions as truths and its key weights as numbers; the same whether read for the whole node or from its start | `Arrival` |
 | `DrawingWeight` | A weight ready for the draw, `Number` or `Auto`, and the arithmetic over them: `Shares` and `Total`. The one definition the compiler and the runner share | The compiler's weight checks, `WeightShares` |
-| `WeightShares` | The playbook's adapter: turns a playbook's weights into drawing weights, refusing a key; M2 and M3 give it the arms in play and the world's answers | `Drawing` |
-| `Drawing` | Works out the shares and sends `Draw`; takes `Drawn`, finds the arm it lands on, and arrives there | `Playing`, `Runner`, `Arrival` |
-| `Arrival` | Walks past a random choice with no drawable arm, as it walks past a menu with nothing available | `Drawing` |
+| `WeightShares` | The playbook's adapter: turns a playbook's weights into drawing weights, refusing a key; M2 and M3 give it the random options in play and the world's answers | `Drawing` |
+| `Drawing` | Works out the shares and sends `Draw`; takes `Drawn`, finds the random option it lands on, and arrives where it leads | `Playing`, `Runner`, `Arrival` |
+| `Arrival` | Walks past a random choice with nothing drawable, as it walks past a menu with nothing available | `Drawing` |
 | `DrawnReader`, `DrawMatcher` | Read a fixture's `drawn` send, and hold a `Draw` to its `draw` expectation | The harness |
 
 ## Key design decisions
 
-### R1 — The host supplies the draw; the runner turns it into an arm
+### R1 — The host supplies the draw; the runner turns it into a random option
 
 The runner is a pure function of state and command, so randomness has to come from
 outside it. There were four places to put it:
 
 | Option | Why not, or why |
 | --- | --- |
-| A generator the runner owns, seeded at `Start` | Every runtime would have to match one specified generator bit for bit, including 64-bit integer arithmetic that JavaScript and GDScript do not do natively. A fixture would read as "seed 42 lands on the second arm", which explains nothing, and a save would carry the generator's state |
-| The host picks the arm | The simplest runner, but "by weight" becomes every host's promise, and the corpus cannot hold a host to it |
+| A generator the runner owns, seeded at `Start` | Every runtime would have to match one specified generator bit for bit, including 64-bit integer arithmetic that JavaScript and GDScript do not do natively. A fixture would read as "seed 42 lands on the second random option", which explains nothing, and a save would carry the generator's state |
+| The host picks the random option | The simplest runner, but "by weight" becomes every host's promise, and the corpus cannot hold a host to it |
 | The draw as a key in `Resolve`, answered in `Supply` | No new request, but a draw is not a read of the world. A driver may serve answers from a cache, as [A2](./Asking%20the%20World.md#a2--the-runner-does-not-remember-an-answer) allows, and would then draw the same number every time; and every world would share a reserved key name |
-| **The host supplies a number, and the runner maps it to an arm** | Chosen. The weights stay the runner's, where the corpus checks them; randomness, seeding, and saving stay the host's |
+| **The host supplies a number, and the runner maps it to a random option** | Chosen. The weights stay the runner's, where the corpus checks them; randomness, seeding, and saving stay the host's |
 
 Asking costs one more request and answer per random choice. In return the runner
 stays pure, a replay of the commands replays every draw, and a fixture reads as
-plainly as "a draw of 0.7 lands on the third arm".
+plainly as "a draw of 0.7 lands on the third random option".
 
-`Draw` names every arm's share, so a host can show the odds, and a debugger that
-wants one arm sends a draw inside that arm's span. The corpus states the shares
-directly, which pins the arithmetic of [R5](#r5--an-excluded-arm-is-left-out-before-the-shares-are-worked-out)
+`Draw` names every random option's share, so a host can show the odds, and a
+debugger that wants one random option sends a draw inside its span. The corpus
+states the shares directly, which pins the arithmetic of
+[R5](#r5--an-excluded-random-option-is-left-out-before-the-shares-are-worked-out)
 and [R9](#r9--the-compiler-and-the-runner-share-one-definition-of-a-share).
 
-### R2 — A draw lands on the arm whose span holds it
+### R2 — A draw lands on the random option whose span holds it
 
 The draw is a number from `0` to `1`, both included, so that a host can pass on any
 common random source: `Math.random()` and `Random.NextDouble()` stop short of `1`,
@@ -198,27 +198,26 @@ and lays the shares end to end in the order written:
 ```text
 point = draw × total
 sum = 0
-for each arm, in the order written:
+for each random option, in the order written:
     sum = sum + share
-    if point < sum: take this arm
-take the last drawable arm
+    if point < sum: take this random option
+take the last drawable random option
 ```
 
-Each span is half-open, so a draw at the exact end of one arm's span belongs to the
-next. The last line is reached only by a draw of `1`, which stands at the total and
-lands on the last drawable arm.
+Each span is half-open, so a draw at the exact end of one span belongs to the next
+random option. The last line is reached only by a draw of `1`, which stands at the
+total and lands on the last drawable random option.
 
 The arithmetic is IEEE 754 binary64, which every runtime has: the shares summed one
-at a time from the first arm, never by a library sum that may reorder them, and an
-auto weight's share computed as `max(0, 100 − numbers) ÷ autos` over the arms in
-play. Two runtimes then
-reach the same arm for the same draw. A boundary can still fall a hair either side of
+at a time from the first, never by a library sum that may reorder them, and an auto
+weight's share computed as `max(0, 100 − numbers) ÷ autos` over the random options
+in play. Two runtimes then reach the same random option for the same draw. A boundary can still fall a hair either side of
 its decimal value, `0.29 × 100` being `28.999999999999996`, so corpus cases put their
 boundaries at draws a double holds exactly, such as `0.5` and `0.25`.
 
 ### R3 — What decides the draw is read once, on arrival
 
-A random choice's arms' conditions and its key weights are asked before the draw, in
+A random choice's conditions and its key weights are asked before the draw, in
 one `Resolve`, as the **before playing** moment of
 [A1](./Asking%20the%20World.md#a1--one-ask-per-moment). A random choice performs
 nothing, so nothing changes between reading the world and drawing, for the same
@@ -238,17 +237,17 @@ asking the world again. This is
 choice: the wait holds what its open request was made against, not the answers that
 produced it.
 
-Where each arm leads is read from the node when the draw arrives. A wait whose node
-is not a random choice, whose shares do not match the node's arms, or whose shares
-leave no arm drawable refuses `Drawn` as misplaced. A run restored at a draw arrives
+Where each random option leads is read from the node when the draw arrives. A wait
+whose node is not a random choice, whose shares do not match the node's random
+options, or whose shares leave nothing drawable refuses `Drawn` as misplaced. A run restored at a draw arrives
 at the random choice afresh, reading the world as it is then, as a run restored at a
 menu does; saves own the restore.
 
-### R5 — An excluded arm is left out before the shares are worked out
+### R5 — An excluded random option is left out before the shares are worked out
 
-The arms in play share the draw as if the excluded arms were not written: an auto
-weight takes an equal part of what the numbers of the arms in play leave of 100, and
-an excluded arm's share is zero. Take this random choice:
+The random options in play share the draw as if the excluded ones were not written:
+an auto weight takes an equal part of what the numbers in play leave of 100, and an
+excluded random option's share is zero. Take this random choice:
 
 ```markdown
 - `Guard.IsAngry?` `50%` Guard: Halt!
@@ -263,29 +262,32 @@ This keeps the promise the [guide](../../../guide/structure-and-flow.md#random-c
 makes for an auto weight: pin the odds that matter and let the rest divide evenly.
 `30%` stays 30% whenever an auto weight is in play to take the rest. When none is,
 the numbers in play re-normalize, as the language says: a calm guard with `50%`,
-`30%`, and `20%` written draws at `30 : 20`, which is 60% and 40%. An excluded arm is
-treated as a false condition is treated everywhere else, as if it were not there.
+`30%`, and `20%` written draws at `30 : 20`, which is 60% and 40%. An excluded
+random option is treated as a false condition is treated everywhere else, as if it
+were not there.
 
 The alternative was to work out every share from the weights as written and only
-then set the excluded arms' shares to zero. That keeps the ratio between two arms in
-play fixed whatever a third arm's condition says, but an arm out of play would still
-take its part of 100 from the auto weights. The calm guard above would draw at
+then set the excluded shares to zero. That keeps the ratio between two random options
+in play fixed whatever a third one's condition says, but a random option out of play
+would still take its part of 100 from the auto weights. The calm guard above would draw at
 `30 : 20`, and with `60%` and `40%` written beside the auto weight, "Lovely day"
 could never be said at all.
 
-An excluded arm's key weight is still asked, because the conditions and the key
-weights come back in one answer, and still checked for a value no weight can have.
+An excluded random option's key weight is still asked, because the conditions and
+the key weights come back in one answer, and still checked for a value no weight can
+have.
 It counts toward nothing.
 
-### R6 — A random choice with no drawable arm is walked past, or leads nowhere
+### R6 — A random choice with nothing drawable is walked past, or leads nowhere
 
-An arm can be drawn only when its share is above zero. When no arm can be, because
-the world withholds every arm or because the arms in play all weigh zero, the walk
-takes the random choice's fall-through, as it takes a menu with nothing available
+A random option can be drawn only when its share is above zero. When none can be,
+because the world withholds every random option or because the random options in play
+all weigh zero, the walk takes the random choice's fall-through, as it takes a menu
+with nothing available
 ([O9](./Offering%20a%20Choice.md#o9--a-menu-with-nothing-available-is-walked-past)),
 and asks for no draw. The compiler writes a fall-through for a random choice whose
-arms are all guarded, so a writer who guards every arm has said where the run goes
-when none applies:
+random options are all guarded, so a writer who guards every one has said where the
+run goes when none applies:
 
 ```markdown
 - `Ada.IsHere?` `Ada.Affection%` Ada: Walk with me?
@@ -302,7 +304,7 @@ take a way out the refusal ruled out.
 A random choice with no fall-through is refused as `leads-nowhere`, and the run
 stands at it, as at any node that leads nowhere. This is the error the language
 makes of a zero total at runtime. A writer who wants a way on when every key weight
-is zero writes it as an arm, which is what an auto weight is for:
+is zero writes it as a random option, which is what an auto weight is for:
 
 ```markdown
 - `Ada.Affection%` Ada: Walk with me?
@@ -314,18 +316,19 @@ With both affections at `0`, the auto weight takes all of 100; once they reach 1
 between them, it takes nothing.
 
 The compiler reports a zero total for static weights, and that includes a random
-choice whose only arm weighs `0%`. A single arm is always taken only while its share
-is above zero, so this one never is, and with no fall-through the run would be
-refused every time it reached it. `DLG2010` reports it, and `DLG3004`, which says a
-single arm is always taken, stays quiet for it. A single arm of any other weight is
-still spared the warning for a total far from 100.
+choice whose only random option weighs `0%`. A single random option is always taken
+only while its share is above zero, so this one never is, and with no fall-through
+the run would be refused every time it reached it. `DLG2010` reports it, and
+`DLG3004`, which says a single random option is always taken, stays quiet for it. A
+single random option of any other weight is still spared the warning for a total far
+from 100.
 
 ### R7 — A random choice always draws while it stands
 
-A random choice the run stands at always asks for a draw, even when one arm holds the
-whole total. Every random choice the host meets then talks to it the same way. The
-language already warns about a random choice with a single arm, so this case is rare
-in a compiled playbook.
+A random choice the run stands at always asks for a draw, even when one random
+option holds the whole total. Every random choice the host meets then talks to it the
+same way. The language already warns about a random choice with a single random
+option, so this case is rare in a compiled playbook.
 
 ### R8 — A key weight is answered with a number
 
@@ -351,8 +354,9 @@ The run waits for the answer holding nothing but the keys it asked, so a driver 
 take as long as it needs: ask a person, or look the key up elsewhere. A driver that
 still cannot answer a key weight, because nothing is bound to it and nothing repairs
 it, has the two moves the protocol already gives it. It can answer `0`, which keeps
-the arm from being drawn and leaves its part of 100 to the auto weights, or stop the
-run, as it may after a [failed effect](./Runner.md#d15--a-failed-effect-holds-the-run).
+the random option from being drawn and leaves its part of 100 to the auto weights, or
+stop the run, as it may after a
+[failed effect](./Runner.md#d15--a-failed-effect-holds-the-run).
 Which one it makes is the driver's policy; the runner has no answer meaning unbound.
 
 ### R9 — The compiler and the runner share one definition of a share
@@ -372,14 +376,14 @@ and `DrawingWeight.Total` adds the shares up in the order written, as R2 require
 Each side turns its own weights into drawing weights, so neither builds the other's
 types to reach the arithmetic:
 
-| Side | A number | An auto weight | A key weight | An excluded arm |
+| Side | A number | An auto weight | A key weight | An excluded random option |
 | --- | --- | --- | --- | --- |
 | Compiler | `Number` | `Auto` | Refused: it has no compile-time value | Not met: a guarded random choice is not checked |
 | Runner | `Number` | `Auto` | `Number` holding the answer, once R8's checks pass | `Number(0)`, which adds nothing to the numbers and takes no part of the rest, as R5 requires |
 
 The runner reaches the arithmetic through `WeightShares`, the playbook library's
-adapter for a playbook's own weights. M2 and M3 give it the arms in play and the
-world's answers, as `SpeechTemplate.Fill` takes an answer for each query.
+adapter for a playbook's own weights. M2 and M3 give it the random options in play
+and the world's answers, as `SpeechTemplate.Fill` takes an answer for each query.
 
 Normalizing shares into probabilities stays in the compiler, behind
 `IWeightNormalization`, with its uniform recovery from a zero total that keeps later
@@ -399,30 +403,30 @@ The runner can then trust a static share, and checks only what the world supplie
 
 | Case | Behavior |
 | --- | --- |
-| A random choice with one arm | Sends `Draw`; every draw lands on that arm |
-| A draw of `0` | Lands on the first drawable arm |
-| A draw of `1` | Lands on the last drawable arm |
-| A draw at the exact end of an arm's span | Lands on the next arm |
+| A random choice with one random option | Sends `Draw`; every draw lands on it |
+| A draw of `0` | Lands on the first drawable random option |
+| A draw of `1` | Lands on the last drawable random option |
+| A draw at the exact end of a span | Lands on the next random option |
 | A draw below `0`, above `1`, or not a number | Refused as `invalid-draw`; the run keeps waiting for a draw |
-| A `0%` arm | Never drawn |
-| Numbers in play that total more than 100 | Each auto weight's share is zero; the arms are drawn by their numbers |
-| An auto weight beside an excluded arm | Takes an equal part of what the arms in play leave of 100 |
-| Every arm excluded | Walked past by the fall-through |
-| Arms in play whose shares are all zero | Walked past by the fall-through, or refused as `leads-nowhere` without one |
-| No drawable arm and no fall-through | Refused as `leads-nowhere` |
-| Unguarded arms that all weigh `0%`, beside guarded arms the world withholds | Nothing is drawable and the compiler writes no fall-through, so refused as `leads-nowhere` |
-| A random choice whose only arm weighs `0%` | The compiler reports `DLG2010`; a playbook built without the compiler is refused as `leads-nowhere` |
+| A `0%` random option | Never drawn |
+| Numbers in play that total more than 100 | Each auto weight's share is zero; the random options are drawn by their numbers |
+| An auto weight beside an excluded random option | Takes an equal part of what the random options in play leave of 100 |
+| Every random option excluded | Walked past by the fall-through |
+| Random options in play whose shares are all zero | Walked past by the fall-through, or refused as `leads-nowhere` without one |
+| Nothing drawable and no fall-through | Refused as `leads-nowhere` |
+| Unguarded random options that all weigh `0%`, beside guarded ones the world withholds | Nothing is drawable and the compiler writes no fall-through, so refused as `leads-nowhere` |
+| A random choice whose only random option weighs `0%` | The compiler reports `DLG2010`; a playbook built without the compiler is refused as `leads-nowhere` |
 | A number weight that is negative or not finite, or number weights summing to infinity | The reader refuses the playbook |
 | A key weight answered with a negative number, or answers summing to infinity | Refused as `invalid-weight`; the run keeps waiting where it asked |
 | A key weight answered with a truth or words | Refused as `wrong-answer-kind`; the run keeps waiting where it asked |
-| An excluded arm's key weight | Asked and checked like any other, though it counts toward nothing |
-| One key as an arm's condition and as a key weight | Refused as `key-needed-both-ways` before anything is asked |
+| An excluded random option's key weight | Asked and checked like any other, though it counts toward nothing |
+| One key as a random option's condition and as a key weight | Refused as `key-needed-both-ways` before anything is asked |
 | `Drawn` while the run is not waiting for a draw | Refused as `misplaced` |
 | `Next`, `Done`, `Failed`, `Supply`, or `Choose` while a draw is awaited | Refused as `misplaced` |
 | `Start` while a draw is awaited | Begins again at the entry |
-| A wait for a draw whose node is not a random choice, whose shares do not match the arms, or whose shares leave nothing drawable | `Drawn` refused as `misplaced` |
-| A random choice whose arm leads to another random choice | Each asks for its own draw, one step at a time |
-| A random choice whose arms lead back to itself | Asks for a draw each time it is arrived at, so the walk never loops |
+| A wait for a draw whose node is not a random choice, whose shares do not match the random options, or whose shares leave nothing drawable | `Drawn` refused as `misplaced` |
+| A random choice whose random option leads to another random choice | Each asks for its own draw, one step at a time |
+| A random choice whose random options lead back to itself | Asks for a draw each time it is arrived at, so the walk never loops |
 | A total far from 100 | Drawn as written; the language's drift warning has no channel in the runner yet |
 
 ## Integration
@@ -431,19 +435,19 @@ The runner can then trust a static share, and checks only what the world supplie
 | --- | --- |
 | Playbook library | `DrawingWeight` and the `WeightShares` adapter, beside the weight types; the reader refuses a number weight no share can have |
 | Playbook schema | A number weight's `percentage` gains `minimum: 0` |
-| Compiler | The weight checks turn their weights into drawing weights and take the shares from `DrawingWeight`; normalizing, and its recovery from a zero total, stay. The zero-total check covers a single arm, and the single-option warning passes over one that weighs `0%` |
+| Compiler | The weight checks turn their weights into drawing weights and take the shares from `DrawingWeight`; normalizing, and its recovery from a zero total, stay. The zero-total check covers a single random option, and the single-option warning passes over one that weighs `0%` |
 | `protocol` | `Draw` joins the requests and `Drawn` the commands; `NumberAnswer` joins the answers, and a JSON number in `supply` now reads as one; `RefusalReason` gains `InvalidDraw` and `InvalidWeight` |
 | `situations` | `AwaitingDraw`, with its wording in a refusal |
-| `stepping` | `Drawing` sends and takes the draw, and `Playing` hands it a random choice; `Arrival` walks past a random choice with no drawable arm; a random choice's questions are its conditions, then its key weights, asked on arrival and never on leaving; `NodeQuestions` gains the numbers, and its both-ways check covers any two kinds |
+| `stepping` | `Drawing` sends and takes the draw, and `Playing` hands it a random choice; `Arrival` walks past a random choice with nothing drawable; a random choice's questions are its conditions, then its key weights, asked on arrival and never on leaving; `NodeQuestions` gains the numbers, and its both-ways check covers any two kinds |
 | `Runner.Step` | `(AwaitingDraw, Drawn)` goes to `Drawing`; `Drawn` anywhere else is misplaced, so it joins the commands the runner knows |
 | Fixture schema | A `draw` expectation naming the shares and a `drawn` send; `supply` takes numbers; the two new refusal reasons |
 | Harness | A `drawn` reader, a `DrawMatcher`, and the screen plays a random choice |
-| Corpus | New cases for a random choice, a draw at the end of a span, auto weights beside an excluded arm, every arm excluded, a key weight, weights all zero, and each refusal |
-| `PlaybookGen` | Draws random choices with number, auto, and key weights and guarded arms, and a fall-through when every arm is guarded; the walk answers each draw from a number drawn for it, and the drawn world answers key weights with non-negative numbers |
+| Corpus | New cases for a random choice, a draw at the end of a span, auto weights beside an excluded random option, every random option excluded, a key weight, weights all zero, and each refusal |
+| `PlaybookGen` | Draws random choices with number, auto, and key weights and guarded random options, and a fall-through when every random option is guarded; the walk answers each draw from a number drawn for it, and the drawn world answers key weights with non-negative numbers |
 | Runner | The protocol matrix gains a `Drawn` column and an `AwaitingDraw` row; the arriving table draws; nothing is refused as `unplayable-node` |
 | Asking the world | A1 names numbers after truths and words; A3 lists `NumberAnswer` and reads a JSON number as one |
-| Random choice | Its deferred runtime work is done and its entropy question settled. An auto weight takes what the arms in play leave; a zero total at runtime walks past by the fall-through, or leads nowhere without one; a single arm is always taken while its weight is above zero, and a single `0%` arm is `DLG2010` |
-| Guide | Random choices: an auto weight beside an excluded arm takes what the arms in play leave, and an auto weight gives a random choice a way on when every key weight is zero |
+| Random choice | Its deferred runtime work is done and its entropy question settled. An auto weight takes what the random options in play leave; a zero total at runtime walks past by the fall-through, or leads nowhere without one; a single random option is always taken while its weight is above zero, and a single `0%` random option is `DLG2010` |
+| Guide | Random choices: an auto weight beside an excluded random option takes what the random options in play leave, and an auto weight gives a random choice a way on when every key weight is zero |
 | Runtime architecture | The entropy question is settled; the runner plays every node kind |
 
 ## Testability
@@ -452,12 +456,12 @@ The runner can then trust a static share, and checks only what the world supplie
 | --- | --- |
 | Unit — `DrawingWeight` | Numbers, autos, the leftover, an auto weight written first, totals over 100, a number of zero beside the others, and an empty list, as plain arithmetic; the total added from the first share |
 | Unit — `WeightShares` | Each kind of playbook weight turned into a drawing weight, and a key weight refused |
-| Unit — the compiler's weight checks | A single `0%` arm reported with `DLG2010` and not `DLG3004`; a single arm of any other weight with `DLG3004` alone |
+| Unit — the compiler's weight checks | A single `0%` random option reported with `DLG2010` and not `DLG3004`; a single random option of any other weight with `DLG3004` alone |
 | Unit — `Drawing` | `Draw` sent with the right shares; a draw landing at the start, inside, and at the end of each span, and at `1`; a zero share skipped; each refusal, with the run left where it keeps waiting |
-| Unit — `Arrival` | Asking about a random choice's conditions and key weights; walking past one with no drawable arm, with and without a fall-through |
+| Unit — `Arrival` | Asking about a random choice's conditions and key weights; walking past one with nothing drawable, with and without a fall-through |
 | Unit — questions | A random choice's keys, conditions before key weights; the same whole or from its start; nothing asked on leaving it |
 | Unit — answers | `NumberAnswer` read from and written to JSON; a number read from a supply |
 | Unit — the reader | A negative, infinite, and overflowing number weight refused |
 | Unit — the protocol | Each new matrix cell |
-| Property | The walk draws at random choices, every draw and answer it sends is accepted, and some walk sees an arm excluded, an arm with no share, and a random choice walked past |
+| Property | The walk draws at random choices, every draw and answer it sends is accepted, and some walk sees a random option excluded, a random option with no share, and a random choice walked past |
 | Conformance | The new cases above, with boundaries at draws a double holds exactly |

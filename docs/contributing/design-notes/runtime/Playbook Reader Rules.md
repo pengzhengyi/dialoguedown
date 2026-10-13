@@ -78,15 +78,15 @@ it is reached, so an else before another arm would leave that arm unreachable. A
 > A `random-choice` node's number weights are finite and not negative, and they add
 > up to a finite total.
 
-A draw is made against the total of the arms' shares, so a weight of `-10`, or one
+A draw is made against the total of the random options' shares, so a weight of `-10`, or one
 of `1e400`, which reads as infinite, would leave the draw without meaning, and
 numbers that are each finite but add up past what a double holds would too. The
 compiler never writes any of these, but a hand-built playbook can.
 
 Checking them on reading lets a runtime trust every number a playbook carries, and
 leaves only the numbers the world supplies for key weights to check at play time. A
-guarded arm's number is checked like any other, because a guard decides whether an
-arm is drawn, not what its weight means.
+guarded random option's number is checked like any other, because a guard decides
+whether a random option is drawn, not what its weight means.
 
 ## Key design decisions
 
@@ -162,7 +162,7 @@ the weights and assumes nothing.
 | a `succession` before or among the branch arms | accept — not an arm | — |
 | a number weight that is negative, or reads as infinite (`1e400`) | refuse | `weight-is-negative`, `weight-is-infinite` |
 | number weights that are each finite but add up past what a double holds | refuse | `weight-total-is-infinite` |
-| a guarded arm's negative number weight | refuse — a guard does not excuse a weight | `guarded-weight-is-negative` |
+| a guarded random option's negative number weight | refuse — a guard does not excuse a weight | `guarded-weight-is-negative` |
 
 ## Testability
 
