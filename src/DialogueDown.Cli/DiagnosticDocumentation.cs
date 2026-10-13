@@ -1,3 +1,5 @@
+using DialogueDown.Diagnostics;
+
 namespace DialogueDown.Cli;
 
 /// <summary>
@@ -8,13 +10,10 @@ namespace DialogueDown.Cli;
 /// </summary>
 internal static class DiagnosticDocumentation
 {
-    private const string ErrorCodesPage =
-        "https://pengzhengyi.github.io/dialoguedown/guide/error-codes.html";
-
     /// <summary>The deep link to <paramref name="code"/>'s entry on the Error codes page.</summary>
     public static string UrlFor(string code)
     {
         ArgumentException.ThrowIfNullOrEmpty(code);
-        return $"{ErrorCodesPage}#{code.ToLowerInvariant()}";
+        return $"{DiagnosticCodes.ReferencePage}#{code.ToLowerInvariant()}";
     }
 }
