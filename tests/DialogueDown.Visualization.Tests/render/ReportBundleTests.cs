@@ -10,7 +10,9 @@ public sealed class ReportBundleTests
     public void Default_CarriesTheClientItsStyleAndMermaidSeparately()
     {
         Assert.Contains("--pico-", _bundle.Style, StringComparison.Ordinal);
-        Assert.True(_bundle.Script.Length > 100_000, "the built client script should be substantial");
+        Assert.True(
+            _bundle.Script.Length > 100_000,
+            $"The built client script runs to only {_bundle.Script.Length} characters.");
         Assert.Contains("mermaid", _bundle.Mermaid, StringComparison.OrdinalIgnoreCase);
     }
 

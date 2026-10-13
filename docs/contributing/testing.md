@@ -304,7 +304,9 @@ variation says only what varies: with `with` where the record allows it, or with
 an argument to the mother where it does not. Where a node sits in the source is
 a variation like any other: a syntax node's mother builds it at a default span,
 and a test about the span sets it with `with` rather than through a span
-parameter on the mother.
+parameter on the mother. Among the records, a Markdown text inline is the
+exception: its content span is fixed from its span when it is built, so its
+mother takes both.
 
 ```csharp
 var options = CompilerOptions.Default with { Mode = CompilationMode.BestEffort };
@@ -375,12 +377,17 @@ narrowed value so the test can assert more on it. Where this matters most:
   page that must inline its scripts, or when .NET composes the message. An
   outcome that carries several reasons is compared with the list of them, not
   their joined text, so a failure names the reason that differs.
-- **`Assert.True` with a message** stays only where xUnit's own report would hide
-  what the reader needs: it shortens long strings and shows only the first few
-  items of a collection. A check that lists every offending entry, or that tells
-  the reader how to regenerate a file, keeps its message; say why in a comment
-  where it is not obvious. Everywhere else `Assert.Equal`, `Assert.Empty`, and
-  their kin already say what differs.
+- **`Assert.True` is for a claim no other assertion states.** Where
+  `Assert.Equal`, `Assert.Empty`, `Assert.InRange`, or a helper can make the
+  check, use it, because its failure shows the values. A claim only a condition
+  can state, such as "some walk stopped part-way through a line", takes
+  `Assert.True` or `Assert.False` with a message that says in the domain's words
+  what went wrong, and shows what the reader needs to act: the offending entries,
+  the output that explains the failure, or how to fix it. A check that could use
+  `Assert.Equal`, `Assert.Empty`, or `Assert.Contains` keeps `Assert.True` only
+  when it would lose that: those take no message, and xUnit shortens long strings
+  and shows only the first few items of a collection. A message that says how to
+  fix the failure explains itself; any other reason gets a comment.
 - **No `!` to reach a value.** A value the test needs is checked with
   `Assert.IsType` or `Assert.NotNull`, which narrow it, or handed to a helper that
   accepts it missing and fails naming what it expected. For a reference type,
