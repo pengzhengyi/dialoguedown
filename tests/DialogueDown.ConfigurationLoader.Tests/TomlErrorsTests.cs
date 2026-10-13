@@ -11,9 +11,10 @@ public sealed class TomlErrorsTests
     public void At_NullMessage_Throws()
     {
         DocumentSyntax document = TomlConfigReading.Parse("mode = 42");
+        var value = document.KeyValues.Single().Value;
+        Assert.NotNull(value);
 
-        Assert.Throws<ArgumentNullException>(
-            () => TomlErrors.At(null!, document.KeyValues.Single().Value!));
+        Assert.Throws<ArgumentNullException>(() => TomlErrors.At(null!, value));
     }
 
     [Fact]
@@ -27,7 +28,8 @@ public sealed class TomlErrorsTests
             title = "Example"
             mode = 42
             """);
-        SyntaxNode value = document.KeyValues.ElementAt(1).Value!;
+        SyntaxNode? value = document.KeyValues.ElementAt(1).Value;
+        Assert.NotNull(value);
 
         DialogueConfigurationException exception = TomlErrors.At("'mode' must be a string.", value);
 

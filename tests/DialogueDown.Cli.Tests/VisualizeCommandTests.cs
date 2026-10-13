@@ -56,7 +56,8 @@ public sealed class VisualizeCommandTests
     public void Visualize_ScriptWithEdit_OpensTheServedReportInEdit()
     {
         using var script = new TempScript("# Scene");
-        var root = Path.GetDirectoryName(script.Path)!;
+        var root = Path.GetDirectoryName(script.Path);
+        Assert.NotNull(root);
         var shell = ShellRunner();
         var tester = CliTester.Create(shell: shell);
 

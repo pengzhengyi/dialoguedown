@@ -12,7 +12,7 @@ public sealed class ChoiceNestingDepthRuleTests
     [Fact]
     public void Check_FourthChoiceLevel_ReportsStyleWarningAtGroupStart()
     {
-        var level4 = Choices(40, Choice(Line(Text("deep"))));
+        var level4 = Choices(Choice(Line(Text("deep")))) with { Span = new SourceSpan(40, 1) };
         var root = NestToFourthLevel(level4);
 
         var diagnostic = Assert.Single(Check(root));
@@ -39,8 +39,8 @@ public sealed class ChoiceNestingDepthRuleTests
     [Fact]
     public void Check_DeeperDescendants_ReportsOnlyFirstOverLimitGroup()
     {
-        var level5 = Choices(50, Choice(Line(Text("deeper"))));
-        var level4 = Choices(40, Choice(level5));
+        var level5 = Choices(Choice(Line(Text("deeper")))) with { Span = new SourceSpan(50, 1) };
+        var level4 = Choices(Choice(level5)) with { Span = new SourceSpan(40, 1) };
         var root = NestToFourthLevel(level4);
 
         var diagnostic = Assert.Single(Check(root));
@@ -51,8 +51,8 @@ public sealed class ChoiceNestingDepthRuleTests
     [Fact]
     public void Check_SeparateOverNestedBranches_ReportsEachBranch()
     {
-        var left = NestFromSecondLevel(Choices(40, Choice(Line(Text("left")))));
-        var right = NestFromSecondLevel(Choices(80, Choice(Line(Text("right")))));
+        var left = NestFromSecondLevel(Choices(Choice(Line(Text("left")))) with { Span = new SourceSpan(40, 1) });
+        var right = NestFromSecondLevel(Choices(Choice(Line(Text("right")))) with { Span = new SourceSpan(80, 1) });
         var root = Choices(Choice(left), Choice(right));
 
         var diagnostics = Check(root);
@@ -76,7 +76,7 @@ public sealed class ChoiceNestingDepthRuleTests
     [Fact]
     public void Check_CustomMaximum_UsesConfiguredDepth()
     {
-        var level2 = Choices(20, Choice(Line(Text("deep"))));
+        var level2 = Choices(Choice(Line(Text("deep")))) with { Span = new SourceSpan(20, 1) };
         var root = Choices(Choice(level2));
 
         var diagnostic = Assert.Single(Check(root, maximumNestingLevel: 1));
@@ -89,7 +89,8 @@ public sealed class ChoiceNestingDepthRuleTests
     public void Check_RandomChoicesCountTowardNestingDepth()
     {
         // Depth mixes both group kinds: Choices > RandomChoices > Choices > RandomChoices.
-        var level4 = RandomChoices(40, RandomOption(NumberWeight(50), Line(Text("deep"))));
+        var deep = RandomOption(NumberWeight(50), Line(Text("deep")));
+        var level4 = RandomChoices(deep) with { Span = new SourceSpan(40, 1) };
         var level3 = Choices(Choice(level4));
         var level2 = RandomChoices(RandomOption(AutoWeight(), level3));
         var root = Choices(Choice(level2));

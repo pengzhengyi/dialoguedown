@@ -21,6 +21,8 @@ internal static class MarkdownAstFactory
     public static SourceSpan Span(int start = 0, int length = 1) =>
         SourceSpanFactory.Span(start, length);
 
+    // Takes its span, unlike the other inlines: a text inline's content span follows the span it
+    // is built with, and a with expression could not move the two together.
     public static TextInline Text(
         string? text = null,
         SourceSpan? span = null,
@@ -43,11 +45,7 @@ internal static class MarkdownAstFactory
             isFirstCharacterEscaped: true);
 
     public static LinkInline Link(string? target = null, params MarkdownInline[] label) =>
-        Link(target, Span(), label);
-
-    public static LinkInline Link(
-        string? target, SourceSpan span, params MarkdownInline[] label) =>
-        new(target ?? $"#{Faker.Lorem.Slug()}", label.Length == 0 ? [Text()] : label, span);
+        new(target ?? $"#{Faker.Lorem.Slug()}", label.Length == 0 ? [Text()] : label, Span());
 
     public static ImageInline Image(string? source = null, params MarkdownInline[] alt) =>
         new(source ?? $"{Faker.Lorem.Slug()}.png", alt.Length == 0 ? [Text()] : alt, Span());
@@ -64,11 +62,7 @@ internal static class MarkdownAstFactory
     public static MarkdownInline[] ElseMarkerInlines() => [CodeSpan("else")];
 
     public static EmphasisInline Emphasis(EmphasisKind kind, params MarkdownInline[] children) =>
-        Emphasis(kind, Span(), children);
-
-    public static EmphasisInline Emphasis(
-        EmphasisKind kind, SourceSpan span, params MarkdownInline[] children) =>
-        new(kind, children.Length == 0 ? [Text()] : children, span);
+        new(kind, children.Length == 0 ? [Text()] : children, Span());
 
     public static LineBreak LineBreak(bool hard = false) => new(hard, Span());
 

@@ -1,5 +1,5 @@
-using System.Text.Json.Nodes;
 using DialogueDown.Runtime.Protocol;
+using static DialogueDown.Runtime.Tests.Conformance.SessionEntries;
 using static DialogueDown.Runtime.Tests.Conformance.SessionOutcomeAssert;
 using static DialogueDown.TestSupport.SpeechFactory;
 
@@ -19,26 +19,27 @@ public sealed class ResolveMatcherTests
         // one order and a fixture can hold them to it.
         AssertDiverged(
             Match(Asked("Alice.HasKey", "playerName"), """[ "playerName", "Alice.HasKey" ]"""),
-            "playerName");
+            """expected ["playerName","Alice.HasKey"] to be asked about, but ["Alice.HasKey","playerName"] was""");
 
     [Fact]
     public void AKeyTheRunNeverAskedAboutDiverges() =>
-        AssertDiverged(Match(Asked("Alice.HasKey"), """[ "Bob.HasRope" ]"""), "Bob.HasRope");
+        AssertDiverged(
+            Match(Asked("Alice.HasKey"), """[ "Bob.HasRope" ]"""),
+            """expected ["Bob.HasRope"] to be asked about, but ["Alice.HasKey"] was""");
 
     [Fact]
     public void ARunSpeakingInsteadOfAskingDiverges() =>
         AssertDiverged(
             Match(Spoke(), """[ "Alice.HasKey" ]"""),
-            "expected the world to be asked something",
-            "heard Alice speak");
+            "expected the world to be asked something, but the run heard Alice speak");
 
     [Fact]
     public void AskingIsDescribedByTheKeysWhenSomethingElseWasExpected() =>
         // The description is what a divergence quotes, so a reader of the failure sees which keys
         // went out rather than only that something did.
         AssertDiverged(
-            new EndedMatcher().Match(Asked("Alice.HasKey"), JsonNode.Parse("true")!),
-            "asked the world about Alice.HasKey");
+            new EndedMatcher().Match(Asked("Alice.HasKey"), Json("true")),
+            "expected the run to end, but it asked the world about Alice.HasKey");
 
     private static Resolve Asked(params string[] keys) => new([.. keys]);
 
@@ -46,5 +47,5 @@ public sealed class ResolveMatcherTests
         new("Alice", [Text("Hi")]);
 
     private SessionOutcome Match(Event happened, string expected) =>
-        _matcher.Match(happened, JsonNode.Parse(expected)!);
+        _matcher.Match(happened, Json(expected));
 }

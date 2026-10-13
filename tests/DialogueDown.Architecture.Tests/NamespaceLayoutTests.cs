@@ -37,7 +37,12 @@ public sealed class NamespaceLayoutTests
                 Environment.NewLine + string.Join(Environment.NewLine, offenders));
     }
 
-    private static string RootNamespaceOf(Assembly assembly) => assembly.GetName().Name!;
+    private static string RootNamespaceOf(Assembly assembly)
+    {
+        var name = assembly.GetName().Name;
+        Assert.NotNull(name);
+        return name;
+    }
 
     private static IReadOnlyList<Type> RootTypesOf(Assembly assembly)
     {

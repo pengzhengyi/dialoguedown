@@ -13,7 +13,7 @@ internal static class SessionEntries
     /// <summary>A send carrying the message this JSON describes.</summary>
     /// <param name="json">The message, as a fixture would write it.</param>
     /// <returns>The entry.</returns>
-    public static Send Sent(string json) => new(JsonNode.Parse(json)!);
+    public static Send Sent(string json) => new(Json(json));
 
     /// <summary>A send naming a bare command, as <c>next</c> does.</summary>
     /// <param name="command">The command's name, unquoted.</param>
@@ -23,5 +23,13 @@ internal static class SessionEntries
     /// <summary>An expectation claiming what this JSON describes.</summary>
     /// <param name="json">The claims, as a fixture would write them.</param>
     /// <returns>The entry.</returns>
-    public static Expect Expected(string json) => new(JsonNode.Parse(json)!);
+    public static Expect Expected(string json) => new(Json(json));
+
+    /// <summary>A value as a fixture would carry it.</summary>
+    /// <param name="json">The value, as a fixture would write it. A fixture never writes a bare
+    /// <c>null</c> where a value belongs.</param>
+    /// <returns>The parsed value.</returns>
+    public static JsonNode Json(string json) =>
+        JsonNode.Parse(json)
+        ?? throw new ArgumentException("A fixture value is never the bare literal null.", nameof(json));
 }

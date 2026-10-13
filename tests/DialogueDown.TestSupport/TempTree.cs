@@ -38,7 +38,9 @@ public sealed class TempTree : IDisposable
     public string File(string relative, string content = "")
     {
         var path = Path.Combine(Root, relative);
-        Directory.CreateDirectory(Path.GetDirectoryName(path)!);
+        var folder = Path.GetDirectoryName(path);
+        Assert.NotNull(folder);
+        Directory.CreateDirectory(folder);
 
         // Spelled out because this class has a member of its own called File.
         System.IO.File.WriteAllText(path, content);

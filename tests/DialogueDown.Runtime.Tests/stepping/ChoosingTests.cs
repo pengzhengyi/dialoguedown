@@ -1,4 +1,3 @@
-using DialogueDown.Playbook.Edges;
 using DialogueDown.Playbook.Nodes;
 using DialogueDown.Runtime.Protocol;
 using DialogueDown.Runtime.Situations;
@@ -104,7 +103,10 @@ public sealed class ChoosingTests
     {
         var result = Choosing.Chosen(PlayContextFactory.AMenu(), WaitingAtTheMenu(0, 1), new Choose(2));
 
-        AssertRefused(result, RefusalReason.NoSuchOption, "no option 2; choose from 0 to 1");
+        AssertRefused(
+            result,
+            RefusalReason.NoSuchOption,
+            "The menu at node 0 has no option 2; choose from 0 to 1.");
         AssertAwaitingChoice(result, 0);
     }
 
@@ -115,7 +117,10 @@ public sealed class ChoosingTests
         // playbook cannot name an option the node lacks.
         var result = Choosing.Chosen(PlayContextFactory.AMenu(), WaitingAtTheMenu(0, 1, 2), new Choose(2));
 
-        AssertRefused(result, RefusalReason.NoSuchOption, "no option 2");
+        AssertRefused(
+            result,
+            RefusalReason.NoSuchOption,
+            "The menu at node 0 has no option 2; choose from 0 to 1.");
     }
 
     [Fact]
@@ -123,7 +128,10 @@ public sealed class ChoosingTests
     {
         var result = Choosing.Chosen(PlayContextFactory.AMenu(), WaitingAtTheMenu(1), new Choose(0));
 
-        AssertRefused(result, RefusalReason.UnavailableOption, "option 0");
+        AssertRefused(
+            result,
+            RefusalReason.UnavailableOption,
+            "The menu at node 0 offered option 0 as one the player cannot take.");
         AssertAwaitingChoice(result, 0);
     }
 
@@ -132,7 +140,10 @@ public sealed class ChoosingTests
     {
         var result = Choosing.Chosen(PlayContextFactory.AMenu(), WaitingAtTheMenu(0, 1), new Choose(-1));
 
-        AssertRefused(result, RefusalReason.NoSuchOption, "no option -1");
+        AssertRefused(
+            result,
+            RefusalReason.NoSuchOption,
+            "The menu at node 0 has no option -1; choose from 0 to 1.");
         AssertAwaitingChoice(result, 0);
     }
 
@@ -142,7 +153,7 @@ public sealed class ChoosingTests
         AssertRefused(
             Choosing.Chosen(Standing(AMenuWithAFallThrough()), WaitingAtTheMenu(0), new Choose(1)),
             RefusalReason.NoSuchOption,
-            "no option 1");
+            "The menu at node 0 has no option 1; choose from 0 to 0.");
 
     [Fact]
     public void Chosen_WhereTheNodeIsNotAMenu_IsRefusedAsMisplaced() =>
@@ -150,7 +161,7 @@ public sealed class ChoosingTests
         AssertRefused(
             Choosing.Chosen(PlayContextFactory.OneLine(), WaitingAtTheMenu(0), new Choose(0)),
             RefusalReason.Misplaced,
-            "not a menu");
+            "Node 0, of kind LineNode, is not a menu, so there is no Choose to take there.");
 
     /// <summary>Offers a menu standing at the start of a playbook.</summary>
     /// <param name="menu">The menu under test.</param>
@@ -201,7 +212,7 @@ public sealed class ChoosingTests
     /// </remarks>
     /// <returns>The menu.</returns>
     private static ChoiceNode AMenuWithAFallThrough() =>
-        Choice(Option("Go east", target: 1), new SuccessionEdge(2));
+        Choice(Option("Go east", target: 1), Succession(2));
 
     /// <summary>A menu whose only option has a command in the middle of its label.</summary>
     /// <remarks>
@@ -223,5 +234,5 @@ public sealed class ChoosingTests
     /// </remarks>
     /// <returns>The menu.</returns>
     private static ChoiceNode AMenuWhoseOnlyOptionIsConditional() =>
-        Choice(Option("Open the door", condition: "Alice.HasKey", target: 1), new SuccessionEdge(2));
+        Choice(Option("Open the door", condition: "Alice.HasKey", target: 1), Succession(2));
 }

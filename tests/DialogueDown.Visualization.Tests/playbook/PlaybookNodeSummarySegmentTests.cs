@@ -241,9 +241,7 @@ public sealed class PlaybookNodeSummarySegmentTests
         Assert.Equal("Alice", pieces[0].Text);
         Assert.Equal("separator", pieces[^1].Role);
         Assert.Equal("…", pieces[^1].Text);
-        Assert.True(
-            string.Concat(pieces.Select(piece => piece.Text)).Length <= 201,
-            "The line ran past the cap.");
+        Assert.InRange(string.Concat(pieces.Select(piece => piece.Text)).Length, 0, 201);
     }
 
     [Fact]

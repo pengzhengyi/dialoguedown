@@ -69,7 +69,7 @@ public sealed class ReportPayload
     /// <summary>Gets the names of the speakers the applied configuration declares.</summary>
     public IReadOnlyList<string> SpeakerNames =>
         Json["configuration"]?["speakers"] is JsonArray speakers
-            ? [.. speakers.Select(speaker => speaker!["name"]!.GetValue<string>())]
+            ? [.. speakers.Select(NameOf)]
             : [];
 
     /// <summary>
@@ -94,6 +94,12 @@ public sealed class ReportPayload
     /// <returns>The payload.</returns>
     public static ReportPayload Parse(string json) => new(Assert.IsType<JsonObject>(JsonNode.Parse(json)));
 
+    /// <summary>Asserts a list of stages holds exactly one, and returns it.</summary>
+    /// <param name="stages">The serialized stages, such as a report's <see cref="Stages"/>.</param>
+    /// <returns>The one stage.</returns>
+    public static JsonObject OnlyStage(JsonNode? stages) =>
+        Assert.IsType<JsonObject>(Assert.Single(Assert.IsType<JsonArray>(stages)));
+
     /// <summary>Reads the report a page carries in its data slot.</summary>
     /// <param name="html">The page.</param>
     /// <returns>The report the page embeds.</returns>
@@ -110,6 +116,14 @@ public sealed class ReportPayload
         using var report = JsonDocument.ParseValue(ref reader);
 
         return Parse(report.RootElement.GetRawText());
+    }
+
+    // A speaker entry's name, which every entry carries.
+    private static string NameOf(JsonNode? speaker)
+    {
+        var name = speaker?["name"]?.GetValue<string>();
+        Assert.NotNull(name);
+        return name;
     }
 
     private string? Text(string field) => Json[field]?.GetValue<string>();

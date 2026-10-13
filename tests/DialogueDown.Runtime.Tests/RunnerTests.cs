@@ -1,4 +1,3 @@
-using System.Collections.Immutable;
 using DialogueDown.Runtime.Protocol;
 using DialogueDown.Runtime.Situations;
 using static DialogueDown.Runtime.Tests.StepAssert;
@@ -44,7 +43,10 @@ public sealed class RunnerTests
 
         var result = Runner.Step(context, Started(context), new Next());
 
-        AssertRefused(result, RefusalReason.Misplaced, "waiting for the host");
+        AssertRefused(
+            result,
+            RefusalReason.Misplaced,
+            "A run cannot take Next at node 0, waiting for the host.");
         AssertAwaitingDone(result, 0);
     }
 
@@ -55,7 +57,10 @@ public sealed class RunnerTests
 
         var result = Runner.Step(context, Started(context), new Next());
 
-        AssertRefused(result, RefusalReason.Misplaced, "waiting for the host");
+        AssertRefused(
+            result,
+            RefusalReason.Misplaced,
+            "A run cannot take Next at node 0, waiting for the host.");
         AssertAwaitingDone(result, 0);
     }
 
@@ -67,7 +72,10 @@ public sealed class RunnerTests
 
         var result = Runner.Step(context, Started(context), new Next());
 
-        AssertRefused(result, RefusalReason.Misplaced, "waiting for the player to choose");
+        AssertRefused(
+            result,
+            RefusalReason.Misplaced,
+            "A run cannot take Next at node 0, waiting for the player to choose.");
         AssertAwaitingChoice(result, 0);
     }
 
@@ -89,7 +97,7 @@ public sealed class RunnerTests
 
         var result = Runner.Step(context, Started(context), new Choose(0));
 
-        AssertRefused(result, RefusalReason.Misplaced, "cannot take Choose");
+        AssertRefused(result, RefusalReason.Misplaced, "A run cannot take Choose at node 0.");
         AssertAt(result, 0);
     }
 
@@ -165,7 +173,10 @@ public sealed class RunnerTests
         // a driver advance a line by answering a question the run never put.
         var context = PlayContextFactory.TwoLines();
 
-        AssertRefused(Runner.Step(context, Started(context), new Done()), RefusalReason.Misplaced, "cannot take Done");
+        AssertRefused(
+            Runner.Step(context, Started(context), new Done()),
+            RefusalReason.Misplaced,
+            "A run cannot take Done at node 0.");
     }
 
     [Fact]
@@ -179,9 +190,9 @@ public sealed class RunnerTests
             Runner.Step(
                 context,
                 Started(context),
-                new Supply(ImmutableDictionary<string, Answer>.Empty)),
+                Answering()),
             RefusalReason.Misplaced,
-            "cannot take Supply");
+            "A run cannot take Supply at node 0.");
     }
 
     [Fact]
@@ -194,7 +205,7 @@ public sealed class RunnerTests
         AssertRefused(
             Runner.Step(context, PlayState.Initial, new Done()),
             RefusalReason.Misplaced,
-            "no position, before the run has started");
+            "A run cannot take Done before it has started.");
     }
 
     [Fact]
@@ -206,7 +217,7 @@ public sealed class RunnerTests
         AssertRefused(
             Runner.Step(context, ended, new Failed("nothing left to fail")),
             RefusalReason.Misplaced,
-            "the end");
+            "A run cannot take Failed at the end.");
     }
 
     [Fact]
@@ -244,7 +255,7 @@ public sealed class RunnerTests
         AssertRefused(
             Runner.Step(context, Started(context), new Failed("nothing to fail")),
             RefusalReason.Misplaced,
-            "cannot take Failed");
+            "A run cannot take Failed at node 0.");
     }
 
     [Fact]
@@ -280,7 +291,10 @@ public sealed class RunnerTests
     {
         var context = PlayContextFactory.OneLine();
 
-        AssertRefused(Runner.Step(context, PlayState.Initial, new Next()), RefusalReason.NotStarted, "has not started");
+        AssertRefused(
+            Runner.Step(context, PlayState.Initial, new Next()),
+            RefusalReason.NotStarted,
+            "The run has not started, so there is nothing to advance from.");
     }
 
     [Fact]
@@ -291,7 +305,10 @@ public sealed class RunnerTests
 
         var result = Runner.Step(context, ended, new Next());
 
-        AssertRefused(result, RefusalReason.AlreadyEnded, "run is over");
+        AssertRefused(
+            result,
+            RefusalReason.AlreadyEnded,
+            "The run is over, so there is nothing to advance to.");
         Assert.Equal(ended, result.State);
     }
 
@@ -300,7 +317,10 @@ public sealed class RunnerTests
     {
         var context = PlayContextFactory.Of([Line("Alone.", id: 0)], ["Alice"]);
 
-        AssertRefused(Runner.Step(context, Started(context), new Next()), RefusalReason.LeadsNowhere, "leads nowhere");
+        AssertRefused(
+            Runner.Step(context, Started(context), new Next()),
+            RefusalReason.LeadsNowhere,
+            "Node 0 leads nowhere.");
     }
 
     [Fact]

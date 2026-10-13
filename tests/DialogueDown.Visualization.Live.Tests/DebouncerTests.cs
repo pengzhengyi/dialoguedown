@@ -53,7 +53,7 @@ public sealed class DebouncerTests
                 throw new InvalidOperationException("boom");
             }
         }, provider);
-        var timer = provider.Timer!;
+        var timer = provider.Timer;
 
         Assert.Throws<InvalidOperationException>(timer.Fire); // the throwing run propagates
         Assert.Equal(1, runs);
@@ -91,7 +91,7 @@ public sealed class DebouncerTests
         var runs = 0;
         var maxConcurrent = 0;
         var concurrent = 0;
-        Debouncer? debouncer = null;
+        Debouncer debouncer = null!; // assigned below, before its action can run
         debouncer = new Debouncer(TimeSpan.FromMilliseconds(10), () =>
         {
             var now = Interlocked.Increment(ref concurrent);
@@ -99,7 +99,7 @@ public sealed class DebouncerTests
             runs++;
             if (runs == 1)
             {
-                debouncer!.Trigger(); // a file change arrives mid-run
+                debouncer.Trigger(); // a file change arrives mid-run
             }
 
             Interlocked.Decrement(ref concurrent);
@@ -125,15 +125,15 @@ public sealed class DebouncerTests
     {
         var time = new FakeTimeProvider();
         var runs = 0;
-        Debouncer? debouncer = null;
+        Debouncer debouncer = null!; // assigned below, before its action can run
         debouncer = new Debouncer(TimeSpan.FromMilliseconds(10), () =>
         {
             runs++;
             if (runs == 1)
             {
-                debouncer!.Trigger();
-                debouncer!.Trigger();
-                debouncer!.Trigger();
+                debouncer.Trigger();
+                debouncer.Trigger();
+                debouncer.Trigger();
             }
         }, time);
 
@@ -153,7 +153,7 @@ public sealed class DebouncerTests
         var provider = new ManualTimeProvider();
         var runs = 0;
         var debouncer = new Debouncer(TimeSpan.FromMilliseconds(10), () => runs++, provider);
-        var timer = provider.Timer!;
+        var timer = provider.Timer;
 
         debouncer.Dispose();
         var changesBefore = timer.ChangeCount;
@@ -171,7 +171,7 @@ public sealed class DebouncerTests
         var provider = new ManualTimeProvider();
         var runs = 0;
         var debouncer = new Debouncer(TimeSpan.FromMilliseconds(10), () => runs++, provider);
-        var timer = provider.Timer!;
+        var timer = provider.Timer;
 
         debouncer.Dispose();
         timer.Fire(); // a late callback races the disposal
@@ -186,17 +186,17 @@ public sealed class DebouncerTests
         // finishes: the follow-up rearm must be skipped rather than call Change on a disposed timer.
         var provider = new ManualTimeProvider();
         var runs = 0;
-        Debouncer? debouncer = null;
+        Debouncer debouncer = null!; // assigned below, before its action can run
         debouncer = new Debouncer(TimeSpan.FromMilliseconds(10), () =>
         {
             runs++;
             if (runs == 1)
             {
-                debouncer!.Trigger(); // coalesced into a pending follow-up
-                debouncer!.Dispose(); // ...but disposal lands before the run returns
+                debouncer.Trigger(); // coalesced into a pending follow-up
+                debouncer.Dispose(); // ...but disposal lands before the run returns
             }
         }, provider);
-        var timer = provider.Timer!;
+        var timer = provider.Timer;
 
         var changesBefore = timer.ChangeCount;
         timer.Fire();
@@ -241,11 +241,14 @@ public sealed class DebouncerTests
     // a callback that throws, without depending on a fake clock's post-throw behavior.
     private sealed class ManualTimeProvider : TimeProvider
     {
-        public ManualTimer? Timer { get; private set; }
+        private ManualTimer? _timer;
+
+        public ManualTimer Timer =>
+            _timer ?? throw new InvalidOperationException("The debouncer has not created its timer yet.");
 
         public override ITimer CreateTimer(
             TimerCallback callback, object? state, TimeSpan dueTime, TimeSpan period) =>
-            Timer = new ManualTimer(callback, state);
+            _timer = new ManualTimer(callback, state);
     }
 
     private sealed class ManualTimer(TimerCallback callback, object? state) : ITimer

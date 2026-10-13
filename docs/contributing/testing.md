@@ -275,7 +275,19 @@ its remarks instead of inventing source.
 Prefer **real dialogue** to a hand-built model. Where a suite has a `Pipeline`
 and the stage under test can be reached by compiling a script, compile it and
 let the test show the source as a raw string literal. Build the model by hand
-only to test a stage in isolation, or to reach a shape no script produces.
+only to test a stage in isolation, or to reach a shape no script produces. In
+that last case, a comment beside it names the shape.
+
+The visualization's projection tests show the pattern. Each one compiles a few
+words of script and takes the node it describes from what the parser built:
+
+```csharp
+var heading = AssertCompilesSingle<Heading>("# The Market");
+```
+
+`AssertCompilesSingle` asserts that the source compiles without a diagnostic, so
+every fixture is a script a writer could ship, and returns the one node of that
+type.
 
 Any multi-line input or expected text is a raw string literal, so it reads as the
 writer would type it rather than as `"# Scene\n\nAlice: Hi."`. An input stays
@@ -289,10 +301,16 @@ The type under test, and a value a reader takes in at a glance such as
 `new SuccessionEdge(1)`, are built directly. Everything else comes from its type's
 mother, so a change to a constructor touches one file. A test that needs a
 variation says only what varies: with `with` where the record allows it, or with
-an argument to the mother where it does not.
+an argument to the mother where it does not. Where a node sits in the source is
+a variation like any other: a syntax node's mother builds it at a default span,
+and a test about the span sets it with `with` rather than through a span
+parameter on the mother. Among the records, a Markdown text inline is the
+exception: its content span is fixed from its span when it is built, so its
+mother takes both.
 
 ```csharp
 var options = CompilerOptions.Default with { Mode = CompilationMode.BestEffort };
+var reference = SpeakerIdReference("A") with { Span = new SourceSpan(7, 2) };
 var gated = PlaybookNodeFactory.Option("Open the door", condition: "Alice.HasKey", target: 2);
 ```
 
@@ -356,13 +374,31 @@ narrowed value so the test can assert more on it. Where this matters most:
 - **Exact values** beat fragments. A message, a table cell, or a rendered line is
   compared whole with `Assert.Equal`, so the test shows what the reader sees.
   A `Contains` check stays only when the text itself is the subject, such as a
-  page that must inline its scripts, or when .NET composes the message.
+  page that must inline its scripts, or when .NET composes the message. An
+  outcome that carries several reasons is compared with the list of them, not
+  their joined text, so a failure names the reason that differs.
+- **`Assert.True` is for a claim no other assertion states.** Where
+  `Assert.Equal`, `Assert.Empty`, `Assert.InRange`, or a helper can make the
+  check, use it, because its failure shows the values. A claim only a condition
+  can state, such as "some walk stopped part-way through a line", takes
+  `Assert.True` or `Assert.False` with a message that says in the domain's words
+  what went wrong, and shows what the reader needs to act: the offending entries,
+  the output that explains the failure, or how to fix it. A check that could use
+  `Assert.Equal`, `Assert.Empty`, or `Assert.Contains` keeps `Assert.True` only
+  when it would lose that: those take no message, and xUnit shortens long strings
+  and shows only the first few items of a collection. A message that says how to
+  fix the failure explains itself; any other reason gets a comment.
 - **No `!` to reach a value.** A value the test needs is checked with
   `Assert.IsType` or `Assert.NotNull`, which narrow it, or handed to a helper that
-  accepts it missing and fails naming what it expected. A value that is only
-  compared reads through `?.`, so a missing one fails the comparison. The one
-  exception is an NSubstitute `Arg.Is` matcher, whose expression tree cannot hold
-  `?.`.
+  accepts it missing and fails naming what it expected. For a reference type,
+  `Assert.NotNull` narrows the variable for the lines after it rather than
+  returning it, so it stands as a statement of its own; `Assert.IsType<T>`
+  returns the value where an expression needs one. A value that is only compared
+  reads through `?.`, so a missing one fails the comparison. The one exception is
+  an NSubstitute `Arg.Is` matcher, whose expression tree cannot hold `?.`.
+  The rule is about reaching a value, so it does not cover `null!` passed on
+  purpose to show a member rejects null, or a local set to `null!` so a callback
+  can refer to the object being built.
 
 Where a helper wraps a member, that member's own test calls it directly, so
 the member is tested without the helper in between.

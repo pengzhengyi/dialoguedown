@@ -13,7 +13,8 @@ public sealed class SingleOptionRandomChoiceRuleTests
     [Fact]
     public void Check_ASingleOptionRandomChoice_WarnsAtTheGroupStart()
     {
-        var random = RandomChoices(9, RandomOption(NumberWeight(50), Line(Text("only"))));
+        var only = RandomOption(NumberWeight(50), Line(Text("only")));
+        var random = RandomChoices(only) with { Span = new SourceSpan(9, 1) };
 
         var diagnostic = AssertReported(Check(random), DiagnosticCatalog.SingleOptionRandomChoice);
 

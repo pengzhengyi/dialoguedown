@@ -27,6 +27,9 @@ internal static class OutputAssert
         for (var i = 0; i < fragments.Length; i++)
         {
             var found = output.IndexOf(fragments[i], from, StringComparison.Ordinal);
+
+            // Assert.True rather than Assert.Contains, which shortens the text it prints: the whole
+            // output is what explains a missing fragment.
             Assert.True(
                 found >= 0,
                 i == 0

@@ -34,21 +34,24 @@ public sealed class SessionMatcherTests
                 PlayContextFactory.OneLine(),
                 Expected("""{ "said": { "speaker": "Alice", "speech": "Hello." } }"""),
                 Expected("""{ "ended": true }""")),
-            "the run fell silent",
-            "ended");
+            """the run fell silent, but the session still expects {"ended":true}""");
     }
 
     [Fact]
     public void EventsTheSessionNeverReadsDiverge()
     {
         // The session stops early, leaving the opening line unread.
-        AssertDiverged(Match(PlayContextFactory.OneLine()), "the session ended, but the run still has 1 event unmatched");
+        AssertDiverged(
+            Match(PlayContextFactory.OneLine()),
+            "the session ended, but the run still has 1 event unmatched");
     }
 
     [Fact]
     public void ASendNothingPlaysYetIsNotYetPlayable()
     {
-        AssertNotYetPlayable(Match(PlayContextFactory.OneLine(), SentCommand("frobnicate")), "frobnicate");
+        AssertNotYetPlayable(
+            Match(PlayContextFactory.OneLine(), SentCommand("frobnicate")),
+            "nothing sends frobnicate yet");
     }
 
     [Fact]

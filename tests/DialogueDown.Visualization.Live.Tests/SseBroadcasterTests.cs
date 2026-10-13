@@ -12,7 +12,7 @@ public sealed class SseBroadcasterTests
         broadcaster.Broadcast(new LiveEvent("reload", "{}"));
 
         Assert.True(reader.TryRead(out var received));
-        Assert.Equal("reload", received!.Event);
+        Assert.Equal("reload", received?.Event);
     }
 
     [Fact]

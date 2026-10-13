@@ -12,6 +12,6 @@ internal static class DiagnosticCatalogReflection
         typeof(DiagnosticCatalog)
             .GetFields(BindingFlags.Public | BindingFlags.Static)
             .Where(field => field.FieldType == typeof(DiagnosticDescriptor))
-            .Select(field => (DiagnosticDescriptor)field.GetValue(null)!)
+            .Select(field => Assert.IsType<DiagnosticDescriptor>(field.GetValue(null)))
             .ToList();
 }

@@ -101,9 +101,6 @@ internal static class DialogueAstFactory
     public static Choices Choices(params Choice[] options) =>
         Choices(isOrdered: false, options);
 
-    public static Choices Choices(int spanStart, params Choice[] options) =>
-        new(false, options, SourceSpanFactory.Span(spanStart));
-
     public static Choices Choices(bool isOrdered, params Choice[] options) =>
         new(isOrdered, options, SourceSpanFactory.Span());
 
@@ -124,9 +121,6 @@ internal static class DialogueAstFactory
 
     public static RandomChoices RandomChoices(params RandomOption[] options) =>
         new(options, SourceSpanFactory.Span());
-
-    public static RandomChoices RandomChoices(int spanStart, params RandomOption[] options) =>
-        new(options, SourceSpanFactory.Span(spanStart));
 
     public static Branch Branch(Condition condition, params ScriptBlock[] body) =>
         new(condition, body, SourceSpanFactory.Span());
