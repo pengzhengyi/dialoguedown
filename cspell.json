@@ -172,6 +172,7 @@
         "precomputes",
         "protoc",
         "pyproject",
+        "pytest",
         "quik",
         "quotienting",
         "reanchors",

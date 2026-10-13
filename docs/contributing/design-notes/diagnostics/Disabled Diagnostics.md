@@ -1,7 +1,7 @@
 # Disabled Diagnostics
 
 > [!NOTE]
-> Status: **proposed**, in review. How a writer turns a diagnostic off **by code**:
+> Status: **approved**, in progress. How a writer turns a diagnostic off **by code**:
 > a `[diagnostics]` table in `dialogue.toml` for the whole project, and
 > `ddown compile --disable` for one run. A disabled diagnostic is still computed and
 > carried, marked as disabled, so each surface decides how to show it. This note
@@ -15,13 +15,13 @@
 - [Functionality checklist](#functionality-checklist)
 - [Where it sits](#where-it-sits)
 - [The `dialogue.toml` table and the CLI option](#the-dialoguetoml-table-and-the-cli-option)
+- [Examples](#examples)
 - [Interfaces and abstractions](#interfaces-and-abstractions)
 - [Key design decisions](#key-design-decisions)
 - [Error and boundary cases](#error-and-boundary-cases)
 - [Testability](#testability)
 - [Planned: the report](#planned-the-report)
 - [Not built](#not-built)
-- [Open questions](#open-questions)
 
 ## Goal and scope
 
@@ -71,7 +71,8 @@ not mistaken for a disabled control, for example "Disabled in dialogue.toml".
       or an `Error` code.
 - [ ] `ddown compile --disable <code>`, repeatable and comma-separated, added to the
       configured set; an unknown or `Error` code is a usage error.
-- [ ] The CLI prints no disabled diagnostic, and the summary line adds `N disabled`.
+- [ ] The CLI prints no disabled diagnostic; a line after the fixable hint counts
+      them by code: `2 disabled: 1 DLG1114, 1 DLG3002`.
 - [ ] `--fix` ignores disabled diagnostics: it applies none of their fixes and counts
       none of them in the hint, the remaining count, or the "after fixing" list.
 - [ ] The report shows no squiggle, gutter marker, Problems row, or "Fix all" entry
@@ -110,6 +111,9 @@ ddown compile scene.dialogue.md --disable DLG1003            # adds to the confi
 ddown compile scene.dialogue.md --disable DLG1003,DLG3004    # same as two --disable options
 ```
 
+`--disable` is repeatable and also takes a comma-separated list, as Ruff's
+`--extend-ignore` does.
+
 **Precedence: the configured set ∪ `--disable`.** `CompileCommand` builds the union
 after resolving the configuration, the way it applies `--mode`:
 `options with { DisabledDiagnostics = options.DisabledDiagnostics.Union(settings.Disable) }`.
@@ -118,14 +122,91 @@ code the project disabled.
 
 A well-formed code is `DLG` followed by four digits, matched case-insensitively.
 
-With `DLG3002` disabled, a piped compile that finds one warning and one disabled
-diagnostic prints:
+## Examples
+
+One script, compiled under different `disable` lists, shows what a writer sees. The
+output is the piped, one-line form; a terminal shows the same diagnostics as Errata
+blocks with the same summary lines. The script raises three diagnostics:
+
+```markdown
+# The workshop
+
+Alice: Which way?
+
+=> The market
+
+---
+
+- Ask about the wrench
+    - Ask again
+        - And again
+            - One more time
+                Bob: Top shelf.
+
+# The market
+
+Merchant: Wares!
+```
+
+| Line | Code | Severity | Why | Fix |
+| --- | --- | --- | --- | --- |
+| 5 | `DLG1113` | warning | `=>` with no link after it | yes |
+| 7 | `DLG1114` | info | `---` is left out of the script | no |
+| 12 | `DLG3002` | warning | a choice nested four levels deep | no |
+
+**Nothing disabled, or nothing that matches** (`disable = ["DLG3004"]`). No count is
+printed for zero:
 
 ```text
-scene.dialogue.md(3,27): warning DLG1113: `=>` makes a jump only when a link follows it. …
+scene.dialogue.md(5,1): warning DLG1113: `=>` makes a jump only when a link follows it. With no link here it is read literally, staying as the characters "=>". If you meant to jump, add a target: `=> [The market](#the-market)`. If you meant the characters, escape the arrow: `\=>`.
   for more information, see https://pengzhengyi.github.io/dialoguedown/guide/error-codes.html#dlg1113
-1 warning, 1 disabled
+scene.dialogue.md(7,1): info DLG1114: This divider is not dialogue, so the compiler left it out of the script. That is expected for notes and diagrams; write it as dialogue if it should be spoken.
+  for more information, see https://pengzhengyi.github.io/dialoguedown/guide/error-codes.html#dlg1114
+scene.dialogue.md(12,13): warning DLG3002: This branch reaches choice nesting level 4; the recommended maximum is 3. Consider moving this branch into a new scene and jumping to it instead.
+  for more information, see https://pengzhengyi.github.io/dialoguedown/guide/error-codes.html#dlg3002
+2 warnings, 1 info
+1 fixable with --fix
 ```
+
+**Some match** (`disable = ["DLG1114", "DLG3002"]`, or `DLG1114` in the file and
+`--disable DLG3002`). The severity summary counts only what is shown, and a last line
+counts what is hidden, by code:
+
+```text
+scene.dialogue.md(5,1): warning DLG1113: `=>` makes a jump only when a link follows it. With no link here it is read literally, staying as the characters "=>". If you meant to jump, add a target: `=> [The market](#the-market)`. If you meant the characters, escape the arrow: `\=>`.
+  for more information, see https://pengzhengyi.github.io/dialoguedown/guide/error-codes.html#dlg1113
+1 warning
+1 fixable with --fix
+2 disabled: 1 DLG1114, 1 DLG3002
+```
+
+**The fixable one matches** (`disable = ["DLG1113"]`). The fixable hint goes with it,
+and `--fix` leaves line 5 alone:
+
+```text
+scene.dialogue.md(7,1): info DLG1114: This divider is not dialogue, so the compiler left it out of the script. That is expected for notes and diagrams; write it as dialogue if it should be spoken.
+  for more information, see https://pengzhengyi.github.io/dialoguedown/guide/error-codes.html#dlg1114
+scene.dialogue.md(12,13): warning DLG3002: This branch reaches choice nesting level 4; the recommended maximum is 3. Consider moving this branch into a new scene and jumping to it instead.
+  for more information, see https://pengzhengyi.github.io/dialoguedown/guide/error-codes.html#dlg3002
+1 warning, 1 info
+1 disabled: 1 DLG1113
+```
+
+**All match** (`disable = ["DLG1113", "DLG1114", "DLG3002"]`). Only the count prints:
+
+```text
+3 disabled: 1 DLG1113, 1 DLG1114, 1 DLG3002
+```
+
+Every case exits `0`. A mistake in the list stops the compile instead:
+
+```text
+dialogue.toml(2,12): Unknown diagnostic code 'DLG302'. Check the code against the error-code reference: https://pengzhengyi.github.io/dialoguedown/guide/error-codes.html
+dialogue.toml(2,12): DLG2001 is an error and cannot be disabled; only info and warning codes can. Fix the problem it reports instead.
+```
+
+The first comes from `disable = ["DLG302"]` and the second from `disable = ["DLG2001"]`,
+each exiting `65`. The same codes given to `--disable` are usage errors, exiting `64`.
 
 ## Interfaces and abstractions
 
@@ -152,7 +233,7 @@ line.
 Whether a code is optional follows its descriptor's **default** severity. No
 reporting site overrides a severity today, but `Diagnostic` allows it, so the sink
 also checks the diagnostic's own severity and never marks an error. A future
-severity map (see [Open questions](#open-questions)) would revisit this rule.
+severity map (see [Not built](#not-built)) would revisit this rule.
 
 Because no disabled diagnostic is ever an error, `HasErrors`, the compile's outcome,
 the stage-boundary halt, and the exit code need no change.
@@ -242,18 +323,23 @@ or an array of tables, is an error rather than silently ignored. A misspelled ta
 name such as `[diagnostic]` is an unrelated root key, which the loader ignores for
 forward compatibility.
 
-### D7 — The CLI filters disabled diagnostics and counts them
+### D7 — The CLI hides disabled diagnostics and counts them by code
 
 `ErrataRenderer` filters disabled diagnostics before anything else, so neither the
-blocks, nor the "print nothing when clean" check, nor the fixable hint sees them.
-The summary line prints whenever an enabled diagnostic of any severity prints, and
-then ends with `N disabled` when any were disabled. The fix run's
-remaining count reuses the summary but leaves the disabled count out.
+blocks, nor the severity summary, nor the fixable hint sees them. When any diagnostic
+was disabled, a last line counts them by code, in code order:
+`2 disabled: 1 DLG1114, 1 DLG3002`. It prints even when every diagnostic was
+disabled, and a compile with nothing to show and nothing disabled still prints
+nothing. A zero count is never printed. The fix run's remaining count leaves disabled
+diagnostics out. See [Examples](#examples).
 
-A compile whose only diagnostics are disabled prints nothing, as a clean compile
-does. A standalone `N disabled` line would make every compile of a project that
-disabled a habitual note print something, which is the noise the writer turned off.
-No `--show-disabled` option is built.
+Compilers and linters rarely count what was disabled: ESLint, rustc, tsc, MSBuild,
+and flake8 hide it silently. Test runners do count deliberate exclusions, as in
+the `2 skipped` that pytest prints (and omits at zero), and Ruff counts hidden fixes on a line of its own
+after its fixable hint. A disable is a decision a writer should not forget, so the CLI
+counts it like a skip. The per-code breakdown, written count first like Ruff's and
+flake8's `--statistics`, shows which disabled codes actually fired. No
+`--show-disabled` option is built.
 
 ### D8 — Fix mode respects the disabled set
 
@@ -302,8 +388,9 @@ disabled group.
 | `--disable` naming a code the config already disables | No effect. |
 | `--disable` with `--emit dot` | Accepted; no effect. |
 | A disabled code that never fires | Nothing reported; unused-disable reporting is not built. |
-| Only disabled diagnostics | Nothing printed; exit `0`. |
-| Only disabled diagnostics carry fixes, under `--fix` | No fix section; the diagnostics print as a plain compile would. |
+| Only disabled diagnostics | Only the `N disabled: …` line; exit `0`. |
+| A disabled code that matches nothing | No `0 disabled` line. |
+| Only disabled diagnostics carry fixes, under `--fix` | No fix section; the output is a plain compile's. |
 | `CompilerOptions` built in code with an unknown or `Error` code | `ArgumentException`. |
 
 ## Testability
@@ -346,26 +433,9 @@ It will be a section of this note.
 
 | Knob | Why not now |
 | --- | --- |
-| A severity map (`DLG3002 = "error"`) | See [Open questions](#open-questions). |
+| A severity map (`DLG3002 = "error"`) | A list is the smallest thing that works. A map can join it later as a sibling (`[diagnostics.severity]`) without breaking `disable`, once promoting a warning to an error that fails the compile is designed. |
 | Inline suppression in a script (`<!-- ddown-disable-next-line -->`) | The front end discards comments today; a follow-up, with unused-suppression reporting. |
 | Per-file scope in `dialogue.toml` | A follow-up; the CLI resolves one configuration per run. |
 | Re-enabling a configured code from the CLI | No known need; the option only adds. |
+| Accepting a well-formed but unknown code | Strict validation (D6) catches typos; the cost is a config naming a newer code fails on an older `ddown`. |
 | `--show-disabled` | The summary count covers awareness; the report covers browsing. |
-
-## Open questions
-
-The checklist and decisions above follow my leaning on each question; a different
-answer changes the decision it names.
-
-1. **List or severity map.** I lean the list: it is the smallest thing that works,
-   and a map can be added later as a sibling (`[diagnostics.severity]`) without
-   breaking `disable`. A map designed now would also have to decide whether a
-   warning promoted to an error fails the compile, a larger change to the outcome
-   rules.
-2. **Strict or lenient for unknown codes.** I lean strict (D6). The alternative
-   accepts a well-formed but unknown `DLG####`, so a config survives a version skew,
-   at the price of letting a typo through.
-3. **The CLI count.** I lean the `N disabled` count on an existing summary line (D7)
-   over printing nothing or adding `--show-disabled`.
-4. **Comma-separated `--disable`.** I lean yes, matching Ruff, at the cost of one
-   more parsing rule.
