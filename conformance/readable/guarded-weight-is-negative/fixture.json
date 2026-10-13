@@ -1,0 +1,7 @@
+{
+  "$schema": "https://pengzhengyi.github.io/dialoguedown/schema/fixture-0.schema.json",
+  "name": "a guarded arm's negative weight is refused",
+  "playbook": "playbook.json",
+  "verdict": "refuse",
+  "because": "the guarded arm weighs -10; a guard decides whether the arm is drawn, not whether its weight can be drawn against"
+}

@@ -160,9 +160,9 @@ the weights and assumes nothing.
 | two else arms | refuse | `two-else-arms` |
 | a branch whose only arm is an else | refuse — nothing to fall back from | `an-else-alone` |
 | a `succession` before or among the branch arms | accept — not an arm | — |
-| a number weight that is negative, or reads as infinite (`1e400`) | refuse | — |
-| number weights that are each finite but add up past what a double holds | refuse | — |
-| a guarded arm's negative number weight | refuse — a guard does not excuse a weight | — |
+| a number weight that is negative, or reads as infinite (`1e400`) | refuse | `weight-is-negative`, `weight-is-infinite` |
+| number weights that are each finite but add up past what a double holds | refuse | `weight-total-is-infinite` |
+| a guarded arm's negative number weight | refuse — a guard does not excuse a weight | `guarded-weight-is-negative` |
 
 ## Testability
 
@@ -170,7 +170,7 @@ the weights and assumes nothing.
 | --- | --- |
 | Unit | `OutwardShapeCheckerTests`, `BranchArmOrderCheckerTests`, and `NumberWeightCheckerTests`: an accept and a refuse per rule, each refusal breaking one thing in a well-formed node |
 | Exhaustiveness | Exactly six concrete `Node` kinds, so a seventh forces a `NodeShape.For` row |
-| Property | The playbook round-trip property: every compiled script's playbook passes both checkers |
+| Property | The playbook round-trip property: every compiled script's playbook passes all three checkers |
 | Cross-runtime | The `readable/` cases in the table above |
 | Schema | CI validates every golden and accepted conformance playbook; the goldens' else-less branches protect `minContains: 0` |
 
