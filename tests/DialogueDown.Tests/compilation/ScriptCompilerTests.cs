@@ -36,7 +36,8 @@ public sealed class ScriptCompilerTests
         var graphBuilder = Substitute<IDialogueGraphBuilder, DialogueGraph>(graph);
 
         var result = AssertSuccess(new ScriptCompiler(
-                parser, transpiler, desugarer, validator, analyzer, graphBuilder, CompilationMode.BestEffort)
+                parser, transpiler, desugarer, validator, analyzer, graphBuilder,
+                CompilationPolicy.Of(CompilationMode.BestEffort))
             .Compile(source));
 
         Assert.Equal(source, result.Source);
@@ -131,6 +132,7 @@ public sealed class ScriptCompilerTests
     [InlineData(3)]
     [InlineData(4)]
     [InlineData(5)]
+    [InlineData(6)]
     public void Constructor_NullDependency_Throws(int nullIndex)
     {
         var parser = nullIndex == 0 ? null! : Substitute<IMarkdownParser, MarkdownDocument>();
@@ -139,9 +141,10 @@ public sealed class ScriptCompilerTests
         var validator = nullIndex == 3 ? null! : NSubstitute.Substitute.For<IStructuralValidator>();
         var analyzer = nullIndex == 4 ? null! : Substitute<ISemanticAnalyzer, SemanticModel>();
         var graphBuilder = nullIndex == 5 ? null! : Substitute<IDialogueGraphBuilder, DialogueGraph>();
+        var policy = nullIndex == 6 ? null! : CompilationPolicy.Of(CompilationMode.BestEffort);
 
         Assert.Throws<ArgumentNullException>(() => new ScriptCompiler(
-            parser, transpiler, desugarer, validator, analyzer, graphBuilder, CompilationMode.BestEffort));
+            parser, transpiler, desugarer, validator, analyzer, graphBuilder, policy));
     }
 
     // Builds a compiler whose stages are substitutes that yield empty artifacts, so a test can focus
@@ -162,7 +165,7 @@ public sealed class ScriptCompilerTests
             NSubstitute.Substitute.For<IStructuralValidator>(),
             analyzer,
             Substitute<IDialogueGraphBuilder, DialogueGraph>(DialogueGraphFactory.EmptyGraph()),
-            mode);
+            CompilationPolicy.Of(mode));
     }
 
     // Builds a compiler in the given mode whose transpiler reports the diagnostic while transpiling,

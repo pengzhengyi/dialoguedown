@@ -1,4 +1,3 @@
-using DialogueDown.Configuration;
 using DialogueDown.Graph;
 using DialogueDown.Markdown;
 using DialogueDown.Script.Desugar;
@@ -12,7 +11,7 @@ namespace DialogueDown.Compilation;
 /// The default <see cref="IScriptCompiler"/>: it runs the stages in order (parse, transpile,
 /// desugar, validate, analyze, build the graph) and assembles their artifacts into a
 /// <see cref="CompilationResult"/>. A <see cref="CompilationSession"/> chooses, from the
-/// <see cref="CompilationMode"/>, the sink each stage reports through and whether to stop at a
+/// <see cref="CompilationPolicy"/>, the sink each stage reports through and whether to stop at a
 /// stage boundary.
 /// </summary>
 internal sealed class ScriptCompiler : IScriptCompiler
@@ -23,7 +22,7 @@ internal sealed class ScriptCompiler : IScriptCompiler
     private readonly IStructuralValidator _validator;
     private readonly ISemanticAnalyzer _analyzer;
     private readonly IDialogueGraphBuilder _graphBuilder;
-    private readonly CompilationMode _mode;
+    private readonly CompilationPolicy _policy;
 
     internal ScriptCompiler(
         IMarkdownParser parser,
@@ -32,7 +31,7 @@ internal sealed class ScriptCompiler : IScriptCompiler
         IStructuralValidator validator,
         ISemanticAnalyzer analyzer,
         IDialogueGraphBuilder graphBuilder,
-        CompilationMode mode)
+        CompilationPolicy policy)
     {
         ArgumentNullException.ThrowIfNull(parser);
         ArgumentNullException.ThrowIfNull(transpiler);
@@ -40,20 +39,21 @@ internal sealed class ScriptCompiler : IScriptCompiler
         ArgumentNullException.ThrowIfNull(validator);
         ArgumentNullException.ThrowIfNull(analyzer);
         ArgumentNullException.ThrowIfNull(graphBuilder);
+        ArgumentNullException.ThrowIfNull(policy);
         _parser = parser;
         _transpiler = transpiler;
         _desugarer = desugarer;
         _validator = validator;
         _analyzer = analyzer;
         _graphBuilder = graphBuilder;
-        _mode = mode;
+        _policy = policy;
     }
 
     /// <inheritdoc />
     public CompilationResult Compile(string source)
     {
         ArgumentNullException.ThrowIfNull(source);
-        var session = CompilationSession.Start(source, _mode);
+        var session = CompilationSession.Start(source, _policy);
 
         var markdown = _parser.Parse(source, session.Context);
         var script = _transpiler.Transpile(markdown, session.Context);

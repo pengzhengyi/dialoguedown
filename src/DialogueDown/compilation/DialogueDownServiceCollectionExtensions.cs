@@ -47,7 +47,7 @@ public static class DialogueDownServiceCollectionExtensions
             provider.GetRequiredService<IStructuralValidator>(),
             provider.GetRequiredService<ISemanticAnalyzer>(),
             provider.GetRequiredService<IDialogueGraphBuilder>(),
-            options.Mode));
+            CompilationPolicy.For(options)));
 
         // Not a compiler stage: it writes a compiled graph out as a playbook.
         services.TryAddSingleton<IPlaybookWriter>(_ => PlaybookWriterFactory.CreateDefault());

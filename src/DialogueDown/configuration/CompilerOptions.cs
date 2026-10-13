@@ -1,5 +1,6 @@
 using System.Collections.Immutable;
 using DialogueDown.Common;
+using DialogueDown.Diagnostics;
 using Generator.Equals;
 
 namespace DialogueDown.Configuration;
@@ -20,6 +21,9 @@ public sealed partial record CompilerOptions
     private ImmutableDictionary<UnmodeledNodeKind, UnmodeledNodeHandling> _unmodeledMarkdown =
         ImmutableDictionary<UnmodeledNodeKind, UnmodeledNodeHandling>.Empty;
 
+    [IgnoreEquality]
+    private ImmutableHashSet<string> _disabledDiagnostics = ImmutableHashSet<string>.Empty;
+
     /// <summary>Creates the unconfigured options: every knob at its built-in default.</summary>
     public CompilerOptions()
     {
@@ -37,6 +41,21 @@ public sealed partial record CompilerOptions
         Mode = mode;
         Speakers = speakers.ToImmutableArray();
         UnmodeledMarkdown = unmodeledMarkdown.ToImmutableDictionary();
+    }
+
+    /// <summary>
+    /// Creates immutable snapshots of every configured collection, including the
+    /// <paramref name="disabledDiagnostics"/> codes.
+    /// </summary>
+    public CompilerOptions(
+        CompilationMode mode,
+        IEnumerable<ConfiguredSpeaker> speakers,
+        IEnumerable<KeyValuePair<UnmodeledNodeKind, UnmodeledNodeHandling>> unmodeledMarkdown,
+        IEnumerable<string> disabledDiagnostics)
+        : this(mode, speakers, unmodeledMarkdown)
+    {
+        ArgumentNullException.ThrowIfNull(disabledDiagnostics);
+        DisabledDiagnostics = disabledDiagnostics.ToImmutableHashSet();
     }
 
     /// <summary>
@@ -71,9 +90,43 @@ public sealed partial record CompilerOptions
         }
     }
 
+    /// <summary>
+    /// The diagnostic codes a project disabled, stored upper-case: a disabled diagnostic is still
+    /// reported, marked <see cref="LocatedDiagnostic.IsDisabled"/>. Empty by default. Only an
+    /// <c>Info</c> or <c>Warning</c> code may be disabled; setting an unknown or <c>Error</c> code
+    /// throws <see cref="ArgumentException"/>.
+    /// </summary>
+    [UnorderedEquality]
+    public ImmutableHashSet<string> DisabledDiagnostics
+    {
+        get => _disabledDiagnostics;
+        init
+        {
+            ArgumentNullException.ThrowIfNull(value);
+            _disabledDiagnostics = [.. value.Select(NormalizeDisabledCode)];
+        }
+    }
+
     /// <summary>The unconfigured options: every knob at its built-in default.</summary>
     public static CompilerOptions Default { get; } = new();
 
     /// <summary>The part of these options the semantic analysis stage reads.</summary>
     internal ISemanticAnalyzerOptions ForSemanticAnalyzer() => new SemanticAnalyzerOptions(Speakers);
+
+    private static string NormalizeDisabledCode(string code)
+    {
+        ArgumentNullException.ThrowIfNull(code);
+        var info = DiagnosticCodes.Find(code)
+            ?? throw new ArgumentException(
+                $"Cannot disable '{code}': no diagnostic has that code.", nameof(code));
+        if (!info.IsOptional)
+        {
+            throw new ArgumentException(
+                $"Cannot disable {info.Code}: it is an error, and only info and warning codes can be "
+                + "disabled.",
+                nameof(code));
+        }
+
+        return info.Code;
+    }
 }
