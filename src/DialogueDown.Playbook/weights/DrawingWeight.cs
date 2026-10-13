@@ -6,15 +6,15 @@ namespace DialogueDown.Playbook.Weights;
 /// A weight ready for its share to be worked out: a number, or an auto weight.
 /// </summary>
 /// <remarks>
-/// A key weight has no number until the world answers it, so there is no resolved weight for a
+/// A key weight has no number until the world answers it, so there is no drawing weight for a
 /// key: once answered, it is a number. An arm left out of the draw weighs nothing, which is a
 /// number of zero: it adds nothing to the numbers, and it is not an auto weight, so it takes no
 /// part of the rest.
 /// </remarks>
-public abstract record ResolvedWeight
+public abstract record DrawingWeight
 {
     // Private, so the two kinds nested here are the only ones there can be.
-    private ResolvedWeight()
+    private DrawingWeight()
     {
     }
 
@@ -32,12 +32,12 @@ public abstract record ResolvedWeight
     /// <exception cref="ArgumentOutOfRangeException">
     /// The percentage is negative or not finite, which no share can be.
     /// </exception>
-    public sealed record Number(double Percentage) : ResolvedWeight
+    public sealed record Number(double Percentage) : DrawingWeight
     {
         /// <summary>Gets the percentage, as written or as the world answered it.</summary>
         public double Percentage { get; } = AssertNonNegativeAndFinite(Percentage);
     }
 
     /// <summary>An auto weight, which takes an equal part of what the numbers leave of 100.</summary>
-    public sealed record Auto : ResolvedWeight;
+    public sealed record Auto : DrawingWeight;
 }
