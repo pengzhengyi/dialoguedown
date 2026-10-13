@@ -3,7 +3,8 @@
 > [!NOTE]
 > Status: **implemented**. `CompilerOptions` is the one immutable value through which
 > a consumer tunes a compile without editing the script: the compilation mode, a
-> registry of configured speakers, and unmodeled-Markdown handling overrides. The core
+> registry of configured speakers, unmodeled-Markdown handling overrides, and the
+> diagnostic codes a project disables. The core
 > takes it directly; the [Configuration Loader](./Configuration%20Loader.md) builds one
 > from `dialogue.toml`.
 
@@ -33,11 +34,12 @@ flowchart LR
     C["ScriptCompiler<br/>compilation mode"]
     S["ISemanticAnalyzerOptions<br/>configured speakers"]
     A["SemanticAnalyzer / SpeakerBinder"]
+    P["CompilationPolicy<br/>mode and disabled codes"]
 
     F --> O
     D --> O
     O -->|"UnmodeledMarkdown"| M
-    O -->|"Mode"| C
+    O -->|"Mode, DisabledDiagnostics"| P --> C
     O -->|"ForSemanticAnalyzer()"| S --> A
 ```
 
@@ -66,7 +68,7 @@ IScriptCompiler compiler = ScriptCompilerFactory.CreateDefault(options);
 
 | Type | Visibility | Responsibility |
 | --- | --- | --- |
-| `CompilerOptions` | public | `Mode`, `Speakers`, `UnmodeledMarkdown`; `Default`; structural equality; the internal `ForSemanticAnalyzer()` view. |
+| `CompilerOptions` | public | `Mode`, `Speakers`, `UnmodeledMarkdown`, `DisabledDiagnostics`; `Default`; structural equality; the internal `ForSemanticAnalyzer()` view. |
 | `CompilationMode`, `CompilationModes` | public | The mode enum and its kebab-case names, including which are settable. |
 | `UnmodeledNodeKind`, `UnmodeledNodeHandling`, `UnmodeledMarkdownNames` | public | The unmodeled-Markdown vocabulary and its names. |
 | `ConfiguredSpeaker`, `ConfiguredTag` | public | A speaker: name, optional id, custom and reserved tags. |
@@ -95,7 +97,9 @@ one.
 
 No stage receives the whole value:
 
-- `Mode` goes straight to `ScriptCompiler`;
+- `Mode` and `DisabledDiagnostics` reach `ScriptCompiler` together as a
+  `CompilationPolicy`, which shapes each compile's diagnostic sink (see
+  [Disabled Diagnostics](../diagnostics/Disabled%20Diagnostics.md));
 - the front end receives an `IUnmodeledNodeHandlingPolicy` built by
   `UnmodeledNodeHandlingPolicies.For(UnmodeledMarkdown)` — in the Markdown layer,
   since configuration must not depend on a stage;
@@ -157,7 +161,7 @@ Hash codes are stable within a process, not across processes.
 - `SpeakerBinder`: one test per precedence case.
 - `SemanticAnalyzer`: configured speakers reach the model through a substituted
   `ISemanticAnalyzerOptions`.
-- Composition roots: both honor speakers and unmodeled handling on a real compile.
+- Composition roots: both honor speakers, unmodeled handling, and disabled codes on a real compile.
 - The architecture test keeps `Configuration` a foundation leaf.
 
 ## Knobs not built
@@ -171,7 +175,7 @@ Hash codes are stable within a process, not across processes.
 | Slug normalization | `Slug` |
 | Live-server port, host, debounce | `DialogueDown.Visualization.Live` |
 | CLI output defaults | `DialogueDown.Cli` |
-| Rule severities and warnings as errors | diagnostics |
+| Rule severities and warnings as errors (disabling a code is built: [Disabled Diagnostics](../diagnostics/Disabled%20Diagnostics.md)) | diagnostics |
 
 The `dialogue.toml` schema is the [Configuration Loader](./Configuration%20Loader.md)
 note and, for writers, the [configuration guide](../../../guide/configuration.md).

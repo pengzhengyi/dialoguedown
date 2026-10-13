@@ -1,7 +1,7 @@
 # Disabled Diagnostics
 
 > [!NOTE]
-> Status: **approved**, in progress. How a writer turns a diagnostic off **by code**:
+> Status: **implemented**. How a writer turns a diagnostic off **by code**:
 > a `[diagnostics]` table in `dialogue.toml` for the whole project, and
 > `ddown compile --disable` for one run. A disabled diagnostic is still computed and
 > carried, marked as disabled, so each surface decides how to show it. This note
@@ -57,28 +57,28 @@ not mistaken for a disabled control, for example "Disabled in dialogue.toml".
 
 ## Functionality checklist
 
-- [ ] `DiagnosticCatalog.All` lists every descriptor explicitly, and a public
+- [x] `DiagnosticCatalog.All` lists every descriptor explicitly, and a public
       `DiagnosticCodes` query exposes each code's title, category, and default
       severity.
-- [ ] `CompilerOptions.DisabledDiagnostics`: a set of optional codes, empty by
+- [x] `CompilerOptions.DisabledDiagnostics`: a set of optional codes, empty by
       default, normalized to upper case, compared as a set.
-- [ ] `Diagnostic.IsDisabled` and `LocatedDiagnostic.IsDisabled`, set during the
+- [x] `Diagnostic.IsDisabled` and `LocatedDiagnostic.IsDisabled`, set during the
       compile for every non-error diagnostic whose code is disabled.
-- [ ] `HasErrors`, the compile's outcome, the stage-boundary halt, and exit codes are
+- [x] `HasErrors`, the compile's outcome, the stage-boundary halt, and exit codes are
       unchanged.
-- [ ] `[diagnostics] disable = [...]` in `dialogue.toml`, with a located
+- [x] `[diagnostics] disable = [...]` in `dialogue.toml`, with a located
       `DialogueConfigurationException` for every malformed shape, an unknown code,
       or an `Error` code.
-- [ ] `ddown compile --disable <code>`, repeatable and comma-separated, added to the
+- [x] `ddown compile --disable <code>`, repeatable and comma-separated, added to the
       configured set; an unknown or `Error` code is a usage error.
-- [ ] The CLI prints no disabled diagnostic; a line after the fixable hint counts
+- [x] The CLI prints no disabled diagnostic; a line after the fixable hint counts
       them by code: `2 disabled: 1 DLG1114, 1 DLG3002`.
-- [ ] `--fix` ignores disabled diagnostics: it applies none of their fixes and counts
+- [x] `--fix` ignores disabled diagnostics: it applies none of their fixes and counts
       none of them in the hint, the remaining count, or the "after fixing" list.
-- [ ] The report shows no squiggle, gutter marker, Problems row, or "Fix all" entry
+- [x] The report shows no squiggle, gutter marker, Problems row, or "Fix all" entry
       for a disabled diagnostic, and still colors ignored Markdown from a disabled
       `DLG1114`.
-- [ ] Guides: `[diagnostics]` in the configuration guide, `--disable` in the CLI
+- [x] Guides: `[diagnostics]` in the configuration guide, `--disable` in the CLI
       guide, and which codes are optional in the error-code reference.
 
 ## Where it sits
@@ -91,7 +91,8 @@ flowchart LR
     T["dialogue.toml<br/>[diagnostics] disable"] --> L["TomlConfigurationLoader"]
     L --> O["CompilerOptions<br/>DisabledDiagnostics"]
     A["--disable"] -->|"union"| O
-    O --> S["ScriptCompiler → CompilationSession<br/>DisablingDiagnosticSink"]
+    O --> C["CompilationPolicy<br/>mode and disabled codes"]
+    C --> S["ScriptCompiler → CompilationSession<br/>DisablingDiagnosticSink"]
     S --> R["LocatedDiagnostic.IsDisabled"]
     R --> E["CLI: errata, summary, --fix"]
     R --> P["Report: LSP projection<br/>(skips disabled)"]
@@ -116,11 +117,11 @@ ddown compile scene.dialogue.md --disable DLG1003,DLG3004    # same as two --dis
 
 **Precedence: the configured set ∪ `--disable`.** `CompileCommand` builds the union
 after resolving the configuration, the way it applies `--mode`:
-`options with { DisabledDiagnostics = options.DisabledDiagnostics.Union(settings.Disable) }`.
+`options with { DisabledDiagnostics = options.DisabledDiagnostics.Union(settings.DisabledCodes) }`.
 The option only adds, like Ruff's `--extend-ignore`, so a run cannot re-enable a
 code the project disabled.
 
-A well-formed code is `DLG` followed by four digits, matched case-insensitively.
+A code must name an entry in the diagnostic catalog, matched case-insensitively.
 
 ## Examples
 
@@ -213,13 +214,14 @@ each exiting `65`. The same codes given to `--disable` are usage errors, exiting
 | Type | Visibility | Responsibility |
 | --- | --- | --- |
 | `DiagnosticCatalog.All` | internal | An explicit array of every descriptor; a test checks it against the reflected fields. |
-| `DiagnosticCodes` | public | The catalog's public face: `All` as `DiagnosticCodeInfo(Code, Title, Category, DefaultSeverity)` in code order, `Find(code)`, and `IsOptional(code)`. Descriptors stay internal. |
+| `DiagnosticCodes` | public | The catalog's public face: `All` as `DiagnosticCodeInfo(Code, Title, Category, DefaultSeverity)` in code order, `Find(code)`, `IsOptional(code)`, and the `ReferencePage` URL that error messages cite. Descriptors stay internal. |
 | `CompilerOptions.DisabledDiagnostics` | public | An `ImmutableHashSet<string>` with an ordinal comparer, holding upper-case codes; validated on `init`. |
 | `CompilerOptions(mode, speakers, unmodeled, disabledDiagnostics)` | public | A new constructor overload; the existing three-argument one stays. |
+| `CompilationPolicy` | internal | What `ScriptCompiler` needs from the options for each compile: the mode and the disabled codes. |
 | `DisablingDiagnosticSink` | internal | An `IDiagnosticSink` decorator over a set of code strings: marks a non-error diagnostic whose code is in the set, then forwards it. |
 | `Diagnostic.IsDisabled`, `LocatedDiagnostic.IsDisabled` | internal, public | The mark, an `init` property on both (not a positional parameter), included in equality. |
 | `ConfiguredDiagnosticsReader` | internal | Reads and fully validates `[diagnostics]` from the TOML syntax tree. |
-| `CompileSettings.Disable` | internal | The `--disable` values, split at commas, trimmed, validated with `DiagnosticCodes`. |
+| `CompileSettings.Disable`, `DisabledCodes` | internal | The `--disable` values as given, and the codes in them, split at commas and trimmed; `Validate` checks each with `DiagnosticCodes`. |
 
 ## Key design decisions
 
@@ -259,9 +261,11 @@ before.
 
 ### D3 — Mark in a sink decorator, during the compile
 
-`ScriptCompiler` takes the set beside the mode, and `CompilationSession.Start(source,
-mode, disabledDiagnostics)` wraps the mode's sink in a `DisablingDiagnosticSink` when
-the set is non-empty. The decorator is outermost, so it marks before the bag (or the
+`ScriptCompiler` takes a `CompilationPolicy`, the mode and the set together, built
+from the options at each composition root with `CompilationPolicy.For(options)`.
+Passing the set as one more constructor parameter would have given `ScriptCompiler`
+eight. `CompilationSession.Start(source, policy)` wraps the mode's sink in a
+`DisablingDiagnosticSink` when the set is non-empty. The decorator is outermost, so it marks before the bag (or the
 fail-fast sink) sees the diagnostic. It takes a set of strings, not
 `CompilerOptions`, so the `Diagnostics` namespace stays a foundation leaf.
 
@@ -317,9 +321,10 @@ promoting a code to `Error`, or a config naming a code newer than the installed
 repurposes a code; promoting one to `Error` becomes a breaking change that the
 changelog calls out.
 
-The `[diagnostics]` table is validated as strictly as `[markdown.unmodeled]`: any
-other spelling of the root `diagnostics` key, such as an inline table, a dotted key,
-or an array of tables, is an error rather than silently ignored. A misspelled table
+The reader also rejects any other spelling of the root `diagnostics` key, such as an
+inline table, a dotted key, an array of tables, or a nested table like
+`[diagnostics.style]`, rather than silently ignoring it, since each would leave the
+codes enabled. `[markdown.unmodeled]` has no such check. A misspelled table
 name such as `[diagnostic]` is an unrelated root key, which the loader ignores for
 forward compatibility.
 
@@ -345,8 +350,8 @@ flake8's `--statistics`, shows which disabled codes actually fired. No
 
 `FixApplier` drops disabled diagnostics before choosing preferred fixes, so they are
 not candidates at all, rather than recorded as skipped. A run whose only fixable
-diagnostics are disabled therefore prints no fix section. The "after fixing" list
-excludes them too. Rewriting text the writer chose not to hear about would surprise
+diagnostics are disabled therefore prints no fix section.
+`FixApplication.NewDiagnostics` leaves them out of the "after fixing" list too. Rewriting text the writer chose not to hear about would surprise
 them. To fix a code the project disabled, a writer removes it from `dialogue.toml`;
 the CLI cannot re-enable it for one run.
 
@@ -412,8 +417,9 @@ disabled group.
   `ErrataRenderer` on a `TestConsole` for the summary, the hint, and the remaining
   count. Fix mode: disabled fixes are not applied, and a run with only disabled
   fixes prints no fix section.
-- Report: `DiagnosticProjection` skips a disabled diagnostic, and
-  `SemanticTokenProjection` still colors a disabled `DLG1114`.
+- Report: `DiagnosticProjection` skips a disabled diagnostic, a served document's
+  payload carries none, and `SemanticTokenProjection` still colors a disabled
+  `DLG1114`.
 
 ## Planned: the report
 

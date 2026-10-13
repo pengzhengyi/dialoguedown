@@ -33,7 +33,7 @@ loader. An architecture test guards both directions. A consumer that builds
 
 | Term | Meaning |
 | --- | --- |
-| **Schema reader** | An internal reader that owns one concern: mode, speakers, or unmodeled Markdown. |
+| **Schema reader** | An internal reader that owns one concern: mode, speakers, unmodeled Markdown, or disabled diagnostics. |
 | **Structural key** | A speaker key the schema defines: `name`, `id`, `tags`. |
 | **Reserved key** | Any other speaker key — a reserved tag, validated against `ReservedTagNames.Known`. |
 | **Tag shorthand** | A custom tag written as in the DSL: `"name"` or `"name=value"`. |
@@ -53,6 +53,9 @@ tags    = ["main", "mood=happy", { name = "a=b", value = "c" }]   # custom tags
 [markdown.unmodeled]
 table      = "keep"                   # keep or ignore, per kind
 code-block = "ignore"
+
+[diagnostics]
+disable = ["DLG3002", "DLG1114"]      # info and warning codes only
 ```
 
 | Key | Maps to |
@@ -62,6 +65,7 @@ code-block = "ignore"
 | `tags` | `CustomTags`: a shorthand string split at the first `=`, or an inline table `{ name, value? }` for a name that itself contains `=`. |
 | any other speaker key | `ReservedTags`: `true` → a name-only tag, a string → a valued tag, `false` → nothing. |
 | `[markdown.unmodeled]` | `CompilerOptions.UnmodeledMarkdown`; omitted kinds stay absent so their defaults apply (see [Unmodeled Markdown Handling](../core/Unmodeled%20Markdown%20Handling.md)). |
+| `[diagnostics]` `disable` | `CompilerOptions.DisabledDiagnostics`; each code must name an info or warning diagnostic (see [Disabled Diagnostics](../diagnostics/Disabled%20Diagnostics.md)). |
 
 ## Interfaces and abstractions
 
@@ -69,7 +73,7 @@ code-block = "ignore"
 | --- | --- | --- |
 | `TomlConfigurationLoader` | public | `Load(path)` and `Parse(toml, sourceName)` → `CompilerOptions`; composes the readers. |
 | `TomlDocumentParser` | internal | Text → Tomlyn `DocumentSyntax`, failing on a syntax error. |
-| `ConfiguredModeReader`, `ConfiguredSpeakerReader`, `ConfiguredUnmodeledReader` | internal | One schema concern each. |
+| `ConfiguredModeReader`, `ConfiguredSpeakerReader`, `ConfiguredUnmodeledReader`, `ConfiguredDiagnosticsReader` | internal | One schema concern each. |
 | `TomlTables`, `TomlKeys`, `TomlErrors`, `TomlLocation` | internal | Shared syntax mechanics: table selection, key names, located errors. |
 | `DialogueConfigurationException` | public | A config error with its `ConfigurationSourceLocation`. |
 | `ConfigurationSourceLocation` | public | The source, line, and column of a config error. |
