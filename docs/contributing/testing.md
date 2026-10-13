@@ -336,7 +336,7 @@ other ways out the node is given:
 
 ```csharp
 Line("Take a torch.", speaker: 1)
-Branch(Arm("Alice.HasMap", target: 16), Else(target: 18))
+Branch(Gated("Alice.HasMap", target: 16), Else(target: 18))
 Line("Hello.", id: 0, next: 1)
 ```
 

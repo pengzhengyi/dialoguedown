@@ -129,19 +129,19 @@ sequenceDiagram
     R-->>D: Said "Wait here"
 ```
 
-What happens after `Choose` comes from the option's arm, not from the runner. The
-compiler writes an option's text twice: as its label, and as the start of the arm
-it leads to. Choosing arrives at that arm, which plays as any node does:
+What happens after `Choose` comes from the option's body, not from the runner. The
+compiler writes an option's text twice: as its label, and as the start of the body
+it leads to. Choosing arrives at that body, which plays as any node does:
 
-| Script | The option's label | What the arm does once it is taken |
+| Script | The option's label | What the body does once the option is taken |
 | --- | --- | --- |
 | `- Go east` | `Go east` | `Said` "Go east", by the anonymous default speaker |
 | `- Bob: Is it really?` | `Is it really?` | `Said` Bob "Is it really?" |
-| `- => [Take the east road](#the-market)` | `Take the east road` | nothing: the arm is a jump, walked past to the market |
+| `- => [Take the east road](#the-market)` | `Take the east road` | nothing: the body is a jump, walked past to the market |
 | ``- `Wave()` `` | empty | `Perform` Wave, from a control block |
 
-An arm ends by falling through to whatever the writer put after the menu, so every
-option rejoins there unless its arm jumps away.
+An option's body ends by falling through to whatever the writer put after the menu,
+so every option rejoins there unless its body jumps away.
 
 ## Interfaces and abstractions
 
@@ -182,8 +182,8 @@ what already happened.
 
 The runner offers every option of a menu, in the order its options appear in `out`,
 and never drops one. The compiler writes them into `out` in the order the writer
-wrote them, and JSON keeps the order of an array, as it does for a branch's arms
-([reader rules D4](./Playbook%20Reader%20Rules.md#d4--the-array-is-the-order)). So
+wrote them, and JSON keeps the order of an array, as it does for a branch node's
+branches ([reader rules D4](./Playbook%20Reader%20Rules.md#d4--the-array-is-the-order)). So
 in every menu, an option's position in the offer is its position as written.
 
 `Choose(index)` names a position in the `Offer` the driver just received. The
@@ -209,7 +209,7 @@ in the `Offer`.
 
 A label is what the player reads to decide. It reaches the host with its queries
 filled from the world's answers and its commands removed: a command written in an
-option runs when its arm plays, which is where the compiler also wrote it. The
+option runs when its body plays, which is where the compiler also wrote it. The
 label is the label's segments' words, joined, so emphasis around a removed
 command stays on both sides of it.
 
@@ -217,7 +217,7 @@ A label keeps its whitespace as written, so a label whose command came first
 starts with a space, as a `Continued` after a command does. How whitespace in
 speech is normalized is the language's to settle.
 
-A label's query is asked on arrival at the menu, and the same query in the arm's
+A label's query is asked on arrival at the menu, and the same query in the body's
 first line is asked again when that line plays. The two answers may differ, which
 is the rule [asking the world](./Asking%20the%20World.md#a2--the-runner-does-not-remember-an-answer)
 sets for any two questions. A host that wants the label and the line to agree
@@ -293,7 +293,7 @@ The reader requires a choice node whose every option carries a condition to have
 **fall-through** beside them, so the node always leads somewhere (see
 [playbook reader rules](./Playbook%20Reader%20Rules.md)). The compiler points it
 past the menu. When no option is available, the walk takes it, as it takes a
-branch's arm ([A8](./Asking%20the%20World.md#a8--a-branch-node-is-walked-past-not-stood-at)),
+branch node's branch ([A8](./Asking%20the%20World.md#a8--a-branch-node-is-walked-past-not-stood-at)),
 and offers nothing. Walking past inside the walk keeps a loop of such menus inside
 the walk's bound, so it is refused as an endless loop. A menu with nothing
 available and no fall-through leads nowhere, and says so.
@@ -314,9 +314,9 @@ it the writer never wrote, and to answer an `Offer` with something other than
 | Two options with the same label | Both offered; `Choose` tells them apart by position |
 | An option whose label is only a command | Offered with an empty label; taking it performs the command |
 | A label whose command comes first | Offered starting with a space, as written |
-| An option whose arm is a jump | Taking it walks past the jump to where it leads |
+| An option whose body is a jump | Taking it walks past the jump to where it leads |
 | An option leading straight past the menu | Taking it arrives at what follows the menu |
-| A menu inside an option's arm | Offered once that arm reaches it |
+| A menu inside an option's body | Offered once that body reaches it |
 | `Choose` below zero or past the last option | Refused as `no-such-option`; the menu stays open |
 | `Choose` of an unavailable option | Refused as `unavailable-option`; the menu stays open |
 | `Choose` while the run is not at a menu | Refused as misplaced |

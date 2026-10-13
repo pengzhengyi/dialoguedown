@@ -121,7 +121,7 @@ Words that read two ways or are figurative:
 | peel | split off, remove | figurative |
 | weave | join, meet again | figurative |
 | surface (as a verb) | report, show | figurative |
-| arm, for a `switch` case or a timer | case; start, set | here an **arm** is only one way forward from a node, as the [Playbook Reader Rules](../docs/contributing/design-notes/runtime/Playbook%20Reader%20Rules.md) define it |
+| arm | an option, random option, branch, or divert — or an edge when every kind is meant; a case, for a `switch`; start or set, for a timer | figurative; the guide never says it, and the playbook already names each kind |
 | a run, for one play of a dialogue | a playthrough | "run" reads as the verb |
 | seam | interface, or name the thing | figurative |
 | lands, lands on | enters, opens, is in range | figurative |
