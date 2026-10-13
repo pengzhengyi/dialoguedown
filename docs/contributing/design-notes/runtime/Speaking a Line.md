@@ -59,7 +59,7 @@ Out of scope: choices (C2b), `Describe` (C2e), and saves (C2f), though the
 resume place is designed to be saved; a command written before a line's speaker
 prefix, as in `` `Wave()` Alice: Hello. ``, losing that speaker, which the compiler
 owns; and how whitespace and quotes in speech are normalized, which the language
-owns.
+owns ([Speech Whitespace](../language/Speech%20Whitespace.md) for whitespace).
 
 ## Vocabulary
 
@@ -67,7 +67,7 @@ owns.
 | --- | --- |
 | **Segment** | A run of words and the command that follows them, as `SpeechTemplate.Segments` returns. A line is one or more segments; either half of one may be empty |
 | **Part** | The words of one segment as the host receives them. The first segment's words are the `Said`; the words of each later segment are a `Continued` |
-| **Says something** | A segment says something when its words hold anything other than whitespace and line breaks, judged on the fragments before any query is filled |
+| **Says something** | A segment says something when its words hold anything other than collapsible spaces (a space, a tab, a line feed, a carriage return) and line breaks, judged on the fragments before any query is filled. A named space, such as `&nbsp;`, says something |
 | **Stop** | A point inside a line where the step ends before the line does |
 | **Resume place** | The segment the run carries on from after a stop |
 
@@ -106,13 +106,16 @@ Each line below plays in one step unless it stops; the arrow marks the host's
 | Line | What the host receives |
 | --- | --- |
 | `Alice: Hello.` | `Said` Alice "Hello." |
-| ``Alice: Hello. `Wave()` `` | `Said` Alice "Hello. " · `Perform` Wave → the player's turn |
+| ``Alice: Hello. `Wave()` `` | `Said` Alice "Hello." · `Perform` Wave → the player's turn |
 | ``Alice: `Wave()` `` | `Said` Alice "" · `Perform` Wave → the player's turn |
-| ``Alice: `Wave()` Hello.`` | `Said` Alice "" · `Perform` Wave · `Continued` " Hello." → the player's turn |
-| ``Alice: Hi. `Bow()` `Wave()` Bye.`` | `Said` Alice "Hi. " · `Perform` Bow · `Perform` Wave · `Continued` " Bye." → the player's turn |
+| ``Alice: `Wave()` Hello.`` | `Said` Alice "" · `Perform` Wave · `Continued` "Hello." → the player's turn |
+| ``Alice: Hi. `Bow()` `Wave()` Bye.`` | `Said` Alice "Hi. " · `Perform` Bow · `Perform` Wave · `Continued` "Bye." → the player's turn |
 
-The last row has a single space between the two commands. That segment says
-nothing, so no `Continued` is sent for it.
+In the last row, the compiler keeps only the first space between "Hi." and
+"Bye.", so nothing is left between the two commands. Where a segment there holds
+only collapsible spaces, as a hand-built playbook's may, it says nothing, and no
+`Continued` is sent for it. A named space there, as in
+``Alice: Hi.`Bow()`&nbsp;`Wave()`Bye.``, says something, so it is sent.
 
 A line with no command is one `Said`. A line with commands but no
 query after any of them is still one step: the host hears everything in order,
@@ -130,7 +133,7 @@ sequenceDiagram
     D->>R: Next (the run arrives at the line)
     R-->>D: Said Yuki "Then... "
     R-->>D: Perform ("Yuki hides a smile behind her sleeve")
-    R-->>D: Continued " I will not argue."
+    R-->>D: Continued "I will not argue."
     Note over R: AwaitingDone, the line finished
     D->>R: Done
     Note over R: nothing left to answer — the player's turn
@@ -158,7 +161,7 @@ sequenceDiagram
     D->>R: Done
     R-->>D: Resolve ["weapon.Attack"]
     D->>R: Supply {weapon.Attack: 15}
-    R-->>D: Continued " its attack is 15."
+    R-->>D: Continued "its attack is 15."
     D->>R: Next
 ```
 
@@ -217,8 +220,9 @@ disagree with the `Said` would only raise the question of what a mismatch means.
 As its own event, a port that has not learned it fails a fixture rather than
 quietly showing two name plates.
 
-A `Continued` is sent only when its words say something, so the space a writer
-leaves between two commands, or after the last one, sends nothing. Whether words
+A `Continued` is sent only when its words say something, so collapsible spaces
+alone between two commands, or after the last one, send nothing, while a named
+space there is sent. Whether words
 say something is judged before any query is filled, so an empty answer never
 changes which events are sent.
 
@@ -359,6 +363,7 @@ decides what follows (S5) sits beside the code that made the host a request.
 | A line whose only speech is a command | `Said` with no words, `Perform`; after `Done`, the player's turn |
 | A line that ends with a command, or with a command and a space | No `Continued` after it |
 | Two commands with only a space between them | Both performed in order, no `Continued` between them |
+| Two commands with only a named space between them | Both performed in order, with a `Continued` holding the named space between them |
 | A command inside a link's label or an image's alt text | Nothing to perform: the compiler writes such a call as plain text |
 | `Failed` on a command inside a line | The run holds where it is; `Done` then carries on from the resume place |
 | `Next` while a line waits on the host or the world | Refused as misplaced |
@@ -392,7 +397,7 @@ decides what follows (S5) sits beside the code that made the host a request.
 
 | Level | What it covers |
 | --- | --- |
-| Unit — segments | `SpeechTemplate`'s own tests, plus "says something" on whitespace, line breaks, and a lone query, and `HasQueries` on a query however deeply it sits |
+| Unit — segments | `SpeechTemplate`'s own tests, plus "says something" on collapsible spaces, named spaces, line breaks, and a lone query, and `HasQueries` on a query however deeply it sits |
 | Unit — `LineEventsBuilder` | The `Said` only when a part starts the line; a part starting later continues it; a part ending early leaves the rest |
 | Unit — `Playing` | Parts and commands in order; the `Said` sent even with no words; no `Continued` for words that say nothing; stopping after the last command before a query; resuming from a place |
 | Unit — questions | The guard and first segment's keys on arrival; a later segment's keys alone |

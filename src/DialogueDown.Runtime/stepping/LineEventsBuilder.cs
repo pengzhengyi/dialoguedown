@@ -71,8 +71,8 @@ internal sealed class LineEventsBuilder
             AddSaid(segment.Words);
         }
 
-        // Space between two commands, or after the last one, says nothing, so the host is not
-        // sent it.
+        // Words of only collapsible spaces between two commands, or after the last one, say
+        // nothing, so the host is not sent them.
         else if (segment.SaysSomething)
         {
             AddContinued(segment.Words);
