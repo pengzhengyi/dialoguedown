@@ -90,12 +90,12 @@ public sealed partial record CompilerOptions
         }
     }
 
-    /// <summary>
-    /// The diagnostic codes a project disabled, stored upper-case: a disabled diagnostic is still
-    /// reported, marked <see cref="LocatedDiagnostic.IsDisabled"/>. Empty by default. Only an
-    /// <c>Info</c> or <c>Warning</c> code may be disabled; setting an unknown or <c>Error</c> code
-    /// throws <see cref="ArgumentException"/>.
-    /// </summary>
+    /// <summary>The diagnostic codes a project disabled, stored upper-case and empty by default.</summary>
+    /// <remarks>
+    /// A disabled diagnostic is still reported, marked <see cref="LocatedDiagnostic.IsDisabled"/>.
+    /// Only an <c>Info</c> or <c>Warning</c> code may be disabled; setting an unknown or
+    /// <c>Error</c> code throws <see cref="ArgumentException"/>.
+    /// </remarks>
     [UnorderedEquality]
     public ImmutableHashSet<string> DisabledDiagnostics
     {

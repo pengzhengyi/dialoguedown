@@ -58,10 +58,11 @@ internal sealed partial record Diagnostic
     [IgnoreEquality]
     public IReadOnlyList<DiagnosticFix> Fixes { get; }
 
-    /// <summary>
-    /// Whether a project disabled this diagnostic's code. A disabled diagnostic is still carried,
-    /// so a surface can show it apart or count it; it is never an error.
-    /// </summary>
+    /// <summary>Whether a project disabled this diagnostic's code.</summary>
+    /// <remarks>
+    /// A disabled diagnostic is still reported, so a surface can list it separately or count it. It
+    /// is never an error.
+    /// </remarks>
     public bool IsDisabled { get; init; }
 
     /// <summary>Whether this diagnostic is an <see cref="DiagnosticSeverity.Error"/> — the severity

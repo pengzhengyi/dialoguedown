@@ -45,8 +45,8 @@ internal sealed class CompileSettings : CommandSettings
     /// mode. Only valid after <see cref="Validate"/> succeeds.</summary>
     public CompilationMode? ResolvedMode => Mode is null ? null : CompilationModes.TryParse(Mode);
 
-    /// <summary>The codes <c>--disable</c> names, split at commas and trimmed, in the case written.
-    /// Only valid after <see cref="Validate"/> succeeds.</summary>
+    /// <summary>The codes <c>--disable</c> names, split at commas and trimmed, in the case written.</summary>
+    /// <remarks>Only valid after <see cref="Validate"/> succeeds.</remarks>
     public IReadOnlyList<string> DisabledCodes => [.. Disable.SelectMany(SplitCodes)];
 
     /// <summary>Whether this compile writes a playbook.</summary>
@@ -119,8 +119,8 @@ internal sealed class CompileSettings : CommandSettings
     private static List<string> SplitCodes(string value) =>
         [.. value.Split(',', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries)];
 
-    // Each `--disable` value must name at least one code, and every code must be one a project
-    // could disable in dialogue.toml, so a typo never silently disables nothing.
+    // Each `--disable` value must name at least one code, and each code must be one a project may
+    // disable.
     private ValidationResult ValidateDisable()
     {
         foreach (var value in Disable)

@@ -58,13 +58,10 @@ internal sealed class CompileCommand : Command<CompileSettings>
             options = options with { Mode = mode };
         }
 
-        if (settings.DisabledCodes.Count > 0)
+        options = options with
         {
-            options = options with
-            {
-                DisabledDiagnostics = options.DisabledDiagnostics.Union(settings.DisabledCodes),
-            };
-        }
+            DisabledDiagnostics = options.DisabledDiagnostics.Union(settings.DisabledCodes),
+        };
 
         // A stage-graph emit renders text instead of reporting diagnostics. The format is
         // validated in settings, so parsing here always succeeds.

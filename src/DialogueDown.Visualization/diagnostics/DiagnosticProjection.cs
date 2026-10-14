@@ -18,9 +18,8 @@ internal sealed class DiagnosticProjection
 
     /// <summary>
     /// Projects <paramref name="diagnostics"/> into LSP-shaped diagnostics, preserving report order.
-    /// A disabled diagnostic is left out, so no squiggle, gutter marker, Problems row, or fix
-    /// reads it.
     /// </summary>
+    /// <remarks>A disabled diagnostic is left out.</remarks>
     public IReadOnlyList<LspDiagnostic> Project(IEnumerable<LocatedDiagnostic> diagnostics)
     {
         ArgumentNullException.ThrowIfNull(diagnostics);

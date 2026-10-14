@@ -13,8 +13,7 @@ namespace DialogueDown.Cli.Fixing;
 /// writer. Candidates are considered in ascending position with a fixed tie-break, so the
 /// compiler's emission order never decides which fix wins: of two overlapping fixes, the one
 /// earlier in the file is applied. The kept fixes are spliced in together against the original
-/// offsets. A disabled diagnostic's fixes are never candidates: the writer chose not to hear about
-/// it, so rewriting its text would surprise them.
+/// offsets. A disabled diagnostic's fixes are never candidates.
 /// </remarks>
 internal static class FixApplier
 {

@@ -5,19 +5,18 @@ using Tomlyn.Syntax;
 namespace DialogueDown.ConfigurationLoader.Readers;
 
 /// <summary>
-/// Reads the <c>[diagnostics]</c> table of a parsed <see cref="DocumentSyntax"/> into the codes a
-/// project disables, upper-case and in the order written. Its one key, <c>disable</c>, is an array
-/// of codes; each must name an <c>Info</c> or <c>Warning</c> diagnostic. Anything else — an unknown
-/// or error code, a non-string, an unknown key, or <c>diagnostics</c> written as anything but a
-/// <c>[diagnostics]</c> table — is rejected with a located
-/// <see cref="DialogueConfigurationException"/>, since a disable that silently does nothing is the
-/// mistake this setting most needs to catch.
+/// Reads the codes a project disables from the <c>[diagnostics]</c> table of a parsed
+/// <see cref="DocumentSyntax"/>, upper-case and in the order written.
 /// </summary>
 /// <remarks>
 /// <code>
 /// [diagnostics]
 /// disable = ["DLG3002", "DLG1114"]
 /// </code>
+/// Its one key, <c>disable</c>, is an array of codes, each naming an <c>Info</c> or <c>Warning</c>
+/// diagnostic. Anything else — an unknown or error code, a non-string, an unknown key, or
+/// <c>diagnostics</c> written as anything but a <c>[diagnostics]</c> table — is rejected with a
+/// located <see cref="DialogueConfigurationException"/>.
 /// </remarks>
 internal sealed class ConfiguredDiagnosticsReader
 {

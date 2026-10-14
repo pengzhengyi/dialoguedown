@@ -7,10 +7,13 @@ namespace DialogueDown.ConfigurationLoader;
 
 /// <summary>
 /// Reads a DialogueDown project's <c>dialogue.toml</c> into a <see cref="CompilerOptions"/> so the
-/// engine-agnostic core never takes a TOML dependency. It reads the speakers, the compilation
-/// mode, how unmodeled Markdown is handled, and which diagnostics are disabled; a config that sets none of them yields
-/// <see cref="CompilerOptions.Default"/>.
+/// engine-agnostic core never takes a TOML dependency.
 /// </summary>
+/// <remarks>
+/// It reads the speakers, the compilation mode, how unmodeled Markdown is handled, and which
+/// diagnostics are disabled; a config that sets none of them yields
+/// <see cref="CompilerOptions.Default"/>.
+/// </remarks>
 public static class TomlConfigurationLoader
 {
     /// <summary>

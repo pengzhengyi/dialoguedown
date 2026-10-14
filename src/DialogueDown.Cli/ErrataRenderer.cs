@@ -7,14 +7,17 @@ namespace DialogueDown.Cli;
 
 /// <summary>
 /// Renders a compile's located diagnostics and, when a fix run had candidates, what it did after
-/// them. On an interactive console it uses the
+/// them.
+/// </summary>
+/// <remarks>
+/// On an interactive console it uses the
 /// <see href="https://github.com/spectreconsole/errata">Errata</see> library to draw a rich block
 /// per diagnostic — the source line with a colored caret under the offending range — and otherwise
 /// writes a greppable <c>file(line,column): severity CODE: message</c> one-liner. Both paths end
 /// with a summary line and, when any diagnostic carries a fix, a fixable-count hint. A disabled
-/// diagnostic is never shown or counted there; a last line counts them by code instead, as in
+/// diagnostic is left out of both and counted by code on a last line, as in
 /// <c>2 disabled: 1 DLG1114, 1 DLG3002</c>. The fix section follows.
-/// </summary>
+/// </remarks>
 internal sealed class ErrataRenderer(IAnsiConsole console) : IErrataRenderer
 {
     public void Render(
@@ -156,7 +159,7 @@ internal sealed class ErrataRenderer(IAnsiConsole console) : IErrataRenderer
             : $"; {Summarize(shown)} {(shown.Count == 1 ? "remains" : "remain")}";
     }
 
-    // "2 disabled: 1 DLG1114, 1 DLG3002": count first, in code order, like Ruff's --statistics.
+    // "2 disabled: 1 DLG1114, 1 DLG3002": count first, in code order.
     private static string CountByCode(IReadOnlyList<LocatedDiagnostic> disabled)
     {
         var byCode = disabled

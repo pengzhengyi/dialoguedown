@@ -34,10 +34,8 @@ public sealed partial record LocatedDiagnostic(
     [IgnoreEquality]
     public IReadOnlyList<LocatedFix> Fixes { get; init; } = [];
 
-    /// <summary>
-    /// Whether a project disabled this diagnostic's code. A surface hides or sets apart a disabled
-    /// diagnostic; it is never an error. Part of equality, since it changes what a surface shows.
-    /// </summary>
+    /// <summary>Whether a project disabled this diagnostic's code, so a surface hides it or sets it apart.</summary>
+    /// <remarks>A disabled diagnostic is never an error. The mark is part of equality.</remarks>
     public bool IsDisabled { get; init; }
 
     internal static LocatedDiagnostic Project(Diagnostic diagnostic, LineMap map)
