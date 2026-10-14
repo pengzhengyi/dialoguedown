@@ -218,9 +218,9 @@ key — there is no "malformed key" to report, only the empty one.
 A weight's text may be a **number** (`50`), a **key**, or empty (an auto weight).
 The reader tries the number first, so `` `50%` `` stays the number 50 rather than a
 key named `50`. A value that *parses as a number but is out of range* — a negative
-percentage like `` `-5%` `` — is an **invalid weight** rather than a key named
-`-5`. Only text that is *not*
-numeric becomes an unquoted key.
+percentage like `` `-5%` ``, or an infinite one such as `` `Infinity%` `` — is an
+**invalid weight** rather than a key named `-5`. Only text that is *not* numeric
+becomes an unquoted key.
 
 ### D4 — The game-call grammar is untouched
 
@@ -255,9 +255,9 @@ readers accept; the surrounding diagnostics keep their meaning:
 
 - A **value read** that is unquoted (`` `IsAngry` ``) still reports *not a game call*
   (`DLG1102`) — value reads are quoted-only.
-- An **invalid weight** is a negative number (`` `-5%` ``, `DLG1105`). Any
-  non-numeric, non-empty weight — `` `abc%` ``, `` `1/2%` `` — is a key (see
-  [D3](#d3--a-weight-is-a-number-first-a-key-second)).
+- An **invalid weight** is a negative or an infinite number (`` `-5%` ``,
+  `` `Infinity%` ``, `DLG1105`). Any non-numeric, non-empty weight — `` `abc%` ``,
+  `` `1/2%` `` — is a key (see [D3](#d3--a-weight-is-a-number-first-a-key-second)).
 - An **orphan condition** (`DLG1106`) is unaffected — an unquoted condition with
   nothing to guard is still an orphan.
 
@@ -275,6 +275,7 @@ readers accept; the surrounding diagnostics keep their meaning:
 | `` `Luck%` ``             | weight, key `Luck`              | unquoted key + sigil                 |
 | `` `50%` ``               | weight, number 50               | number wins over key                 |
 | `` `-5%` ``               | *invalid weight* (`DLG1105`)    | numeric but out of range             |
+| `` `Infinity%` ``         | *invalid weight* (`DLG1105`)    | numeric but out of range             |
 | `` `1/2%` ``              | weight, key `1/2`               | not a number, so a key               |
 | `` `%` ``                 | auto weight                     | empty weight                         |
 | `` `JoinClub("Alice")` `` | custom command                  | grammar untouched                    |

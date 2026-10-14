@@ -5,10 +5,10 @@
 > [Dialogue Graph](../core/Dialogue%20Graph.md): the portable **playbook**, the
 > **runner** that plays one, the **protocol** between a runner and its driver, and
 > the **conformance corpus** that keeps runtimes honest. The playbook, the corpus,
-> and a runner that plays lines, jumps, effects, branches, menus, and the end, and
-> asks the world what they need, are built; random choices, saves, drivers, and
-> every other host are not (see
-> [components](#components-and-sequencing)).
+> and a runner that plays lines, jumps, effects, branches, menus, random choices of
+> number and auto weights, and the end, and asks the world what they need, are
+> built; random choices that ask the world, saves, drivers, and every other host are
+> not (see [components](#components-and-sequencing)).
 
 ## Table of contents
 
@@ -547,7 +547,7 @@ Everything the notes promise, and the insurance each has in version 0.
 | Detour and return | [Progression Order](../language/Progression%20Order.md) | Every save file | Saves are not serialized yet, so `PlayState` gains a call stack before any save exists |
 | `#START`, cross-file entry | [Progression Order](../language/Progression%20Order.md) | None — additive | `anchors` names every scene a host may start at; `entry` states only the default |
 | Hide versus disable an option | [Conditions](../language/Conditions.md#d9--a-player-option-is-shown-unavailable-not-removed) | The host API | [D8](#d8--a-menu-shows-unavailable-options) |
-| Weight draws on replay | [Random Choice](../language/Random%20Choice.md) | Saves and conformance | Entropy is a seam; see [open questions](#open-questions-and-deferred-work) |
+| Weight draws on replay | [Random Choice](../language/Random%20Choice.md) | Saves and conformance | The host supplies every draw with `Drawn`, so replaying the commands replays every draw; see [Drawing a Random Option](./Drawing%20a%20Random%20Option.md#r1--the-host-supplies-the-draw-the-runner-turns-it-into-a-random-option) |
 | Localization | — | Every script | Unknown properties are ignored, so a `lineId` is a field to populate, not a shape to change |
 | Binary encoding | — | Nothing | The writer is a seam |
 
@@ -569,7 +569,7 @@ flowchart LR
 | # | Component | Delivers | Note | Status |
 | --- | --- | --- | --- | --- |
 | C1 | **Playbook format and writer** | The schema, the header, the reader and its checks, and `ddown compile --output` | [Playbook Format](./Playbook%20Format.md), [Playbook Reader Rules](./Playbook%20Reader%20Rules.md) | Implemented |
-| C2 | **C# runner** | `Step`, `PlayState`, the protocol, drivers, the world seam, saves | [Runner](./Runner.md) | Partially implemented: lines and the commands in them, jumps, effects, conditions and queries, block conditions, menus, the end |
+| C2 | **C# runner** | `Step`, `PlayState`, the protocol, drivers, the world seam, saves | [Runner](./Runner.md) | Partially implemented: lines and the commands in them, jumps, effects, conditions and queries, block conditions, menus, random choices of number and auto weights, the end |
 | C3 | **Conformance corpus** | Fixtures plus a harness, owned as data | [Conformance Corpus](./Conformance%20Corpus.md) | Implemented |
 | C4 | **`ddown play` and the REPL** | A terminal player, plus a raw stdio mode another language can drive | [Interactive Playthrough](../other/Interactive%20Playthrough.md) | Proposed |
 | C5a | **Web proxy Play tab** | The served report plays through the C# runner (level 1) | [Interactive Playthrough](../other/Interactive%20Playthrough.md) | Proposed |
@@ -623,10 +623,6 @@ failing fixture also *shrinks* to the smallest reproduction.
 - **Line identity for localization.** A node reference is positional and therefore
   not a localization key. A scheme stable across edits — Yarn writes `#line:` tags
   back into the source — needs its own note.
-- **Entropy: specified generator or supplied values?** A specified generator costs
-  one round trip fewer but must match bit-for-bit across languages; host-supplied
-  values are simpler to conform. Decided by whichever change teaches the runner to
-  play a random choice.
 - **Detour syntax and return boundary** stay owned by
   [Progression Order](../language/Progression%20Order.md).
 - **The world interface's name.** The proposed read-only interface and its boolean

@@ -1,10 +1,11 @@
 # Playbook Reader Rules
 
 > [!NOTE]
-> Status: **implemented**. Two reader rules close gaps where two conformant
+> Status: **implemented**. Three reader rules close gaps where two conformant
 > runtimes could otherwise play one playbook differently: every node's ways out have
-> a well-defined shape (`OutwardShapeChecker`), and a `branch`'s else comes after
-> every gated branch (`BranchOrderChecker`). Both run in the default reader, the
+> a well-defined shape (`OutwardShapeChecker`), a `branch`'s else comes after every
+> gated branch (`BranchOrderChecker`), and a `random-choice`'s number weights can be
+> drawn against (`NumberWeightChecker`). All three run in the default reader, the
 > schema states what it can of each, and `readable/` conformance cases pin the
 > refusals. The reader pipeline they join is in
 > [Playbook Format](./Playbook%20Format.md#reading-a-playbook).
@@ -14,6 +15,7 @@
 - [Ubiquitous language](#ubiquitous-language)
 - [Outward shape](#outward-shape)
 - [Branch order](#branch-order)
+- [Number weights](#number-weights)
 - [Key design decisions](#key-design-decisions)
 - [Error and boundary cases](#error-and-boundary-cases)
 - [Testability](#testability)
@@ -72,6 +74,21 @@ it is reached, so an else before another branch would leave that branch
 unreachable. A `succession` may sit anywhere among the branches, because it is not a
 branch.
 
+## Number weights
+
+> A `random-choice` node's number weights are finite and not negative, and they add
+> up to a finite total.
+
+A draw is made against the total of the random options' shares, so a weight of
+`-10`, or one of `1e400`, which reads as infinite, would leave the draw without
+meaning, and numbers that are each finite but add up past what a double holds would
+too. The compiler never writes any of these, but a hand-built playbook can.
+
+Checking them on reading lets a runtime trust every number a playbook carries, and
+leaves only the numbers the world supplies for key weights to check at play time. A
+guarded random option's number is checked like any other, because a guard decides
+whether a random option is drawn, not what its weight means.
+
 ## Key design decisions
 
 ### D1 — State the invariant, not the table
@@ -88,7 +105,9 @@ edge kinds (`items`), demand an edge of its kind (`contains`), bound the success
 count (`minContains` / `maxContains`), demand a gated `branch` edge, and allow at
 most one else. It cannot relate a succession's presence to the conditions on other
 edges, and it cannot compare positions, so "leads somewhere" and "last" belong to
-the reader.
+the reader. For a number weight it states `minimum: 0`, but a number too large for a
+double is still a valid JSON number, and the schema cannot add the numbers up, so
+"finite" belongs to the reader too.
 
 ```json
 "allOf": [
@@ -122,9 +141,10 @@ in source order, so every compiled branch node already satisfies the rule.
 ### D5 — One idea per checker, in dependency order
 
 `PlaybookCheckerFactory.CreateDefault()` runs `ReferenceChecker`, then
-`OutwardShapeChecker`, then `BranchOrderChecker`. Each can then assume what the
-one before it proved: edges lead to real nodes, and a branch node carries at least
-one edge of its kind.
+`OutwardShapeChecker`, then `BranchOrderChecker`, then `NumberWeightChecker`. Each
+can then assume what the one before it proved: edges lead to real nodes, and a
+branch node carries at least one edge of its kind. `NumberWeightChecker` reads only
+the weights and assumes nothing.
 
 ## Error and boundary cases
 
@@ -141,14 +161,17 @@ one edge of its kind.
 | two else branches | refuse | `two-else-branches` |
 | a branch node whose only branch is an else | refuse — nothing to fall back from | `an-else-alone` |
 | a `succession` before or among the branches | accept — not a branch | — |
+| a number weight that is negative, or reads as infinite (`1e400`) | refuse | `weight-is-negative`, `weight-is-infinite` |
+| number weights that are each finite but add up past what a double holds | refuse | `weight-total-is-infinite` |
+| a guarded random option's negative number weight | refuse — a guard does not excuse a weight | `guarded-weight-is-negative` |
 
 ## Testability
 
 | Layer | Test |
 | --- | --- |
-| Unit | `OutwardShapeCheckerTests` and `BranchOrderCheckerTests`: an accept and a refuse per rule, each refusal breaking one thing in a well-formed node |
+| Unit | `OutwardShapeCheckerTests`, `BranchOrderCheckerTests`, and `NumberWeightCheckerTests`: an accept and a refuse per rule, each refusal breaking one thing in a well-formed node |
 | Exhaustiveness | Exactly six concrete `Node` kinds, so a seventh forces a `NodeShape.For` row |
-| Property | The playbook round-trip property: every compiled script's playbook passes both checkers |
+| Property | The playbook round-trip property: every compiled script's playbook passes all three checkers |
 | Cross-runtime | The `readable/` cases in the table above |
 | Schema | CI validates every golden and accepted conformance playbook; the goldens' else-less branches protect `minContains: 0` |
 

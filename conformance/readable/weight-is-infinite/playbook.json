@@ -1,0 +1,108 @@
+{
+  "$schema": "https://pengzhengyi.github.io/dialoguedown/schema/playbook-0.schema.json",
+  "format": {
+    "version": 0,
+    "requires": [
+      "core"
+    ],
+    "uses": []
+  },
+  "script": "source.dialogue.md",
+  "entry": 0,
+  "anchors": {
+    "the-inn": 0
+  },
+  "speakers": [
+    {
+      "name": "Alice",
+      "tags": []
+    }
+  ],
+  "nodes": [
+    {
+      "kind": "random-choice",
+      "id": 0,
+      "out": [
+        {
+          "kind": "random-option",
+          "target": 1,
+          "weight": {
+            "kind": "number",
+            "percentage": 1e400
+          }
+        },
+        {
+          "kind": "random-option",
+          "target": 2,
+          "weight": {
+            "kind": "number",
+            "percentage": 30
+          }
+        },
+        {
+          "kind": "random-option",
+          "target": 3,
+          "weight": {
+            "kind": "auto"
+          }
+        }
+      ]
+    },
+    {
+      "kind": "line",
+      "id": 1,
+      "speaker": 0,
+      "speech": [
+        {
+          "kind": "text",
+          "text": "Hello."
+        }
+      ],
+      "out": [
+        {
+          "kind": "succession",
+          "target": 4
+        }
+      ]
+    },
+    {
+      "kind": "line",
+      "id": 2,
+      "speaker": 0,
+      "speech": [
+        {
+          "kind": "text",
+          "text": "Good evening."
+        }
+      ],
+      "out": [
+        {
+          "kind": "succession",
+          "target": 4
+        }
+      ]
+    },
+    {
+      "kind": "line",
+      "id": 3,
+      "speaker": 0,
+      "speech": [
+        {
+          "kind": "text",
+          "text": "Welcome back."
+        }
+      ],
+      "out": [
+        {
+          "kind": "succession",
+          "target": 4
+        }
+      ]
+    },
+    {
+      "kind": "end",
+      "id": 4,
+      "out": []
+    }
+  ]
+}

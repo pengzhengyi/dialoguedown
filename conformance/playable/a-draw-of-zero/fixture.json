@@ -1,0 +1,13 @@
+{
+  "$schema": "https://pengzhengyi.github.io/dialoguedown/schema/fixture-0.schema.json",
+  "name": "a draw of 0 lands on the first random option with a share",
+  "playbook": "playbook.json",
+  "because": "a random option weighing 0% has an empty span, so even a draw of 0 passes it by and lands on the first random option a draw can land on",
+  "session": [
+    { "expect": { "draw": [0, 50, 50] } },
+    { "send": { "drawn": 0 } },
+    { "expect": { "said": { "speaker": "Guard", "speech": "Move along." } } },
+    { "send": "next" },
+    { "expect": { "ended": {} } }
+  ]
+}

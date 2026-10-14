@@ -1,0 +1,3 @@
+- `0%` Guard: Halt!
+- `50%` Guard: Move along.
+- `50%` Guard: Lovely day.

@@ -124,7 +124,8 @@ internal static class DiagnosticDocs
             DiagnosticCatalog.InvalidChoiceWeight,
             "A choice weight is a percentage code span: a non-negative number like `50%`, a bare "
             + "`%` to take an equal share of the remaining percentage, or a game-state key like "
-            + "`Luck%` the runtime computes into a weight. A negative number is not a valid weight.",
+            + "`Luck%` the runtime computes into a weight. A negative number is not a valid weight, "
+            + "and neither is one too large to hold.",
             new(
                 """
                 # Coin
@@ -683,7 +684,8 @@ internal static class DiagnosticDocs
             DiagnosticCatalog.SingleOptionRandomChoice,
             "A random choice with only one option always selects it — the weight has no effect and "
             + "the list is not really random. This usually means a plain line was given a weight, "
-            + "or the other options are missing.",
+            + "or the other options are missing. A lone `0%` option is never selected, so it is "
+            + "reported as a zero total (DLG2010) instead.",
             new(
                 """
                 # Coin

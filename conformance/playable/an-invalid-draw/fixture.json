@@ -1,0 +1,15 @@
+{
+  "$schema": "https://pengzhengyi.github.io/dialoguedown/schema/fixture-0.schema.json",
+  "name": "a draw outside 0 to 1 is refused, and the random choice still takes a draw",
+  "playbook": "playbook.json",
+  "because": "a draw is a number from 0 to 1, so 1.5 is refused rather than clamped or wrapped, and the run keeps waiting at the random choice for a draw it can take",
+  "session": [
+    { "expect": { "draw": [50, 50] } },
+    { "send": { "drawn": 1.5 } },
+    { "expect": { "refused": { "reason": "invalid-draw" } } },
+    { "send": { "drawn": 0.25 } },
+    { "expect": { "said": { "speaker": "Guard", "speech": "Halt!" } } },
+    { "send": "next" },
+    { "expect": { "ended": {} } }
+  ]
+}

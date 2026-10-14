@@ -1,4 +1,5 @@
 using System.Collections.Immutable;
+using static DialogueDown.Playbook.Checking.PlaybookRefusal;
 
 namespace DialogueDown.Playbook.Checking;
 
@@ -33,7 +34,7 @@ public sealed class CapabilityChecker : IPlaybookChecker
         {
             if (!_understood.Contains(capability))
             {
-                throw new InvalidPlaybookException(
+                Refuse(
                     $"This playbook requires '{capability}', which this build does not understand.");
             }
         }

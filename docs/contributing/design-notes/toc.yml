@@ -38,6 +38,8 @@
     href: runtime/Speaking a Line.md
   - name: Offering a Choice
     href: runtime/Offering a Choice.md
+  - name: Drawing a Random Option
+    href: runtime/Drawing a Random Option.md
 - name: Language constructs
   items:
   - name: Progression Order

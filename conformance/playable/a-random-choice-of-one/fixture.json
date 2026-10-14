@@ -1,0 +1,15 @@
+{
+  "$schema": "https://pengzhengyi.github.io/dialoguedown/schema/fixture-0.schema.json",
+  "name": "a random choice of one random option still asks the host for a draw",
+  "playbook": "playbook.json",
+  "because": "a random choice the run stands at always asks for a draw, so the host meets every random choice the same way, even one whose only random option holds the whole total",
+  "session": [
+    { "expect": { "draw": [100] } },
+    { "send": { "drawn": 0.5 } },
+    { "expect": { "said": { "speaker": "Guard", "speech": "Halt!" } } },
+    { "send": "next" },
+    { "expect": { "said": { "speech": "The guard looks away." } } },
+    { "send": "next" },
+    { "expect": { "ended": {} } }
+  ]
+}

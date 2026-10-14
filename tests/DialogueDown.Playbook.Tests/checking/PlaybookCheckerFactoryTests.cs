@@ -63,6 +63,16 @@ public sealed class PlaybookCheckerFactoryTests
         AssertReaderRefuses(playbook, "else before another branch");
     }
 
+    [Fact]
+    public void CreateDefault_AlsoChecksARandomChoicesNumberWeights()
+    {
+        // A negative weight is well shaped; only the wider set asks whether a draw can use it.
+        var playbook = PlaybookFactory.Document(
+            nodes: [RandomChoice(Chance(-10, target: 1), Chance(50, target: 1)), End(id: 1)]);
+
+        AssertReaderRefuses(playbook, "-10%");
+    }
+
     /// <summary>
     /// Asserts the format check — the version and required capabilities — refuses a playbook, and
     /// that the refusal says why. Used for a header this build cannot read at all.
