@@ -5,8 +5,7 @@ namespace DialogueDown.Tests.Diagnostics;
 
 public sealed class DisablingDiagnosticSinkTests
 {
-    private static readonly DiagnosticDescriptor _nesting =
-        Descriptor("DLG3002", DiagnosticCategory.Style, defaultSeverity: DiagnosticSeverity.Warning);
+    private static readonly DiagnosticDescriptor _nesting = DiagnosticCatalog.DeeplyNestedChoiceBranch;
 
     [Fact]
     public void Constructor_NullInner_Throws() =>
@@ -20,12 +19,12 @@ public sealed class DisablingDiagnosticSinkTests
 
     [Fact]
     public void Report_NullDiagnostic_Throws() =>
-        Assert.Throws<ArgumentNullException>(() => Sink(out _, "DLG3002").Report(null!));
+        Assert.Throws<ArgumentNullException>(() => Sink(out _, _nesting.Code).Report(null!));
 
     [Fact]
     public void Report_ADisabledCode_ForwardsItMarkedDisabled()
     {
-        var sink = Sink(out var collected, "DLG3002");
+        var sink = Sink(out var collected, _nesting.Code);
         var nesting = Diagnostic(_nesting);
 
         sink.Report(nesting);
@@ -36,7 +35,7 @@ public sealed class DisablingDiagnosticSinkTests
     [Fact]
     public void Report_AnotherCode_ForwardsItUnchanged()
     {
-        var sink = Sink(out var collected, "DLG3004");
+        var sink = Sink(out var collected, DiagnosticCatalog.IgnoredUnmodeledMarkdown.Code);
         var nesting = Diagnostic(_nesting);
 
         sink.Report(nesting);
@@ -49,12 +48,12 @@ public sealed class DisablingDiagnosticSinkTests
     {
         // A producer may raise a diagnostic above its descriptor's default; an error still fails
         // the compile, so it must stay visible.
-        var sink = Sink(out var collected, "DLG3002");
+        var sink = Sink(out var collected, _nesting.Code);
         var error = Diagnostic(_nesting, severity: DiagnosticSeverity.Error);
 
         sink.Report(error);
 
-        Assert.False(Assert.Single(collected.Diagnostics).IsDisabled);
+        Assert.Same(error, Assert.Single(collected.Diagnostics));
     }
 
     private static DisablingDiagnosticSink Sink(out DiagnosticBag collected, params string[] codes)

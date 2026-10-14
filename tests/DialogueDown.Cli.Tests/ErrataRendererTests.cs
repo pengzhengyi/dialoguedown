@@ -317,7 +317,6 @@ public sealed class ErrataRendererTests
             "Fixed s.dialogue.md (1 fix)");
     }
 
-
     [Fact]
     public void Render_DisabledDiagnostics_AreCountedByCodeAfterTheHint()
     {
@@ -332,16 +331,15 @@ public sealed class ErrataRendererTests
                 At("DLG3002", 12, 13, "deep nesting") with { IsDisabled = true },
             ]);
 
-        AssertInOrder(
-            console.Output,
-            "s.dialogue.md(5,1): warning DLG1113: dangling arrow",
-            "1 warning",
-            "1 fixable with --fix",
-            "2 disabled: 1 DLG1114, 1 DLG3002");
-        Assert.DoesNotContain("divider", console.Output, StringComparison.Ordinal);
-        Assert.DoesNotContain("deep nesting", console.Output, StringComparison.Ordinal);
-        Assert.DoesNotContain("warnings", console.Output, StringComparison.Ordinal);
-        Assert.DoesNotContain("1 info", console.Output, StringComparison.Ordinal);
+        Assert.Equal(
+            [
+                "s.dialogue.md(5,1): warning DLG1113: dangling arrow",
+                $"  {MoreInformation}#dlg1113",
+                "1 warning",
+                "1 fixable with --fix",
+                "2 disabled: 1 DLG1114, 1 DLG3002",
+            ],
+            console.Lines);
     }
 
     [Fact]
@@ -357,8 +355,14 @@ public sealed class ErrataRendererTests
                 At("DLG3002", 12, 13, "deep nesting"),
             ]);
 
-        AssertInOrder(console.Output, "deep nesting", "1 warning", "1 disabled: 1 DLG1113");
-        Assert.DoesNotContain("fixable", console.Output, StringComparison.Ordinal);
+        Assert.Equal(
+            [
+                "s.dialogue.md(12,13): warning DLG3002: deep nesting",
+                $"  {MoreInformation}#dlg3002",
+                "1 warning",
+                "1 disabled: 1 DLG1113",
+            ],
+            console.Lines);
     }
 
     [Fact]
@@ -375,7 +379,7 @@ public sealed class ErrataRendererTests
                 At("DLG1114", 9, 1, "divider", DiagnosticSeverity.Info) with { IsDisabled = true },
             ]);
 
-        Assert.Equal("3 disabled: 2 DLG1114, 1 DLG3002", console.Output.Trim());
+        Assert.Equal(["3 disabled: 2 DLG1114, 1 DLG3002"], console.Lines);
     }
 
     [Fact]
@@ -385,7 +389,9 @@ public sealed class ErrataRendererTests
 
         new ErrataRenderer(console).Render("s.dialogue.md", "", [At("DLG3002", 1, 1, "deep nesting")]);
 
-        Assert.DoesNotContain("disabled", console.Output, StringComparison.Ordinal);
+        Assert.Equal(
+            ["s.dialogue.md(1,1): warning DLG3002: deep nesting", $"  {MoreInformation}#dlg3002", "1 warning"],
+            console.Lines);
     }
 
     [Fact]

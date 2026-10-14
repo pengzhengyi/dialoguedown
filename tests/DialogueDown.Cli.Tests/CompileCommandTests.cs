@@ -544,7 +544,6 @@ public sealed class CompileCommandTests
         Assert.True(File.Exists(destination));
     }
 
-
     [Fact]
     public void Compile_Disable_AddsToTheConfiguredSet()
     {
@@ -610,7 +609,8 @@ public sealed class CompileCommandTests
         var result = CliTester.Create().Run("compile", script.Path, "--disable", "DLG1114,DLG3002");
 
         var output = AssertSucceeded(result);
-        AssertInOrder(output, "warning DLG1113", "1 warning", "1 fixable with --fix", "2 disabled: 1 DLG1114, 1 DLG3002");
+        AssertInOrder(
+            output, "warning DLG1113", "1 warning", "1 fixable with --fix", "2 disabled: 1 DLG1114, 1 DLG3002");
         Assert.DoesNotContain("DLG1114:", output, StringComparison.Ordinal);
         Assert.DoesNotContain("DLG3002:", output, StringComparison.Ordinal);
     }
@@ -625,7 +625,8 @@ public sealed class CompileCommandTests
             """);
         using var script = new TempScript(ThreeKindsOfDiagnostic);
 
-        var result = CliTester.Create().Run("compile", script.Path, "--config", configPath, "-o", tree.File("out.json"));
+        var result = CliTester.Create()
+            .Run("compile", script.Path, "--config", configPath, "-o", tree.File("out.json"));
 
         Assert.Equal("3 disabled: 1 DLG1113, 1 DLG1114, 1 DLG3002", AssertSucceeded(result).Trim());
     }

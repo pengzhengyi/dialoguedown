@@ -1,6 +1,8 @@
 using DialogueDown.Compilation;
 using DialogueDown.Configuration;
+using DialogueDown.Diagnostics;
 using Microsoft.Extensions.DependencyInjection;
+using static DialogueDown.Tests.Support.DiagnosticsAssert;
 
 namespace DialogueDown.Tests.Compilation;
 
@@ -11,8 +13,7 @@ namespace DialogueDown.Tests.Compilation;
 /// </summary>
 public sealed class DisabledDiagnosticsCompilationTests
 {
-    // A dangling arrow (DLG1113, a warning with a fix) and a duplicated scene heading (DLG2001, an
-    // error).
+    // A dangling arrow, a warning with a fix, and a duplicated scene heading, an error.
     private const string Script = """
         # The workshop
 
@@ -24,14 +25,14 @@ public sealed class DisabledDiagnosticsCompilationTests
         """;
 
     private static readonly CompilerOptions _disablesTheArrow =
-        CompilerOptions.Default with { DisabledDiagnostics = ["DLG1113"] };
+        CompilerOptions.Default with { DisabledDiagnostics = [DiagnosticCatalog.DanglingJumpArrow.Code] };
 
     [Fact]
     public void CreateDefault_ADisabledCode_IsReportedMarkedDisabledWithItsFix()
     {
         var result = ScriptCompilerFactory.CreateDefault(_disablesTheArrow).Compile(Script);
 
-        var arrow = Assert.Single(result.LocatedDiagnostics, diagnostic => diagnostic.Code == "DLG1113");
+        var arrow = AssertLocated(result.LocatedDiagnostics, DiagnosticCatalog.DanglingJumpArrow);
         Assert.True(arrow.IsDisabled);
         Assert.NotEmpty(arrow.Fixes);
     }
@@ -41,7 +42,7 @@ public sealed class DisabledDiagnosticsCompilationTests
     {
         var result = ScriptCompilerFactory.CreateDefault(_disablesTheArrow).Compile(Script);
 
-        var duplicate = Assert.Single(result.LocatedDiagnostics, diagnostic => diagnostic.Code == "DLG2001");
+        var duplicate = AssertLocated(result.LocatedDiagnostics, DiagnosticCatalog.DuplicateAnchor);
         Assert.False(duplicate.IsDisabled);
         Assert.True(result.HasErrors);
     }
@@ -62,6 +63,6 @@ public sealed class DisabledDiagnosticsCompilationTests
 
         var result = provider.GetRequiredService<IScriptCompiler>().Compile(Script);
 
-        Assert.True(Assert.Single(result.LocatedDiagnostics, diagnostic => diagnostic.Code == "DLG1113").IsDisabled);
+        Assert.True(AssertLocated(result.LocatedDiagnostics, DiagnosticCatalog.DanglingJumpArrow).IsDisabled);
     }
 }

@@ -67,14 +67,13 @@ public sealed class CompilationSessionTests
     [Fact]
     public void Diagnostics_ReportedWithADisabledCode_AreMarkedDisabled()
     {
+        var nesting = DiagnosticCatalog.DeeplyNestedChoiceBranch;
         var session = CompilationSession.Start(
-            "x", CompilationSessionOptions(CompilationMode.StageBoundary, "DLG3002"));
-        var nesting = Diagnostic(
-            Descriptor("DLG3002", DiagnosticCategory.Style, defaultSeverity: DiagnosticSeverity.Warning));
+            "x", CompilationSessionOptions(CompilationMode.StageBoundary, nesting.Code));
 
-        session.Context.Diagnostics.Report(nesting);
+        var reported = Report(session, Diagnostic(nesting));
 
-        Assert.Equal([nesting with { IsDisabled = true }], session.Diagnostics);
+        Assert.Equal([reported with { IsDisabled = true }], session.Diagnostics);
     }
 
     [Fact]
@@ -90,11 +89,13 @@ public sealed class CompilationSessionTests
     private static CompilationSession Start(CompilationMode mode, string source = "x") =>
         CompilationSession.Start(source, CompilationSessionOptions(mode));
 
-    // Reports a diagnostic of the given severity through the session's sink, returning it so a test
-    // can also assert on the exact instance that was collected.
-    private static Diagnostic Report(CompilationSession session, DiagnosticSeverity severity)
+    // Each overload reports a diagnostic through the session's sink and returns it, so a test can
+    // also assert on the exact instance that was collected.
+    private static Diagnostic Report(CompilationSession session, DiagnosticSeverity severity) =>
+        Report(session, Diagnostic(severity: severity));
+
+    private static Diagnostic Report(CompilationSession session, Diagnostic diagnostic)
     {
-        var diagnostic = Diagnostic(severity: severity);
         session.Context.Diagnostics.Report(diagnostic);
         return diagnostic;
     }

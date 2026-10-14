@@ -155,6 +155,7 @@ public sealed class FixApplierTests
         Assert.Equal([true, false, true], application.Outcomes.Select(outcome => outcome.Applied));
         Assert.Equal("aXe!f", application.Text);
     }
+
     [Fact]
     public void Apply_ADisabledDiagnosticsFix_IsNotACandidate()
     {

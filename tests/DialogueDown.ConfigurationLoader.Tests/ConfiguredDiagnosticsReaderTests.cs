@@ -106,8 +106,8 @@ public sealed class ConfiguredDiagnosticsReaderTests
     }
 
     [Theory]
-    [InlineData("diagnostics.disable = [\"DLG3002\"]")]
-    [InlineData("diagnostics = { disable = [\"DLG3002\"] }")]
+    [InlineData("""diagnostics.disable = ["DLG3002"]""")]
+    [InlineData("""diagnostics = { disable = ["DLG3002"] }""")]
     public void Read_DiagnosticsOutsideATable_Throws(string toml)
     {
         // Either shape would otherwise be skipped by a reader that only looks for the table, so the
