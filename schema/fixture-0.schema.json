@@ -129,6 +129,19 @@
         {
           "type": "object",
           "required": [
+            "drawn"
+          ],
+          "properties": {
+            "drawn": {
+              "type": "number",
+              "description": "The host's draw, in reply to `draw`: a number from 0 to 1, both included. One outside that range is refused, so a fixture may send one to hold a runtime to refusing it."
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "required": [
             "supply"
           ],
           "properties": {

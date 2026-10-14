@@ -19,7 +19,12 @@ internal static class Commands
     private static readonly IReadOnlyDictionary<string, ICommandReader> _byKey =
         KeyedHandlers.ByKey<ICommandReader>(
             reader => reader.Key,
-            new NextReader(), new DoneReader(), new FailedReader(), new SupplyReader(), new ChooseReader());
+            new NextReader(),
+            new DoneReader(),
+            new FailedReader(),
+            new SupplyReader(),
+            new ChooseReader(),
+            new DrawnReader());
 
     /// <summary>The display name of a send: the command it names, or its message when it names none.</summary>
     /// <param name="send">What the session sends, in the corpus's own words.</param>
