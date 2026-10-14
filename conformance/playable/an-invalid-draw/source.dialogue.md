@@ -1,0 +1,2 @@
+- `50%` Guard: Halt!
+- `50%` Guard: Move along.

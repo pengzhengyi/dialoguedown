@@ -1,0 +1,13 @@
+{
+  "$schema": "https://pengzhengyi.github.io/dialoguedown/schema/fixture-0.schema.json",
+  "name": "a draw of 1 lands on the last random option with a share",
+  "playbook": "playbook.json",
+  "because": "a draw of 1 stands at the total, past the end of every span, so it lands on the last random option with a share rather than on the 0% one written after it",
+  "session": [
+    { "expect": { "draw": [50, 50, 0] } },
+    { "send": { "drawn": 1 } },
+    { "expect": { "said": { "speaker": "Guard", "speech": "Move along." } } },
+    { "send": "next" },
+    { "expect": { "ended": {} } }
+  ]
+}

@@ -1,0 +1,13 @@
+{
+  "$schema": "https://pengzhengyi.github.io/dialoguedown/schema/fixture-0.schema.json",
+  "name": "an auto weight beside numbers past 100 has no share, and the numbers are drawn as written",
+  "playbook": "playbook.json",
+  "because": "an auto weight takes what the numbers leave of 100, which here is nothing, so the draw names its share as 0 and stands at 90 of the numbers' total of 120",
+  "session": [
+    { "expect": { "draw": [70, 50, 0] } },
+    { "send": { "drawn": 0.75 } },
+    { "expect": { "said": { "speaker": "Guard", "speech": "Move along." } } },
+    { "send": "next" },
+    { "expect": { "ended": {} } }
+  ]
+}

@@ -1,0 +1,15 @@
+{
+  "$schema": "https://pengzhengyi.github.io/dialoguedown/schema/fixture-0.schema.json",
+  "name": "a random choice refuses to be advanced past, and still takes a draw",
+  "playbook": "playbook.json",
+  "because": "a random choice waits for the host's draw, so a next there is refused rather than read as one -- a runner that took the first random option, or left the random choice, would hold a different conversation",
+  "session": [
+    { "expect": { "draw": [50, 50] } },
+    { "send": "next" },
+    { "expect": { "refused": { "reason": "misplaced" } } },
+    { "send": { "drawn": 0.75 } },
+    { "expect": { "said": { "speaker": "Guard", "speech": "Move along." } } },
+    { "send": "next" },
+    { "expect": { "ended": {} } }
+  ]
+}

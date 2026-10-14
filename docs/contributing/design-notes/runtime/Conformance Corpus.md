@@ -42,6 +42,7 @@ what the runtime must reply, in order.
 | `"done"` | `Done` — the effect just asked for has been performed |
 | `{ "failed": "…" }` | `Failed(explanation)` — the effect could not be performed |
 | `{ "choose": n }` | `Choose(n)` — take the option at zero-based position `n` among those just offered, which is also its position as written |
+| `{ "drawn": x }` | `Drawn(x)` — the host's draw, a number from 0 to 1, in reply to `draw` |
 | `{ "supply": { … } }` | `Supply(answers)` — what the world says |
 | `{ "start": "the-inn" }` | `Start(anchor)` — begin somewhere other than `entry` |
 | `"describe"` | `Describe()` — ask where the run stands |
@@ -53,6 +54,7 @@ what the runtime must reply, in order.
 | `offer` | the menu offered: whether it is `ordered`, and its `options` in the order offered, which is the order written, each a `label` and whether it is `available` |
 | `perform` | the effect the runtime asks the host to perform, as the playbook names it |
 | `resolve` | the keys the runtime asks the world about |
+| `draw` | the shares the runtime asks the host to draw against: every random option's share, in the order written |
 | `invalidated` | an offered option that stopped being available |
 | `ended` | the run finished |
 | `refused` | the `reason`, from the runner's [closed set](./Runner.md#refusals) |
@@ -103,6 +105,14 @@ rather than a script.
 | `a-query-in-a-label` | Is a label's query asked before the menu is offered, and the label shown with the answer? | yes |
 | `a-menu-asking-truths-and-words` | Are a menu's conditions asked before its labels' queries, in one request? | yes |
 | `a-menu-with-nothing-available` | Is a menu whose every option the world withholds walked past by its fall-through? | yes |
+| `a-random-choice` | Is a draw asked for with each random option's share, and does it lead into the random option it lands on? | yes |
+| `a-draw-at-the-end-of-a-span` | Does a draw at the exact end of one span land on the next random option? | yes |
+| `a-draw-of-zero` | Does a draw of 0 pass a `0%` random option by and land on the first with a share? | yes |
+| `a-draw-of-one` | Does a draw of 1 land on the last random option with a share, not on a `0%` one after it? | yes |
+| `an-auto-weight-left-nothing` | Does an auto weight beside numbers past 100 have no share, with the numbers drawn as written? | yes |
+| `a-random-choice-of-one` | Does a random choice of one random option still ask for a draw? | yes |
+| `an-invalid-draw` | Is a draw outside 0 to 1 refused, with the random choice still waiting for one? | yes |
+| `a-next-at-a-random-choice` | Is `next` refused at a random choice, which still takes a draw afterwards? | yes |
 
 The `readable/` half covers every refusal the reader makes — version, capability,
 node position, the four dangling references, and the
@@ -210,8 +220,5 @@ files for all three.
 - **Which fragment kinds survive a run.** A `query` fragment must become something
   else once `supply` answers it, and whether `tag` and `custom-command` pass through
   or surface as their own events is a runner decision.
-- **Random choice has no fixture.** Pinning a draw needs the entropy decision the
-  [architecture note](./Dialogue%20Runtime%20Architecture.md#open-questions-and-deferred-work)
-  owns.
 - **A rendered view of a session** — printing a fixture as prose — would give
   readability with no parser in any port.
