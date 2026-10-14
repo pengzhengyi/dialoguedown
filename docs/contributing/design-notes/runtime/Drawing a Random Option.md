@@ -1,13 +1,15 @@
 # Drawing a random option
 
 > [!NOTE]
-> Status: **proposed**. The pass that lets the runner play a random choice: it asks
-> the world what decides the odds, asks the host for a draw, and follows the random
-> option the draw lands on. It settles the entropy question the
-> [dialogue runtime architecture](./Dialogue%20Runtime%20Architecture.md#open-questions-and-deferred-work)
-> leaves open, plays the weights the [random choice](../language/Random%20Choice.md)
-> note defines, and reuses [asking the world](./Asking%20the%20World.md) and the
-> shape of [offering a choice](./Offering%20a%20Choice.md).
+> Status: **partially implemented**. The pass that lets the runner play a random
+> choice: it asks the world what decides the odds, asks the host for a draw, and
+> follows the random option the draw lands on. M1 is built: the runner draws at a
+> random choice of number and auto weights, and refuses one with a guarded random
+> option or a key weight until M2 and M3. It settles where the runner's randomness
+> comes from ([R1](#r1--the-host-supplies-the-draw-the-runner-turns-it-into-a-random-option)),
+> plays the weights the [random choice](../language/Random%20Choice.md) note
+> defines, and reuses [asking the world](./Asking%20the%20World.md) and the shape of
+> [offering a choice](./Offering%20a%20Choice.md).
 
 ## Table of contents
 
@@ -85,22 +87,22 @@ language rules out.
 
 M1:
 
-- [ ] A random choice, once arrived at, sends `Draw` with every random option's
+- [x] A random choice, once arrived at, sends `Draw` with every random option's
       share, in the order written, and waits for `Drawn`.
-- [ ] Number and auto weights resolve to shares as the language defines: an auto
+- [x] Number and auto weights resolve to shares as the language defines: an auto
       weight takes an equal part of what the numbers leave of 100.
-- [ ] A draw lands on the random option whose span holds it, the spans laid end to
+- [x] A draw lands on the random option whose span holds it, the spans laid end to
       end in the order written; the run arrives where that random option leads.
-- [ ] A draw below `0`, above `1`, or not a number is refused as `invalid-draw`, and
+- [x] A draw below `0`, above `1`, or not a number is refused as `invalid-draw`, and
       the run keeps waiting for another.
-- [ ] `Drawn` anywhere else, and `Next`, `Done`, `Failed`, `Supply`, or `Choose`
+- [x] `Drawn` anywhere else, and `Next`, `Done`, `Failed`, `Supply`, or `Choose`
       while a draw is awaited, is refused as misplaced.
-- [ ] The reader refuses a number weight that is negative or not finite, and a
+- [x] The reader refuses a number weight that is negative or not finite, and a
       random choice whose number weights sum to more than a double can hold.
-- [ ] The compiler reports a random choice whose only random option weighs `0%` with
+- [x] The compiler reports a random choice whose only random option weighs `0%` with
       `DLG2010`, as it reports any zero total, and not with `DLG3004`, which says the
       random option is always taken.
-- [ ] A random choice with a guarded random option or a key weight is refused as
+- [x] A random choice with a guarded random option or a key weight is refused as
       `unplayable-node`, until M2 and M3.
 
 M2:
@@ -159,9 +161,10 @@ anywhere: asking what that node needs, walking past a jump, or saying a line.
 | `NumberAnswer(value)` | An answer: a number, as a key weight needs | `Answer` |
 | `NodeQuestions` | For a random choice, its conditions as truths and its key weights as numbers; the same whether read for the whole node or from its start | `Arrival` |
 | `DrawingWeight` | A weight ready for the draw, `Number` or `Auto`, and the arithmetic over them: `Shares` and `Total`. The one definition the compiler and the runner share | The compiler's weight checks, `WeightShares` |
-| `WeightShares` | The playbook's adapter: turns a playbook's weights into drawing weights, refusing a key; M2 and M3 give it the random options in play and the world's answers | `Drawing` |
-| `Drawing` | Works out the shares and sends `Draw`; takes `Drawn`, finds the random option it lands on, and arrives where it leads | `Playing`, `Runner`, `Arrival` |
-| `Arrival` | Walks past a random choice with nothing drawable, as it walks past a menu with nothing available | `Drawing` |
+| `WeightShares` | The playbook's adapter: turns a playbook's weights into drawing weights, refusing a key; M2 and M3 give it the random options in play and the world's answers | `RandomChoiceShares` |
+| `RandomChoiceShares` | Works out a random choice's shares from its weights, and whether any is drawable. Until M2 and M3, it works them out only when no random option is guarded or weighted by a key | `WeightShares`, `Playing`, `Arrival`, `Drawing` |
+| `Drawing` | Sends `Draw` with the shares worked out; takes `Drawn`, finds the random option it lands on, and arrives where it leads. It reads only the shares, never the weights | `Playing`, `Runner` |
+| `Arrival` | Walks past a random choice with nothing drawable, as it walks past a menu with nothing available | `RandomChoiceShares` |
 | `DrawnReader`, `DrawMatcher` | Read a fixture's `drawn` send, and hold a `Draw` to its `draw` expectation | The harness |
 
 ## Key design decisions

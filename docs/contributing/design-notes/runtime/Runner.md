@@ -2,10 +2,11 @@
 
 > [!NOTE]
 > Status: **partially implemented**. The C# runner plays lines, jumps, effects,
-> branches, menus, and the end of a run. It waits on the host for each effect and
-> on the player at each menu, asks the world about conditions and queries (see
+> branches, menus, random choices of number and auto weights, and the end of a run.
+> It waits on the host for each effect and each draw and on the player at each
+> menu, asks the world about conditions and queries (see
 > [Asking the World](./Asking%20the%20World.md)), and refuses what it cannot play
-> yet: random choices. It applies the
+> yet: a random choice with a guarded random option or a key weight. It applies the
 > cross-cutting decisions of the
 > [Dialogue Runtime Architecture](./Dialogue%20Runtime%20Architecture.md).
 
@@ -29,17 +30,19 @@
 | --- | --- |
 | **Runner** | The static `Runner.Step`: a total, deterministic transition from a context, a state, and a command. |
 | **Driver** | Whoever sends commands and reads events — a harness, a CLI, a game. |
-| **Command** | What a driver sends: `Start`, `Next`, `Done`, `Failed`, `Supply`, `Choose`. |
+| **Command** | What a driver sends: `Start`, `Next`, `Done`, `Failed`, `Supply`, `Choose`, `Drawn`. |
 | **Event** | What a step reports: `Said`, `Continued`, `Ended`, `Refused`, or a request. |
-| **Request** | An event the run waits on until the driver answers it: `Perform`, answered by `Done` or `Failed`; `Resolve`, answered by `Supply`; `Offer`, answered by `Choose`. |
+| **Request** | An event the run waits on until the driver answers it: `Perform`, answered by `Done` or `Failed`; `Resolve`, answered by `Supply`; `Offer`, answered by `Choose`; `Draw`, answered by `Drawn`. |
 | **Menu** | A choice node: offered to the player with `Offer`, and left by the option they take with `Choose`. |
+| **Random choice** | A random-choice node: drawn at with `Draw`, and left by the random option the host's `Drawn` lands on. |
 | **Situation** | Where a run is, and what it is doing there. |
 | **Walk** | What arriving does: visit a node, and carry on only while it hands the host nothing. |
 
 Event names follow the conformance corpus (`said`, `ended`, `perform`, `resolve`,
-`offer`), so a fixture, the harness, and the code read in one vocabulary. The past
-tense marks an event as a report of something that already happened; `Perform` is
-named for what it asks, because nothing has happened yet when it is sent.
+`offer`, `draw`), so a fixture, the harness, and the code read in one vocabulary. The
+past tense marks an event as a report of something that already happened; `Perform`
+and `Draw` are named for what they ask, because nothing has happened yet when they
+are sent.
 
 ## Where the types live
 
@@ -47,16 +50,19 @@ named for what it asks, because nothing has happened yet when it is sent.
 src/DialogueDown.Runtime/          the facade: what a consumer calls
   PlayContext.cs  PlayState.cs  Runner.cs  StepResult.cs
   situations/                      Situation, NotStarted, AtNode, AwaitingDone,
-                                   AwaitingSupply, AwaitingChoice, AtEnd, Resume, Moment
+                                   AwaitingSupply, AwaitingChoice, AwaitingDraw, AtEnd,
+                                   Resume, Moment
   protocol/                        Command, Event, Request, RefusalReason
-    commands/                      Start, Next, Done, Failed, Supply, Choose
+    commands/                      Start, Next, Done, Failed, Supply, Choose, Drawn
     events/                        Said, Continued, Ended, Refused, Perform, Resolve,
-                                   Offer, OfferedOption
+                                   Offer, OfferedOption, Draw
     answers/                       Answer: what the world said about one key
   stepping/
     Arrival.cs                     arriving at a node: ask, then play or walk past
     Playing.cs                     playing a node: what it hands the host, and what follows Done
     Choosing.cs                    a menu: offer its options, then take the one chosen
+    RandomChoiceShares.cs          a random choice: its shares, and whether any is drawable
+    Drawing.cs                     a random choice: ask for a draw, then take the one drawn
     Departure.cs                   leaving a node: ask which way out, then arrive
     NodeTraversalExtensions.cs     one reader per edge kind: the way onward, a menu's options
 ```
@@ -83,9 +89,11 @@ flowchart LR
     AT -->|Next| AT2["AtNode(j)"]
     AT -->|"Next, arriving at a guarded node"| AS["AwaitingSupply(k, keys, moment)"]
     AT -->|"Next, arriving at a menu"| AC["AwaitingChoice(k, available)"]
+    AT -->|"Next, arriving at a random choice"| AW["AwaitingDraw(k, shares)"]
     AT -->|"Next, arriving at a control node"| AD["AwaitingDone(k)"]
     AS -->|Supply| AT2
     AC -->|Choose| AT2
+    AW -->|Drawn| AT2
     AD -->|Done| AT2
     AD -->|Failed| AD
     AT2 -->|"Next, arriving at the end"| END["AtEnd"]
@@ -114,21 +122,24 @@ the order they were written.
 
 What may be sent where is one matrix:
 
-| Situation | `Start` | `Next` | `Done` | `Failed` | `Supply` | `Choose` |
-| --- | --- | --- | --- | --- | --- | --- |
-| `NotStarted` | arrive at the entry | refused: `not-started` | refused: `misplaced` | refused: `misplaced` | refused: `misplaced` | refused: `misplaced` |
-| `AtNode` | arrive at the entry | leave by the way onward | refused: `misplaced` | refused: `misplaced` | refused: `misplaced` | refused: `misplaced` |
-| `AwaitingDone` | arrive at the entry | refused: `misplaced` | at a line, go on from where it stopped or give the player the turn; otherwise leave by the way onward | stand still, report nothing | refused: `misplaced` | refused: `misplaced` |
-| `AwaitingSupply` | arrive at the entry | refused: `misplaced` | refused: `misplaced` | refused: `misplaced` | play or leave the node, by its moment | refused: `misplaced` |
-| `AwaitingChoice` | arrive at the entry | refused: `misplaced` | refused: `misplaced` | refused: `misplaced` | refused: `misplaced` | arrive where the chosen option leads, or refused: `no-such-option` or `unavailable-option` |
-| `AtEnd` | arrive at the entry | refused: `already-ended` | refused: `misplaced` | refused: `misplaced` | refused: `misplaced` | refused: `misplaced` |
+| Situation | `Start` | `Next` | `Done` | `Failed` | `Supply` | `Choose` | `Drawn` |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| `NotStarted` | arrive at the entry | refused: `not-started` | refused: `misplaced` | refused: `misplaced` | refused: `misplaced` | refused: `misplaced` | refused: `misplaced` |
+| `AtNode` | arrive at the entry | leave by the way onward | refused: `misplaced` | refused: `misplaced` | refused: `misplaced` | refused: `misplaced` | refused: `misplaced` |
+| `AwaitingDone` | arrive at the entry | refused: `misplaced` | at a line, go on from where it stopped or give the player the turn; otherwise leave by the way onward | stand still, report nothing | refused: `misplaced` | refused: `misplaced` | refused: `misplaced` |
+| `AwaitingSupply` | arrive at the entry | refused: `misplaced` | refused: `misplaced` | refused: `misplaced` | play or leave the node, by its moment | refused: `misplaced` | refused: `misplaced` |
+| `AwaitingChoice` | arrive at the entry | refused: `misplaced` | refused: `misplaced` | refused: `misplaced` | refused: `misplaced` | arrive where the chosen option leads, or refused: `no-such-option` or `unavailable-option` | refused: `misplaced` |
+| `AwaitingDraw` | arrive at the entry | refused: `misplaced` | refused: `misplaced` | refused: `misplaced` | refused: `misplaced` | refused: `misplaced` | arrive where the random option the draw lands on leads, or refused: `invalid-draw` |
+| `AtEnd` | arrive at the entry | refused: `already-ended` | refused: `misplaced` | refused: `misplaced` | refused: `misplaced` | refused: `misplaced` | refused: `misplaced` |
 
 The way onward is the node's `divert` when it carries one, otherwise its
 `succession`; with neither, the step is refused as `leads-nowhere`. A divert
 beside a succession leaves the succession unreachable, which plays no differently.
 A `Choose` names an option by its position among those the menu offered, counting
 from 0 in the order written. A menu's succession is not an option, so it is never
-counted.
+counted. A `Drawn` carries a number from 0 to 1, which lands on one random option's
+span of the shares the `Draw` named; [Drawing a Random Option](./Drawing%20a%20Random%20Option.md)
+owns how.
 
 ## Arriving at a node
 
@@ -145,7 +156,9 @@ nothing. The first node that asks for something is where the run stands.
 | `end` | `Ended` | waits on nobody |
 | `choice` | `Offer(ordered, options)`: every option in the order written, each label with its commands removed and its queries filled, each marked available or not | waits on the player — `Choose` |
 | `choice` with no option available | nothing | walks on by its fall-through, as past a branch |
-| `random-choice` | `Refused(unplayable-node)` | stands at that node |
+| `random-choice` | `Draw(shares)`: every random option's share, in the order written | waits on the host — `Drawn` |
+| `random-choice` with nothing drawable | nothing | walks on by its fall-through, as past a menu with nothing available |
+| `random-choice` with a guarded random option or a key weight | `Refused(unplayable-node)` | stands at that node |
 
 Before a node plays, the run asks the world, in one `Resolve`, every key the node
 needs to play: its own condition and the queries in its speech up to its first
@@ -175,7 +188,9 @@ flowchart TD
     Kind -->|"Control, no effects"| Onward{"Way onward?"}
     Kind -->|Choice| Offer["Offer"] --> Chooser(["Waits on the player to choose"])
     Kind -->|"Choice, nothing available"| Onward
-    Kind -->|"Random choice"| RefuseK(["Refused: unplayable-node"])
+    Kind -->|"Random choice"| Draw["Draw"] --> Host(["Waits on the host to draw"])
+    Kind -->|"Random choice, nothing drawable"| Onward
+    Kind -->|"Random choice, guarded or key-weighted"| RefuseK(["Refused: unplayable-node"])
     Onward -->|"divert or succession"| Arrive
     Onward -->|none| RefuseN(["Refused: leads-nowhere"])
 ```
@@ -190,7 +205,7 @@ runtimes.
 | --- | --- |
 | `not-started` | `Next` arrives before `Start` |
 | `already-ended` | `Next` arrives after the run has ended |
-| `misplaced` | a known command arrives where it cannot be taken — `Next` while the run waits on the host or the player, `Done`/`Failed` when nothing was asked, or `Choose` where no menu waits |
+| `misplaced` | a known command arrives where it cannot be taken — `Next` while the run waits on the host or the player, `Done`/`Failed` when nothing was asked, `Choose` where no menu waits, or `Drawn` where no draw is awaited |
 | `unknown-command` | the command is one the runner does not define |
 | `leads-nowhere` | the node the run stands at has no way onward |
 | `endless-loop` | a walk enters a loop of nodes that hand the host nothing |
@@ -198,9 +213,10 @@ runtimes.
 | `unasked-key` | a `Supply` answers a key the run did not ask about |
 | `wrong-answer-kind` | an answer is the wrong kind for its question — words for a condition, or a truth for a query |
 | `key-needed-both-ways` | one node needs the same key as a truth and as words, which one answer cannot be |
-| `unplayable-node` | the node is one this build does not play: a random choice |
+| `unplayable-node` | the node is one this build does not play: a random choice with a guarded random option or a key weight |
 | `no-such-option` | a `Choose` names a position outside the options the menu offered: below 0, or past the last |
 | `unavailable-option` | a `Choose` names an option the menu offered as one the player cannot take |
+| `invalid-draw` | a `Drawn` carries a number below 0 or above 1, or one that is not a number |
 
 A refused command leaves the situation where it was; a walk refused at a node
 stands at that node (`AtNode`). The reason names what the driver did or what the
@@ -222,7 +238,7 @@ session and judging it are separate pieces, each tested alone:
 | Piece | Responsibility |
 | --- | --- |
 | `PlayableRun` | Reads one case's playbook, screens it, then holds its session against the runner |
-| `Playability` | What this build can play: every node but a random choice, the sends a reader takes, and why a case is not there yet |
+| `Playability` | What this build can play: every node but a random choice that asks the world, the sends a reader takes, and why a case is not there yet |
 | `SessionMatcher` | Walks the session, playing each entry against the state the one before it left |
 | `SessionOperator` | Steps the runner and holds the events nobody has read yet |
 | `Commands` | Reads what a `send` names, one reader per command |
@@ -329,8 +345,8 @@ picks.
 
 ### D14 — What the runner cannot play is refused, not guessed
 
-Walking past a random choice, or offering a menu without asking the world about its
-options, would look like correct play. Refusing keeps a construct the runner cannot
+Drawing at a random choice without asking the world about its guards, or offering a
+menu without asking about its options, would look like correct play. Refusing keeps a construct the runner cannot
 play yet showing as unplayable until the runner supports it.
 
 ### D15 — A failed effect holds the run
@@ -355,6 +371,9 @@ because skipping is the silent wrong story the format refuses to tell.
 | `Choose` of an option offered as unavailable | Refused as `unavailable-option`; the menu stays open for another choice |
 | A menu with no option available | Walked past by its fall-through; refused as `leads-nowhere` when it has none |
 | A hand-built `AwaitingChoice` at a node that is not a menu | `Choose` refused as `misplaced` |
+| `Drawn` below 0, above 1, or not a number | Refused as `invalid-draw`; the random choice keeps waiting for a draw |
+| A random choice with nothing drawable | Walked past by its fall-through; refused as `leads-nowhere` when it has none |
+| A hand-built `AwaitingDraw` at a node that is not a random choice, or whose shares do not fit it | `Drawn` refused as `misplaced` |
 | A fixture the runner cannot play yet | Reported as not yet playable, naming what is missing |
 
 ## Testability
@@ -364,11 +383,12 @@ because skipping is the silent wrong story the format refuses to tell.
 | Unit — `Runner` | Each cell of the protocol matrix |
 | Unit — `Arrival` | Each node kind: what it reports, and which party the run then waits on |
 | Unit — `Choosing` | A menu offered with its labels filled and each option's availability, a choice taken, and a choice the menu did not offer, or offered as unavailable, refused |
+| Unit — `RandomChoiceShares`, `Drawing` | A random choice's shares, and whether any is drawable; a draw asked for with every share, and taken at the start, inside, and at the end of a span, and at 1; each refusal |
 | Unit — traversal | Divert taken, succession fallen through to, neither available; a menu's options in the order written |
 | Unit — harness | Each piece alone: reading a send, driving a runner, matching one claim, walking a session |
 | Conformance | Every case the runner plays conforms; the rest are named as not yet playable |
 | Architecture | The runtime references only the playbook |
-| Property | A walk over any playbook `PlaybookGen` draws stands only at a node that playbook has, answering each stage as it reaches it and choosing an available option at each menu |
+| Property | A walk over any playbook `PlaybookGen` draws stands only at a node that playbook has, answering each stage as it reaches it, choosing an available option at each menu, and drawing at each random choice |
 
 Unit tests build playbooks by hand; the corpus supplies compiled ones. A total
 function must handle shapes a compiler never emits — a line leading nowhere, a
@@ -379,10 +399,9 @@ runtime tests may not reference the compiler, and a test holds it and the harnes
 
 ## Open questions and deferred work
 
-- **Random choices.** Refused until the runner learns to pick one. Whether the
-  runner draws by weight or the host supplies the draw is an
-  [open question](./Dialogue%20Runtime%20Architecture.md#open-questions-and-deferred-work)
-  of the architecture note.
+- **Random choices that ask the world.** A guarded random option and a key weight
+  are refused as `unplayable-node` until the runner asks the world about them, as
+  [Drawing a Random Option](./Drawing%20a%20Random%20Option.md) plans.
 - **Saves.** `Describe` and `Restore` are designed in the
   [architecture note](./Dialogue%20Runtime%20Architecture.md#the-protocol) and not
   built; each adds commands, events, and situations to the matrix above.

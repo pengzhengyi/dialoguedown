@@ -1,10 +1,12 @@
 # Random Choice
 
 > [!NOTE]
-> Status: **implemented** at compile time. A list whose options lead with a
-> weight (`` `50%` ``, `` `%` ``, `` `key%` ``) is a random choice the engine
-> resolves to one option; the runner does not draw one yet and refuses a
-> `random-choice` node (`unplayable-node`, see [Runner](../runtime/Runner.md)).
+> Status: **implemented** at compile time, and **partially implemented** at
+> runtime. A list whose options lead with a weight (`` `50%` ``, `` `%` ``,
+> `` `key%` ``) is a random choice the engine resolves to one option. The runner
+> draws at a random choice of number and auto weights, and refuses one with a
+> guarded option or a key weight (`unplayable-node`) until
+> [Drawing a Random Option](../runtime/Drawing%20a%20Random%20Option.md) is complete.
 
 ## Table of contents
 
@@ -159,8 +161,10 @@ At runtime:
    where `explicit` includes both numeric and resolved query weights. Each auto
    receives `leftover ÷ autoCount`.
 3. **Total** all resolved weights.
-4. **Reject a zero total.** No option can be selected. This mirrors
-   [`DLG2010`](#diagnostics) for static weights.
+4. **Select nothing from a zero total.** No option can be selected, so the run
+   walks past the random choice by its fall-through, or is refused as
+   `leads-nowhere` without one. This mirrors [`DLG2010`](#diagnostics) for static
+   weights.
 5. **Warn on drift.** If the total is more than 0.5 from 100, report the actual
    total, then continue. This mirrors [`DLG3003`](#diagnostics); the tolerance
    keeps deliberate rounding such as three `` `33.3%` `` weights quiet.
@@ -476,12 +480,11 @@ indentation are visible.
 
 ## Open questions and deferred work
 
-- **Runtime execution** — the runner refuses a `random-choice` node; resolving a
-  `QueryWeight`, validating it, and drawing the weighted sample come with the world
-  seam and the entropy decision owned by the
-  [runtime architecture](../runtime/Dialogue%20Runtime%20Architecture.md#open-questions-and-deferred-work).
+- **Runtime execution** — the runner draws at a random choice of number and auto
+  weights, the host supplying each draw, so a replay of the commands replays every
+  draw. Asking the world about a guarded option, and resolving and validating a
+  `QueryWeight`, come with the rest of
+  [Drawing a Random Option](../runtime/Drawing%20a%20Random%20Option.md).
 - **Weighted player menu** — weights that bias a *shown* menu (for previews or
   autoplay) are explicitly out of scope; this construct always resolves to one
   option with no menu.
-- **Replay** — whether a draw is drawn again on replay belongs to the same
-  entropy decision.

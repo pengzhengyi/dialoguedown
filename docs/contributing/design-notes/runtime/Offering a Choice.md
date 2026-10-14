@@ -57,8 +57,8 @@ In scope:
 - a `choose` send and an `offer` matcher in the harness, and corpus cases;
 - menus in `PlaybookGen`, so the walk property offers and takes them.
 
-Out of scope: a random choice, which needs a decision on where the runner's
-randomness comes from; a menu checked again when the player picks, with
+Out of scope: a random choice, which
+[Drawing a Random Option](./Drawing%20a%20Random%20Option.md) plays; a menu checked again when the player picks, with
 `Invalidated` and a version token (see
 [choices and stale truth](./Dialogue%20Runtime%20Architecture.md#choices-and-stale-truth));
 the protocol's `Describe`; saves; and the history a driver keeps, which records a

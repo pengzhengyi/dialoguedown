@@ -110,6 +110,21 @@ changes easy to categorize.
   conformant runtimes. See
   [Branch order](docs/contributing/design-notes/runtime/Playbook%20Reader%20Rules.md).
 
+- **A run draws at a random choice** — `Draw(shares)` joins the requests a run stops for: a random
+  choice of number and auto weights names every random option's share, in the order written, and
+  the run waits for the host's `Drawn(value)`, a number from 0 to 1, then follows the random option
+  whose span holds it. The host owns randomness and seeding, so replaying the commands replays
+  every draw. A draw outside 0 to 1 is refused as `invalid-draw` and the run keeps waiting; a
+  random choice with nothing to draw is walked past by its fall-through. A random choice with a
+  guarded option or a key weight is still refused as `unplayable-node`. See
+  [Drawing a random option](docs/contributing/design-notes/runtime/Drawing%20a%20Random%20Option.md).
+
+- **A random choice's number weights are checked when a playbook loads** — the reader refuses a
+  number weight that is negative or not finite, and number weights that add up to more than a
+  double can hold, so no runtime has to decide what a draw against them means; the schema gives a
+  number weight a minimum of 0. See
+  [Number weights](docs/contributing/design-notes/runtime/Playbook%20Reader%20Rules.md#number-weights).
+
 - **Jump from a playbook table into the JSON** — in the Playbook tab, clicking a node number,
   a speaker's name, or the entry node scrolls the serialized playbook to that element and centers
   it, so reading `#the-market → 33` no longer means hunting for node 33 by hand. See
