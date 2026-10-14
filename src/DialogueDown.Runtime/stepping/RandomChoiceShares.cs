@@ -1,4 +1,5 @@
 using System.Collections.Immutable;
+using DialogueDown.Playbook.Edges;
 using DialogueDown.Playbook.Nodes;
 using DialogueDown.Playbook.Weights;
 
@@ -65,7 +66,13 @@ internal static class RandomChoiceShares
             return false;
         }
 
-        shares = WeightShares.Of(randomOptions);
+        shares = WeightShares.Of(randomOptions, new NothingExcluded());
         return true;
+    }
+
+    // Shares are worked out here only when no random option is guarded, so none is excluded.
+    private sealed class NothingExcluded : IRandomOptionArbiter
+    {
+        public bool Excludes(RandomOptionEdge option) => false;
     }
 }
