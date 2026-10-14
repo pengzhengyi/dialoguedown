@@ -97,7 +97,7 @@ internal sealed class ConfiguredDiagnosticsReader
         var info = DiagnosticCodes.Find(code)
             ?? throw TomlErrors.At(
                 $"Unknown diagnostic code '{code}'. Check the code against the error-code reference: "
-                    + DiagnosticCodes.ReferencePage,
+                    + DiagnosticDocumentation.ReferencePage,
                 value);
         if (!info.IsOptional)
         {

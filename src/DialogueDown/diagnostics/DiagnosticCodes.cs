@@ -6,9 +6,6 @@ namespace DialogueDown.Diagnostics;
 /// </summary>
 public static class DiagnosticCodes
 {
-    /// <summary>The hosted error-code reference, with one section per code.</summary>
-    public const string ReferencePage = "https://pengzhengyi.github.io/dialoguedown/guide/error-codes.html";
-
     private static readonly IReadOnlyDictionary<string, DiagnosticCodeInfo> _byCode =
         DiagnosticCatalog.All
             .Select(Describe)

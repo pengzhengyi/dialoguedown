@@ -121,7 +121,7 @@ internal sealed class CompileSettings : CommandSettings
         if (info is null)
         {
             return $"Unknown diagnostic code '{code}'. Check the code against the error-code reference: "
-                + DiagnosticCodes.ReferencePage;
+                + DiagnosticDocumentation.ReferencePage;
         }
 
         return info.IsOptional
