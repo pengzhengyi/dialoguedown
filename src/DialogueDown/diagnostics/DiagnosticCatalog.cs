@@ -1,3 +1,5 @@
+using System.Reflection;
+
 namespace DialogueDown.Diagnostics;
 
 /// <summary>
@@ -300,42 +302,20 @@ internal static class DiagnosticCatalog
         DiagnosticCategory.Style,
         DiagnosticSeverity.Warning);
 
-    /// <summary>
-    /// Every descriptor above, in declaration order. Listed by hand rather than found by
-    /// reflection, so it survives trimming; a test keeps it complete.
-    /// </summary>
-    public static readonly IReadOnlyList<DiagnosticDescriptor> All =
+    private static readonly Lazy<IReadOnlyList<DiagnosticDescriptor>> _all = new(Declared);
+
+    /// <summary>Every descriptor declared in this catalog.</summary>
+    /// <remarks>
+    /// Read from the catalog's public static fields on first use, so declaring a descriptor is
+    /// enough to list it.
+    /// </remarks>
+    public static IReadOnlyList<DiagnosticDescriptor> All => _all.Value;
+
+    private static IReadOnlyList<DiagnosticDescriptor> Declared() =>
     [
-        UnreachableContentAfterJump,
-        TagsWithoutSpeaker,
-        NotAGameCall,
-        CommandInLabel,
-        MissingChoiceWeight,
-        InvalidChoiceWeight,
-        OrphanCondition,
-        StyledSpeakerPrefix,
-        SeveredControlBranch,
-        MalformedControlBranchOrder,
-        ControlMarkerNotAlone,
-        MissingControlBranchCondition,
-        UnexpectedElseCondition,
-        DanglingJumpArrow,
-        IgnoredUnmodeledMarkdown,
-        DuplicateAnchor,
-        HeadingWithoutAnchor,
-        SpeakerNameIdConflict,
-        IdBoundToAnotherName,
-        NameBoundToAnotherId,
-        MultipleDefaultSpeakers,
-        UnnamedSpeakerId,
-        UnknownReservedTag,
-        MissingScene,
-        ZeroChoiceWeightTotal,
-        ExternalJumpNotResolved,
-        OptionWithNothingToShow,
-        SceneHeadingInsideBranch,
-        DeeplyNestedChoiceBranch,
-        ChoiceWeightsNotOneHundred,
-        SingleOptionRandomChoice,
+        .. typeof(DiagnosticCatalog)
+            .GetFields(BindingFlags.Public | BindingFlags.Static)
+            .Select(field => field.GetValue(null))
+            .OfType<DiagnosticDescriptor>(),
     ];
 }

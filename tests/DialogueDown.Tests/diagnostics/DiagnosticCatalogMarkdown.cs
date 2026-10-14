@@ -51,7 +51,7 @@ internal static class DiagnosticCatalogMarkdown
 
     public static string Render()
     {
-        var byCategory = DiagnosticCatalogReflection.Descriptors()
+        var byCategory = DiagnosticCatalog.All
             .GroupBy(descriptor => descriptor.Category)
             .ToDictionary(group => group.Key, group => group.OrderBy(d => d.Code, StringComparer.Ordinal).ToList());
 

@@ -7,7 +7,7 @@ public sealed class DiagnosticCodesTests
     [Fact]
     public void All_DescribesEveryCatalogDescriptor_InCodeOrder()
     {
-        var expected = DiagnosticCatalogReflection.Descriptors()
+        var expected = DiagnosticCatalog.All
             .Select(descriptor => new DiagnosticCodeInfo(
                 descriptor.Code, descriptor.Title, descriptor.Category, descriptor.DefaultSeverity))
             .OrderBy(info => info.Code, StringComparer.Ordinal);
