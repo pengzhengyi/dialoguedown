@@ -4,5 +4,7 @@
   href: testing.md
 - name: Design notes
   href: design-notes/
+- name: Language surveys
+  href: surveys/
 - name: API reference
   href: ../api/

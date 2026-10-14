@@ -17,6 +17,9 @@ architecture, the reasoning behind each compiler stage, and how to get set up.
 - **[Design notes](design-notes/README.md)** — one note per component and compiler
   stage (the Markdown front-end, the transpiler, desugaring, the visualization,
   the CLI, and more), each recording the goal, key decisions, and tradeoffs.
+- **[Language surveys](surveys/README.md)** — dated reviews of the script language:
+  features it lacks next to comparable dialogue languages, and how well each existing
+  construct works. Read them before proposing a new construct.
 - **[API reference](../api/index.md)** — the generated C# API, useful when reading
   or extending the library.
 
