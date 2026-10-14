@@ -1,6 +1,5 @@
-using System.Text.Json.Nodes;
-using DialogueDown.Conformance;
 using DialogueDown.Runtime.Protocol;
+using static DialogueDown.Runtime.Tests.Conformance.Readers.CommandReaderAssert;
 
 namespace DialogueDown.Runtime.Tests.Conformance.Readers;
 
@@ -10,9 +9,9 @@ public sealed class DoneReaderTests
 
     [Fact]
     public void Read_TheBareName_IsTheDoneCommand() =>
-        Assert.IsType<Done>(_reader.Read(null));
+        AssertReadAs(_reader, payload: null, new Done());
 
     [Fact]
     public void Read_APayloadBesideTheName_IsAFixtureBug() =>
-        Assert.Throws<InvalidFixtureException>(() => _reader.Read(JsonNode.Parse("true")));
+        AssertRejected(_reader, "true");
 }

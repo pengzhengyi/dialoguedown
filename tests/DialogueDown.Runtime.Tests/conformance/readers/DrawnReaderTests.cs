@@ -1,6 +1,5 @@
-using System.Text.Json.Nodes;
-using DialogueDown.Conformance;
 using DialogueDown.Runtime.Protocol;
+using static DialogueDown.Runtime.Tests.Conformance.Readers.CommandReaderAssert;
 
 namespace DialogueDown.Runtime.Tests.Conformance.Readers;
 
@@ -9,37 +8,25 @@ public sealed class DrawnReaderTests
     private readonly DrawnReader _reader = new();
 
     [Fact]
-    public void Read_ADraw_IsADrawnCommandCarryingIt()
-    {
-        var drawn = Assert.IsType<Drawn>(_reader.Read(JsonNode.Parse("0.7")));
-
-        Assert.Equal(0.7, drawn.Value);
-    }
+    public void Read_ADraw_IsADrawnCommandCarryingIt() =>
+        AssertReadAs(_reader, "0.7", new Drawn(0.7));
 
     [Fact]
-    public void Read_AWholeNumber_IsADrawnCommandCarryingIt()
-    {
+    public void Read_AWholeNumber_IsADrawnCommandCarryingIt() =>
         // A draw of 1 is the top of the range, and a fixture may write it without a decimal point.
-        var drawn = Assert.IsType<Drawn>(_reader.Read(JsonNode.Parse("1")));
-
-        Assert.Equal(1.0, drawn.Value);
-    }
+        AssertReadAs(_reader, "1", new Drawn(1.0));
 
     [Fact]
-    public void Read_ADrawOutsideZeroToOne_IsTakenAsWritten()
-    {
+    public void Read_ADrawOutsideZeroToOne_IsTakenAsWritten() =>
         // Whether the run can take the draw is the runner's to say, so a fixture can hold it to
         // refusing one.
-        var drawn = Assert.IsType<Drawn>(_reader.Read(JsonNode.Parse("1.5")));
-
-        Assert.Equal(1.5, drawn.Value);
-    }
+        AssertReadAs(_reader, "1.5", new Drawn(1.5));
 
     [Fact]
     public void Read_ADrawWrittenAsWords_IsAFixtureBug() =>
-        Assert.Throws<InvalidFixtureException>(() => _reader.Read(JsonNode.Parse("\"0.7\"")));
+        AssertRejected(_reader, "\"0.7\"");
 
     [Fact]
     public void Read_NoDrawAtAll_IsAFixtureBug() =>
-        Assert.Throws<InvalidFixtureException>(() => _reader.Read(null));
+        AssertRejected(_reader, payload: null);
 }
