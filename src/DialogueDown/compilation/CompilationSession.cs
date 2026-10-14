@@ -3,21 +3,21 @@ using DialogueDown.Diagnostics;
 
 namespace DialogueDown.Compilation;
 
-/// <summary>
-/// The diagnostics state of one compilation: the sink each stage reports through (chosen from
-/// the <see cref="CompilationPolicy"/>), the diagnostics it collects, and, in stage-boundary mode,
-/// whether the compile should stop after a stage that reported an error. The compiler consults
-/// it between stages.
-/// </summary>
+/// <summary>The diagnostics state of one compilation, which the compiler consults between stages.</summary>
+/// <remarks>
+/// It holds the sink each stage reports through, built from the
+/// <see cref="CompilationSessionOptions"/>; the diagnostics collected so far; and, in stage-boundary
+/// mode, whether the compile should stop after a stage that reported an error.
+/// </remarks>
 internal sealed class CompilationSession
 {
     private readonly DiagnosticBag _diagnostics = new();
     private readonly CompilationMode _mode;
 
-    private CompilationSession(string source, CompilationPolicy policy)
+    private CompilationSession(string source, CompilationSessionOptions options)
     {
-        _mode = policy.Mode;
-        Context = new DiagnosticsContext(source, CreateSink(policy, _diagnostics));
+        _mode = options.Mode;
+        Context = new DiagnosticsContext(source, CreateSink(options, _diagnostics));
     }
 
     /// <summary>The context each stage reports through: the source and the sink.</summary>
@@ -36,24 +36,22 @@ internal sealed class CompilationSession
     /// </summary>
     public bool ShouldHalt => _mode == CompilationMode.StageBoundary && _diagnostics.HasErrors;
 
-    /// <summary>Starts a session for compiling <paramref name="source"/> under <paramref name="policy"/>.</summary>
-    public static CompilationSession Start(string source, CompilationPolicy policy)
+    /// <summary>Starts a session for compiling <paramref name="source"/> under <paramref name="options"/>.</summary>
+    public static CompilationSession Start(string source, CompilationSessionOptions options)
     {
         ArgumentNullException.ThrowIfNull(source);
-        ArgumentNullException.ThrowIfNull(policy);
-        return new CompilationSession(source, policy);
+        ArgumentNullException.ThrowIfNull(options);
+        return new CompilationSession(source, options);
     }
 
     // The disabling sink is outermost, so the mode's sink and the bag both see the mark.
-    private static IDiagnosticSink CreateSink(CompilationPolicy policy, DiagnosticBag diagnostics)
+    private static DisablingDiagnosticSink CreateSink(CompilationSessionOptions options, DiagnosticBag diagnostics)
     {
-        IDiagnosticSink sink = policy.Mode switch
+        IDiagnosticSink sink = options.Mode switch
         {
             CompilationMode.FailFast => new FailFastDiagnosticSink(diagnostics),
             _ => diagnostics,
         };
-        return policy.DisabledDiagnostics.Count == 0
-            ? sink
-            : new DisablingDiagnosticSink(sink, policy.DisabledDiagnostics);
+        return new DisablingDiagnosticSink(sink, options.DisabledDiagnostics);
     }
 }

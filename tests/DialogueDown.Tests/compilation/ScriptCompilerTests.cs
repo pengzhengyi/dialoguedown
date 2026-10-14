@@ -13,6 +13,7 @@ using DialogueDown.Tests.Support;
 using NSubstitute;
 using NSubstitute.Extensions;
 using static DialogueDown.Tests.Support.CompilationAssert;
+using static DialogueDown.Tests.Support.ConfigurationFactory;
 
 namespace DialogueDown.Tests.Compilation;
 
@@ -37,7 +38,7 @@ public sealed class ScriptCompilerTests
 
         var result = AssertSuccess(new ScriptCompiler(
                 parser, transpiler, desugarer, validator, analyzer, graphBuilder,
-                CompilationPolicy.Of(CompilationMode.BestEffort))
+                CompilationSessionOptions(CompilationMode.BestEffort))
             .Compile(source));
 
         Assert.Equal(source, result.Source);
@@ -141,10 +142,10 @@ public sealed class ScriptCompilerTests
         var validator = nullIndex == 3 ? null! : NSubstitute.Substitute.For<IStructuralValidator>();
         var analyzer = nullIndex == 4 ? null! : Substitute<ISemanticAnalyzer, SemanticModel>();
         var graphBuilder = nullIndex == 5 ? null! : Substitute<IDialogueGraphBuilder, DialogueGraph>();
-        var policy = nullIndex == 6 ? null! : CompilationPolicy.Of(CompilationMode.BestEffort);
+        var sessionOptions = nullIndex == 6 ? null! : CompilationSessionOptions(CompilationMode.BestEffort);
 
         Assert.Throws<ArgumentNullException>(() => new ScriptCompiler(
-            parser, transpiler, desugarer, validator, analyzer, graphBuilder, policy));
+            parser, transpiler, desugarer, validator, analyzer, graphBuilder, sessionOptions));
     }
 
     // Builds a compiler whose stages are substitutes that yield empty artifacts, so a test can focus
@@ -165,7 +166,7 @@ public sealed class ScriptCompilerTests
             NSubstitute.Substitute.For<IStructuralValidator>(),
             analyzer,
             Substitute<IDialogueGraphBuilder, DialogueGraph>(DialogueGraphFactory.EmptyGraph()),
-            CompilationPolicy.Of(mode));
+            CompilationSessionOptions(mode));
     }
 
     // Builds a compiler in the given mode whose transpiler reports the diagnostic while transpiling,

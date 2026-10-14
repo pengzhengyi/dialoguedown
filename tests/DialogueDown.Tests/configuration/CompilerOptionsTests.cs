@@ -158,6 +158,21 @@ public sealed class CompilerOptionsTests
     }
 
     [Fact]
+    public void ForCompilationSession_TakesTheModeAndTheDisabledCodes()
+    {
+        var options = CompilerOptions.Default with
+        {
+            Mode = CompilationMode.BestEffort,
+            DisabledDiagnostics = ["DLG3002"],
+        };
+
+        var session = options.ForCompilationSession();
+
+        Assert.Equal(CompilationMode.BestEffort, session.Mode);
+        Assert.Equal(["DLG3002"], session.DisabledDiagnostics);
+    }
+
+    [Fact]
     public void DisabledDiagnostics_AreEmptyByDefault() =>
         Assert.Empty(CompilerOptions.Default.DisabledDiagnostics);
 

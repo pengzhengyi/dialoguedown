@@ -113,6 +113,9 @@ public sealed partial record CompilerOptions
     /// <summary>The part of these options the semantic analysis stage reads.</summary>
     internal ISemanticAnalyzerOptions ForSemanticAnalyzer() => new SemanticAnalyzerOptions(Speakers);
 
+    /// <summary>The part of these options each compilation session reads.</summary>
+    internal CompilationSessionOptions ForCompilationSession() => new(Mode, DisabledDiagnostics);
+
     private static string NormalizeDisabledCode(string code)
     {
         var check = DisabledDiagnosticCodes.Check(code);

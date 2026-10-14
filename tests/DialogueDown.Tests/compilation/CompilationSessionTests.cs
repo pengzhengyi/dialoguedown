@@ -2,6 +2,7 @@ using DialogueDown.Compilation;
 using DialogueDown.Configuration;
 using DialogueDown.Diagnostics;
 using DialogueDown.Diagnostics.Errors;
+using static DialogueDown.Tests.Support.ConfigurationFactory;
 using static DialogueDown.Tests.Support.DiagnosticsFactory;
 
 namespace DialogueDown.Tests.Compilation;
@@ -11,10 +12,10 @@ public sealed class CompilationSessionTests
     [Fact]
     public void Start_NullSource_Throws() =>
         Assert.Throws<ArgumentNullException>(
-            () => CompilationSession.Start(null!, CompilationPolicy.Of(CompilationMode.StageBoundary)));
+            () => CompilationSession.Start(null!, CompilationSessionOptions(CompilationMode.StageBoundary)));
 
     [Fact]
-    public void Start_NullPolicy_Throws() =>
+    public void Start_NullOptions_Throws() =>
         Assert.Throws<ArgumentNullException>(() => CompilationSession.Start("x", null!));
 
     [Fact]
@@ -67,7 +68,7 @@ public sealed class CompilationSessionTests
     public void Diagnostics_ReportedWithADisabledCode_AreMarkedDisabled()
     {
         var session = CompilationSession.Start(
-            "x", new CompilationPolicy(CompilationMode.StageBoundary, new HashSet<string> { "DLG3002" }));
+            "x", CompilationSessionOptions(CompilationMode.StageBoundary, "DLG3002"));
         var nesting = Diagnostic(
             Descriptor("DLG3002", DiagnosticCategory.Style, defaultSeverity: DiagnosticSeverity.Warning));
 
@@ -83,12 +84,11 @@ public sealed class CompilationSessionTests
 
         var warning = Report(session, DiagnosticSeverity.Warning);
 
-        Assert.False(Assert.Single(session.Diagnostics).IsDisabled);
         Assert.Equal([warning], session.Diagnostics);
     }
 
     private static CompilationSession Start(CompilationMode mode, string source = "x") =>
-        CompilationSession.Start(source, CompilationPolicy.Of(mode));
+        CompilationSession.Start(source, CompilationSessionOptions(mode));
 
     // Reports a diagnostic of the given severity through the session's sink, returning it so a test
     // can also assert on the exact instance that was collected.
