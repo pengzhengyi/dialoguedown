@@ -3,6 +3,7 @@ using CsCheck;
 using DialogueDown.Playbook.Edges;
 using DialogueDown.Playbook.Nodes;
 using DialogueDown.Playbook.Speech;
+using DialogueDown.Runtime.Stepping;
 using DialogueDown.TestSupport;
 
 namespace DialogueDown.Runtime.Tests;
@@ -92,6 +93,26 @@ public sealed class PlaybookGenTests
             threads: 1);
 
         Assert.Equal(["alone", "between", "first", "last"], places.Order(StringComparer.Ordinal));
+    }
+
+    [Fact]
+    public void TheDraw_GivesSomeRandomChoiceNothingDrawable()
+    {
+        // A random choice is walked past only when no random option has a share, so the walk covers
+        // that only if some drawn random choice has nothing drawable.
+        var nothingDrawable = 0;
+
+        PlaybookGen.Valid().Sample(
+            playbook =>
+            {
+                if (playbook.Nodes.OfType<RandomChoiceNode>().Any(RandomChoiceShares.HasNothingDrawable))
+                {
+                    Interlocked.Increment(ref nothingDrawable);
+                }
+            },
+            iter: Samples);
+
+        Assert.True(nothingDrawable > 0, "No drawn random choice had nothing drawable.");
     }
 
     /// <summary>
