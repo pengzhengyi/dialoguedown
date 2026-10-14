@@ -1,5 +1,7 @@
+using DialogueDown.Playbook.Edges;
 using DialogueDown.Playbook.Weights;
 using DialogueDown.TestSupport;
+using static DialogueDown.TestSupport.PlaybookNodeFactory;
 
 namespace DialogueDown.Playbook.Tests.Weights;
 
@@ -8,22 +10,22 @@ public sealed class WeightSharesTests
     [Fact]
     public void Of_DecidesAboutEveryKindOfPlaybookWeight()
     {
-        ChoiceWeight[] samples = [new NumberWeight(50), new AutoWeight(), new QueryWeight("Guard.Mood")];
+        RandomOptionEdge[] samples = [Chance(50), EvenChance(), Chance("Guard.Mood")];
 
         // Checked first, because the walk below is only as complete as the list it walks: a kind
         // added to the format and left out here would have no drawing weight and nothing to say so.
-        UnionCoverageAssert.AssertCoversEveryMember<ChoiceWeight>(samples);
+        UnionCoverageAssert.AssertCoversEveryMember<ChoiceWeight>(samples.Select(option => option.Weight));
 
-        foreach (var weight in samples)
+        foreach (var option in samples)
         {
-            Assert.IsNotType<NotSupportedException>(Record.Exception(() => WeightShares.Of([weight])));
+            Assert.IsNotType<NotSupportedException>(Record.Exception(() => WeightShares.Of([option])));
         }
     }
 
     [Fact]
-    public void Of_PlaybookWeights_ComeToTheSharesTheirDrawingWeightsDo()
+    public void Of_RandomOptions_ComeToTheSharesTheirDrawingWeightsDo()
     {
-        var shares = WeightShares.Of([new NumberWeight(30), new AutoWeight(), new NumberWeight(20), new AutoWeight()]);
+        var shares = WeightShares.Of([Chance(30), EvenChance(), Chance(20), EvenChance()]);
 
         Assert.Equal(
             DrawingWeight.Shares(
@@ -34,7 +36,7 @@ public sealed class WeightSharesTests
     [Fact]
     public void Of_AKeyWeight_IsRefusedNamingTheKey_BecauseOnlyTheWorldKnowsItsNumber()
     {
-        static void UnansweredKey() => _ = WeightShares.Of([new QueryWeight("Guard.Mood"), new AutoWeight()]);
+        static void UnansweredKey() => _ = WeightShares.Of([Chance("Guard.Mood"), EvenChance()]);
 
         var error = Assert.Throws<ArgumentException>(UnansweredKey);
         Assert.Contains("Guard.Mood", error.Message, StringComparison.Ordinal);
@@ -42,15 +44,15 @@ public sealed class WeightSharesTests
 
     [Fact]
     public void Of_ANumberNoShareCanBe_IsRefused() =>
-        Assert.Throws<ArgumentOutOfRangeException>(() => WeightShares.Of([new NumberWeight(-10), new AutoWeight()]));
+        Assert.Throws<ArgumentOutOfRangeException>(() => WeightShares.Of([Chance(-10), EvenChance()]));
 
     [Fact]
-    public void Of_NoWeights_HaveNoShares() =>
+    public void Of_NoRandomOptions_HaveNoShares() =>
         Assert.Empty(WeightShares.Of([]));
 
     [Fact]
-    public void Of_RejectsAMissingWeight() =>
-        Assert.Throws<ArgumentNullException>(() => WeightShares.Of([new NumberWeight(50), null!]));
+    public void Of_RejectsAMissingRandomOption() =>
+        Assert.Throws<ArgumentNullException>(() => WeightShares.Of([Chance(50), null!]));
 
     [Fact]
     public void Total_IsTheDrawingWeightsTotal() =>

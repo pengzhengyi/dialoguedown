@@ -65,7 +65,7 @@ internal static class RandomChoiceShares
             return false;
         }
 
-        shares = WeightShares.Of(randomOptions.Select(option => option.Weight));
+        shares = WeightShares.Of(randomOptions);
         return true;
     }
 }
