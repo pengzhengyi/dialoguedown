@@ -68,6 +68,41 @@ public sealed class SpeechSpacingTests
             [Text("Hi"), DefaultCommand(), Text(" there")]);
 
     [Fact]
+    public void Normalize_ASpaceAloneBetweenTwoCommands_MovesBeforeTheNextWord() =>
+        // `Hi.`Bow()` `Wave()`Bye.`: between the commands, the space would be a part saying nothing.
+        AssertNormalizes(
+            [Text("Hi."), CustomCommand("Bow"), Text(" "), CustomCommand("Wave"), Text("Bye.")],
+            [Text("Hi."), CustomCommand("Bow"), CustomCommand("Wave"), Text(" "), Text("Bye.")]);
+
+    [Fact]
+    public void Normalize_ASoftBreakAloneBetweenTwoCommands_MovesBeforeTheNextWord() =>
+        AssertNormalizes(
+            [Text("Hi."), CustomCommand("Bow"), LineBreak(), CustomCommand("Wave"), Text("Bye.")],
+            [Text("Hi."), CustomCommand("Bow"), CustomCommand("Wave"), LineBreak(), Text("Bye.")]);
+
+    [Fact]
+    public void Normalize_ASpaceAfterACommand_MovesPastTagsAndCommandsToTheNextVisiblePiece() =>
+        AssertNormalizes(
+            [Text("Gold:"), DefaultCommand(), Text(" "), Tag("t"), CustomCommand("Wave"),
+                Query("Gold")],
+            [Text("Gold:"), DefaultCommand(), Tag("t"), CustomCommand("Wave"), Text(" "),
+                Query("Gold")]);
+
+    [Fact]
+    public void Normalize_ASpaceAfterACommand_MovesBeforeStyledText() =>
+        AssertNormalizes(
+            [Text("Hi."), CustomCommand("Bow"), Text(" "), CustomCommand("Wave"),
+                Bold(Text("Bye."))],
+            [Text("Hi."), CustomCommand("Bow"), CustomCommand("Wave"), Text(" "),
+                Bold(Text("Bye."))]);
+
+    [Fact]
+    public void Normalize_ASpaceAfterWordsBeforeTwoCommands_StaysWithTheWords() =>
+        AssertNormalizes(
+            [Text("Hi."), Text(" "), CustomCommand("Bow"), CustomCommand("Wave"), Text("Bye.")],
+            [Text("Hi."), Text(" "), CustomCommand("Bow"), CustomCommand("Wave"), Text("Bye.")]);
+
+    [Fact]
     public void Normalize_ATagBetweenTwoSpaces_KeepsTheFirst() =>
         AssertNormalizes(
             [Text("I am "), Tag("mood", "sad"), Text(" fine.")],
@@ -164,7 +199,8 @@ public sealed class SpeechSpacingTests
     public void Normalize_Twice_ChangesNothing()
     {
         var once = SpeechSpacing.Normalize(
-            [Text("a  "), Bold(Text("  b")), Text("  c"), DefaultCommand(), Text("  d ")]);
+            [Text("a  "), Bold(Text("  b")), Text("  c"), DefaultCommand(), Text("  "),
+                CustomCommand("Wave"), Text("d ")]);
 
         Assert.Equal(once, SpeechSpacing.Normalize(once));
     }

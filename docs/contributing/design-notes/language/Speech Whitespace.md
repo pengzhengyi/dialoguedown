@@ -95,6 +95,7 @@ tags the preview draws are taken out.
 | ``Alice: Then... `Wave()` I will not argue.`` | `"Then... "`, the command, `"I will not argue."` | A command takes no room, so its two spaces become one. |
 | ``- Say goodbye `Wave()` and leave`` | `"Say goodbye "`, the command, `"and leave"` | The same, in an option's label. |
 | ``Alice: `Wave()` Hello.`` | the command, `"Hello."` | Before the first word, the space separates nothing. |
+| ``Alice: Hi.`Bow()` `Wave()`Bye.`` | `"Hi."`, both commands, `" "`, `"Bye."` | A space alone between two commands moves to the words after them. |
 | `Alice: I am #mood=sad fine.` | `"I am "`, the tag, `"fine."` | A tag takes no room. |
 | `Alice: Hello. #mood=happy` | `"Hello."`, the tag | After the last word, the space separates nothing. |
 | `Alice: Go there => [Go](#market)` | `"Go there"` | The jump becomes an edge, so the space before it follows the last word. |
@@ -191,6 +192,13 @@ part after begins with a word (`"I will not argue."`), so a host that joins the
 parts shows one space, and a host that shows each part alone shows no stray space
 at its start. When the only space is written after the command, as in
 ``Hi`Wave()` there``, that space is the one kept, and the part after begins with it.
+
+A kept space with nothing but commands and tags after it until the next visible
+piece moves past them to just before that piece. A runner speaks the words
+between two commands as a part of the line and skips a part holding only a space,
+so in ``Hi.`Bow()` `Wave()`Bye.`` a space left between the commands would run
+`"Hi."` and `"Bye."` together for a host that joins the parts. Moved, the part
+after the commands begins with it, as in ``Hi`Wave()` there``.
 
 A styled text and a link's label belong to the list around them, as an inline
 element belongs to its line in CSS. An image is a visible piece, and its alt text
@@ -302,7 +310,7 @@ returns it normalized. `SpeechMapping` calls it once for each list it is handed 
 `NodeMapping` or `EdgeMapping`, and once for each image's alt text. The styled
 texts and link labels inside a list are part of that list, not lists of their own.
 
-It reads the list in order, descending into styled text and link labels, in two
+It reads the list in order, descending into styled text and link labels, in three
 passes:
 
 1. **Forward.** Remember whether the last thing kept was a collapsible space,
@@ -310,6 +318,8 @@ passes:
    that. Remove each collapsible space that follows a kept one. A kept space, tab,
    line feed, or carriage return becomes a space; a kept soft line break stays.
 2. **Backward.** Remove each collapsible space with no visible piece after it.
+3. **Placing.** Move a space kept right after an unseen fragment past any more
+   unseen fragments, to just before the next visible piece.
 
 A text left empty is omitted, and so is a soft line break that is removed. Every
 other fragment, and every character that is not a collapsible space, stays where
@@ -335,6 +345,7 @@ piece on each side within the same list, passing over commands and tags.
 | A text emptied by the rule | Omitted. |
 | A query or an image between spaces | Kept: each is a visible piece. A query's answer is not normalized. |
 | A space written only after a command, as ``Hi`Wave()` there`` | Kept; the part after the command begins with it. |
+| A space alone between two commands, as ``Hi.`Bow()` `Wave()`Bye.`` | Moved past the commands to the words after them, so no part of the line holds only a space. |
 | Typed spacing inside emphasis or a link's label | Collapsed with the list around it; reported. |
 | Typed spacing in alt text | Collapsed within the alt text; reported. |
 | A soft line break after a command, as ``a `Wave()` `` and `b` on the next line | The break follows a kept space and is removed: `"a "`, the command, `"b"`. |
@@ -372,8 +383,9 @@ The code changed with the implementation:
   `a-command-opening-a-line` continues with `"Hello."`; `a-command-in-a-label`
   offers and continues with `"and leave"`; `a-command-ending-a-line` and
   `a-failed-command-in-a-line` say `"Hello."`; and `a-query-after-a-command`
-  continues with `"Now it is 15."`. A new playable case pins spaces typed together
-  arriving as one.
+  continues with `"Now it is 15."`. New playable cases pin spaces typed together
+  arriving as one, a named space between two commands being said, and a space
+  alone between two commands moving to the words after them.
 - **Emission goldens.** All four change (`gallery`, `highrise-fire`, `rpg-quest`,
   `visual-novel`): nearly every line that ends in a command or a tag loses the
   space before it.
@@ -417,7 +429,7 @@ The documentation changed with the implementation:
       preferred fix and, between visible pieces, the alternative.
 - [ ] Merges beside commands, tags, and boundaries, the ends of a list, a single
       tab, a control line's effects, and headings report nothing.
-- [ ] The six changed corpus cases, the new one, and the four goldens pass.
+- [ ] The six changed corpus cases, the new ones, and the four goldens pass.
 - [ ] The properties in [Property tests](#property-tests) hold.
 - [ ] `DLG1116` has a compiled example in the error-code reference.
 - [ ] The writer's guide explains spacing and the named spaces.

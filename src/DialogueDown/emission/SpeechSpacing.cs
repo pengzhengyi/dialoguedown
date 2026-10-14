@@ -58,6 +58,16 @@ namespace DialogueDown.Emission;
 /// <c>visibleAfter</c> is true.
 /// </item>
 /// </list>
+/// <para>
+/// A third pass, Placing, moves a space kept right after a command or a tag past any more of them,
+/// to just before the next visible piece. A host speaks the words between two commands as a part
+/// of the line and skips a part that is only a space, so the space must sit with the words it
+/// separates:
+/// </para>
+/// <code>
+/// original:        "Hi."   Bow()   " "   Wave()   "Bye."
+/// after placing:   "Hi."   Bow()   Wave()   " "   "Bye."
+/// </code>
 /// </remarks>
 internal static class SpeechSpacing
 {
@@ -68,7 +78,7 @@ internal static class SpeechSpacing
     {
         ArgumentNullException.ThrowIfNull(fragments);
 
-        return new Trimming().Trim(new Collapsing().Collapse(fragments));
+        return Placing.Place(new Trimming().Trim(new Collapsing().Collapse(fragments)));
     }
 
     // Whether a fragment that holds no other speech shows to the player: an image or a query does,
@@ -100,6 +110,65 @@ internal static class SpeechSpacing
             kept = new StyledTextFragment(styled.Style, children);
             return true;
         }
+    }
+
+    // Moves a space kept right after a command or a tag past any more of them, to just before the
+    // next visible piece. It runs last, on what Trimming kept, where every space left has a visible
+    // piece after it, in the list or after the list, as words can follow a styled text.
+    private static class Placing
+    {
+        public static ImmutableArray<SpeechFragment> Place(ImmutableArray<SpeechFragment> fragments)
+        {
+            var placed = ImmutableArray.CreateBuilder<SpeechFragment>(fragments.Length);
+
+            // The space waiting for the next visible piece. Left between two commands, it would be
+            // a part of the line that says nothing, which a host skips.
+            SpeechFragment? held = null;
+            var afterUnseen = false;
+            foreach (var fragment in fragments.Select(Placed))
+            {
+                if (afterUnseen && IsLoneSpace(fragment))
+                {
+                    held = fragment;
+                    continue;
+                }
+
+                afterUnseen = IsUnseen(fragment);
+                if (held is not null && !afterUnseen)
+                {
+                    placed.Add(held);
+                    held = null;
+                }
+
+                placed.Add(fragment);
+            }
+
+            // Nothing visible followed it in this list, so it goes at the end, the nearest it can
+            // come to the words after the list.
+            if (held is not null)
+            {
+                placed.Add(held);
+            }
+
+            return placed.ToImmutable();
+        }
+
+        // What Collapsing leaves of a text holding only collapsible spaces, or a soft line break.
+        private static bool IsLoneSpace(SpeechFragment fragment) =>
+            fragment is LineBreakFragment or TextFragment { Text: " " };
+
+        private static bool IsUnseen(SpeechFragment fragment) =>
+            fragment is not (TextFragment or LineBreakFragment or StyledTextFragment or LinkFragment)
+            && !IsVisiblePiece(fragment);
+
+        private static SpeechFragment Placed(SpeechFragment fragment) =>
+            fragment switch
+            {
+                StyledTextFragment styled =>
+                    new StyledTextFragment(styled.Style, Place(styled.Children)),
+                LinkFragment link => new LinkFragment(link.Target, Place(link.Label)),
+                _ => fragment,
+            };
     }
 
     // Keeps the first collapsible space of each run, written as a space, and drops the rest along
