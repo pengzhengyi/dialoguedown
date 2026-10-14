@@ -34,12 +34,12 @@ flowchart LR
     C["ScriptCompiler<br/>compilation mode"]
     S["ISemanticAnalyzerOptions<br/>configured speakers"]
     A["SemanticAnalyzer / SpeakerBinder"]
-    P["CompilationPolicy<br/>mode and disabled codes"]
+    P["CompilationSessionOptions<br/>mode and disabled codes"]
 
     F --> O
     D --> O
     O -->|"UnmodeledMarkdown"| M
-    O -->|"Mode, DisabledDiagnostics"| P --> C
+    O -->|"ForCompilationSession()"| P --> C
     O -->|"ForSemanticAnalyzer()"| S --> A
 ```
 
@@ -68,12 +68,13 @@ IScriptCompiler compiler = ScriptCompilerFactory.CreateDefault(options);
 
 | Type | Visibility | Responsibility |
 | --- | --- | --- |
-| `CompilerOptions` | public | `Mode`, `Speakers`, `UnmodeledMarkdown`, `DisabledDiagnostics`; `Default`; structural equality; the internal `ForSemanticAnalyzer()` view. |
+| `CompilerOptions` | public | `Mode`, `Speakers`, `UnmodeledMarkdown`, `DisabledDiagnostics`; `Default`; structural equality; the internal `ForSemanticAnalyzer()` and `ForCompilationSession()` views. |
 | `CompilationMode`, `CompilationModes` | public | The mode enum and its kebab-case names, including which are settable. |
 | `UnmodeledNodeKind`, `UnmodeledNodeHandling`, `UnmodeledMarkdownNames` | public | The unmodeled-Markdown vocabulary and its names. |
 | `ConfiguredSpeaker`, `ConfiguredTag` | public | A speaker: name, optional id, custom and reserved tags. |
 | `ReservedTagNames` | public | The closed set of reserved tag names (`default`). |
 | `ISemanticAnalyzerOptions`, `SemanticAnalyzerOptions` | internal | The analyzer's view: the configured speakers. |
+| `CompilationSessionOptions` | internal | The compilation session's view: the mode and the disabled codes. |
 | `ConfiguredSpeakerBuilder` | internal | Turns a `ConfiguredSpeaker` into the `SpeakerDeclaration` the binder consumes. |
 
 All public types live in `DialogueDown.Configuration`.
@@ -97,14 +98,15 @@ one.
 
 No stage receives the whole value:
 
-- `Mode` and `DisabledDiagnostics` reach `ScriptCompiler` together as a
-  `CompilationPolicy`, which shapes each compile's diagnostic sink (see
-  [Disabled Diagnostics](../diagnostics/Disabled%20Diagnostics.md));
+- `Mode` and `DisabledDiagnostics` reach `ScriptCompiler` together as
+  `CompilationSessionOptions`, built by `ForCompilationSession()`, which shapes each
+  compile's diagnostic sink (see
+  [Disabled Diagnostics](../diagnostics/Disabled%20Diagnostics.md) D3);
 - the front end receives an `IUnmodeledNodeHandlingPolicy` built by
   `UnmodeledNodeHandlingPolicies.For(UnmodeledMarkdown)` — in the Markdown layer,
   since configuration must not depend on a stage;
-- the analyzer receives `ISemanticAnalyzerOptions`, an interface because its tests
-  substitute it.
+- the analyzer receives `ISemanticAnalyzerOptions`, built by `ForSemanticAnalyzer()`,
+  an interface because its tests substitute it.
 
 Passing the whole value, or an ambient context, would let stages read unrelated knobs
 and hide their dependencies.

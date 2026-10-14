@@ -57,9 +57,9 @@ not mistaken for a disabled control, for example "Disabled in dialogue.toml".
 
 ## Functionality checklist
 
-- [x] `DiagnosticCatalog.All` lists every descriptor explicitly, and a public
-      `DiagnosticCodes` query exposes each code's title, category, and default
-      severity.
+- [x] `DiagnosticCatalog.All` lists every declared descriptor, and a public
+      `DisabledDiagnosticCodes.Check` tells `CompilerOptions`, the loader, and the CLI
+      whether a code can be disabled, and if not, why.
 - [x] `CompilerOptions.DisabledDiagnostics`: a set of optional codes, empty by
       default, normalized to upper case, compared as a set.
 - [x] `Diagnostic.IsDisabled` and `LocatedDiagnostic.IsDisabled`, set during the
@@ -91,7 +91,7 @@ flowchart LR
     T["dialogue.toml<br/>[diagnostics] disable"] --> L["TomlConfigurationLoader"]
     L --> O["CompilerOptions<br/>DisabledDiagnostics"]
     A["--disable"] -->|"union"| O
-    O --> C["CompilationPolicy<br/>mode and disabled codes"]
+    O -->|"ForCompilationSession()"| C["CompilationSessionOptions<br/>mode and disabled codes"]
     C --> S["ScriptCompiler → CompilationSession<br/>DisablingDiagnosticSink"]
     S --> R["LocatedDiagnostic.IsDisabled"]
     R --> E["CLI: errata, summary, --fix"]
@@ -207,21 +207,27 @@ dialogue.toml(2,12): DLG2001 is an error and cannot be disabled; only info and w
 ```
 
 The first comes from `disable = ["DLG302"]` and the second from `disable = ["DLG2001"]`,
-each exiting `65`. The same codes given to `--disable` are usage errors, exiting `64`.
+each exiting `65`. The same codes given to `--disable` are usage errors, exiting `64`,
+with the same sentence after the option and the code as typed:
+
+```text
+--disable DLG2001: DLG2001 is an error and cannot be disabled; only info and warning codes can. Fix the problem it reports instead.
+```
 
 ## Interfaces and abstractions
 
 | Type | Visibility | Responsibility |
 | --- | --- | --- |
-| `DiagnosticCatalog.All` | internal | An explicit array of every descriptor; a test checks it against the reflected fields. |
-| `DiagnosticCodes` | public | The catalog's public face: `All` as `DiagnosticCodeInfo(Code, Title, Category, DefaultSeverity)` in code order, `Find(code)`, `IsOptional(code)`, and the `ReferencePage` URL that error messages cite. Descriptors stay internal. |
+| `DiagnosticCatalog.All` | internal | Every descriptor the catalog declares, read from its public static fields on first use. |
+| `DisabledDiagnosticCodes.Check(code)` | public | Whether a project may disable a code, as a `DisabledCodeCheck(Code, Problem)` with `IsValid`: the code, upper-case when the compiler reports it, and the sentence every surface reports when it cannot be disabled. Descriptors stay internal. |
+| `DiagnosticDocumentation` | public | The Error codes page (`ReferencePage`) and a code's anchor on it (`UrlFor`), cited by the check and the CLI renderer. |
 | `CompilerOptions.DisabledDiagnostics` | public | An `ImmutableHashSet<string>` with an ordinal comparer, holding upper-case codes; validated on `init`. |
-| `CompilerOptions(mode, speakers, unmodeled, disabledDiagnostics)` | public | A new constructor overload; the existing three-argument one stays. |
-| `CompilationPolicy` | internal | What `ScriptCompiler` needs from the options for each compile: the mode and the disabled codes. |
+| `CompilerOptions(mode, speakers, unmodeled, disabledDiagnostics)` | public | An overload that adds `disabledDiagnostics`; the three-argument one stays. |
+| `CompilationSessionOptions` | internal | What each compilation session reads from the options: the mode and the disabled codes, built by `CompilerOptions.ForCompilationSession()`. |
 | `DisablingDiagnosticSink` | internal | An `IDiagnosticSink` decorator over a set of code strings: marks a non-error diagnostic whose code is in the set, then forwards it. |
 | `Diagnostic.IsDisabled`, `LocatedDiagnostic.IsDisabled` | internal, public | The mark, an `init` property on both (not a positional parameter), included in equality. |
 | `ConfiguredDiagnosticsReader` | internal | Reads and fully validates `[diagnostics]` from the TOML syntax tree. |
-| `CompileSettings.Disable`, `DisabledCodes` | internal | The `--disable` values as given, and the codes in them, split at commas and trimmed; `Validate` checks each with `DiagnosticCodes`. |
+| `CompileSettings.Disable`, `DisabledCodes` | internal | The `--disable` values as given, and the codes in them, split at commas and trimmed; `Validate` checks each with `DisabledDiagnosticCodes.Check`. |
 
 ## Key design decisions
 
@@ -261,13 +267,18 @@ before.
 
 ### D3 — Mark in a sink decorator, during the compile
 
-`ScriptCompiler` takes a `CompilationPolicy`, the mode and the set together, built
-from the options at each composition root with `CompilationPolicy.For(options)`.
-Passing the set as one more constructor parameter would have given `ScriptCompiler`
-eight. `CompilationSession.Start(source, policy)` wraps the mode's sink in a
-`DisablingDiagnosticSink` when the set is non-empty. The decorator is outermost, so it marks before the bag (or the
-fail-fast sink) sees the diagnostic. It takes a set of strings, not
-`CompilerOptions`, so the `Diagnostics` namespace stays a foundation leaf.
+`ScriptCompiler` takes a `CompilationSessionOptions`, the mode and the set together,
+which each composition root builds with `options.ForCompilationSession()`, the twin of
+`ForSemanticAnalyzer()`. The two travel as one value because the six stages plus a
+separate mode and set would be eight parameters, and Sonar's S107 caps a core
+constructor at seven: the limit is set in `src/DialogueDown/SonarLint.xml` and is an
+error for the core through `.editorconfig`.
+
+`CompilationSession.Start(source, options)` always wraps the mode's sink in a
+`DisablingDiagnosticSink`, which forwards every diagnostic unchanged when the set is
+empty. The decorator is outermost, so it marks before the bag (or the fail-fast sink)
+sees the diagnostic. It takes a set of strings, not `CompilerOptions`, so the
+`Diagnostics` namespace stays a foundation leaf.
 
 This gives one marking site for every composition root, and reporting sites stay
 unaware, as they are of the mode
@@ -288,20 +299,29 @@ normalizes the codes to upper case, the getter returns a new set, not the instan
 assigned.
 
 `CompilerOptions` validates the set on `init` and throws `ArgumentException` for an
-unknown or `Error` code. A code-level consumer that passes one is misusing the API,
-which the [Error Model](../core/Error%20Model.md) routes to the standard .NET channel.
+unknown or `Error` code, carrying the check's sentence. A code-level consumer that
+passes one is misusing the API, which the [Error Model](../core/Error%20Model.md)
+routes to the standard .NET channel.
 The loader validates first and reports its own located error, so a writer never sees
 the `ArgumentException`, and the served report, which catches only
 `DialogueConfigurationException` when it reloads `dialogue.toml`, never crashes on one.
 
-### D5 — A public `DiagnosticCodes` query, not wider internals
+### D5 — One public check, not wider internals
 
-The loader and the CLI must check a code against the catalog, which is internal.
-Rather than add an `InternalsVisibleTo` for the loader, the core exposes a small,
-read-only view. Each entry carries the title and default severity because the
-planned Config tab autocompletion shows them. It reads an explicit
-`DiagnosticCatalog.All` array, not reflection, so it survives trimming in engine
-builds; a test keeps the array complete.
+`CompilerOptions`, the loader, and the CLI must each check a code against the catalog,
+which is internal. Rather than add an `InternalsVisibleTo` for the loader, the core
+exposes one static check, `DisabledDiagnosticCodes.Check(code)`. It returns a
+`DisabledCodeCheck`: the code, upper-case when the compiler reports it, and a
+`Problem` sentence when it cannot be disabled. Each caller reports that sentence and
+adds only where the code was written: `CompilerOptions` throws it as an
+`ArgumentException`, the loader places it at the code in `dialogue.toml`, and the CLI
+puts `--disable CODE:` before it. So the rule and its wording live in one place, and
+the check's tests cover every case once.
+
+No caller needs a code's title or category, so the catalog has no other public view.
+The check reads `DiagnosticCatalog.All`, which finds the descriptors from the
+catalog's public static fields, so declaring a descriptor is enough to list it; a test
+checks that no two share a code.
 
 Codes match case-insensitively, so `dlg3002` and `DLG3002` are one code.
 
@@ -400,18 +420,22 @@ disabled group.
 
 ## Testability
 
-- `DiagnosticCatalog.All` matches the reflected descriptor fields; `DiagnosticCodes`
-  agrees with it entry by entry.
+- `DiagnosticCatalog.All` lists descriptors with unique codes.
+- `DisabledDiagnosticCodes.Check` owns every case: an info or warning code in any
+  case, an error code, an unknown, empty, or untrimmed code, and null. Each caller's
+  tests check only what it adds.
 - `CompilerOptions`: empty by default; codes normalize; equality ignores order and
-  case; an unknown or `Error` code throws; the three-argument constructor still
-  works.
+  case; an unknown or `Error` code throws with the check's sentence; the
+  three-argument constructor still works; `ForCompilationSession()` carries the mode
+  and the set.
 - `DisablingDiagnosticSink`: marks a code in the set, forwards the rest unchanged,
   and never marks an error, even one with an overridden severity.
 - Composition roots: a real compile with a disabled code marks it, keeps its span and
   fixes, and leaves `HasErrors` unchanged, through both `ScriptCompilerFactory` and
   `AddDialogueDown`.
 - Loader: raw-string TOML to the expected set, and one test per error case asserting
-  the location; an invalid code never surfaces as `ArgumentException`.
+  the location; an invalid code is reported with the check's sentence, never as an
+  `ArgumentException`.
 - CLI through `CommandAppTester`: `--disable` unions with the config; each parsing
   edge case; an invalid code exits `64`; disabled diagnostics are not printed.
   `ErrataRenderer` on a `TestConsole` for the summary, the hint, and the remaining
@@ -430,8 +454,9 @@ existing TOML editing, which can already create the file in place:
   filter;
 - an enabled row offers **Disable DLG3002 in dialogue.toml**, a disabled row offers
   **Enable**, and either recompiles;
-- the Config tab autocompletes codes in `disable` from `DiagnosticCodes.All`, carried
-  to the client in a new configuration-report field, like the reserved tags.
+- the Config tab autocompletes codes in `disable` from the catalog's descriptors,
+  which the visualization reads through its existing `InternalsVisibleTo`, carried to
+  the client in a new configuration-report field, like the reserved tags.
 
 It will be a section of this note.
 

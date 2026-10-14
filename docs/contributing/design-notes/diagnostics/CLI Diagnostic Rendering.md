@@ -62,7 +62,7 @@ section after the diagnostics, whose grammar is the
 | `LocatedDiagnostic` (public) | `Code`, `Severity`, `Category`, `Message`, `Start`, `End`, `StartOffset`, `EndOffset`, and `Fixes`. |
 | `CompilationResult.LocatedDiagnostics` (public) | The projection, built on first access and cached. |
 | `ErrataRenderer` (CLI) | Render diagnostics, summary, fixable hint, disabled count, and a fix run's section to an `IAnsiConsole`. |
-| `DiagnosticDocumentation` (CLI) | Map a code to its hosted error-code anchor (`…/error-codes.html#dlg<code>`). |
+| `DiagnosticDocumentation` (public) | Map a code to its hosted error-code anchor (`…/error-codes.html#dlg<code>`). |
 | `CompileCommand` (CLI) | Compile, render, choose the exit code; parse `--mode`. |
 
 ## Key design decisions
