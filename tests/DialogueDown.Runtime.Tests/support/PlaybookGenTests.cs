@@ -105,7 +105,8 @@ public sealed class PlaybookGenTests
         PlaybookGen.Valid().Sample(
             playbook =>
             {
-                if (playbook.Nodes.OfType<RandomChoiceNode>().Any(RandomChoiceShares.HasNothingDrawable))
+                if (playbook.Nodes.OfType<RandomChoiceNode>()
+                    .Any(random => RandomChoiceShares.HasNothingDrawable(random)))
                 {
                     Interlocked.Increment(ref nothingDrawable);
                 }

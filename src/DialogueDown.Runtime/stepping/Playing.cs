@@ -34,7 +34,7 @@ internal static class Playing
             LineNode line => Line(context, position, line, supply, segmentIndex: 0),
             ControlNode control => Control(position, control),
             ChoiceNode choice => Choosing.Offer(position, choice, supply),
-            RandomChoiceNode random when RandomChoiceShares.TryWorkOut(random, out var shares) =>
+            RandomChoiceNode random when RandomChoiceShares.TryWorkOut(random, supply, out var shares) =>
                 Drawing.AskForADraw(position, shares),
             EndNode => End(),
             var unplayable => Unplayable(position, unplayable),
