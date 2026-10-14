@@ -54,8 +54,8 @@ In scope:
 Out of scope, each with the pass that owns it: choices, and an option's
 condition with them (C2b); `Describe` (C2e); saves (C2f); and `PlaySession` with
 its drivers, and the world a driver answers from (C2g). Dynamic weights need a
-number from the world and entropy to spend it on, and wait for the pass that plays
-a random choice.
+number from the world and a draw to spend it on, and belong to
+[Drawing a Random Option](./Drawing%20a%20Random%20Option.md).
 
 ## What the corpus fixes
 

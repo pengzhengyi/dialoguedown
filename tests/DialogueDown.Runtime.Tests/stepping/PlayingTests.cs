@@ -134,14 +134,24 @@ public sealed class PlayingTests
     }
 
     [Fact]
-    public void At_AKindThisBuildCannotPlay_SaysSoRatherThanStalling()
+    public void At_ARandomChoice_AsksTheHostForADrawWithEachRandomOptionsShare() =>
+        // The auto weight takes what the numbers leave of 100.
+        AssertAskedForADraw(PlayTheFirstNode(PlayContextFactory.ARandomChoice()), 0, 50, 30, 20);
+
+    [Fact]
+    public void At_ARandomChoiceWhoseOnlyRandomOptionHoldsTheWholeTotal_StillAsksForADraw() =>
+        // Asking every time means the host meets every random choice the same way.
+        AssertAskedForADraw(PlayTheFirstNode(ARandomChoiceOfOneRandomOption()), 0, 100);
+
+    [Fact]
+    public void At_ANodeThisBuildCannotPlay_SaysSoRatherThanStalling()
     {
         // Silence here would leave a run standing at a node forever, which reads as a hang rather
-        // than as a node kind the runner cannot play.
+        // than as a node the runner cannot play.
         AssertRefused(
             PlayTheFirstNode(PlayContextFactory.NotYetPlayable()),
             RefusalReason.UnplayableNode,
-            "This build cannot play a node of kind RandomChoiceNode yet.");
+            "This build cannot play node 0, of kind RandomChoiceNode, yet.");
     }
 
     [Fact]
@@ -423,6 +433,17 @@ public sealed class PlayingTests
     /// <returns>A context whose only line is the one given.</returns>
     private static PlayContext OneLineSaying(string speaker, params SpeechFragment[] speech) =>
         PlayContextFactory.Of([LineOf([.. speech], id: 0, next: 1), End(id: 1)], [speaker]);
+
+    /// <summary>A random choice of one random option, then the line it leads to, then the end.</summary>
+    /// <remarks>
+    /// <code>
+    /// - `%` Guard: Halt!
+    /// </code>
+    /// </remarks>
+    /// <returns>A context that begins at the random choice.</returns>
+    private static PlayContext ARandomChoiceOfOneRandomOption() =>
+        PlayContextFactory.Of(
+            [RandomChoice(EvenChance(target: 1)), Line("Halt!", id: 1, next: 2), End(id: 2)], ["Guard"]);
 
     /// <summary>Two effects in one node, then a line, then the end.</summary>
     /// <remarks>

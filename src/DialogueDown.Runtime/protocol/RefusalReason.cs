@@ -57,4 +57,7 @@ public enum RefusalReason
 
     /// <summary><c>Choose</c> named an option the menu offered as one the player cannot take.</summary>
     UnavailableOption,
+
+    /// <summary><c>Drawn</c> carried a number below 0 or above 1, or one that is not a number.</summary>
+    InvalidDraw,
 }

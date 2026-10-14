@@ -181,7 +181,8 @@
               "const": "number"
             },
             "percentage": {
-              "type": "number"
+              "type": "number",
+              "minimum": 0
             }
           },
           "description": "A share the writer stated, relative to the others."

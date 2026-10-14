@@ -178,12 +178,14 @@ internal static class Arrival
     // condition is another, which only chooses the branch the run goes on by. Standing at either
     // would ask the player to advance past something they were never shown. A menu with no option
     // the player can take is walked past too, by its fall-through, because standing there would
-    // wait for a choice the player cannot make.
+    // wait for a choice the player cannot make. So is a random choice with nothing drawable,
+    // because no draw could land anywhere.
     private static bool IsWalkedPast(Node node, Supply? supply) =>
         node switch
         {
             ControlNode { Effects.IsEmpty: true } or BranchNode => true,
             ChoiceNode menu => Choosing.HasNoOptionAvailable(menu, supply),
+            RandomChoiceNode random => RandomChoiceShares.HasNothingDrawable(random),
             _ => false,
         };
 

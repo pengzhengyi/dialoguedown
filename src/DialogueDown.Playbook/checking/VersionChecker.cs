@@ -1,6 +1,7 @@
 using System.Globalization;
 
 using DialogueDown.Playbook.Common;
+using static DialogueDown.Playbook.Checking.PlaybookRefusal;
 
 namespace DialogueDown.Playbook.Checking;
 
@@ -36,13 +37,13 @@ public sealed class VersionChecker : IPlaybookChecker
 
         if (version > _newest)
         {
-            throw new InvalidPlaybookException(
+            Refuse(
                 $"This playbook is version {GetVersionString(version)}, and this build reads up to {GetVersionString(_newest)}.");
         }
 
         if (version < _oldest)
         {
-            throw new InvalidPlaybookException(
+            Refuse(
                 $"This playbook is version {GetVersionString(version)}, and this build reads back to {GetVersionString(_oldest)}.");
         }
     }

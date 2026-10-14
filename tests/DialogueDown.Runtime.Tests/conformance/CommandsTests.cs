@@ -31,6 +31,12 @@ public sealed class CommandsTests
     }
 
     [Fact]
+    public void TryRead_Drawn_IsTheDrawnCommand()
+    {
+        AssertReadableCommand<Drawn>("""{ "drawn": 0.7 }""");
+    }
+
+    [Fact]
     public void TryRead_Describe_IsNotPlayedYet()
     {
         AssertNotReadable("\"describe\"");

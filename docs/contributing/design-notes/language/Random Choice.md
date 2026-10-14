@@ -1,10 +1,12 @@
 # Random Choice
 
 > [!NOTE]
-> Status: **implemented** at compile time. A list whose options lead with a
-> weight (`` `50%` ``, `` `%` ``, `` `key%` ``) is a random choice the engine
-> resolves to one option; the runner does not draw one yet and refuses a
-> `random-choice` node (`unplayable-node`, see [Runner](../runtime/Runner.md)).
+> Status: **implemented** at compile time, and **partially implemented** at
+> runtime. A list whose options lead with a weight (`` `50%` ``, `` `%` ``,
+> `` `key%` ``) is a random choice the engine resolves to one option. The runner
+> draws at a random choice of number and auto weights, and refuses one with a
+> guarded option or a key weight (`unplayable-node`) until
+> [Drawing a Random Option](../runtime/Drawing%20a%20Random%20Option.md) is complete.
 
 ## Table of contents
 
@@ -159,17 +161,22 @@ At runtime:
    where `explicit` includes both numeric and resolved query weights. Each auto
    receives `leftover ÷ autoCount`.
 3. **Total** all resolved weights.
-4. **Reject a zero total.** No option can be selected. This mirrors
-   [`DLG2010`](#diagnostics) for static weights.
+4. **Select nothing from a zero total.** No option can be selected, so the run
+   walks past the random choice by its fall-through, or is refused as
+   `leads-nowhere` without one. This mirrors [`DLG2010`](#diagnostics) for static
+   weights.
 5. **Warn on drift.** If the total is more than 0.5 from 100, report the actual
    total, then continue. This mirrors [`DLG3003`](#diagnostics); the tolerance
    keeps deliberate rounding such as three `` `33.3%` `` weights quiet.
 6. **Normalize:** divide every resolved weight by the total so the probabilities
    sum to 1. Weights remain relative; they need not total 100 to work.
 
-The injectable normalization policy is the single definition of auto
-distribution and sum normalization; a runtime resolves `QueryWeight` values
-before invoking it.
+The playbook library's `DrawingWeight` is the single definition of steps 1 to 3:
+a number as written, an equal part of the leftover for each auto, and the total,
+added in the order written. The compiler and a runtime each turn their own weights
+into drawing weights, a runtime turning each `QueryWeight` into the number the
+world answered. The compiler's injectable normalization policy builds step 6 on
+the shares.
 
 ## Prior art
 
@@ -215,7 +222,8 @@ flowchart LR
     RC -->|static only| Rule["WeightTotalRule"]
     RC -->|contains query| Runtime["Runtime query resolution"]
     Rule --> Norm["IWeightNormalization"]
-    Runtime --> Norm
+    Norm --> Drawing["DrawingWeight<br/>(playbook library)"]
+    Runtime --> Drawing
 ```
 
 Recognition happens in the **transpiler**. `RandomChoiceRecognition` removes a
@@ -231,8 +239,8 @@ before its body.
 
 The **weight-total** rules run at compile time only for a fully static group.
 When a `QueryWeight` is present, the group is structurally valid but unresolved;
-a runtime resolves every query, validates the values, and invokes the same
-normalization policy.
+a runtime resolves every query, validates the values, and works out the shares
+with the same `DrawingWeight` arithmetic the compiler uses.
 
 ## Interfaces and responsibilities
 
@@ -245,12 +253,13 @@ normalization policy.
 | `NumberWeight` | A finite, non-negative literal percentage plus its source span. |
 | `AutoWeight` | A bare `%` plus its source span; resolved after explicit numeric and query weights. |
 | `QueryWeight` | A game-state query key plus its source span. The runtime numeric result becomes an explicit weight. |
-| `IWeightNormalization` | The injectable policy that fills autos, normalizes resolved values, and reports the raw total; shared by static validation and a runtime. |
+| `DrawingWeight` | In the playbook library: a weight ready for the draw, a number or an auto weight, and the arithmetic over them. Each number is its own share, each auto takes an equal part of what the numbers leave of 100, and the shares are added up in the order written. The one definition the compiler and a runtime share. |
+| `IWeightNormalization` | The compiler's injectable policy that divides the shares of its drawing weights by their total, recovers to a uniform distribution from a zero total, and reports the raw total. |
 | `ChoiceWeightReader` | Reads all three weight forms; a key goes through `QueryKeyReader`. |
 | `SemanticTokenProjection` | A weight is a Markdown code span the editor already colors, so no dedicated weight token is projected. Query-key completion stays deferred until a game-state symbol source exists. |
 | `DiagnosticCatalog` | Own `DLG1104`, `DLG1105`, `DLG2010`, `DLG3003`, and `DLG3004`. |
 | `WeightTotalRule` | Validates only fully static, unconditional groups. A group containing a `QueryWeight` or a conditional option defers zero/drift checks to runtime. |
-| `SingleOptionRandomChoiceRule` | A structural rule that warns (`DLG3004`) when a random choice offers only one option, since it is always selected and the weight has no effect. |
+| `SingleOptionRandomChoiceRule` | A structural rule that warns (`DLG3004`) when a random choice offers only one option, since it is always selected and the weight has no effect. A lone, unguarded `` `0%` `` option is left to `DLG2010`. |
 
 ## Key design decisions
 
@@ -348,17 +357,21 @@ node because a weight is not an inline game call and must participate in the
 
 ### D9 — Weight normalization is an injectable strategy
 
-Turning weights into probabilities — summing, filling autos, normalizing by the
-total, and the uniform recovery the compiler uses after reporting a zero total
-(`DLG2010`) — lives behind an `IWeightNormalization`
-seam, not inline in `BlockBuilder` or `WeightTotalRule`. This keeps the arithmetic
-a pure, table-testable unit independent of parsing, lets the compile-time warning
-and a runtime share one definition, and leaves room to swap the policy
-(for example, a strict "must total 100" variant) without touching recognition.
+Turning weights into probabilities — normalizing by the total, and the uniform
+recovery the compiler uses after reporting a zero total (`DLG2010`) — lives behind
+an `IWeightNormalization` seam, not inline in `BlockBuilder` or `WeightTotalRule`.
+This keeps the arithmetic a pure, table-testable unit independent of parsing, and
+leaves room to swap the policy (for example, a strict "must total 100" variant)
+without touching recognition.
 
-The strategy takes non-negative weights as a precondition — recognition rejects a
-negative weight as `DLG1105` before it reaches the AST — and fails fast on a
-violation, so its output probabilities are always valid.
+The shares the policy normalizes, with each auto weight's part worked out and the
+total added up, come from the playbook library's `DrawingWeight`. The runtime may
+depend only on that library, so keeping the share arithmetic there is what lets
+the compile-time warning and a runtime share one definition.
+
+The strategy takes finite, non-negative weights as a precondition — recognition
+rejects a negative or an infinite weight as `DLG1105` before it reaches the AST —
+and fails fast on a violation, so its output probabilities are always valid.
 
 For a dynamic group, the runtime first resolves each `QueryWeight` to a numeric
 explicit value and validates that it is finite and non-negative. Only then does
@@ -387,10 +400,10 @@ it so the code span is no longer the option's weight prefix.
 | Code | Title | Category | Severity | When |
 | --- | --- | --- | --- | --- |
 | `DLG1104` | Missing weight in a random choice | Syntax | Error | An option in a random choice has no leading weight span. |
-| `DLG1105` | Invalid choice weight | Syntax | Error | A weight value is a negative number (`` `-10%` ``). Any non-numeric text is a key. |
+| `DLG1105` | Invalid choice weight | Syntax | Error | A weight value is a negative number (`` `-10%` ``), or an infinite one (`` `Infinity%` ``, or more digits than a double holds). Any non-numeric text is a key. |
 | `DLG2010` | Random choice weights sum to zero | Semantic | Error | A fully static, unconditional random choice's weights all resolve to 0, so no option can be selected. |
 | `DLG3003` | Choice weights do not total 100% | Style | Warning | A fully static, unconditional random choice's weights do not total ≈100% (within 0.5, and not all zero); the odds are normalized anyway. |
-| `DLG3004` | Single-option random choice | Style | Warning | A random choice offers only one option, so it is always selected and the weight has no effect. |
+| `DLG3004` | Single-option random choice | Style | Warning | A random choice offers only one option, so it is always selected and the weight has no effect. A lone, unguarded `` `0%` `` option is `DLG2010` instead. |
 
 `DLG1104`/`DLG1105` sit in the `DLG11xx` line/inline-surface band alongside the
 game-call diagnostics. A zero total is a meaning-level fault, not a token-level
@@ -403,13 +416,15 @@ one, so it takes a semantic (`DLG2xxx`) code. `DLG3003` and `DLG3004` are style
 | --- | --- |
 | No option weighted | Ordinary player choice; unchanged. |
 | Some options weighted, one bare | `DLG1104` on the bare option; recover it as an auto. |
-| Single weighted option | Valid, but always selected, so `DLG3004` warns that the weight has no effect. |
+| Single weighted option | Valid, but always selected while its weight is above zero, so `DLG3004` warns that the weight has no effect. |
+| Single `` `0%` `` option, unguarded | `DLG2010`: it is never selected. |
 | All auto (`` `%` `` everywhere) | Uniform random. |
 | Explicit total < 100, no autos | `DLG3003`; normalize by the sum. |
 | Explicit total within 0.5 of 100 (e.g. three `` `33.3%` `` → 99.9) | No warning. |
 | Explicit total > 100 | Autos resolve to 0%; `DLG3003`; normalize by the sum. |
 | Every weight 0 (`` `0%` ``), sum 0 | `DLG2010` error; the strategy recovers to a uniform distribution. |
 | Negative weight (`` `-10%` ``) | `DLG1105`. |
+| Infinite weight (`` `Infinity%` ``, or more digits than a double holds) | `DLG1105`. |
 | Non-numeric value (`` `abc%` ``) | A `QueryWeight` on the key `abc`. |
 | Non-integer (`` `33.3%` ``) | Allowed; normalized. |
 | Key weight (`` `q%` `` or `` `"q"%` ``) | Accepted as `QueryWeight`; compile-time total checks are deferred. |
@@ -465,12 +480,11 @@ indentation are visible.
 
 ## Open questions and deferred work
 
-- **Runtime execution** — the runner refuses a `random-choice` node; resolving a
-  `QueryWeight`, validating it, and drawing the weighted sample come with the world
-  seam and the entropy decision owned by the
-  [runtime architecture](../runtime/Dialogue%20Runtime%20Architecture.md#open-questions-and-deferred-work).
+- **Runtime execution** — the runner draws at a random choice of number and auto
+  weights, the host supplying each draw, so a replay of the commands replays every
+  draw. Asking the world about a guarded option, and resolving and validating a
+  `QueryWeight`, come with the rest of
+  [Drawing a Random Option](../runtime/Drawing%20a%20Random%20Option.md).
 - **Weighted player menu** — weights that bias a *shown* menu (for previews or
   autoplay) are explicitly out of scope; this construct always resolves to one
   option with no menu.
-- **Replay** — whether a draw is drawn again on replay belongs to the same
-  entropy decision.

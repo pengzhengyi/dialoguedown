@@ -8,8 +8,9 @@ namespace DialogueDown.Runtime.Stepping;
 
 /// <summary>
 /// What playing a node hands the host — a line's words and commands, a control block's effects, a
-/// menu's options, or the end — and what follows once the host has done what the node asked, or
-/// once the world has answered what a line needs part-way through.
+/// menu's options, a random choice's request for a draw, or the end — and what follows once the
+/// host has done what the node asked, or once the world has answered what a line needs part-way
+/// through.
 /// </summary>
 /// <remarks>
 /// A node is played once the run has arrived at it and the world has answered what it asked, so
@@ -33,6 +34,8 @@ internal static class Playing
             LineNode line => Line(context, position, line, supply, segmentIndex: 0),
             ControlNode control => Control(position, control),
             ChoiceNode choice => Choosing.Offer(position, choice, supply),
+            RandomChoiceNode random when RandomChoiceShares.TryWorkOut(random, out var shares) =>
+                Drawing.AskForADraw(position, shares),
             EndNode => End(),
             var unplayable => Unplayable(position, unplayable),
         };
@@ -154,12 +157,13 @@ internal static class Playing
 
     private static StepResult End() => new(new PlayState(new AtEnd()), [new Ended()]);
 
-    // Refused rather than answered with no events, which would look like a hang.
+    // Refused rather than answered with no events, which would look like a hang. A random choice
+    // comes here when only the world can say what its shares are.
     private static StepResult Unplayable(int position, Node unplayable) =>
         StepResults.Refuse(
             position,
             RefusalReason.UnplayableNode,
-            $"This build cannot play a node of kind {unplayable.GetType().Name} yet.");
+            $"This build cannot play node {position}, of kind {unplayable.GetType().Name}, yet.");
 
     // Nothing new is said, and nothing is left for the host to answer, so the player has the turn.
     private static StepResult WaitForThePlayer(int position) =>

@@ -155,6 +155,20 @@ public sealed class NodeTraversalExtensionsTests
         Assert.Throws<ArgumentNullException>(() => ((ChoiceNode)null!).Options());
     }
 
+    [Fact]
+    public void RandomOptions_ARandomChoiceWithAFallThrough_AreOnlyItsRandomOptionsInTheOrderListed()
+    {
+        var random = RandomChoice(Chance(50, target: 7), Succession(4), EvenChance(target: 8));
+
+        Assert.Equal([7, 8], random.RandomOptions().Select(option => option.Target));
+    }
+
+    [Fact]
+    public void RandomOptions_NoRandomChoice_IsRefused()
+    {
+        Assert.Throws<ArgumentNullException>(() => ((RandomChoiceNode)null!).RandomOptions());
+    }
+
     /// <summary>A node whose jump the world must allow, with a fall-through beneath it.</summary>
     /// <remarks>
     /// <code>

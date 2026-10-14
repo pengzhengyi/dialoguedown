@@ -110,6 +110,21 @@ changes easy to categorize.
   conformant runtimes. See
   [Branch order](docs/contributing/design-notes/runtime/Playbook%20Reader%20Rules.md).
 
+- **A run draws at a random choice** — `Draw(shares)` joins the requests a run stops for: a random
+  choice of number and auto weights names every random option's share, in the order written, and
+  the run waits for the host's `Drawn(value)`, a number from 0 to 1, then follows the random option
+  whose span holds it. The host owns randomness and seeding, so replaying the commands replays
+  every draw. A draw outside 0 to 1 is refused as `invalid-draw` and the run keeps waiting; a
+  random choice with nothing to draw is walked past by its fall-through. A random choice with a
+  guarded option or a key weight is still refused as `unplayable-node`. See
+  [Drawing a random option](docs/contributing/design-notes/runtime/Drawing%20a%20Random%20Option.md).
+
+- **A random choice's number weights are checked when a playbook loads** — the reader refuses a
+  number weight that is negative or not finite, and number weights that add up to more than a
+  double can hold, so no runtime has to decide what a draw against them means; the schema gives a
+  number weight a minimum of 0. See
+  [Number weights](docs/contributing/design-notes/runtime/Playbook%20Reader%20Rules.md#number-weights).
+
 - **Jump from a playbook table into the JSON** — in the Playbook tab, clicking a node number,
   a speaker's name, or the entry node scrolls the serialized playbook to that element and centers
   it, so reading `#the-market → 33` no longer means hunting for node 33 by hand. See
@@ -128,6 +143,11 @@ changes easy to categorize.
   [Game Calls in Labels](docs/contributing/design-notes/language/Game%20Calls%20in%20Labels.md).
 
 ### Changed
+
+- **A random choice whose only option weighs `0%` is an error** — it compiled with a warning
+  that the option is always selected, but an option with no weight is never selected. It is now
+  reported as a zero total (`DLG2010`), as two `0%` options already were, and the warning stays
+  quiet for it.
 
 - **The conformance harness reports every divergence a case has** — an outcome carries a list of
   reasons rather than only the first, so a contributor meets every fault a fixture found in one run
@@ -228,6 +248,11 @@ changes easy to categorize.
   that answer from a world.
 
 ### Fixed
+
+- **An infinite weight is reported instead of stopping the compiler** — `` `Infinity%` ``, or a
+  weight written with more digits than a double holds, read as an infinite number, and the
+  compiler stopped with an error when it wrote the playbook. It is now reported as an invalid
+  weight (`DLG1105`), as a negative one is.
 
 - **A disabled action stays readable in the light theme** — the Discard button, and the
   Explorer's New file and New folder while in View, dimmed their labels to about 2:1 against

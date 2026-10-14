@@ -40,9 +40,14 @@ public sealed class PlayabilityTests
     [Fact]
     public void WhyNotPlayable_OfAPlaybook_NamesEachKindOnce()
     {
+        // Two random choices this build cannot play yet: one guarded, and one the world weighs.
         var context = PlayContextFactory.Of(
-            [RandomChoice(EvenChance(target: 2)), RandomChoice(id: 1, EvenChance(target: 2)), End(id: 2)],
-            ["Alice"]);
+            [
+                RandomChoice(EvenChance(condition: "Guard.IsAngry", target: 2), EvenChance(target: 2)),
+                RandomChoice(id: 1, Chance("Guard.Mood", target: 2), EvenChance(target: 2)),
+                End(id: 2),
+            ],
+            ["Guard"]);
 
         AssertNotPlayable(context, "nothing plays a RandomChoiceNode yet");
     }
@@ -86,8 +91,9 @@ public sealed class PlayabilityTests
     public void WhatTheHarnessDeclines_IsWhatTheRunnerRefuses()
     {
         // The harness screens a playbook before stepping, and the screen restates what the runner
-        // can play, so the two must agree: on every kind, and on each way a menu asks the world.
-        foreach (var (name, node) in EveryKindAndEveryMenuThatAsksTheWorld())
+        // can play, so the two must agree: on every kind, and on each way a menu or a random choice
+        // asks the world.
+        foreach (var (name, node) in EveryKindAndEachNodeThatAsksTheWorld())
         {
             var refused = node.RefusalOnArrival() is not null;
 
@@ -108,16 +114,20 @@ public sealed class PlayabilityTests
     }
 
     /// <summary>
-    /// One node of every kind, named by its kind, and each menu that asks the world, named by the
-    /// scenario that builds it.
+    /// One node of every kind, named by its kind, and each menu and random choice that asks the
+    /// world, named by the scenario that builds it.
     /// </summary>
     /// <returns>Each node, with the name a failure reports it by.</returns>
-    private static IEnumerable<(string Name, Node Node)> EveryKindAndEveryMenuThatAsksTheWorld() =>
+    private static IEnumerable<(string Name, Node Node)> EveryKindAndEachNodeThatAsksTheWorld() =>
     [
         .. PlayContextFactory.OneOfEveryNodeKind().Select(node => (node.GetType().Name, node)),
         (
             nameof(PlayContextFactory.AMenuWithAConditionalOption),
             PlayContextFactory.AMenuWithAConditionalOption()),
         (nameof(PlayContextFactory.AMenuWithAQueryInALabel), PlayContextFactory.AMenuWithAQueryInALabel()),
+        (
+            nameof(PlayContextFactory.ARandomChoiceWithAGuardedRandomOption),
+            PlayContextFactory.ARandomChoiceWithAGuardedRandomOption()),
+        (nameof(PlayContextFactory.ARandomChoiceWithAKeyWeight), PlayContextFactory.ARandomChoiceWithAKeyWeight()),
     ];
 }

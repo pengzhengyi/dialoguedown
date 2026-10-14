@@ -33,6 +33,7 @@ public sealed class RunnerWalkPropertyTests
             RefusalReason.WrongAnswerKind,
             RefusalReason.NoSuchOption,
             RefusalReason.UnavailableOption,
+            RefusalReason.InvalidDraw,
         ];
 
     /// <summary>
@@ -148,6 +149,43 @@ public sealed class RunnerWalkPropertyTests
     }
 
     /// <summary>
+    /// A run only ever asks for a draw that can land on a random option.
+    /// </summary>
+    /// <remarks>
+    /// A random choice with nothing drawable is walked past, so a draw asked for there would wait
+    /// for a number that could pick nothing.
+    /// </remarks>
+    [Fact]
+    public void AWalkIsOnlyEverAskedForADrawThatCanLand() =>
+        ForEveryWalk(
+            (_, stepped) => Assert.All(
+                stepped.Events.OfType<Draw>(), draw => Assert.Contains(draw.Shares, share => share > 0)));
+
+    /// <summary>
+    /// Some walk is asked for a draw.
+    /// </summary>
+    /// <remarks>
+    /// This checks the walk rather than the runner. If no walk met a random choice it could draw at,
+    /// the walk above would pass without a draw ever being asked for.
+    /// </remarks>
+    [Fact]
+    public void SomeWalk_IsAskedForADraw()
+    {
+        var draws = 0;
+
+        ForEveryWalk(
+            (_, stepped) =>
+            {
+                if (stepped.Events.OfType<Draw>().Any())
+                {
+                    Interlocked.Increment(ref draws);
+                }
+            });
+
+        Assert.True(draws > 0, "No walk was asked for a draw.");
+    }
+
+    /// <summary>
     /// Every answer a walk gives is one the run accepts.
     /// </summary>
     /// <remarks>
@@ -181,11 +219,12 @@ public sealed class RunnerWalkPropertyTests
             playbook => PlaybookCheckerFactory.CreateDefault().Check(playbook), iter: Samples);
 
     // Walks every drawn playbook from its start, answering its questions from a world drawn beside
-    // it, and taking an option the player can take at every menu, picked by a number drawn for it.
-    // Every step the walk takes is checked, not only the one it stops at.
+    // it, taking an option the player can take at every menu, picked by a number drawn for it, and
+    // drawing at every random choice with a draw made for it. Every step the walk takes is checked,
+    // not only the one it stops at.
     private static void ForEveryWalk(Action<PlayContext, StepResult> everyStepHolds) =>
-        Gen.Select(PlaybookGen.Valid(), PlaybookGen.Worlds(), Gen.Int.NonNegative).Sample(
-            (playbook, world, pick) =>
+        Gen.Select(PlaybookGen.Valid(), PlaybookGen.Worlds(), Gen.Int.NonNegative, Draws()).Sample(
+            (playbook, world, pick, draw) =>
             {
                 var context = PlayContext.Of(playbook);
                 var state = PlayState.Initial;
@@ -198,21 +237,25 @@ public sealed class RunnerWalkPropertyTests
                     everyStepHolds(context, stepped);
 
                     state = stepped.State;
-                    command = MovesOnFrom(state.Situation, world, pick);
+                    command = MovesOnFrom(state.Situation, world, pick, draw);
                 }
             },
             iter: Samples);
 
+    // A draw from 0 to 1, with both ends drawn on their own, because a host may send either.
+    private static Gen<double> Draws() => Gen.OneOf(Gen.Const(0.0), Gen.Const(1.0), Gen.Double[0.0, 1.0]);
+
     // The walk sends whatever the stage it reached calls for, so a run that stopped to hand the
-    // host work, to ask the world something, or to offer a menu carries on rather than ending the
-    // walk there.
-    private static Command? MovesOnFrom(Situation situation, DrawnWorld world, int pick) =>
+    // host work, to ask the world something, to offer a menu, or to ask for a draw carries on
+    // rather than ending the walk there.
+    private static Command? MovesOnFrom(Situation situation, DrawnWorld world, int pick, double draw) =>
         situation switch
         {
             AtNode => new Next(),
             AwaitingDone => new Done(),
             AwaitingSupply waiting => world.Answering(waiting.Keys),
             AwaitingChoice waiting => new Choose(OneThePlayerCanTake(waiting, pick)),
+            AwaitingDraw => new Drawn(draw),
             _ => null,
         };
 
@@ -228,7 +271,7 @@ public sealed class RunnerWalkPropertyTests
 
     private static void AssertAddressable(PlayContext context, Situation situation)
     {
-        // Four stages name a node, and a walk standing outside the document at any of them is the
+        // Five stages name a node, and a walk standing outside the document at any of them is the
         // same defect.
         var node = situation switch
         {
@@ -236,6 +279,7 @@ public sealed class RunnerWalkPropertyTests
             AwaitingDone waiting => waiting.Node,
             AwaitingSupply waiting => waiting.Node,
             AwaitingChoice waiting => waiting.Node,
+            AwaitingDraw waiting => waiting.Node,
             _ => (int?)null,
         };
 

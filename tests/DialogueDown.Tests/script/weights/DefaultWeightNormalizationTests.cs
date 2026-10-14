@@ -107,6 +107,14 @@ public sealed class DefaultWeightNormalizationTests
         Assert.Throws<ArgumentOutOfRangeException>(
             () => _normalizer.Normalize([NumberWeight(-10), NumberWeight(50)]));
 
+    [Theory]
+    [InlineData(double.PositiveInfinity)]
+    [InlineData(double.NaN)]
+    public void AWeightThatIsNotFinite_IsRejected_AsACallerError(double percentage) =>
+        // Recognition reports an infinite weight instead of building it, so one here is a bug.
+        Assert.Throws<ArgumentOutOfRangeException>(
+            () => _normalizer.Normalize([NumberWeight(percentage), NumberWeight(50)]));
+
     [Fact]
     public void AQueryWeight_IsRejected_AsACallerError()
     {

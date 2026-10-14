@@ -20,11 +20,15 @@ internal static class EventDescription
             Perform perform => $"asked the host to perform {Effect(perform)}",
             Resolve resolve => $"asked the world about {string.Join(", ", resolve.Keys)}",
             Offer offer => $"offered a menu: {Labels(offer)}",
+            Draw draw => $"asked the host to draw against {Shares(draw)}",
             _ => happened.GetType().Name,
         };
 
     // Written as a fixture claims it, so a reader can set the two side by side.
     private static string Effect(Perform perform) => JsonSerializer.Serialize(perform.Effect, FixtureJson.Compact);
+
+    // Written as a fixture claims them, so a reader can set the two side by side.
+    private static string Shares(Draw draw) => JsonSerializer.Serialize(draw.Shares, FixtureJson.Compact);
 
     // Each label is quoted, so a label holding a comma still reads as one option.
     private static string Labels(Offer offer) =>
