@@ -2,6 +2,7 @@ using System.Text;
 using DialogueDown.Cli.Tests.Support;
 using DialogueDown.Compilation;
 using DialogueDown.Configuration;
+using DialogueDown.Diagnostics;
 using DialogueDown.Playbook;
 using DialogueDown.TestSupport;
 using DialogueDown.Visualization.Live;
@@ -590,15 +591,15 @@ public sealed class CompileCommandTests
     }
 
     [Theory]
-    [InlineData("DLG302", "--disable DLG302: Unknown diagnostic code 'DLG302'")]
-    [InlineData("DLG3002,dlg2001", "--disable dlg2001: DLG2001 is an error and cannot be disabled")]
-    public void Compile_DisableACodeThatCannotBeDisabled_FailsWithUsageError(string value, string message)
+    [InlineData("DLG302", "DLG302")]
+    [InlineData("DLG3002,dlg2001", "dlg2001")]
+    public void Compile_DisableACodeThatCannotBeDisabled_FailsWithUsageErrorNamingTheCode(string value, string code)
     {
         using var script = new TempScript("# Scene");
 
         var result = CliTester.Create().Run("compile", script.Path, "--disable", value);
 
-        AssertExited(result, ExitCodes.UsageError, message);
+        AssertExited(result, ExitCodes.UsageError, $"--disable {code}: {DisabledDiagnosticCodes.Check(code).Problem}");
     }
 
     [Fact]

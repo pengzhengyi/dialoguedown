@@ -115,18 +115,7 @@ public sealed partial record CompilerOptions
 
     private static string NormalizeDisabledCode(string code)
     {
-        ArgumentNullException.ThrowIfNull(code);
-        var info = DiagnosticCodes.Find(code)
-            ?? throw new ArgumentException(
-                $"Cannot disable '{code}': no diagnostic has that code.", nameof(code));
-        if (!info.IsOptional)
-        {
-            throw new ArgumentException(
-                $"Cannot disable {info.Code}: it is an error, and only info and warning codes can be "
-                + "disabled.",
-                nameof(code));
-        }
-
-        return info.Code;
+        var check = DisabledDiagnosticCodes.Check(code);
+        return check.IsValid ? check.Code : throw new ArgumentException(check.Problem, nameof(code));
     }
 }

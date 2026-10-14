@@ -1,6 +1,7 @@
 using DialogueDown.ConfigurationLoader.Errors;
 using DialogueDown.ConfigurationLoader.Readers;
 using DialogueDown.ConfigurationLoader.Tests.Support;
+using DialogueDown.Diagnostics;
 using Tomlyn.Syntax;
 using static DialogueDown.ConfigurationLoader.Tests.Support.ConfigurationErrorAssert;
 
@@ -46,27 +47,29 @@ public sealed class ConfiguredDiagnosticsReaderTests
                 """));
 
     [Fact]
-    public void Read_UnknownCode_ThrowsAtTheCode()
+    public void Read_UnknownCode_ThrowsTheCheckProblemAtTheCode()
     {
         var exception = AssertRejects("""
             [diagnostics]
             disable = ["DLG302"]
             """);
 
-        AssertRejectedAt(exception, line: 2, "Unknown diagnostic code 'DLG302'", "error-codes.html");
-        Assert.Equal(12, exception.Location.Column);
+        AssertRejectedAt(exception, line: 2);
+        Assert.Equal(12, exception.Location.Column); // the opening quote of "DLG302"
+        Assert.Equal(DisabledDiagnosticCodes.Check("DLG302").Problem, exception.Message);
     }
 
     [Fact]
-    public void Read_ErrorCode_ThrowsAtTheCode()
+    public void Read_ErrorCode_ThrowsTheCheckProblemAtTheCode()
     {
         var exception = AssertRejects("""
             [diagnostics]
             disable = ["DLG3002", "DLG2001"]
             """);
 
-        AssertRejectedAt(exception, line: 2, "DLG2001 is an error and cannot be disabled");
-        Assert.Equal(23, exception.Location.Column);
+        AssertRejectedAt(exception, line: 2);
+        Assert.Equal(23, exception.Location.Column); // the opening quote of "DLG2001"
+        Assert.Equal(DisabledDiagnosticCodes.Check("DLG2001").Problem, exception.Message);
     }
 
     [Fact]

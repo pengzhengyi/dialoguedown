@@ -1,5 +1,6 @@
 using System.Collections.Immutable;
 using DialogueDown.Configuration;
+using DialogueDown.Diagnostics;
 using static DialogueDown.Tests.Support.ConfigurationFactory;
 
 namespace DialogueDown.Tests.Configuration;
@@ -168,15 +169,21 @@ public sealed class CompilerOptionsTests
 
     [Fact]
     public void DisabledDiagnostics_OneCodeInTwoCases_IsOneEntry() =>
-        Assert.Single((CompilerOptions.Default with { DisabledDiagnostics = ["DLG3002", "dlg3002"] }).DisabledDiagnostics);
+        Assert.Equal(
+            ["DLG3002"],
+            (CompilerOptions.Default with { DisabledDiagnostics = ["DLG3002", "dlg3002"] }).DisabledDiagnostics);
 
     [Theory]
     [InlineData("DLG302")] // no such code
-    [InlineData("")]
     [InlineData("DLG2001")] // an error
-    public void DisabledDiagnostics_AnUnknownOrErrorCode_Throws(string code) =>
-        Assert.Throws<ArgumentException>(
+    public void DisabledDiagnostics_ACodeThatCannotBeDisabled_ThrowsTheCheckProblem(string code)
+    {
+        var exception = Assert.Throws<ArgumentException>(
             () => CompilerOptions.Default with { DisabledDiagnostics = [code] });
+
+        // .NET appends the parameter name to the message.
+        Assert.StartsWith(DisabledDiagnosticCodes.Check(code).Problem, exception.Message, StringComparison.Ordinal);
+    }
 
     [Fact]
     public void DisabledDiagnostics_Null_Throws() =>

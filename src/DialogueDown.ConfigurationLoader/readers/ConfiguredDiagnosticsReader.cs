@@ -93,20 +93,7 @@ internal sealed class ConfiguredDiagnosticsReader
             throw TomlErrors.At("Each code in 'disable' must be a string, such as \"DLG3002\".", value);
         }
 
-        var code = text.Value!;
-        var info = DiagnosticCodes.Find(code)
-            ?? throw TomlErrors.At(
-                $"Unknown diagnostic code '{code}'. Check the code against the error-code reference: "
-                    + DiagnosticDocumentation.ReferencePage,
-                value);
-        if (!info.IsOptional)
-        {
-            throw TomlErrors.At(
-                $"{info.Code} is an error and cannot be disabled; only info and warning codes can. "
-                    + "Fix the problem it reports instead.",
-                value);
-        }
-
-        return info.Code;
+        var check = DisabledDiagnosticCodes.Check(text.Value!);
+        return check.IsValid ? check.Code : throw TomlErrors.At(check.Problem, value);
     }
 }

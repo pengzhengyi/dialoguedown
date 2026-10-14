@@ -115,20 +115,6 @@ internal sealed class CompileSettings : CommandSettings
         return ValidateEmit();
     }
 
-    private static string? DisableProblem(string code)
-    {
-        var info = DiagnosticCodes.Find(code);
-        if (info is null)
-        {
-            return $"Unknown diagnostic code '{code}'. Check the code against the error-code reference: "
-                + DiagnosticDocumentation.ReferencePage;
-        }
-
-        return info.IsOptional
-            ? null
-            : $"{info.Code} is an error and cannot be disabled; only info and warning codes can.";
-    }
-
     // A trailing or doubled comma leaves an empty entry, which is dropped.
     private static List<string> SplitCodes(string value) =>
         [.. value.Split(',', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries)];
@@ -147,10 +133,10 @@ internal sealed class CompileSettings : CommandSettings
 
             foreach (var code in codes)
             {
-                var problem = DisableProblem(code);
-                if (problem is not null)
+                var check = DisabledDiagnosticCodes.Check(code);
+                if (!check.IsValid)
                 {
-                    return ValidationResult.Error($"--disable {code}: {problem}");
+                    return ValidationResult.Error($"--disable {code}: {check.Problem}");
                 }
             }
         }
