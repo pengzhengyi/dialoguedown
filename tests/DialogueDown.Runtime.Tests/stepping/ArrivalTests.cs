@@ -298,7 +298,7 @@ public sealed class ArrivalTests
         AssertRefused(
             Arrival.At(ALineNeedingOneKeyBothWays(), 0),
             RefusalReason.KeyNeededBothWays,
-            "Node 0 needs Alice.HasKey as a truth and as words both, and a single answer can only be one of those.");
+            "Node 0 needs Alice.HasKey as more than one kind of answer, and a single answer can only be one kind.");
 
     [Fact]
     public void At_AMenuNeedingOneKeyBothWays_RefusesBeforeAskingAnything() =>
@@ -307,7 +307,7 @@ public sealed class ArrivalTests
         AssertRefused(
             Arrival.At(AMenuNeedingOneKeyBothWays(), 0),
             RefusalReason.KeyNeededBothWays,
-            "Node 0 needs Alice.HasKey as a truth and as words both, and a single answer can only be one of those.");
+            "Node 0 needs Alice.HasKey as more than one kind of answer, and a single answer can only be one kind.");
 
     [Fact]
     public void Supplied_ToALineNeedingOneKeyBothWays_RefusesRatherThanReadingTheWrongKind() =>
@@ -319,7 +319,7 @@ public sealed class ArrivalTests
                 Waiting(0, "Alice.HasKey"),
                 Answering(("Alice.HasKey", "yes"))),
             RefusalReason.KeyNeededBothWays,
-            "Node 0 needs Alice.HasKey as a truth and as words both, and a single answer can only be one of those.");
+            "Node 0 needs Alice.HasKey as more than one kind of answer, and a single answer can only be one kind.");
 
     [Fact]
     public void Supplied_WithAnAnswerNobodyAskedFor_RefusesAndStaysWhereItAsked()

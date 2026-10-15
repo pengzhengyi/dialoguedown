@@ -25,7 +25,7 @@ internal static class NodeArrivalExtensions
     /// <summary>Whether the runner has no code for a node of this kind yet.</summary>
     /// <remarks>
     /// Narrower than refusing: a node can also be refused for the data it holds, such as a key it
-    /// needs both as a truth and as words.
+    /// needs as more than one kind of answer.
     /// </remarks>
     /// <param name="node">The node to arrive at.</param>
     /// <returns>

@@ -42,7 +42,7 @@ public enum RefusalReason
     /// <summary>The world answered a key with something other than the kind its use needs.</summary>
     WrongAnswerKind,
 
-    /// <summary>One key on a node is needed as a truth and as words both.</summary>
+    /// <summary>One key on a node is needed as more than one kind of answer.</summary>
     /// <remarks>
     /// A key is asked about once, so in <c>`Alice.HasKey?` Alice: You have `"Alice.HasKey"`.</c>
     /// one answer would have to be both a truth and words.
