@@ -108,7 +108,9 @@ internal static class NodeQuestionExtensions
 
         return node switch
         {
-            RandomChoiceNode random => WeightKeysOfRandomOptions(random),
+            // A random choice reads every key weight before it asks for a draw, so each random
+            // option in play has its number when the shares are worked out.
+            RandomChoiceNode random => random.RandomOptions().WeightKeys(),
             _ => [],
         };
     }
@@ -134,6 +136,28 @@ internal static class NodeQuestionExtensions
         ];
     }
 
+    /// <summary>The keys the key weights of some random options read.</summary>
+    /// <param name="randomOptions">The random options, in the order written.</param>
+    /// <returns>
+    /// The keys, in the order written and each named once. Empty when every weight is written.
+    /// </returns>
+    /// <remarks>
+    /// Read from whichever random options it is given, so a caller can leave some out first.
+    /// </remarks>
+    public static ImmutableArray<string> WeightKeys(this IEnumerable<RandomOptionEdge> randomOptions)
+    {
+        ArgumentNullException.ThrowIfNull(randomOptions);
+
+        return
+        [
+            .. randomOptions
+                .Select(option => option.Weight)
+                .OfType<QueryWeight>()
+                .Select(keyWeight => keyWeight.Key)
+                .Distinct(StringComparer.Ordinal),
+        ];
+    }
+
     // A menu reads every option's condition before it is offered, so whether each option can be
     // taken is known when the menu is shown.
     private static ImmutableArray<string> ConditionKeysOfOptions(ChoiceNode menu) =>
@@ -148,17 +172,6 @@ internal static class NodeQuestionExtensions
     // conditions.
     private static ImmutableArray<string> QueryKeysOfLabels(ChoiceNode menu) =>
         [.. menu.Options().SelectMany(option => SpeechTemplate.Keys(option.Label)).Distinct(StringComparer.Ordinal)];
-
-    // A random choice reads every key weight before it asks for a draw, so each random option in
-    // play has its number when the shares are worked out.
-    private static ImmutableArray<string> WeightKeysOfRandomOptions(RandomChoiceNode random) =>
-    [
-        .. random.RandomOptions()
-            .Select(option => option.Weight)
-            .OfType<QueryWeight>()
-            .Select(keyWeight => keyWeight.Key)
-            .Distinct(StringComparer.Ordinal),
-    ];
 
     private static ImmutableArray<string> KeysOf(Condition? condition) => condition?.Keys() ?? [];
 }

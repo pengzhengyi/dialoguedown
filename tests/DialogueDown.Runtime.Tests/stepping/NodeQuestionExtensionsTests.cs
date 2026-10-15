@@ -1,3 +1,4 @@
+using DialogueDown.Playbook.Edges;
 using DialogueDown.Playbook.Nodes;
 using DialogueDown.Runtime.Stepping;
 using static DialogueDown.TestSupport.PlaybookNodeFactory;
@@ -182,10 +183,41 @@ public sealed class NodeQuestionExtensionsTests
                 .FindTruthsForLeaving());
 
     [Fact]
+    public void WeightKeys_NameTheKeyWeightsInTheOrderWritten_EachOnce() =>
+        Assert.Equal(
+            ["Guard.Mood", "Guard.Patience"],
+            RandomChoice(
+                Chance("Guard.Mood", target: 1),
+                Chance(20, target: 2),
+                Chance("Guard.Patience", target: 3),
+                Chance("Guard.Mood", target: 4))
+                .RandomOptions()
+                .WeightKeys());
+
+    [Fact]
+    public void WeightKeys_NameOnlyTheKeyWeightsOfTheRandomOptionsGiven() =>
+        Assert.Equal(
+            ["Guard.Patience"],
+            RandomChoice(
+                Chance("Guard.Mood", condition: "Guard.IsAngry", target: 1),
+                Chance("Guard.Patience", target: 2))
+                .RandomOptions()
+                .Where(option => option.Condition is null)
+                .WeightKeys());
+
+    [Fact]
+    public void WeightKeys_OfRandomOptionsWhoseOddsAreAllWritten_AreNone() =>
+        Assert.Empty(RandomChoice(Chance(50, target: 1), EvenChance(target: 2)).RandomOptions().WeightKeys());
+
+    [Fact]
     public void FindTruthsForPlaying_AreNotReadFromNothing() =>
         Assert.Throws<ArgumentNullException>(() => ((Node)null!).FindTruthsForPlaying());
 
     [Fact]
     public void FindTruthsForLeaving_AreNotReadFromNothing() =>
         Assert.Throws<ArgumentNullException>(() => ((Node)null!).FindTruthsForLeaving());
+
+    [Fact]
+    public void WeightKeys_AreNotReadFromNothing() =>
+        Assert.Throws<ArgumentNullException>(() => ((IEnumerable<RandomOptionEdge>)null!).WeightKeys());
 }
