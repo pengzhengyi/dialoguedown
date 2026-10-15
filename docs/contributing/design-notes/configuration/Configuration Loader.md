@@ -1,7 +1,7 @@
 # Configuration Loader
 
-> [!IMPORTANT]
-> Status: **approved, in progress**. `TomlConfigurationLoader` reads a project's
+> [!NOTE]
+> Status: **implemented**. `TomlConfigurationLoader` reads a project's
 > `dialogue.toml` into a [`CompilerOptions`](./Configuration.md), validating it
 > first. It is a separate assembly, `DialogueDown.ConfigurationLoader`, so the core
 > never takes a TOML dependency. A setting means the same thing in every TOML

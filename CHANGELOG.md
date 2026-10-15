@@ -147,6 +147,17 @@ changes easy to categorize.
 
 ### Changed
 
+- **An unknown key in `dialogue.toml` is an error** — a misspelled setting (`modee`,
+  `[[speaker]]`) or an unknown key under `[markdown]` (`[markdown.unmodled]`) was ignored, which
+  left the setting at its default without a word. It is now rejected with its file, line, and
+  column, and the message lists the keys allowed there. A dotted key is a nested table by TOML's
+  rules, so `mode.strategy = "…"` is now reported as a `mode` that is not a string, and a dotted
+  speaker or kind key such as `name.first` as a `name` that is not a string.
+
+- **A `dialogue.toml` error points at the exact element** — an error about one element of an
+  array, such as a tag that is neither a string nor a table, points at that element, also when
+  the array spans several lines.
+
 - **A random choice whose only option weighs `0%` is an error** — it compiled with a warning
   that the option is always selected, but an option with no weight is never selected. It is now
   reported as a zero total (`DLG2010`), as two `0%` options already were, and the warning stays
@@ -251,6 +262,12 @@ changes easy to categorize.
   that answer from a world.
 
 ### Fixed
+
+- **Every TOML spelling of a `dialogue.toml` setting is read** — a setting written as an inline
+  table, an inline array of tables, or a dotted key (`speakers = [{ name = "Alice" }]`,
+  `markdown.unmodeled.table = "keep"`) was ignored without an error, so the compile ran on the
+  defaults. Each spelling now configures what its `[table]` or `[[array]]` form does. See
+  [Configuration Loader](docs/contributing/design-notes/configuration/Configuration%20Loader.md).
 
 - **An infinite weight is reported instead of stopping the compiler** — `` `Infinity%` ``, or a
   weight written with more digits than a double holds, read as an infinite number, and the
