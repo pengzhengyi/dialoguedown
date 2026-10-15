@@ -342,6 +342,7 @@
                 "unanswered-key",
                 "unasked-key",
                 "wrong-answer-kind",
+                "invalid-weight",
                 "key-needed-both-ways",
                 "unplayable-node",
                 "no-such-option",

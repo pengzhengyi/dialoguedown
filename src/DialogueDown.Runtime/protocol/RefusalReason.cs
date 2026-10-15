@@ -42,6 +42,12 @@ public enum RefusalReason
     /// <summary>The world answered a key with something other than the kind its use needs.</summary>
     WrongAnswerKind,
 
+    /// <summary>The world answered a key weight with a number no weight can be.</summary>
+    /// <remarks>
+    /// A weight is finite and not negative, so <c>-10</c> for <c>`Guard.Mood%`</c> is refused.
+    /// </remarks>
+    InvalidWeight,
+
     /// <summary>One key on a node is needed as more than one kind of answer.</summary>
     /// <remarks>
     /// A key is asked about once, so in <c>`Alice.HasKey?` Alice: You have `"Alice.HasKey"`.</c>
