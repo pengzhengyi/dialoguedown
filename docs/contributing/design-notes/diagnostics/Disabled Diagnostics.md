@@ -341,12 +341,12 @@ promoting a code to `Error`, or a config naming a code newer than the installed
 repurposes a code; promoting one to `Error` becomes a breaking change that the
 changelog calls out.
 
-The reader also rejects any other spelling of the root `diagnostics` key, such as an
-inline table, a dotted key, an array of tables, or a nested table like
-`[diagnostics.style]`, rather than silently ignoring it, since each would leave the
-codes enabled. `[markdown.unmodeled]` has no such check. A misspelled table
-name such as `[diagnostic]` is an unrelated root key, which the loader ignores for
-forward compatibility.
+An inline table or a dotted key configures the codes as the `[diagnostics]` header
+does, because the loader reads every TOML spelling of a setting
+([Configuration Loader](../configuration/Configuration%20Loader.md)). An array of
+tables is rejected, a nested table such as `[diagnostics.style]` is an unknown key,
+and so is a misspelled table such as `[diagnostic]`, since the loader rejects an
+unknown key at every level.
 
 ### D7 — The CLI hides disabled diagnostics and counts them by code
 
@@ -401,8 +401,9 @@ disabled group.
 | An unknown or malformed code (`DLG12`, `DLG302`) | Located `DialogueConfigurationException`, naming the code. |
 | An `Error` code | Located `DialogueConfigurationException`, saying errors cannot be disabled. |
 | An unknown key in `[diagnostics]` | Located `DialogueConfigurationException`, as in `[markdown.unmodeled]`. |
-| `diagnostics` as an inline table, dotted key, or array of tables | Located `DialogueConfigurationException`. |
-| `[diagnostic]` (misspelled) | Ignored, like any unrelated root key. |
+| `diagnostics` as an inline table or a dotted key | Read like the `[diagnostics]` table. |
+| `[[diagnostics]]` (an array of tables) or `[diagnostics.style]` | Located `DialogueConfigurationException`. |
+| `[diagnostic]` (misspelled) | Located `DialogueConfigurationException`, like any unknown root key. |
 | A duplicate code, or one code in two cases | One entry. |
 | `--disable` with an unknown or `Error` code | Usage error, exit `64`. |
 | `--disable ""` or `--disable ","` (no code at all) | Usage error, exit `64`. |
