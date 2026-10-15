@@ -267,6 +267,20 @@ describe("runApp — what the footer offers", () => {
         expect(drawerTabs().map((tab) => tab.textContent)).toContain("Problems");
         expect(document.querySelector(".status-bar .diagnostic-summary")).not.toBeNull();
     });
+
+    it("puts the whitespace toggle on the status line, just before Help", () => {
+        runApp(reportWith("alpha"));
+
+        const help = document.getElementById("help-toggle");
+        expect(help?.previousElementSibling?.classList).toContain("whitespace-toggle");
+    });
+
+    // Whitespace is an editor setting; the file selector has no editor to show it in.
+    it("leaves the whitespace toggle out of a report with no editor", () => {
+        runApp({ stages: [] });
+
+        expect(document.querySelector(".whitespace-toggle")).toBeNull();
+    });
 });
 
 describe("runApp — keyboard navigation follows the graph's edges", () => {

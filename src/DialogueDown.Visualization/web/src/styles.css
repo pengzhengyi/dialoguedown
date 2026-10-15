@@ -4832,6 +4832,47 @@ body.zen .playbook-view > .playbook-source {
     color: var(--pico-color);
 }
 
+/* The show-whitespace toggle, a ¶ glyph just left of Help, styled like it. It takes the auto
+   margin that pushes the right-hand controls to the end of the line, so Help gives it up. */
+.app-footer .whitespace-toggle {
+    --pico-color: inherit;
+    --pico-background-color: transparent;
+
+    flex: 0 0 auto;
+    display: inline-flex;
+    align-items: center;
+    width: auto;
+    margin: 0 0 0 auto;
+    padding: 1px 4px;
+    border: none;
+    border-radius: 3px;
+    background: transparent;
+    color: var(--pico-muted-color);
+    font-size: 1em;
+    cursor: pointer;
+}
+
+.app-footer .whitespace-toggle + .help-toggle {
+    margin-left: 0;
+}
+
+.app-footer .whitespace-toggle:hover {
+    color: var(--pico-color);
+}
+
+/* Pressed while whitespace is shown, like an editor's toggled toolbar button. */
+.app-footer .whitespace-toggle[aria-pressed="true"] {
+    background: var(--pico-muted-border-color);
+    color: var(--pico-color);
+}
+
+/* Pico rings every focused button; a mouse click should leave only the pressed state. */
+.app-footer .whitespace-toggle:focus:not(:focus-visible) {
+    --pico-box-shadow: none;
+
+    box-shadow: none;
+}
+
 /* The shortcut panel, shown full width below the status line when expanded. */
 .app-footer .shortcuts {
     position: relative;
