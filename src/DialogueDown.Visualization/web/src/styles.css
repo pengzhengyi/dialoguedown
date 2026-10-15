@@ -4433,7 +4433,11 @@ body.zen .playbook-view > .playbook-source {
        The *inline* padding stays in `rem` so the row keeps aligning with the content gutter
        above it, which does scale. */
     font-size: 13px;
-    gap: 4px 1rem;
+
+    /* The space between status-line groups, named so a pair of neighbors can close it up. */
+    --status-gap: 1rem;
+
+    gap: 4px var(--status-gap);
     padding: 0 1.25rem;
 
     /* Always readable: when the footer shrinks to make room for the stage, the help panel
@@ -4832,8 +4836,10 @@ body.zen .playbook-view > .playbook-source {
     color: var(--pico-color);
 }
 
-/* The show-whitespace toggle, a ¶ glyph just left of Help, styled like it. It takes the auto
-   margin that pushes the right-hand controls to the end of the line, so Help gives it up. */
+/* The show-whitespace toggle, a ¶ glyph just left of Help. The two sit as close as a code
+   editor's status-bar icons: each pads its glyph by 5px, and 6px separate their boxes, as in
+   VS Code, rather than the gap between the line's groups. The toggle takes the auto margin that
+   pushes the right-hand controls to the end of the line, so Help gives it up. */
 .app-footer .whitespace-toggle {
     --pico-color: inherit;
     --pico-background-color: transparent;
@@ -4843,9 +4849,9 @@ body.zen .playbook-view > .playbook-source {
     align-items: center;
     width: auto;
     margin: 0 0 0 auto;
-    padding: 1px 4px;
+    padding: 2px 5px;
     border: none;
-    border-radius: 3px;
+    border-radius: 4px;
     background: transparent;
     color: var(--pico-muted-color);
     font-size: 1em;
@@ -4853,23 +4859,28 @@ body.zen .playbook-view > .playbook-source {
 }
 
 .app-footer .whitespace-toggle + .help-toggle {
-    margin-left: 0;
+    margin-left: calc(6px - var(--status-gap));
 }
 
 .app-footer .whitespace-toggle:hover {
+    background: color-mix(in srgb, var(--pico-color) 8%, transparent);
     color: var(--pico-color);
 }
 
-/* Pressed while whitespace is shown, like an editor's toggled toolbar button. */
+/* Pressed while whitespace is shown, the way Word marks its own ¶ button: a solid gray tile with
+   a fine outline, and the glyph at full strength. */
 .app-footer .whitespace-toggle[aria-pressed="true"] {
-    background: var(--pico-muted-border-color);
+    background: color-mix(in srgb, var(--pico-color) 22%, transparent);
+    box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--pico-color) 35%, transparent);
     color: var(--pico-color);
 }
 
 /* Pico rings every focused button; a mouse click should leave only the pressed state. */
 .app-footer .whitespace-toggle:focus:not(:focus-visible) {
     --pico-box-shadow: none;
+}
 
+.app-footer .whitespace-toggle:not([aria-pressed="true"]):focus:not(:focus-visible) {
     box-shadow: none;
 }
 
@@ -5390,7 +5401,9 @@ body.zen .playbook-view > .playbook-source {
        anything wraps; below 720px the paths drop to their icons entirely (see the rule at the
        end of this file). */
     .status-line {
-        gap: 0.3rem 0.6rem;
+        --status-gap: 0.6rem;
+
+        gap: 0.3rem var(--status-gap);
     }
 
     .app-footer .help-toggle {
@@ -5988,7 +6001,9 @@ button.dd-tag:focus-visible {
     }
 
     .status-line {
-        gap: 0.3rem 0.5rem;
+        --status-gap: 0.5rem;
+
+        gap: 0.3rem var(--status-gap);
     }
 
     .app-footer .help-toggle {

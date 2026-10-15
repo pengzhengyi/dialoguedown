@@ -1,5 +1,6 @@
-import { test, expect, type Page } from "@playwright/test";
+import { test, expect, type Locator, type Page } from "@playwright/test";
 import type { Report } from "../src/model";
+import { contrastRatio, over, parseColor } from "./contrast";
 import { SAMPLE_STAGES, writeReport } from "./report";
 
 /** A script indented with spaces and with a tab, so both kinds of mark have something to draw. */
@@ -68,3 +69,55 @@ test("whitespace is drawn fainter than CodeMirror's default", async ({ page }) =
     expect(dot).toContain("15%");
     expect(dot).not.toContain("rgb(170, 170, 170)");
 });
+
+test("the whitespace toggle sits beside Help, as close as an editor's status-bar icons", async ({
+    page,
+}) => {
+    await page.goto(writeReport(REPORT));
+
+    const toggleBox = (await toggle(page).boundingBox())!;
+    const helpBox = (await page.locator("#help-toggle").boundingBox())!;
+
+    // VS Code separates neighboring status-bar items by 6px; the line's own group gap is wider.
+    expect(helpBox.x - (toggleBox.x + toggleBox.width)).toBeCloseTo(6, 0);
+});
+
+for (const scheme of ["light", "dark"] as const) {
+    test(`the pressed toggle stands out from the status line (${scheme})`, async ({ page }) => {
+        await page.emulateMedia({ colorScheme: scheme });
+        await page.goto(writeReport(REPORT));
+        await toggle(page).click();
+
+        const contrast = await fillContrastOf(toggle(page));
+
+        // A faint wash reads as unpressed; Word's ¶ tile is plainly darker than its ribbon.
+        expect(contrast).toBeGreaterThan(1.4);
+    });
+}
+
+/** The contrast between an element's own fill, as painted, and the background behind it. */
+async function fillContrastOf(locator: Locator): Promise<number> {
+    const rendered = await locator.evaluate(async (element) => {
+        // Pico eases a button's background; read the settled fill, not a frame of the fade.
+        await Promise.all(element.getAnimations().map((animation) => animation.finished));
+        let node = element.parentElement;
+        let backdrop = "rgb(255, 255, 255)";
+        while (node !== null) {
+            const color = getComputedStyle(node).backgroundColor;
+            // Transparent computes as `rgba(…, 0)` or `color(srgb … / 0)`.
+            if (color !== "transparent" && !/[,/]\s*0\)$/.test(color)) {
+                backdrop = color;
+                break;
+            }
+            node = node.parentElement;
+        }
+        return { fill: getComputedStyle(element).backgroundColor, backdrop };
+    });
+
+    const fill = parseColor(rendered.fill);
+    const backdrop = parseColor(rendered.backdrop);
+    if (!fill || !backdrop) {
+        throw new Error(`Unreadable color: ${rendered.fill} over ${rendered.backdrop}`);
+    }
+    return contrastRatio(over(fill, backdrop), backdrop);
+}
