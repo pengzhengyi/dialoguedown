@@ -57,6 +57,24 @@ public sealed class NodeQuestionsTests
             NodeQuestions.RequiredToPlay(AGuardedLineSaying("Hero.HasSword", "HeroName")).NeededBothWays());
 
     [Fact]
+    public void Keys_NameTheNumbersAfterTheTruths() =>
+        Assert.Equal(
+            ["Guard.IsAngry", "Guard.Mood"],
+            new NodeQuestions(Truths: ["Guard.IsAngry"], Words: [], Numbers: ["Guard.Mood"]).Keys());
+
+    [Fact]
+    public void Asked_HoldsAKeyWeightToANumber() =>
+        Assert.Equal(
+            AnswerKind.Number,
+            new NodeQuestions(Truths: [], Words: [], Numbers: ["Guard.Mood"]).Asked()["Guard.Mood"]);
+
+    [Fact]
+    public void NeededBothWays_WhenAGuardAndAKeyWeightShareAKey_NameIt() =>
+        Assert.Equal(
+            ["Guard.Mood"],
+            new NodeQuestions(Truths: ["Guard.Mood"], Words: [], Numbers: ["Guard.Mood"]).NeededBothWays());
+
+    [Fact]
     public void RequiredToPlay_IsNotReadFromNothing() =>
         Assert.Throws<ArgumentNullException>(() => NodeQuestions.RequiredToPlay(null!));
 
