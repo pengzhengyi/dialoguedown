@@ -50,6 +50,7 @@ import { edgeTooltipHtml, escapeHtml } from "./text";
 import { tagLabel } from "./tag-chip";
 import { lineOf, revealLine, type PlaybookTarget } from "./playbook-jump";
 import { playbookReferences, playbookReferenceKeymap } from "./playbook-references";
+import { whitespaceVisibility } from "./show-whitespace";
 
 /**
  * JSON highlighting driven by CSS variables, so the playbook follows the page's light/dark theme
@@ -129,6 +130,7 @@ function mountEditor(parent: HTMLElement, source: string): EditorView {
         state: EditorState.create({
             doc: source,
             extensions: [
+                whitespaceVisibility(),
                 lineNumbers(),
                 highlightActiveLineGutter(),
                 foldGutter({ markerDOM: foldGutterMarker }),

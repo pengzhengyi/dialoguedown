@@ -17,8 +17,12 @@ const STORAGE_KEY = "dd-show-whitespace";
  */
 const whitespace = new Compartment();
 
-/** The editors currently open, so a switch reaches each of them. */
-const openEditors = new Set<EditorView>();
+/**
+ * The editors currently open, so a switch reaches each of them. Held weakly: the Playbook and
+ * Config views drop their editors without destroying them, and this list must not keep those
+ * alive.
+ */
+const openEditors = new Set<WeakRef<EditorView>>();
 
 const listeners = new Set<(visible: boolean) => void>();
 
@@ -27,8 +31,9 @@ let visible: boolean | undefined;
 
 /** Registers an editor while it is open, so {@link setWhitespaceVisible} can reconfigure it. */
 const tracking = ViewPlugin.define((view) => {
-    openEditors.add(view);
-    return { destroy: () => openEditors.delete(view) };
+    const ref = new WeakRef(view);
+    openEditors.add(ref);
+    return { destroy: () => openEditors.delete(ref) };
 });
 
 const marks = (show: boolean): Extension => (show ? highlightWhitespace() : []);
@@ -72,8 +77,10 @@ export function setWhitespaceVisible(
     } catch {
         /* a sandboxed or `file://` report has nowhere to remember it */
     }
-    for (const view of openEditors) {
-        view.dispatch({ effects: whitespace.reconfigure(marks(show)) });
+    for (const ref of openEditors) {
+        const view = ref.deref();
+        if (view) view.dispatch({ effects: whitespace.reconfigure(marks(show)) });
+        else openEditors.delete(ref);
     }
     for (const listener of listeners) listener(show);
 }

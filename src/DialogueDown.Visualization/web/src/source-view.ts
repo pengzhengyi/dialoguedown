@@ -97,6 +97,7 @@ import { debugEditor, toggleBreakpointAt } from "./debug-editor";
 import { createDebugToolbar, type DebugToolbar } from "./debug-toolbar";
 import { reservedTargetsPanel, setEditorReservedTargets } from "./reserved-targets-panel";
 import { sourceLanguage } from "./source-language";
+import { whitespaceVisibility } from "./show-whitespace";
 
 /**
  * Markdown syntax highlighting driven by CSS variables (`--md-*`), so the editor
@@ -654,6 +655,7 @@ export function createSourceView(
             doc: source,
             extensions: [
                 ...(debug ? [debugEditor(debug)] : []),
+                whitespaceVisibility(),
                 lineNumbers(),
                 highlightActiveLineGutter(),
                 foldGutter({ markerDOM: foldGutterMarker }),
