@@ -1,13 +1,12 @@
 using DialogueDown.Configuration;
-using DialogueDown.ConfigurationLoader.Toml;
-using Tomlyn.Syntax;
+using DialogueDown.ConfigurationLoader.Document;
+using DialogueDown.ConfigurationLoader.Errors;
 
 namespace DialogueDown.ConfigurationLoader.Readers;
 
 /// <summary>
-/// Reads the <c>[[speakers]]</c> entries of a parsed <see cref="DocumentSyntax"/> into
-/// <see cref="ConfiguredSpeaker"/>s, in document order, and rejects a malformed speaker with a
-/// located <see cref="DialogueConfigurationException"/>.
+/// Reads the <c>speakers</c> section into <see cref="ConfiguredSpeaker"/>s, in document order, and
+/// rejects a malformed speaker with a located <see cref="DialogueConfigurationException"/>.
 /// </summary>
 /// <remarks>
 /// <code>
@@ -17,32 +16,40 @@ namespace DialogueDown.ConfigurationLoader.Readers;
 /// default = true
 /// tags = ["main", "mood=cheerful", { name = "voice", value = "soft" }]
 /// </code>
-/// A custom tag is a <c>name</c> or <c>name=value</c> string, or an inline table with a
-/// <c>name</c> and an optional <c>value</c>. Any other key must be a reserved tag such as
-/// <c>default</c>, set to a boolean or a string, and at most one speaker may be the default. The
-/// reader maps syntax to data only; what a reserved tag means is decided by the compiler.
+/// A custom tag is a <c>name</c> or <c>name=value</c> string, or a table with a <c>name</c> and an
+/// optional <c>value</c>. Any other key must be a reserved tag such as <c>default</c>, set to a
+/// boolean or a string, and at most one speaker may be the default. The reader maps the
+/// configuration to data only; what a reserved tag means is decided by the compiler.
 /// </remarks>
 internal sealed class ConfiguredSpeakerReader
 {
-    private const string SpeakersTableName = "speakers";
+    /// <summary>The root key this reader owns.</summary>
+    public const string Key = "speakers";
+
     private const string NameKey = "name";
     private const string IdKey = "id";
     private const string TagsKey = "tags";
-    private const string InlineTagValueKey = "value";
+    private const string TagValueKey = "value";
 
-    public IReadOnlyList<ConfiguredSpeaker> Read(DocumentSyntax document)
+    public IReadOnlyList<ConfiguredSpeaker> Read(ConfigurationTable root)
     {
-        ArgumentNullException.ThrowIfNull(document);
+        ArgumentNullException.ThrowIfNull(root);
 
         var speakers = new List<ConfiguredSpeaker>();
-        string? firstDefaultName = null;
-
-        foreach (var entry in TomlTables.Named<TableArraySyntax>(document, SpeakersTableName))
+        if (root.Find(Key) is not { } section)
         {
-            var speaker = ReadSpeaker(entry);
+            return speakers;
+        }
+
+        ConfiguredSpeaker? firstDefault = null;
+        foreach (var entry in RequireSpeakerArray(section).Items)
+        {
+            var table = RequireSpeakerTable(entry);
+            var speaker = ReadSpeaker(table);
             if (IsDefault(speaker))
             {
-                RejectSecondDefault(entry, speaker, ref firstDefaultName);
+                RejectSecondDefault(firstDefault, speaker, table);
+                firstDefault = speaker;
             }
 
             speakers.Add(speaker);
@@ -51,16 +58,27 @@ internal sealed class ConfiguredSpeakerReader
         return speakers;
     }
 
-    private static ConfiguredSpeaker ReadSpeaker(TableArraySyntax entry)
+    private static ConfigurationArray RequireSpeakerArray(ConfigurationEntry section) =>
+        section.Value as ConfigurationArray
+            ?? throw new DialogueConfigurationException(
+                "'speakers' must be an array of speaker tables, such as [[speakers]] entries.",
+                section.Value.Location);
+
+    private static ConfigurationTable RequireSpeakerTable(ConfigurationValue entry) =>
+        entry as ConfigurationTable
+            ?? throw new DialogueConfigurationException(
+                "A speaker must be a table with a 'name'.", entry.Location);
+
+    private static ConfiguredSpeaker ReadSpeaker(ConfigurationTable table)
     {
         string? name = null;
         string? id = null;
         var customTags = new List<ConfiguredTag>();
         var reservedTags = new List<ConfiguredTag>();
 
-        foreach (var item in entry.Items)
+        foreach (var item in table.Entries)
         {
-            switch (TomlKeys.Name(item.Key))
+            switch (item.Key)
             {
                 case NameKey:
                     name = RequireNonEmptyString(item);
@@ -77,29 +95,31 @@ internal sealed class ConfiguredSpeakerReader
             }
         }
 
-        return new ConfiguredSpeaker(RequireName(name, entry), id, customTags, reservedTags);
+        var required = name ?? throw new DialogueConfigurationException(
+            "A speaker must have a 'name'.", table.Location);
+        return new ConfiguredSpeaker(required, id, customTags, reservedTags);
     }
 
-    private static void ReadCustomTags(KeyValueSyntax item, List<ConfiguredTag> into)
+    private static void ReadCustomTags(ConfigurationEntry item, List<ConfiguredTag> into)
     {
-        if (item.Value is not ArraySyntax array)
+        if (item.Value is not ConfigurationArray array)
         {
-            throw TomlErrors.At(
-                "'tags' must be an array of tag strings or inline tables.", item.Value!);
+            throw new DialogueConfigurationException(
+                "'tags' must be an array of tag strings or inline tables.", item.Value.Location);
         }
 
         foreach (var element in array.Items)
         {
-            into.Add(ReadCustomTag(element.Value!));
+            into.Add(ReadCustomTag(element));
         }
     }
 
-    private static ConfiguredTag ReadCustomTag(SyntaxNode value) => value switch
+    private static ConfiguredTag ReadCustomTag(ConfigurationValue value) => value switch
     {
-        InlineTableSyntax inline => ReadInlineTag(inline),
-        StringValueSyntax shorthand => ParseShorthandTag(shorthand.Value!),
-        _ => throw TomlErrors.At(
-            "A tag must be a string or an inline table with a 'name'.", value),
+        ConfigurationTable table => ReadTableTag(table),
+        ConfigurationScalar { Value: string shorthand } => ParseShorthandTag(shorthand),
+        _ => throw new DialogueConfigurationException(
+            "A tag must be a string or an inline table with a 'name'.", value.Location),
     };
 
     private static ConfiguredTag ParseShorthandTag(string shorthand)
@@ -110,91 +130,79 @@ internal sealed class ConfiguredSpeakerReader
             : new ConfiguredTag(shorthand[..separator], shorthand[(separator + 1)..]);
     }
 
-    private static ConfiguredTag ReadInlineTag(InlineTableSyntax inline)
+    private static ConfiguredTag ReadTableTag(ConfigurationTable table)
     {
         string? name = null;
         string? value = null;
-        foreach (var field in inline.Items)
+        foreach (var field in table.Entries)
         {
-            var pair = field.KeyValue!;
-            switch (TomlKeys.Name(pair.Key))
+            switch (field.Key)
             {
                 case NameKey:
-                    name = RequireString(pair);
+                    name = field.RequireString();
                     break;
-                case InlineTagValueKey:
-                    value = RequireString(pair);
+                case TagValueKey:
+                    value = field.RequireString();
                     break;
                 default:
-                    throw TomlErrors.At(
+                    throw new DialogueConfigurationException(
                         $"An inline-table tag has only 'name' and 'value'; "
-                        + $"'{TomlKeys.Name(pair.Key)}' is not allowed.", pair.Value!);
+                            + $"'{field.Key}' is not allowed.",
+                        field.Value.Location);
             }
         }
 
-        if (name is null)
-        {
-            throw TomlErrors.At("An inline-table tag must have a 'name'.", inline);
-        }
-
-        return new ConfiguredTag(name, value);
+        var required = name ?? throw new DialogueConfigurationException(
+            "An inline-table tag must have a 'name'.", table.Location);
+        return new ConfiguredTag(required, value);
     }
 
-    private static void AddReservedTag(KeyValueSyntax item, List<ConfiguredTag> into)
+    private static void AddReservedTag(ConfigurationEntry item, List<ConfiguredTag> into)
     {
-        var name = TomlKeys.Name(item.Key);
-        if (!ReservedTagNames.Known.Contains(name))
+        if (!ReservedTagNames.Known.Contains(item.Key))
         {
-            throw TomlErrors.At(
-                $"Unknown speaker key '{name}'. Use 'name', 'id', 'tags', or a known reserved tag.",
-                item.Key!);
+            throw new DialogueConfigurationException(
+                $"Unknown speaker key '{item.Key}'. Use 'name', 'id', 'tags', or a known reserved tag.",
+                item.KeyLocation);
         }
 
         switch (item.Value)
         {
-            case BooleanValueSyntax { Value: true }:
-                into.Add(new ConfiguredTag(name));
+            case ConfigurationScalar { Value: true }:
+                into.Add(new ConfiguredTag(item.Key));
                 break;
-            case BooleanValueSyntax { Value: false }:
+            case ConfigurationScalar { Value: false }:
                 break;
-            case StringValueSyntax valued:
-                into.Add(new ConfiguredTag(name, valued.Value!));
+            case ConfigurationScalar { Value: string valued }:
+                into.Add(new ConfiguredTag(item.Key, valued));
                 break;
             default:
-                throw TomlErrors.At(
-                    $"Reserved tag '{name}' must be a boolean or a string.", item.Value!);
+                throw new DialogueConfigurationException(
+                    $"Reserved tag '{item.Key}' must be a boolean or a string.", item.Value.Location);
         }
     }
 
     private static void RejectSecondDefault(
-        TableArraySyntax entry, ConfiguredSpeaker speaker, ref string? firstDefaultName)
+        ConfiguredSpeaker? firstDefault, ConfiguredSpeaker speaker, ConfigurationTable table)
     {
-        if (firstDefaultName is not null)
+        if (firstDefault is not null)
         {
-            throw TomlErrors.At(
-                $"Two speakers are marked default ('{firstDefaultName}' and '{speaker.Name}'); "
-                + "only one default speaker is allowed.", entry);
+            throw new DialogueConfigurationException(
+                $"Two speakers are marked default ('{firstDefault.Name}' and '{speaker.Name}'); "
+                    + "only one default speaker is allowed.",
+                table.Location);
         }
-
-        firstDefaultName = speaker.Name;
     }
 
     private static bool IsDefault(ConfiguredSpeaker speaker) =>
         speaker.ReservedTags.Any(tag => tag.Name == ReservedTagNames.Default);
 
-    private static string RequireName(string? name, TableArraySyntax entry) =>
-        name ?? throw TomlErrors.At("A speaker must have a 'name'.", entry);
-
-    private static string RequireNonEmptyString(KeyValueSyntax item)
+    private static string RequireNonEmptyString(ConfigurationEntry item)
     {
-        var value = RequireString(item);
+        var value = item.RequireString();
         return value.Length > 0
             ? value
-            : throw TomlErrors.At(
-                $"'{TomlKeys.Name(item.Key)}' must not be empty.", item.Value!);
+            : throw new DialogueConfigurationException(
+                $"'{item.Key}' must not be empty.", item.Value.Location);
     }
-
-    private static string RequireString(KeyValueSyntax item) => item.Value is StringValueSyntax text
-        ? text.Value!
-        : throw TomlErrors.At($"'{TomlKeys.Name(item.Key)}' must be a string.", item.Value!);
 }
