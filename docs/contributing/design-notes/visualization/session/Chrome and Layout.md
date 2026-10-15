@@ -2,8 +2,8 @@
 
 > [!NOTE]
 > Status: **implemented**. The frame around every report tab: Zen mode, the narrow-screen layout,
-> and the footer drawer with its Problems panel. It applies to served reports and static exports
-> alike.
+> the footer drawer with its Problems panel, and the status-line switch that shows whitespace. It
+> applies to served reports and static exports alike.
 
 ## Table of contents
 
@@ -13,6 +13,7 @@
 - [Zen](#zen)
 - [Narrow screens](#narrow-screens)
 - [Problems panel](#problems-panel)
+- [Show whitespace](#show-whitespace)
 - [Error and boundary cases](#error-and-boundary-cases)
 - [Testability](#testability)
 
@@ -20,8 +21,8 @@
 
 The report's tabs are Config, Source, the five compiler stages (Markdown AST, Dialogue AST,
 Desugared AST, Semantic Model, Dialogue Graph), and Playbook. This note owns what surrounds them:
-how much chrome is visible, how the frame fits a small window, and how diagnostics are listed. It
-does not change what any tab renders. The Explorer's own toggle is in [Explorer](./Explorer.md).
+how much chrome is visible, how the frame fits a small window, how diagnostics are listed, and
+whether the editors draw whitespace. It does not change what any tab renders. The Explorer's own toggle is in [Explorer](./Explorer.md).
 
 ## Ubiquitous language
 
@@ -31,6 +32,7 @@ does not change what any tab renders. The Explorer's own toggle is in [Explorer]
 | **Focus mode** | How much is hidden: `normal`, `maximized` (full screen), or `zen`. |
 | **Secondary panel** | The pane beside a tab's primary content: preview, speakers, inspector, or tables. |
 | **Footer drawer** | The bottom panel opened from the status line, with **Problems** and **Help** tabs. |
+| **Shown whitespace** | Every editor drawing each space as a faint dot and each tab as an arrow. |
 
 ## Layout
 
@@ -182,6 +184,52 @@ Diagnostics arrive on first render and on every save or hot reload. Both go thro
 that updates the editor overlay, the list, and the counts together, so a fixed squiggle cannot leave
 a stale count behind.
 
+## Show whitespace
+
+A ¶ button just left of Help, or <kbd>Alt-W</kbd>, shows or hides whitespace in the Source,
+Config, and Playbook editors at once. It is off by default, and the choice is remembered in
+`localStorage` like the theme.
+
+```mermaid
+flowchart LR
+    B["¶ button"] --> S["setWhitespaceVisible"]
+    K["Alt-W"] --> S
+    S -->|reconfigure| E["every open editor"]
+    S -->|remember| L["localStorage"]
+    S -->|notify| B
+```
+
+### D16 — CodeMirror's own highlighter
+
+`highlightWhitespace` ships in `@codemirror/view`, which the report already depends on, and draws
+spaces and tabs the way VS Code's "Render Whitespace" does. The codicon set already carries the
+`whitespace` glyph. Nothing is added to the dependencies.
+
+### D17 — One switch for every editor
+
+Whitespace is a reading preference, not a property of one document, so one setting covers all three
+editors. `show-whitespace.ts` owns it: each editor installs a shared compartment that holds the
+highlighter or nothing, and a switch reconfigures every open editor in place, keeping its document,
+selection, and history. A hidden editor draws no marks at all, so the default costs nothing.
+
+The switch finds the editors through a list it holds weakly. The Playbook and Config views drop an
+editor without destroying it, and a strong list would keep each replaced editor alive.
+
+### D18 — A pressed toggle, and a shortcut that works while typing
+
+The button keeps the name "Show whitespace" and carries the state in `aria-pressed`, as a toggle
+button should, and it follows the setting however it changes. <kbd>Alt-W</kbd> joins the editor's
+other Alt-letter shortcuts. Unlike <kbd>z</kbd> it works inside the editors, where a reader checking
+indentation is, so it reads the physical key (`event.code`), because macOS reports Option-W as `∑`,
+and takes the event so an editable editor does not type that character.
+
+### D19 — Fainter than the default, and no trailing-space warning
+
+The marks should describe the spacing without competing with the text. The report draws a smaller
+dot in the theme's muted color, mixed toward transparent, and a thinner, translucent tab arrow.
+CodeMirror's `highlightTrailingWhitespace` stays out: in Markdown, two trailing spaces are a
+deliberate hard line break, so tinting them red would read as an error.
+
 ## Error and boundary cases
 
 | Case | Behavior |
@@ -193,6 +241,9 @@ a stale count behind.
 | Narrow window, row already fits | No arrows. |
 | Short landscape window with help open | The drawer floats; the stage keeps its height; nothing scrolls the page. |
 | Clean compile | The summary reads `0 0 0` and the list says so. |
+| A report with no editor | No whitespace toggle and no <kbd>Alt-W</kbd>. |
+| <kbd>Alt-W</kbd> with another modifier, or already handled | Ignored. |
+| Storage blocked, as in some `file://` reports | Whitespace starts hidden; a switch still applies for the session. |
 
 ## Testability
 
@@ -204,6 +255,10 @@ reloads rather than clicks, because a Playwright click scrolls its target into v
 
 - **Unit:** focus-mode transitions, key guards, button state, and focus release
   (`fullscreen.test.ts`); counts, rendering, ordering, activation, drawer tabs, and sync
-  (`problems-panel.test.ts`, `footer-drawer.test.ts`).
+  (`problems-panel.test.ts`, `footer-drawer.test.ts`); the whitespace switch reaching every open
+  editor, its memory, and the toggle and shortcut (`show-whitespace.test.ts`,
+  `whitespace-toggle.test.ts`).
 - **Browser:** Zen on each tab hides the right panel, a reader's collapse choice survives a Zen
-  round trip, and Zen hides the Explorer on a served report.
+  round trip, and Zen hides the Explorer on a served report. Whitespace shows from the toggle and
+  survives a reload, <kbd>Alt-W</kbd> toggles it from inside the editor without typing, and the
+  report's fainter dot outranks CodeMirror's own rule (`whitespace.spec.ts`).
