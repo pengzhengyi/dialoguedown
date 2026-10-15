@@ -114,9 +114,12 @@ changes easy to categorize.
   choice of number and auto weights names every random option's share, in the order written, and
   the run waits for the host's `Drawn(value)`, a number from 0 to 1, then follows the random option
   whose span holds it. The host owns randomness and seeding, so replaying the commands replays
-  every draw. A draw outside 0 to 1 is refused as `invalid-draw` and the run keeps waiting; a
-  random choice with nothing to draw is walked past by its fall-through. A random choice with a
-  guarded option or a key weight is still refused as `unplayable-node`. See
+  every draw. A draw outside 0 to 1 is refused as `invalid-draw` and the run keeps waiting. A
+  random choice's conditions are asked on arrival in one `Resolve`, and a random option the world
+  withholds is left out: its share is 0, and an auto weight takes what the random options in play
+  leave of 100. A random choice with nothing to draw is walked past by its fall-through, or
+  refused as `leads-nowhere` without one. A random choice with a key weight is still refused as
+  `unplayable-node`. See
   [Drawing a random option](docs/contributing/design-notes/runtime/Drawing%20a%20Random%20Option.md).
 
 - **A random choice's number weights are checked when a playbook loads** — the reader refuses a
@@ -143,6 +146,17 @@ changes easy to categorize.
   [Game Calls in Labels](docs/contributing/design-notes/language/Game%20Calls%20in%20Labels.md).
 
 ### Changed
+
+- **An unknown key in `dialogue.toml` is an error** — a misspelled setting (`modee`,
+  `[[speaker]]`) or an unknown key under `[markdown]` (`[markdown.unmodled]`) was ignored, which
+  left the setting at its default without a word. It is now rejected with its file, line, and
+  column, and the message lists the keys allowed there. A dotted key is a nested table by TOML's
+  rules, so `mode.strategy = "…"` is now reported as a `mode` that is not a string, and a dotted
+  speaker or kind key such as `name.first` as a `name` that is not a string.
+
+- **A `dialogue.toml` error points at the exact element** — an error about one element of an
+  array, such as a tag that is neither a string nor a table, points at that element, also when
+  the array spans several lines.
 
 - **A random choice whose only option weighs `0%` is an error** — it compiled with a warning
   that the option is always selected, but an option with no weight is never selected. It is now
@@ -248,6 +262,12 @@ changes easy to categorize.
   that answer from a world.
 
 ### Fixed
+
+- **Every TOML spelling of a `dialogue.toml` setting is read** — a setting written as an inline
+  table, an inline array of tables, or a dotted key (`speakers = [{ name = "Alice" }]`,
+  `markdown.unmodeled.table = "keep"`) was ignored without an error, so the compile ran on the
+  defaults. Each spelling now configures what its `[table]` or `[[array]]` form does. See
+  [Configuration Loader](docs/contributing/design-notes/configuration/Configuration%20Loader.md).
 
 - **An infinite weight is reported instead of stopping the compiler** — `` `Infinity%` ``, or a
   weight written with more digits than a double holds, read as an infinite number, and the

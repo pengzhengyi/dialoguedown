@@ -1,0 +1,11 @@
+{
+  "$schema": "https://pengzhengyi.github.io/dialoguedown/schema/fixture-0.schema.json",
+  "name": "a random choice the world leaves nothing drawable, with no fall-through, is refused as leading nowhere",
+  "playbook": "playbook.json",
+  "because": "the unguarded random option weighs 0%, so the compiler writes no fall-through; once the world withholds the guarded one nothing is drawable and the run has nowhere to go, which the refusal names rather than asking for a draw that could pick nothing",
+  "session": [
+    { "expect": { "resolve": ["Guard.IsAngry"] } },
+    { "send": { "supply": { "Guard.IsAngry": false } } },
+    { "expect": { "refused": { "reason": "leads-nowhere" } } }
+  ]
+}

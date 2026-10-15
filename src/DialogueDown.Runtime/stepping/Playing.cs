@@ -34,7 +34,7 @@ internal static class Playing
             LineNode line => Line(context, position, line, supply, segmentIndex: 0),
             ControlNode control => Control(position, control),
             ChoiceNode choice => Choosing.Offer(position, choice, supply),
-            RandomChoiceNode random when RandomChoiceShares.TryWorkOut(random, out var shares) =>
+            RandomChoiceNode random when RandomChoiceShares.TryWorkOut(random, supply, out var shares) =>
                 Drawing.AskForADraw(position, shares),
             EndNode => End(),
             var unplayable => Unplayable(position, unplayable),
@@ -158,7 +158,7 @@ internal static class Playing
     private static StepResult End() => new(new PlayState(new AtEnd()), [new Ended()]);
 
     // Refused rather than answered with no events, which would look like a hang. A random choice
-    // comes here when only the world can say what its shares are.
+    // comes here when a random option has a key weight.
     private static StepResult Unplayable(int position, Node unplayable) =>
         StepResults.Refuse(
             position,

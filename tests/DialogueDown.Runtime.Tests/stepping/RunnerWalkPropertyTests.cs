@@ -2,8 +2,10 @@ using CsCheck;
 using DialogueDown.Playbook.Checking;
 using DialogueDown.Playbook.Nodes;
 using DialogueDown.Playbook.Speech;
+using DialogueDown.Playbook.Weights;
 using DialogueDown.Runtime.Protocol;
 using DialogueDown.Runtime.Situations;
+using DialogueDown.Runtime.Stepping;
 
 namespace DialogueDown.Runtime.Tests.Stepping;
 
@@ -186,6 +188,30 @@ public sealed class RunnerWalkPropertyTests
     }
 
     /// <summary>
+    /// Some walk is asked for a draw with a random option the world excluded.
+    /// </summary>
+    /// <remarks>
+    /// This checks the walk rather than the runner. If no walk met a random choice whose guard the
+    /// world withheld, the walks above would pass without a random option ever being excluded.
+    /// </remarks>
+    [Fact]
+    public void SomeWalk_IsAskedForADrawWithARandomOptionExcluded()
+    {
+        var excluded = 0;
+
+        ForEveryWalk(
+            (context, stepped) =>
+            {
+                if (stepped.State.Situation is AwaitingDraw waiting && LeavesARandomOptionOut(context, waiting))
+                {
+                    Interlocked.Increment(ref excluded);
+                }
+            });
+
+        Assert.True(excluded > 0, "No walk was asked for a draw with a random option excluded.");
+    }
+
+    /// <summary>
     /// Every answer a walk gives is one the run accepts.
     /// </summary>
     /// <remarks>
@@ -268,6 +294,21 @@ public sealed class RunnerWalkPropertyTests
     // world filled it in.
     private static bool SaysTheWorldsWords(OfferedOption option) =>
         option.Label.Contains(new TextFragment(DrawnWorld.Words));
+
+    // A random option's share is zero for one of three reasons: the world excluded it, its weight
+    // is `0%`, or it is an auto weight the numbers in play leave nothing. The drawn numbers, 0 and
+    // 60, never reach 100 between them, so the last cannot happen here. A guarded random option
+    // with a share of zero and a weight other than `0%` was therefore excluded. Checking the guard
+    // alone would also count a guarded `0%` the world allowed, so a walk would pass this check
+    // even if nothing were ever excluded.
+    private static bool LeavesARandomOptionOut(PlayContext context, AwaitingDraw waiting) =>
+        context.NodeAt(waiting.Node) is RandomChoiceNode random
+            && random.RandomOptions()
+                .Zip(waiting.Shares)
+                .Any(drawn =>
+                    drawn.First.Condition is not null
+                    && drawn.First.Weight is not NumberWeight { Percentage: 0 }
+                    && drawn.Second == 0);
 
     private static void AssertAddressable(PlayContext context, Situation situation)
     {

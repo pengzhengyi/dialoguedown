@@ -4,8 +4,8 @@
 > Status: **implemented** at compile time, and **partially implemented** at
 > runtime. A list whose options lead with a weight (`` `50%` ``, `` `%` ``,
 > `` `key%` ``) is a random choice the engine resolves to one option. The runner
-> draws at a random choice of number and auto weights, and refuses one with a
-> guarded option or a key weight (`unplayable-node`) until
+> draws at a random choice of number and auto weights, guarded or not, and refuses
+> one with a key weight (`unplayable-node`) until
 > [Drawing a Random Option](../runtime/Drawing%20a%20Random%20Option.md) is complete.
 
 ## Table of contents
@@ -121,8 +121,9 @@ The Dialogue AST preserves the key and source span as a `QueryWeight`, and the
 report shows the structure.
 
 An option may also carry a [condition](./Conditions.md#conditional-choice-option)
-before its weight (`` - `IsAngry?` `50%` … ``); a false one is excluded and the
-remaining weights re-normalize.
+before its weight (`` - `IsAngry?` `50%` … ``); a false one is excluded, an auto
+weight takes what the options still in play leave of 100, and the remaining weights
+re-normalize.
 
 ## Grammar
 
@@ -158,8 +159,9 @@ At runtime:
    A missing, non-numeric, negative, NaN, or infinite result is a runtime error;
    the runtime selects no option.
 2. **Distribute the leftover to autos:** `leftover = max(0, 100 − explicit)`,
-   where `explicit` includes both numeric and resolved query weights. Each auto
-   receives `leftover ÷ autoCount`.
+   where `explicit` includes the numeric and resolved query weights of the options
+   in play; an excluded option counts as zero. Each auto receives
+   `leftover ÷ autoCount`.
 3. **Total** all resolved weights.
 4. **Select nothing from a zero total.** No option can be selected, so the run
    walks past the random choice by its fall-through, or is refused as

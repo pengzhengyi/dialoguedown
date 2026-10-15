@@ -1,0 +1,15 @@
+{
+  "$schema": "https://pengzhengyi.github.io/dialoguedown/schema/fixture-0.schema.json",
+  "name": "a random choice whose every random option the world withholds is walked past by its fall-through",
+  "playbook": "playbook.json",
+  "because": "with every random option excluded nothing is drawable, so no draw is asked for and the run goes on where the script carries on after the random choice; a port that asked anyway would wait for a number that could pick nothing",
+  "session": [
+    { "expect": { "said": { "speech": "The guard looks up." } } },
+    { "send": "next" },
+    { "expect": { "resolve": ["Guard.IsAngry", "Guard.IsTired"] } },
+    { "send": { "supply": { "Guard.IsAngry": false, "Guard.IsTired": false } } },
+    { "expect": { "said": { "speech": "The guard looks away." } } },
+    { "send": "next" },
+    { "expect": { "ended": {} } }
+  ]
+}

@@ -1,6 +1,7 @@
 using DialogueDown.Configuration;
 using DialogueDown.ConfigurationLoader.Errors;
 using DialogueDown.TestSupport;
+using static DialogueDown.ConfigurationLoader.Tests.Support.ConfigurationErrorAssert;
 using static DialogueDown.ConfigurationLoader.Tests.Support.ConfiguredSpeakerAssert;
 using static DialogueDown.ConfigurationLoader.Tests.Support.TomlConfigReading;
 
@@ -21,7 +22,7 @@ public sealed class TomlConfigurationLoaderTests
     }
 
     [Fact]
-    public void Parse_NoSpeakers_ReturnsDefaultOptions()
+    public void Parse_EmptyFile_ReturnsDefaultOptions()
     {
         CompilerOptions options = TomlConfigurationLoader.Parse(string.Empty, SourceName);
 
@@ -29,72 +30,32 @@ public sealed class TomlConfigurationLoaderTests
     }
 
     [Fact]
-    public void Parse_WithSpeakers_WrapsThemInOptions()
+    public void Parse_OnlyComments_ReturnsDefaultOptions()
     {
-        var toml = """
-            [[speakers]]
-            name = "Alice"
-            id = "A"
-            """;
+        CompilerOptions options = TomlConfigurationLoader.Parse("""
+            # mode = "best-effort"
+            """, SourceName);
 
-        CompilerOptions options = TomlConfigurationLoader.Parse(toml, SourceName);
-
-        var speaker = AssertOnlySpeaker(options.Speakers);
-        Assert.Equal("Alice", speaker.Name);
-        Assert.Equal("A", speaker.Id);
+        Assert.Same(CompilerOptions.Default, options);
     }
 
     [Fact]
-    public void Parse_WithMode_SetsIt()
+    public void Parse_EverySection_AppliesAll()
     {
-        var toml = """
-            mode = "best-effort"
-            """;
-
-        CompilerOptions options = TomlConfigurationLoader.Parse(toml, SourceName);
-
-        Assert.Equal(CompilationMode.BestEffort, options.Mode);
-    }
-
-    [Fact]
-    public void Parse_NoMode_KeepsTheDefaultMode()
-    {
-        var toml = """
-            [[speakers]]
-            name = "Alice"
-            """;
-
-        CompilerOptions options = TomlConfigurationLoader.Parse(toml, SourceName);
-
-        Assert.Equal(CompilationMode.StageBoundary, options.Mode);
-    }
-
-    [Fact]
-    public void Parse_WithModeAndSpeakers_AppliesBoth()
-    {
-        var toml = """
+        CompilerOptions options = TomlConfigurationLoader.Parse("""
             mode = "best-effort"
 
             [[speakers]]
             name = "Alice"
-            """;
 
-        CompilerOptions options = TomlConfigurationLoader.Parse(toml, SourceName);
+            [markdown.unmodeled]
+            table = "keep"
+            """, SourceName);
 
         Assert.Equal(CompilationMode.BestEffort, options.Mode);
-        var speaker = AssertOnlySpeaker(options.Speakers);
-        Assert.Equal("Alice", speaker.Name);
-    }
-
-    [Fact]
-    public void Parse_InvalidMode_Throws()
-    {
-        var toml = """
-            mode = "turbo"
-            """;
-
-        Assert.Throws<DialogueConfigurationException>(
-            () => TomlConfigurationLoader.Parse(toml, SourceName));
+        Assert.Equal("Alice", AssertOnlySpeaker(options.Speakers).Name);
+        Assert.Equal(
+            UnmodeledNodeHandling.Keep, options.UnmodeledMarkdown[UnmodeledNodeKind.Table]);
     }
 
     [Fact]
@@ -114,62 +75,71 @@ public sealed class TomlConfigurationLoaderTests
 
         CompilerOptions options = TomlConfigurationLoader.Load(path);
 
-        var speaker = AssertOnlySpeaker(options.Speakers);
-
-        Assert.Equal("Alice", speaker.Name);
+        Assert.Equal("Alice", AssertOnlySpeaker(options.Speakers).Name);
     }
 
     [Fact]
-    public void Parse_WithUnmodeledHandling_WrapsItInOptions()
+    public void Load_InvalidFile_NamesThePathInTheLocation()
     {
-        CompilerOptions options = TomlConfigurationLoader.Parse("""
-            [markdown.unmodeled]
-            table      = "keep"
-            code-block = "ignore"
-            """, SourceName);
+        using var tree = new TempTree();
+        var path = tree.File("dialogue.toml", """
+            mode = "turbo"
+            """);
 
-        Assert.Equal(
-            UnmodeledNodeHandling.Keep, options.UnmodeledMarkdown[UnmodeledNodeKind.Table]);
-        Assert.Equal(
-            UnmodeledNodeHandling.Ignore, options.UnmodeledMarkdown[UnmodeledNodeKind.CodeBlock]);
+        var error = Assert.Throws<DialogueConfigurationException>(() => TomlConfigurationLoader.Load(path));
+
+        Assert.Equal(new ConfigurationSourceLocation(path, 1, 8), error.Location);
     }
 
     [Fact]
-    public void Parse_NoUnmodeledSection_KeepsTheDefaults()
-    {
-        CompilerOptions options = TomlConfigurationLoader.Parse("""
-            [[speakers]]
-            name = "Alice"
-            """, SourceName);
-
-        Assert.Empty(options.UnmodeledMarkdown);
-    }
+    public void Parse_MisspelledSetting_IsRejectedAtTheKey() =>
+        AssertRejects(
+            """
+            # The project's compilation mode.
+            modee = "best-effort"
+            """,
+            "Unknown setting 'modee'. Use 'mode', 'speakers', 'markdown', 'diagnostics'.",
+            line: 2,
+            column: 1);
 
     [Fact]
-    public void Parse_UnmodeledWithSpeakersAndMode_AppliesAll()
-    {
-        CompilerOptions options = TomlConfigurationLoader.Parse("""
+    public void Parse_SingularSpeakerHeader_IsRejectedAtTheKey() =>
+        AssertRejects(
+            """
             mode = "best-effort"
 
-            [[speakers]]
+            [[speaker]]
             name = "Alice"
-
-            [markdown.unmodeled]
-            table = "keep"
-            """, SourceName);
-
-        Assert.Equal(CompilationMode.BestEffort, options.Mode);
-        AssertOnlySpeaker(options.Speakers);
-        Assert.Equal(
-            UnmodeledNodeHandling.Keep, options.UnmodeledMarkdown[UnmodeledNodeKind.Table]);
-    }
+            """,
+            "Unknown setting 'speaker'. Use 'mode', 'speakers', 'markdown', 'diagnostics'.",
+            line: 3,
+            column: 3);
 
     [Fact]
-    public void Parse_InvalidUnmodeledKind_Throws() =>
-        Assert.Throws<DialogueConfigurationException>(() => TomlConfigurationLoader.Parse("""
-            [markdown.unmodeled]
-            footnote = "ignore"
-            """, SourceName));
+    public void Parse_QuotedKeyWithADot_IsOneUnknownSetting() =>
+        // A quoted key is one name, so this is not the [markdown.unmodeled] section.
+        AssertRejects(
+            """
+            ["markdown.unmodeled"]
+            table = "keep"
+            """,
+            "Unknown setting 'markdown.unmodeled'. Use 'mode', 'speakers', 'markdown', 'diagnostics'.",
+            line: 1,
+            column: 2);
+
+    [Fact]
+    public void Parse_MalformedToml_IsRejectedAtTheSyntaxError()
+    {
+        // The value is missing after the '=', a TOML syntax error on line 3.
+        var error = AssertRejects("""
+            [[speakers]]
+            name = "Alice"
+            broken =
+            """);
+
+        Assert.Equal(3, error.Location.Line);
+        Assert.NotEqual(string.Empty, error.Message);
+    }
 
     [Fact]
     public void Parse_WithDisabledDiagnostics_WrapsThemInOptions()

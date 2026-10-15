@@ -185,7 +185,7 @@ internal static class Arrival
         {
             ControlNode { Effects.IsEmpty: true } or BranchNode => true,
             ChoiceNode menu => Choosing.HasNoOptionAvailable(menu, supply),
-            RandomChoiceNode random => RandomChoiceShares.HasNothingDrawable(random),
+            RandomChoiceNode random => RandomChoiceShares.HasNothingDrawable(random, supply),
             _ => false,
         };
 

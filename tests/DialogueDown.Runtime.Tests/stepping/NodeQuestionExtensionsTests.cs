@@ -42,6 +42,26 @@ public sealed class NodeQuestionExtensionsTests
                 .FindTruthsForPlaying());
 
     [Fact]
+    public void FindTruthsForPlaying_OfARandomChoice_NameItsRandomOptionsConditionsInTheOrderWritten() =>
+        Assert.Equal(
+            ["Guard.IsAngry", "Guard.IsTired"],
+            RandomChoice(
+                Chance(50, condition: "Guard.IsAngry", target: 1),
+                EvenChance(target: 2),
+                Chance(20, condition: "Guard.IsTired", target: 3))
+                .FindTruthsForPlaying());
+
+    [Fact]
+    public void FindTruthsForPlaying_OfARandomChoice_NameARepeatedKeyOnce() =>
+        // One reading of the world decides every random option's share.
+        Assert.Equal(
+            ["Guard.IsAngry"],
+            RandomChoice(
+                Chance(50, condition: "Guard.IsAngry", target: 1),
+                Chance(30, condition: "Guard.IsAngry", target: 2))
+                .FindTruthsForPlaying());
+
+    [Fact]
     public void FindWordsForPlaying_OfALineWithNoQueryInIt_AreNone() =>
         Assert.Empty(Line("Hello.").FindWordsForPlaying());
 

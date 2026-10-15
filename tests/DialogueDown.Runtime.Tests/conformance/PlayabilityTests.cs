@@ -40,11 +40,11 @@ public sealed class PlayabilityTests
     [Fact]
     public void WhyNotPlayable_OfAPlaybook_NamesEachKindOnce()
     {
-        // Two random choices this build cannot play yet: one guarded, and one the world weighs.
+        // Two random choices this build cannot play yet, each with a key weight.
         var context = PlayContextFactory.Of(
             [
-                RandomChoice(EvenChance(condition: "Guard.IsAngry", target: 2), EvenChance(target: 2)),
-                RandomChoice(id: 1, Chance("Guard.Mood", target: 2), EvenChance(target: 2)),
+                RandomChoice(Chance("Guard.Mood", target: 2), EvenChance(target: 2)),
+                RandomChoice(id: 1, Chance("Guard.Patience", target: 2), EvenChance(target: 2)),
                 End(id: 2),
             ],
             ["Guard"]);

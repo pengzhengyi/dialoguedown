@@ -1,12 +1,12 @@
-using DialogueDown.ConfigurationLoader.Toml;
+using DialogueDown.ConfigurationLoader.Document;
+using DialogueDown.ConfigurationLoader.Errors;
 using DialogueDown.Diagnostics;
-using Tomlyn.Syntax;
 
 namespace DialogueDown.ConfigurationLoader.Readers;
 
 /// <summary>
-/// Reads the codes a project disables from the <c>[diagnostics]</c> table of a parsed
-/// <see cref="DocumentSyntax"/>, upper-case and in the order written.
+/// Reads the codes a project disables from the <c>diagnostics</c> section, upper-case and in the
+/// order written.
 /// </summary>
 /// <remarks>
 /// <code>
@@ -14,85 +14,57 @@ namespace DialogueDown.ConfigurationLoader.Readers;
 /// disable = ["DLG3002", "DLG1114"]
 /// </code>
 /// Its one key, <c>disable</c>, is an array of codes, each naming an <c>Info</c> or <c>Warning</c>
-/// diagnostic. Anything else — an unknown or error code, a non-string, an unknown key, or
-/// <c>diagnostics</c> written as anything but a <c>[diagnostics]</c> table — is rejected with a
-/// located <see cref="DialogueConfigurationException"/>.
+/// diagnostic. An unknown or error code, a non-string, an unknown key, or <c>diagnostics</c>
+/// written as anything but a table is rejected with a located
+/// <see cref="DialogueConfigurationException"/>.
 /// </remarks>
 internal sealed class ConfiguredDiagnosticsReader
 {
-    private const string TableName = "diagnostics";
+    /// <summary>The root key this reader owns.</summary>
+    public const string Key = "diagnostics";
+
     private const string DisableKey = "disable";
 
-    public IReadOnlyList<string> Read(DocumentSyntax document)
+    public IReadOnlyList<string> Read(ConfigurationTable root)
     {
-        ArgumentNullException.ThrowIfNull(document);
-        AssertNoOtherShape(document);
+        ArgumentNullException.ThrowIfNull(root);
 
-        var codes = new List<string>();
-        foreach (var table in TomlTables.Named<TableSyntax>(document, TableName))
+        if (root.Find(Key) is not { } section)
         {
-            foreach (var entry in table.Items)
-            {
-                codes.AddRange(ReadDisable(entry));
-            }
+            return [];
         }
 
-        return codes;
+        var table = section.Value as ConfigurationTable
+            ?? throw new DialogueConfigurationException(
+                $"'{Key}' must be a table, such as a [{Key}] line with {DisableKey} = [\"DLG3002\"].",
+                section.Value.Location);
+        table.RejectUnknownKeys([DisableKey], "diagnostics setting");
+
+        return table.Find(DisableKey) is { } disable ? ReadDisable(disable) : [];
     }
 
-    // `diagnostics.disable = [...]` at the root, an inline `diagnostics = { ... }`, `[[diagnostics]]`,
-    // or `[diagnostics.x]` would each be skipped by a reader that only looks for the table.
-    private static void AssertNoOtherShape(DocumentSyntax document)
+    private static List<string> ReadDisable(ConfigurationEntry disable)
     {
-        foreach (var entry in document.KeyValues)
+        if (disable.Value is not ConfigurationArray array)
         {
-            if (IsDiagnosticsName(TomlKeys.Name(entry.Key)))
-            {
-                throw TomlErrors.At(
-                    "Write 'diagnostics' as a table: a [diagnostics] line, then disable = [\"DLG3002\"].",
-                    entry.Key!);
-            }
+            throw new DialogueConfigurationException(
+                $"'{DisableKey}' must be an array of diagnostic codes.", disable.Value.Location);
         }
 
-        foreach (var table in document.Tables)
-        {
-            var name = TomlKeys.Name(table.Name);
-            if (IsDiagnosticsName(name) && (table is not TableSyntax || name != TableName))
-            {
-                throw TomlErrors.At(
-                    $"Unknown table '{name}'. Diagnostics are configured in one [diagnostics] table.",
-                    table.Name!);
-            }
-        }
+        return array.Items.Select(ReadCode).ToList();
     }
 
-    private static bool IsDiagnosticsName(string name) =>
-        name == TableName || name.StartsWith(TableName + ".", StringComparison.Ordinal);
-
-    private static IEnumerable<string> ReadDisable(KeyValueSyntax entry)
+    private static string ReadCode(ConfigurationValue value)
     {
-        var key = TomlKeys.Name(entry.Key);
-        if (key != DisableKey)
+        if (value is not ConfigurationScalar { Value: string text })
         {
-            throw TomlErrors.At($"Unknown key '{key}' in [diagnostics]. Use '{DisableKey}'.", entry.Key!);
+            throw new DialogueConfigurationException(
+                $"Each code in '{DisableKey}' must be a string, such as \"DLG3002\".", value.Location);
         }
 
-        if (entry.Value is not ArraySyntax array)
-        {
-            throw TomlErrors.At("'disable' must be an array of diagnostic codes.", entry.Value!);
-        }
-
-        return array.Items.Select(item => ReadCode(item.Value!)).ToList();
-    }
-
-    private static string ReadCode(SyntaxNode value)
-    {
-        if (value is not StringValueSyntax text)
-        {
-            throw TomlErrors.At("Each code in 'disable' must be a string, such as \"DLG3002\".", value);
-        }
-
-        var check = DisabledDiagnosticCodes.Check(text.Value!);
-        return check.IsValid ? check.Code : throw TomlErrors.At(check.Problem, value);
+        var check = DisabledDiagnosticCodes.Check(text);
+        return check.IsValid
+            ? check.Code
+            : throw new DialogueConfigurationException(check.Problem, value.Location);
     }
 }

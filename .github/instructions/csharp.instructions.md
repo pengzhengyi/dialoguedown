@@ -73,8 +73,9 @@ and visualization assemblies are unaffected):
 | Cyclomatic complexity | 10 | S1541 |
 | Cognitive complexity | 15 | S3776 |
 
-These are advisory **warnings**, not build errors — treat them as a prompt to
-split a method, introduce a parameter object, or simplify branching. Thresholds
+These are **build errors**, not warnings: a method or file over its limit fails
+the build and CI. Split the method, introduce a parameter object, or simplify the
+branching; do not suppress the rule. Thresholds
 live in [`src/DialogueDown/SonarLint.xml`](../../src/DialogueDown/SonarLint.xml)
 (SonarAnalyzer reads rule parameters only from that file); severities and the
 core-only scope live in [`.editorconfig`](../../.editorconfig). The analyzer is a

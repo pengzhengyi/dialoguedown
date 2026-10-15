@@ -17,6 +17,7 @@ stay free of project-wide setup.
 - [Project configuration](#project-configuration)
   - [Table of contents](#table-of-contents)
   - [Where the file lives](#where-the-file-lives)
+  - [Writing the file](#writing-the-file)
   - [Configuring speakers](#configuring-speakers)
   - [The default speaker](#the-default-speaker)
   - [Tags](#tags)
@@ -43,6 +44,36 @@ The CLI **discovers** it by walking up from a script's folder to the nearest
 `dialogue.toml`, so one file at the root serves every script beneath it — the same
 way `tsconfig.json`, `.clang-format`, and `pyproject.toml` are found. To point at a
 config elsewhere, pass [`--config`](#using-it-with-the-cli).
+
+## Writing the file
+
+The examples on this page use TOML's `[section]` and `[[array]]` headers, but any
+TOML spelling of a setting means the same thing. These two declare the same
+speaker:
+
+```toml
+[[speakers]]
+name = "Alice"
+```
+
+```toml
+speakers = [{ name = "Alice" }]
+```
+
+And these two set the same override:
+
+```toml
+[markdown.unmodeled]
+table = "keep"
+```
+
+```toml
+markdown.unmodeled.table = "keep"
+```
+
+A key DialogueDown does not know is an error, reported with its file, line, and
+column, so a typo such as `modee`, `[[speaker]]`, or `[markdown.unmodled]` cannot
+quietly leave a setting at its default.
 
 ## Configuring speakers
 
