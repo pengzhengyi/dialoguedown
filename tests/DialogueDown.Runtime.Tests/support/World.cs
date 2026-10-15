@@ -7,7 +7,8 @@ namespace DialogueDown.Runtime.Tests;
 /// What the world answers when a run asks it something, written the way a test means it.
 /// </summary>
 /// <remarks>
-/// Each builds a supply from plain values: a yes or no for a guard, words for a query.
+/// Each builds a supply from plain values: a yes or no for a guard, words for a query, a number
+/// for a key weight.
 /// </remarks>
 internal static class World
 {
@@ -27,7 +28,13 @@ internal static class World
     public static Supply Answering(params (string Key, string Words)[] answers) =>
         Answering([.. answers.Select(answer => (answer.Key, Answer: (Answer)new TextAnswer(answer.Words)))]);
 
-    /// <summary>What the world answers, when the keys it was asked about need answers of both kinds.</summary>
+    /// <summary>What the world answers, as a number for each key it was asked about.</summary>
+    /// <param name="answers">Each key, with the number that answers it.</param>
+    /// <returns>The supply.</returns>
+    public static Supply Answering(params (string Key, double Number)[] answers) =>
+        Answering([.. answers.Select(answer => (answer.Key, Answer: (Answer)new NumberAnswer(answer.Number)))]);
+
+    /// <summary>What the world answers, when the keys it was asked about need answers of more than one kind.</summary>
     /// <param name="answers">Each key, with its answer.</param>
     /// <returns>The supply.</returns>
     public static Supply Answering(params (string Key, Answer Answer)[] answers) =>
