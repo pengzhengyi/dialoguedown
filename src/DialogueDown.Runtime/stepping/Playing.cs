@@ -158,7 +158,7 @@ internal static class Playing
     private static StepResult End() => new(new PlayState(new AtEnd()), [new Ended()]);
 
     // Refused rather than answered with no events, which would look like a hang. A random choice
-    // comes here when only the world can say what its shares are.
+    // comes here when a random option has a key weight.
     private static StepResult Unplayable(int position, Node unplayable) =>
         StepResults.Refuse(
             position,

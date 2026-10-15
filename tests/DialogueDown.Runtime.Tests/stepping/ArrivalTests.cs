@@ -91,6 +91,37 @@ public sealed class ArrivalTests
             "Node 0 sits in a loop of nodes that hand the host nothing, so a run entering it would never come out.");
 
     [Fact]
+    public void At_ARandomChoiceWithAGuardedRandomOption_AsksTheWorldBeforeAskingForADraw() =>
+        AssertAsked(
+            Arrival.At(ARandomChoiceWithAGuardedRandomOptionStanding(), 0),
+            node: 0,
+            Moment.BeforePlaying,
+            "Guard.IsAngry");
+
+    [Fact]
+    public void Supplied_WhenTheWorldWithholdsAGuard_AsksForADrawWithTheRandomOptionItGuardsExcluded() =>
+        // The excluded random option's share is zero, so the auto weight in play takes the whole draw.
+        AssertAskedForADraw(
+            Arrival.Supplied(
+                ARandomChoiceWithAGuardedRandomOptionStanding(),
+                Waiting(0, "Guard.IsAngry"),
+                Answering(("Guard.IsAngry", false))),
+            0,
+            0,
+            100);
+
+    [Fact]
+    public void Supplied_WhenTheWorldAllowsAGuard_AsksForADrawWithTheRandomOptionItGuardsInPlay() =>
+        AssertAskedForADraw(
+            Arrival.Supplied(
+                ARandomChoiceWithAGuardedRandomOptionStanding(),
+                Waiting(0, "Guard.IsAngry"),
+                Answering(("Guard.IsAngry", true))),
+            0,
+            50,
+            50);
+
+    [Fact]
     public void At_ARandomChoiceWithNothingDrawable_WalksOnByItsFallThrough()
     {
         // No draw could land anywhere, so the run goes on to where the script carries on after it.
@@ -615,6 +646,17 @@ public sealed class ArrivalTests
         PlayContextFactory.Of(
             [Choice(Succession(1)), Line("Onward.", id: 1, next: 2), End(id: 2)],
             ["Alice"]);
+
+    /// <summary>A playbook that begins at a random choice whose first random option only the world can allow.</summary>
+    /// <remarks>
+    /// <code>
+    /// - `Guard.IsAngry?` `%` Guard: Halt!
+    /// - `%` Guard: Move along.
+    /// </code>
+    /// </remarks>
+    /// <returns>A context ready to step.</returns>
+    private static PlayContext ARandomChoiceWithAGuardedRandomOptionStanding() =>
+        PlayContextFactory.Of([PlayContextFactory.ARandomChoiceWithAGuardedRandomOption(), End(id: 1)], ["Guard"]);
 
     /// <summary>A random choice whose only random option weighs nothing, then a line.</summary>
     /// <remarks>
