@@ -1,6 +1,7 @@
 using System.Collections.Immutable;
 using System.Diagnostics.CodeAnalysis;
 using System.Text;
+using DialogueDown.Common;
 using DialogueDown.Playbook.Speech;
 
 namespace DialogueDown.Emission;
@@ -194,10 +195,6 @@ internal static class SpeechSpacing
             return collapsed.ToImmutable();
         }
 
-        // The set CSS collapses: a space, a tab, and the line breaks an entity can write into a
-        // text. A named space such as U+00A0 is one the writer chose, so it never collapses.
-        private static bool IsCollapsible(char character) => character is ' ' or '\t' or '\n' or '\r';
-
         // Returns false when nothing of the fragment is left to keep.
         private bool TryKeep(SpeechFragment fragment, [NotNullWhen(true)] out SpeechFragment? kept)
         {
@@ -235,7 +232,7 @@ internal static class SpeechSpacing
             var builder = new StringBuilder(text.Text.Length);
             foreach (var character in text.Text)
             {
-                var isSpace = IsCollapsible(character);
+                var isSpace = character.IsCollapsibleSpace();
                 if (isSpace && _afterSpace)
                 {
                     continue;
