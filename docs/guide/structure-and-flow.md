@@ -398,7 +398,34 @@ A [random option](#random-choices) can be conditional too — the condition come
 
 When `IsAngry` is true the engine picks among all three by weight; when it is false
 the first option is left out and the remaining weights are re-normalized — a random
-pool with a dynamic set of options.
+pool with a dynamic set of options. A calm guard waves you through 60% of the time
+and ignores you 40%.
+
+An auto weight (`` `%` ``) counts only the options still in play. Give the last
+option one:
+
+```markdown
+- `IsAngry?` `50%` The guard glares and blocks your path.
+- `30%` The guard waves you through.
+- `%` The guard ignores you.
+```
+
+An angry guard ignores you 20% of the time, the auto weight taking what `50%` and
+`30%` leave of 100. A calm guard ignores you 70% of the time: with the first option
+left out, the auto weight takes everything `30%` leaves.
+
+When every option is left out there is nothing to pick, so the random choice is
+passed by and the run carries on with whatever follows the list:
+
+```markdown
+- `IsAngry?` `%` The guard glares and blocks your path.
+- `IsTired?` `%` The guard yawns and waves you through.
+
+The guard says nothing.
+```
+
+A guard who is neither angry nor tired has no option left, so the run goes straight
+on to "The guard says nothing."
 
 As with a [conditional jump](#conditional-jumps) or line, each option's condition
 is independent and there is no inline *else*: query an inverse flag for the
