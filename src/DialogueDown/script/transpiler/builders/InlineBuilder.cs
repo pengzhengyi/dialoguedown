@@ -91,6 +91,15 @@ internal sealed class InlineBuilder(
 
     private void AppendText(TextInline text, IInlinePolicy policy, List<InlineFragment> fragments)
     {
+        // An entity's characters do not stand one for one in the source. It is literal, never a
+        // sigil, so it becomes one text over the whole entity rather than being tokenized from
+        // its first character.
+        if (text.IsEntity)
+        {
+            fragments.Add(new Text(text.Text, text.Span));
+            return;
+        }
+
         // Anchor at ContentSpan: the tokenizer walks the unescaped Text, whose source
         // position sits past any stripped leading backslash. The escape flag keeps an
         // escaped leading character — and a sigil it begins — literal.
