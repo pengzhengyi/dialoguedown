@@ -41,7 +41,7 @@ public sealed class RandomChoiceSharesTests
                 ARandomChoiceWhoseOnlyShareIsGuarded(), Answering(("Guard.IsAngry", true))));
 
     [Fact]
-    public void HasNothingDrawable_WhenARandomOptionIsWeightedByAKey_AndTheWorldWasAskedNothing_IsFalse() =>
+    public void HasNothingDrawable_WhenARandomOptionHasAKeyWeight_AndTheWorldWasAskedNothing_IsFalse() =>
         // The other number is zero, but the key weight must be asked before the shares are known.
         Assert.False(RandomChoiceShares.HasNothingDrawable(ARandomChoiceWithAKeyWeightBesideAZero()));
 
@@ -110,7 +110,7 @@ public sealed class RandomChoiceSharesTests
         Assert.False(RandomChoiceShares.TryWorkOut(ARandomChoiceWithAGuardedZero(), supply: null, out _));
 
     [Fact]
-    public void TryWorkOut_WhenARandomOptionIsWeightedByAKey_AndTheWorldWasAskedNothing_Fails() =>
+    public void TryWorkOut_WhenARandomOptionHasAKeyWeight_AndTheWorldWasAskedNothing_Fails() =>
         Assert.False(RandomChoiceShares.TryWorkOut(ARandomChoiceWithAKeyWeightBesideAZero(), supply: null, out _));
 
     [Fact]

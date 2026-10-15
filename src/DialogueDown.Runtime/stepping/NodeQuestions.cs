@@ -58,8 +58,8 @@ internal readonly record struct NodeQuestions(
     /// <param name="node">The node being left.</param>
     /// <returns>Its questions, all of them truths.</returns>
     /// <remarks>
-    /// A way out is guarded rather than spoken or weighted, so nothing here is answered with words or
-    /// with a number.
+    /// A way out can have a guard but never words or a weight, so nothing here is answered with words
+    /// or with a number.
     /// </remarks>
     public static NodeQuestions RequiredToLeave(Node node)
     {

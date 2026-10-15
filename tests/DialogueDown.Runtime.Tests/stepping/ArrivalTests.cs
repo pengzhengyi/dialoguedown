@@ -178,10 +178,10 @@ public sealed class ArrivalTests
             "Guard.Mood");
 
     [Fact]
-    public void At_ARandomChoiceGuardedAndWeightedByOneKey_RefusesBeforeAskingAnything() =>
+    public void At_ARandomOptionWhoseGuardAndKeyWeightReadOneKey_RefusesBeforeAskingAnything() =>
         // One answer comes back for the key, so either the guard or the key weight cannot read it.
         AssertRefused(
-            Arrival.At(ARandomChoiceGuardedAndWeightedByOneKey(), 0),
+            Arrival.At(ARandomOptionWhoseGuardAndKeyWeightReadOneKey(), 0),
             RefusalReason.KeyNeededBothWays,
             "Node 0 needs Guard.Mood as more than one kind of answer, and a single answer can only be one kind.");
 
@@ -197,7 +197,7 @@ public sealed class ArrivalTests
 
     [Fact]
     public void Supplied_WhenTheWorldWithholdsAGuard_TheKeyWeightItGuardsCountsForNothing() =>
-        // The number was answered, but the random option it weights is out of play.
+        // The number was answered, but its random option is out of play.
         AssertAskedForADraw(
             Arrival.Supplied(
                 ARandomChoiceWithAGuardedKeyWeightStanding(),
@@ -851,7 +851,7 @@ public sealed class ArrivalTests
             ],
             ["Guard"]);
 
-    /// <summary>A random choice whose first random option is guarded and weighted by the same key.</summary>
+    /// <summary>A random choice whose first random option has a guard and a key weight that read one key.</summary>
     /// <remarks>
     /// <code>
     /// - `Guard.Mood?` `Guard.Mood%` Guard: Halt!
@@ -859,7 +859,7 @@ public sealed class ArrivalTests
     /// </code>
     /// </remarks>
     /// <returns>A context whose entry needs one key as a truth and as a number.</returns>
-    private static PlayContext ARandomChoiceGuardedAndWeightedByOneKey() =>
+    private static PlayContext ARandomOptionWhoseGuardAndKeyWeightReadOneKey() =>
         PlayContextFactory.Of(
             [RandomChoice(Chance("Guard.Mood", condition: "Guard.Mood", target: 1), EvenChance(target: 1)), End(id: 1)],
             ["Guard"]);
