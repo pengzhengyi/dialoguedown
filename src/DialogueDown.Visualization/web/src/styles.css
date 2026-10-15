@@ -4873,6 +4873,26 @@ body.zen .playbook-view > .playbook-source {
     box-shadow: none;
 }
 
+/* Shown whitespace stays in the background: CodeMirror's dots and arrows are drawn smaller and
+   fainter than its defaults, so they mark the spacing without competing with the text. The dot
+   takes the theme's muted color; the arrow is an image, which cannot read a custom property, so
+   it uses a mid gray at low opacity that recedes on both themes. The extra `.cm-content` outranks
+   CodeMirror's own theme rules. */
+.cm-editor .cm-content .cm-highlightSpace {
+    background: radial-gradient(
+            circle at 50% 55%,
+            color-mix(in srgb, var(--md-muted) 50%, transparent) 15%,
+            transparent 0
+        )
+        no-repeat;
+    background-position: calc(min(50%, 0px)) center;
+    background-size: 0.4em;
+}
+
+.cm-editor .cm-content .cm-highlightTab {
+    background-image: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="200" height="20"><path stroke="%23888" stroke-opacity="0.45" stroke-width="0.8" fill="none" d="M1 10H196L190 5M190 15L196 10M197 4L197 16"/></svg>');
+}
+
 /* The shortcut panel, shown full width below the status line when expanded. */
 .app-footer .shortcuts {
     position: relative;
