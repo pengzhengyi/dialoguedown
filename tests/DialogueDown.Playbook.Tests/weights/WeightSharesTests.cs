@@ -35,7 +35,19 @@ public sealed class WeightSharesTests
     }
 
     [Fact]
-    public void Of_AKeyWeight_IsRefusedNamingTheKey_BecauseOnlyTheWorldKnowsItsNumber()
+    public void Of_AKeyWeight_ComesToTheNumberTheWorldAnswered()
+    {
+        // - `Guard.Mood%` Guard: Lovely day.
+        // - `%` Guard: Move along.
+        var shares = WeightShares.Of(
+            [Chance("Guard.Mood"), EvenChance()], new EveryOptionInPlay(), new KeyWeightAnswered("Guard.Mood", 20));
+
+        // Answered 20, the key weight counts as `20%` would, and the auto weight takes what it leaves.
+        Assert.Equal([20.0, 80.0], shares);
+    }
+
+    [Fact]
+    public void Of_AKeyWeightWithNoAnswers_IsRefusedNamingTheKey_BecauseOnlyTheWorldKnowsItsNumber()
     {
         static void UnansweredKey() =>
             _ = WeightShares.Of([Chance("Guard.Mood"), EvenChance()], new EveryOptionInPlay());
@@ -43,6 +55,14 @@ public sealed class WeightSharesTests
         var error = Assert.Throws<ArgumentException>(UnansweredKey);
         Assert.Contains("Guard.Mood", error.Message, StringComparison.Ordinal);
     }
+
+    [Fact]
+    public void Of_AKeyWeightAnsweredWithANumberNoShareCanBe_IsRefused() =>
+        Assert.Throws<ArgumentOutOfRangeException>(
+            () => WeightShares.Of(
+                [Chance("Guard.Mood"), EvenChance()],
+                new EveryOptionInPlay(),
+                new KeyWeightAnswered("Guard.Mood", -10)));
 
     [Fact]
     public void Of_ANumberNoShareCanBe_IsRefused() =>
@@ -115,5 +135,12 @@ public sealed class WeightSharesTests
     private sealed class GuardsWithheld : IRandomOptionArbiter
     {
         public bool Excludes(RandomOptionEdge option) => option.Condition is not null;
+    }
+
+    // As though the world answered one key weight, and was asked about no other.
+    private sealed class KeyWeightAnswered(string answeredKey, double number) : IKeyWeightAnswers
+    {
+        public double NumberFor(string key) =>
+            key == answeredKey ? number : throw new KeyNotFoundException($"The world was not asked about {key}.");
     }
 }
