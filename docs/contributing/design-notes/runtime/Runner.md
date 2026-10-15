@@ -6,7 +6,7 @@
 > It waits on the host for each effect and each draw and on the player at each
 > menu, asks the world about conditions and queries (see
 > [Asking the World](./Asking%20the%20World.md)), and refuses what it cannot play
-> yet: a random choice with a guarded random option or a key weight. It applies the
+> yet: a random choice with a key weight. It applies the
 > cross-cutting decisions of the
 > [Dialogue Runtime Architecture](./Dialogue%20Runtime%20Architecture.md).
 
@@ -158,11 +158,11 @@ nothing. The first node that asks for something is where the run stands.
 | `choice` with no option available | nothing | walks on by its fall-through, as past a branch |
 | `random-choice` | `Draw(shares)`: every random option's share, in the order written | waits on the host — `Drawn` |
 | `random-choice` with nothing drawable | nothing | walks on by its fall-through, as past a menu with nothing available |
-| `random-choice` with a guarded random option or a key weight | `Refused(unplayable-node)` | stands at that node |
+| `random-choice` with a key weight | `Refused(unplayable-node)` | stands at that node |
 
 Before a node plays, the run asks the world, in one `Resolve`, every key the node
 needs to play: its own condition and the queries in its speech up to its first
-[stop](./Speaking%20a%20Line.md#s8--the-world-is-asked-once-per-stop), or for a menu, its options' conditions and its labels' queries. A line asks once more at each stop, once the host is done. Before it leaves, it
+[stop](./Speaking%20a%20Line.md#s8--the-world-is-asked-once-per-stop), for a menu, its options' conditions and its labels' queries, and for a random choice, its random options' conditions. A line asks once more at each stop, once the host is done. Before it leaves, it
 asks in one more `Resolve` about the conditions on its ways out. The `Moment` on
 `AwaitingSupply` says which of the two a `Supply` answers. A node whose own
 condition fails is stepped over by its succession; a guarded way out whose
@@ -190,7 +190,7 @@ flowchart TD
     Kind -->|"Choice, nothing available"| Onward
     Kind -->|"Random choice"| Draw["Draw"] --> Host(["Waits on the host to draw"])
     Kind -->|"Random choice, nothing drawable"| Onward
-    Kind -->|"Random choice, guarded or key-weighted"| RefuseK(["Refused: unplayable-node"])
+    Kind -->|"Random choice, key-weighted"| RefuseK(["Refused: unplayable-node"])
     Onward -->|"divert or succession"| Arrive
     Onward -->|none| RefuseN(["Refused: leads-nowhere"])
 ```
@@ -213,7 +213,7 @@ runtimes.
 | `unasked-key` | a `Supply` answers a key the run did not ask about |
 | `wrong-answer-kind` | an answer is the wrong kind for its question — words for a condition, or a truth for a query |
 | `key-needed-both-ways` | one node needs the same key as a truth and as words, which one answer cannot be |
-| `unplayable-node` | the node is one this build does not play: a random choice with a guarded random option or a key weight |
+| `unplayable-node` | the node is one this build does not play: a random choice with a key weight |
 | `no-such-option` | a `Choose` names a position outside the options the menu offered: below 0, or past the last |
 | `unavailable-option` | a `Choose` names an option the menu offered as one the player cannot take |
 | `invalid-draw` | a `Drawn` carries a number below 0 or above 1, or one that is not a number |
@@ -238,7 +238,7 @@ session and judging it are separate pieces, each tested alone:
 | Piece | Responsibility |
 | --- | --- |
 | `PlayableRun` | Reads one case's playbook, screens it, then holds its session against the runner |
-| `Playability` | What this build can play: every node but a random choice that asks the world, the sends a reader takes, and why a case is not there yet |
+| `Playability` | What this build can play: every node but a random choice with a key weight, the sends a reader takes, and why a case is not there yet |
 | `SessionMatcher` | Walks the session, playing each entry against the state the one before it left |
 | `SessionOperator` | Steps the runner and holds the events nobody has read yet |
 | `Commands` | Reads what a `send` names, one reader per command |
@@ -383,7 +383,7 @@ because skipping is the silent wrong story the format refuses to tell.
 | Unit — `Runner` | Each cell of the protocol matrix |
 | Unit — `Arrival` | Each node kind: what it reports, and which party the run then waits on |
 | Unit — `Choosing` | A menu offered with its labels filled and each option's availability, a choice taken, and a choice the menu did not offer, or offered as unavailable, refused |
-| Unit — `RandomChoiceShares`, `Drawing` | A random choice's shares, and whether any is drawable; a draw asked for with every share, and taken at the start, inside, and at the end of a span, and at 1; each refusal |
+| Unit — `RandomChoiceShares`, `Drawing` | A random choice's shares with the world's answers, and whether any is drawable; a draw asked for with every share, and taken at the start, inside, and at the end of a span, and at 1; each refusal |
 | Unit — traversal | Divert taken, succession fallen through to, neither available; a menu's options in the order written |
 | Unit — harness | Each piece alone: reading a send, driving a runner, matching one claim, walking a session |
 | Conformance | Every case the runner plays conforms; the rest are named as not yet playable |
@@ -399,8 +399,8 @@ runtime tests may not reference the compiler, and a test holds it and the harnes
 
 ## Open questions and deferred work
 
-- **Random choices that ask the world.** A guarded random option and a key weight
-  are refused as `unplayable-node` until the runner asks the world about them, as
+- **Random choices weighted by a key.** A key weight is refused as
+  `unplayable-node` until the runner asks the world for its number, as
   [Drawing a Random Option](./Drawing%20a%20Random%20Option.md) plans.
 - **Saves.** `Describe` and `Restore` are designed in the
   [architecture note](./Dialogue%20Runtime%20Architecture.md#the-protocol) and not

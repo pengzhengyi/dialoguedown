@@ -16,19 +16,19 @@ namespace DialogueDown.Runtime.Tests;
 /// </summary>
 /// <remarks>
 /// Only what the runner plays is drawn: a line, an end, a jump, a line or a control block that
-/// asks the host to perform something, a block condition, a menu, and a random choice whose shares
-/// need no answer from the world. A line may hold a command before, between, or after its words, or
-/// say nothing but a command. A node or edge kind the runner gains belongs here too, so a walk
-/// covers everything a run can meet.
+/// asks the host to perform something, a block condition, a menu, and a random choice of number
+/// and auto weights. A line may hold a command before, between, or after its words, or say nothing
+/// but a command. A node or edge kind the runner gains belongs here too, so a walk covers
+/// everything a run can meet.
 /// <para>
-/// Any of them but a random choice may ask the world something. A line or a control block may be
-/// guarded, a jump may fire only when the world allows it, a block condition's first branch is
-/// always guarded, a menu's options may be guarded, and a line or an option's label may have a
-/// query in what it says. A guard and a query never read the same key, so a world drawn beside the
-/// playbook can answer each key in the kind it needs. A menu whose every option is guarded has a
-/// fall-through beside them, as a script compiles to, so a walk sometimes passes a menu by. A
-/// random choice whose random options all weigh zero has one too, so a walk sometimes passes a
-/// random choice by.
+/// Any of them but an end may ask the world something. A line or a control block may be guarded, a
+/// jump may fire only when the world allows it, a block condition's first branch is always
+/// guarded, a menu's options and a random choice's random options may be guarded, and a line or an
+/// option's label may have a query in what it says. A guard and a query never read the same key,
+/// so a world drawn beside the playbook can answer each key in the kind it needs. A menu whose
+/// every option is guarded has a fall-through beside them, as a script compiles to, so a walk
+/// sometimes passes a menu by. So does a random choice whose every random option is guarded, and
+/// one whose random options all weigh zero, so a walk sometimes passes a random choice by.
 /// </para>
 /// <para>
 /// A drawn playbook may loop, may begin anywhere, and may leave an end unreachable. All three are
@@ -79,7 +79,7 @@ internal static class PlaybookGen
 
         /// <summary>
         /// A random choice of two random options, one carrying on and one leading elsewhere, each
-        /// weighed by a number or an auto weight.
+        /// weighed by a number or an auto weight, either of which the world may withhold.
         /// </summary>
         RandomChoice,
     }
@@ -177,7 +177,13 @@ internal static class PlaybookGen
                 new MenuDraft(onwardGuard, elsewhereGuard, onwardAsks, elsewhereAsks));
 
     private static Gen<RandomChoiceDraft> RandomChoice() =>
-        Gen.Select(Weight(), Weight(), (onward, elsewhere) => new RandomChoiceDraft(onward, elsewhere));
+        Gen.Select(
+            Weight(),
+            Weight(),
+            Guard(),
+            Guard(),
+            (onwardWeight, elsewhereWeight, onwardGuard, elsewhereGuard) =>
+                new RandomChoiceDraft(onwardWeight, elsewhereWeight, onwardGuard, elsewhereGuard));
 
     // A number beside an auto weight leaves the auto weight the rest of 100, and two zeros leave
     // nothing drawable.
@@ -207,7 +213,7 @@ internal static class PlaybookGen
     /// <param name="Asks">Whether a line has a query in what it says.</param>
     /// <param name="CommandAt">Where a line holds a command in what it says.</param>
     /// <param name="Menu">What a menu's options ask of the world.</param>
-    /// <param name="RandomChoice">How a random choice's random options are weighed.</param>
+    /// <param name="RandomChoice">How a random choice's random options are weighed and guarded.</param>
     private readonly record struct NodeDraft(
         Draws Draws,
         int Speaker,
@@ -288,17 +294,20 @@ internal static class PlaybookGen
         private static OptionEdge Option(int target, string words, Condition? guard, bool asks) =>
             new(target, asks ? [Text($"{words}, "), Query(WordsKey), Text(".")] : [Text($"{words}.")], guard);
 
-        // A random choice with nothing drawable falls through past its random options, so the walk
-        // goes on rather than being refused there.
+        // A random choice whose every random option the world may withhold falls through past them,
+        // which is how a script compiles one. So does one whose random options both weigh zero, so
+        // the walk goes on rather than being refused there. A guarded random option beside an
+        // unguarded zero has no fall-through, as its script compiles to, so a walk is sometimes
+        // refused there as leading nowhere.
         private ImmutableArray<Edge> RandomOptions() =>
-            RandomChoice.HasNothingDrawable
+            RandomChoice.EveryRandomOptionIsGuarded || RandomChoice.BothWeighZero
                 ? [.. TwoRandomOptions(), new SuccessionEdge(Onward)]
                 : [.. TwoRandomOptions()];
 
         private ImmutableArray<RandomOptionEdge> TwoRandomOptions() =>
             [
-                new(Onward, RandomChoice.OnwardWeight, Condition: null),
-                new(Elsewhere, RandomChoice.ElsewhereWeight, Condition: null),
+                new(Onward, RandomChoice.OnwardWeight, RandomChoice.OnwardGuard),
+                new(Elsewhere, RandomChoice.ElsewhereWeight, RandomChoice.ElsewhereGuard),
             ];
     }
 
@@ -314,13 +323,25 @@ internal static class PlaybookGen
         public bool EveryOptionIsGuarded => OnwardGuard is not null && ElsewhereGuard is not null;
     }
 
-    /// <summary>How a drawn random choice's random options are weighed.</summary>
+    /// <summary>How a drawn random choice's random options are weighed and guarded.</summary>
     /// <param name="OnwardWeight">The weight of the random option that carries on.</param>
     /// <param name="ElsewhereWeight">The weight of the random option leading elsewhere.</param>
-    private readonly record struct RandomChoiceDraft(ChoiceWeight OnwardWeight, ChoiceWeight ElsewhereWeight)
+    /// <param name="OnwardGuard">
+    /// What the world must allow for the random option that carries on to be in play.
+    /// </param>
+    /// <param name="ElsewhereGuard">
+    /// What the world must allow for the random option leading elsewhere to be in play.
+    /// </param>
+    private readonly record struct RandomChoiceDraft(
+        ChoiceWeight OnwardWeight, ChoiceWeight ElsewhereWeight, Condition? OnwardGuard, Condition? ElsewhereGuard)
     {
-        /// <summary>Gets whether both random options weigh zero, so no draw could land on either.</summary>
-        public bool HasNothingDrawable => IsZero(OnwardWeight) && IsZero(ElsewhereWeight);
+        /// <summary>Gets whether the world may withhold every random option.</summary>
+        public bool EveryRandomOptionIsGuarded => OnwardGuard is not null && ElsewhereGuard is not null;
+
+        /// <summary>
+        /// Gets whether both random options weigh zero, so nothing is drawable whatever the world says.
+        /// </summary>
+        public bool BothWeighZero => IsZero(OnwardWeight) && IsZero(ElsewhereWeight);
 
         private static bool IsZero(ChoiceWeight weight) => weight is NumberWeight { Percentage: 0 };
     }

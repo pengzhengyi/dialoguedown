@@ -114,9 +114,12 @@ changes easy to categorize.
   choice of number and auto weights names every random option's share, in the order written, and
   the run waits for the host's `Drawn(value)`, a number from 0 to 1, then follows the random option
   whose span holds it. The host owns randomness and seeding, so replaying the commands replays
-  every draw. A draw outside 0 to 1 is refused as `invalid-draw` and the run keeps waiting; a
-  random choice with nothing to draw is walked past by its fall-through. A random choice with a
-  guarded option or a key weight is still refused as `unplayable-node`. See
+  every draw. A draw outside 0 to 1 is refused as `invalid-draw` and the run keeps waiting. A
+  random choice's conditions are asked on arrival in one `Resolve`, and a random option the world
+  withholds is left out: its share is 0, and an auto weight takes what the random options in play
+  leave of 100. A random choice with nothing to draw is walked past by its fall-through, or
+  refused as `leads-nowhere` without one. A random choice with a key weight is still refused as
+  `unplayable-node`. See
   [Drawing a random option](docs/contributing/design-notes/runtime/Drawing%20a%20Random%20Option.md).
 
 - **A random choice's number weights are checked when a playbook loads** — the reader refuses a

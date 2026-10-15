@@ -16,9 +16,9 @@ namespace DialogueDown.Runtime.Tests.Conformance;
 /// playable rather than as a divergence. The screen restates what the runner can play, so a test
 /// checks that the two agree.
 /// <para>
-/// A node is playable by its kind, except a random choice, which is playable only while it asks
-/// the world nothing. A send is playable when a reader owns it, and an expectation when the harness
-/// can check every claim in it.
+/// A node is playable by its kind, except a random choice, which is playable only while none of its
+/// random options has a key weight. A send is playable when a reader owns it, and an expectation
+/// when the harness can check every claim in it.
 /// </para>
 /// </remarks>
 internal static class Playability
@@ -29,7 +29,7 @@ internal static class Playability
     public static bool CanPlay(Node node) => node switch
     {
         LineNode or EndNode or ControlNode or BranchNode or ChoiceNode => true,
-        RandomChoiceNode random => AsksTheWorldNothing(random),
+        RandomChoiceNode random => HasNoKeyWeight(random),
         _ => false,
     };
 
@@ -86,7 +86,6 @@ internal static class Playability
 
     // Written out here rather than asked of the runner, so the test that the two agree checks
     // something.
-    private static bool AsksTheWorldNothing(RandomChoiceNode random) =>
-        random.Out.OfType<RandomOptionEdge>()
-            .All(option => option.Condition is null && option.Weight is not QueryWeight);
+    private static bool HasNoKeyWeight(RandomChoiceNode random) =>
+        random.Out.OfType<RandomOptionEdge>().All(option => option.Weight is not QueryWeight);
 }

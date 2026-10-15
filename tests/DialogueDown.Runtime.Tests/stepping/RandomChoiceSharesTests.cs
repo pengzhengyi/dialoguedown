@@ -1,5 +1,6 @@
 using DialogueDown.Playbook.Nodes;
 using DialogueDown.Runtime.Stepping;
+using static DialogueDown.Runtime.Tests.World;
 using static DialogueDown.TestSupport.PlaybookNodeFactory;
 
 namespace DialogueDown.Runtime.Tests.Stepping;
@@ -23,9 +24,21 @@ public sealed class RandomChoiceSharesTests
         Assert.False(RandomChoiceShares.HasNothingDrawable(ARandomChoiceWhoseNumberLeavesTheAutoWeightNothing()));
 
     [Fact]
-    public void HasNothingDrawable_WhenARandomOptionIsGuarded_IsFalseBecauseOnlyTheWorldCanSay() =>
+    public void HasNothingDrawable_WhenARandomOptionIsGuarded_AndTheWorldWasAskedNothing_IsFalse() =>
         // Every number is zero, but the guard must be asked before the shares are known.
         Assert.False(RandomChoiceShares.HasNothingDrawable(ARandomChoiceWithAGuardedZero()));
+
+    [Fact]
+    public void HasNothingDrawable_WhenTheWorldWithholdsTheOnlyRandomOptionWithAShare_IsTrue() =>
+        Assert.True(
+            RandomChoiceShares.HasNothingDrawable(
+                ARandomChoiceWhoseOnlyShareIsGuarded(), Answering(("Guard.IsAngry", false))));
+
+    [Fact]
+    public void HasNothingDrawable_WhenTheWorldAllowsTheOnlyRandomOptionWithAShare_IsFalse() =>
+        Assert.False(
+            RandomChoiceShares.HasNothingDrawable(
+                ARandomChoiceWhoseOnlyShareIsGuarded(), Answering(("Guard.IsAngry", true))));
 
     [Fact]
     public void HasNothingDrawable_WhenARandomOptionIsWeightedByAKey_IsFalseBecauseOnlyTheWorldCanSay() =>
@@ -50,7 +63,8 @@ public sealed class RandomChoiceSharesTests
     [Fact]
     public void TryWorkOut_NumbersAndAnAutoWeight_ComeToTheirShares()
     {
-        var workedOut = RandomChoiceShares.TryWorkOut(ARandomChoiceOfTwoNumbersAndAnAutoWeight(), out var shares);
+        var workedOut = RandomChoiceShares.TryWorkOut(
+            ARandomChoiceOfTwoNumbersAndAnAutoWeight(), supply: null, out var shares);
 
         // The auto weight takes what the numbers leave of 100.
         Assert.True(workedOut);
@@ -58,16 +72,42 @@ public sealed class RandomChoiceSharesTests
     }
 
     [Fact]
-    public void TryWorkOut_WhenARandomOptionIsGuarded_FailsBecauseOnlyTheWorldCanSay() =>
-        Assert.False(RandomChoiceShares.TryWorkOut(ARandomChoiceWithAGuardedZero(), out _));
+    public void TryWorkOut_WhenTheWorldWithholdsAGuard_TheRandomOptionItGuardsHasNoShare()
+    {
+        var workedOut = RandomChoiceShares.TryWorkOut(
+            ARandomChoiceWithAGuardedNumber(), Answering(("Guard.IsAngry", false)), out var shares);
+
+        // The random options in play share the draw as if the angry guard's were not written.
+        Assert.True(workedOut);
+        Assert.Equal([0.0, 30.0, 70.0], shares);
+    }
+
+    [Fact]
+    public void TryWorkOut_WhenTheWorldAllowsAGuard_TheRandomOptionItGuardsKeepsItsShare()
+    {
+        var workedOut = RandomChoiceShares.TryWorkOut(
+            ARandomChoiceWithAGuardedNumber(), Answering(("Guard.IsAngry", true)), out var shares);
+
+        Assert.True(workedOut);
+        Assert.Equal([50.0, 30.0, 20.0], shares);
+    }
+
+    [Fact]
+    public void TryWorkOut_WhenARandomOptionIsGuarded_AndTheWorldWasAskedNothing_Fails() =>
+        Assert.False(RandomChoiceShares.TryWorkOut(ARandomChoiceWithAGuardedZero(), supply: null, out _));
 
     [Fact]
     public void TryWorkOut_WhenARandomOptionIsWeightedByAKey_FailsBecauseOnlyTheWorldCanSay() =>
-        Assert.False(RandomChoiceShares.TryWorkOut(ARandomChoiceWithAKeyWeightBesideAZero(), out _));
+        Assert.False(RandomChoiceShares.TryWorkOut(ARandomChoiceWithAKeyWeightBesideAZero(), supply: null, out _));
+
+    [Fact]
+    public void TryWorkOut_WhenARandomOptionIsWeightedByAKey_FailsEvenOnceTheWorldHasAnswered() =>
+        // The world is asked about guards, and nothing it says gives a key weight its number.
+        Assert.False(RandomChoiceShares.TryWorkOut(ARandomChoiceWithAKeyWeightBesideAZero(), Answering(), out _));
 
     [Fact]
     public void TryWorkOut_OfNoRandomChoice_IsRejected() =>
-        Assert.Throws<ArgumentNullException>(() => RandomChoiceShares.TryWorkOut(null!, out _));
+        Assert.Throws<ArgumentNullException>(() => RandomChoiceShares.TryWorkOut(null!, supply: null, out _));
 
     /// <summary>A random choice of two numbers and an auto weight.</summary>
     /// <remarks>
@@ -80,6 +120,29 @@ public sealed class RandomChoiceSharesTests
     /// <returns>The random choice.</returns>
     private static RandomChoiceNode ARandomChoiceOfTwoNumbersAndAnAutoWeight() =>
         RandomChoice(Chance(50, target: 1), Chance(30, target: 2), EvenChance(target: 3));
+
+    /// <summary>A random choice of two numbers and an auto weight, its first number guarded.</summary>
+    /// <remarks>
+    /// <code>
+    /// - `Guard.IsAngry?` `50%` Guard: Halt!
+    /// - `30%` Guard: Move along.
+    /// - `%` Guard: Lovely day.
+    /// </code>
+    /// </remarks>
+    /// <returns>The random choice.</returns>
+    private static RandomChoiceNode ARandomChoiceWithAGuardedNumber() =>
+        RandomChoice(Chance(50, condition: "Guard.IsAngry", target: 1), Chance(30, target: 2), EvenChance(target: 3));
+
+    /// <summary>A random choice whose only random option with a share is guarded.</summary>
+    /// <remarks>
+    /// <code>
+    /// - `Guard.IsAngry?` `50%` Guard: Halt!
+    /// - `0%` Guard: Move along.
+    /// </code>
+    /// </remarks>
+    /// <returns>The random choice.</returns>
+    private static RandomChoiceNode ARandomChoiceWhoseOnlyShareIsGuarded() =>
+        RandomChoice(Chance(50, condition: "Guard.IsAngry", target: 1), Chance(0, target: 2));
 
     /// <summary>A random choice whose random options all weigh nothing.</summary>
     /// <remarks>

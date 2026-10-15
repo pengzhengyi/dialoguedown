@@ -91,6 +91,60 @@ public sealed class ArrivalTests
             "Node 0 sits in a loop of nodes that hand the host nothing, so a run entering it would never come out.");
 
     [Fact]
+    public void At_ARandomChoiceWithAGuardedRandomOption_AsksTheWorldBeforeAskingForADraw() =>
+        AssertAsked(
+            Arrival.At(ARandomChoiceWithAGuardedRandomOptionStanding(), 0),
+            node: 0,
+            Moment.BeforePlaying,
+            "Guard.IsAngry");
+
+    [Fact]
+    public void Supplied_WhenTheWorldWithholdsAGuard_AsksForADrawWithTheRandomOptionItGuardsExcluded() =>
+        // The excluded random option's share is zero, so the auto weight in play takes the whole draw.
+        AssertAskedForADraw(
+            Arrival.Supplied(
+                ARandomChoiceWithAGuardedRandomOptionStanding(),
+                Waiting(0, "Guard.IsAngry"),
+                Answering(("Guard.IsAngry", false))),
+            0,
+            0,
+            100);
+
+    [Fact]
+    public void Supplied_WhenTheWorldAllowsAGuard_AsksForADrawWithTheRandomOptionItGuardsInPlay() =>
+        AssertAskedForADraw(
+            Arrival.Supplied(
+                ARandomChoiceWithAGuardedRandomOptionStanding(),
+                Waiting(0, "Guard.IsAngry"),
+                Answering(("Guard.IsAngry", true))),
+            0,
+            50,
+            50);
+
+    [Fact]
+    public void Supplied_WhenTheWorldWithholdsEveryRandomOption_WalksOnByItsFallThrough()
+    {
+        // Every random option is excluded, so nothing is drawable and no draw is asked for.
+        var result = Arrival.Supplied(
+            ARandomChoiceWhoseOnlyRandomOptionIsGuardedThenALine(),
+            Waiting(0, "Guard.IsAngry"),
+            Answering(("Guard.IsAngry", false)));
+
+        AssertSaid(result, "Guard", "The guard says nothing.");
+        AssertAt(result, 2);
+    }
+
+    [Fact]
+    public void Supplied_WhenARandomChoiceTheWorldLeavesNothingDrawableHasNoFallThrough_RefusesAsLeadingNowhere() =>
+        AssertRefused(
+            Arrival.Supplied(
+                ARandomChoiceWithAGuardedAutoWeightBesideAZero(),
+                Waiting(0, "Guard.IsAngry"),
+                Answering(("Guard.IsAngry", false))),
+            RefusalReason.LeadsNowhere,
+            "Node 0 leads nowhere.");
+
+    [Fact]
     public void At_ARandomChoiceWithNothingDrawable_WalksOnByItsFallThrough()
     {
         // No draw could land anywhere, so the run goes on to where the script carries on after it.
@@ -615,6 +669,58 @@ public sealed class ArrivalTests
         PlayContextFactory.Of(
             [Choice(Succession(1)), Line("Onward.", id: 1, next: 2), End(id: 2)],
             ["Alice"]);
+
+    /// <summary>A playbook that begins at a random choice whose first random option only the world can allow.</summary>
+    /// <remarks>
+    /// <code>
+    /// - `Guard.IsAngry?` `%` Guard: Halt!
+    /// - `%` Guard: Move along.
+    /// </code>
+    /// </remarks>
+    /// <returns>A context ready to step.</returns>
+    private static PlayContext ARandomChoiceWithAGuardedRandomOptionStanding() =>
+        PlayContextFactory.Of([PlayContextFactory.ARandomChoiceWithAGuardedRandomOption(), End(id: 1)], ["Guard"]);
+
+    /// <summary>A random choice whose only random option the world must allow, then a line.</summary>
+    /// <remarks>
+    /// <code>
+    /// - `Guard.IsAngry?` `%` Guard: Halt!
+    ///
+    /// The guard says nothing.
+    /// </code>
+    /// The compiler writes the random choice's fall-through, which leads to the line after it,
+    /// because every random option has a condition.
+    /// </remarks>
+    /// <returns>A context that asks about <c>Guard.IsAngry</c> before asking for a draw.</returns>
+    private static PlayContext ARandomChoiceWhoseOnlyRandomOptionIsGuardedThenALine() =>
+        PlayContextFactory.Of(
+            [
+                RandomChoice(EvenChance(condition: "Guard.IsAngry", target: 1), Succession(2)),
+                Line("Halt!", id: 1, next: 3),
+                Line("The guard says nothing.", id: 2, next: 3),
+                End(id: 3),
+            ],
+            ["Guard"]);
+
+    /// <summary>A random choice whose only random option with a share is guarded, beside a zero.</summary>
+    /// <remarks>
+    /// <code>
+    /// - `Guard.IsAngry?` `%` Guard: Halt!
+    /// - `0%` Guard: Move along.
+    /// </code>
+    /// The compiler writes no fall-through, because one random option has no condition. Once the
+    /// world withholds the guard, the zero is all that is left in play.
+    /// </remarks>
+    /// <returns>A context whose random choice leads nowhere once the world withholds the guard.</returns>
+    private static PlayContext ARandomChoiceWithAGuardedAutoWeightBesideAZero() =>
+        PlayContextFactory.Of(
+            [
+                RandomChoice(EvenChance(condition: "Guard.IsAngry", target: 1), Chance(0, target: 2)),
+                Line("Halt!", id: 1, next: 3),
+                Line("Move along.", id: 2, next: 3),
+                End(id: 3),
+            ],
+            ["Guard"]);
 
     /// <summary>A random choice whose only random option weighs nothing, then a line.</summary>
     /// <remarks>

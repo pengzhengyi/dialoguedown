@@ -3,6 +3,7 @@ using CsCheck;
 using DialogueDown.Playbook.Edges;
 using DialogueDown.Playbook.Nodes;
 using DialogueDown.Playbook.Speech;
+using DialogueDown.Runtime.Protocol;
 using DialogueDown.Runtime.Stepping;
 using DialogueDown.TestSupport;
 
@@ -96,16 +97,17 @@ public sealed class PlaybookGenTests
     }
 
     [Fact]
-    public void TheDraw_GivesSomeRandomChoiceNothingDrawable()
+    public void TheDraw_GivesSomeRandomChoiceNothingDrawable_OnceTheWorldWithholdsEveryGuard()
     {
         // A random choice is walked past only when no random option has a share, so the walk covers
-        // that only if some drawn random choice has nothing drawable.
+        // that only if some drawn random choice has nothing drawable in a world the walk can meet.
         var nothingDrawable = 0;
 
         PlaybookGen.Valid().Sample(
             playbook =>
             {
-                if (playbook.Nodes.OfType<RandomChoiceNode>().Any(RandomChoiceShares.HasNothingDrawable))
+                if (playbook.Nodes.OfType<RandomChoiceNode>()
+                    .Any(random => RandomChoiceShares.HasNothingDrawable(random, WithholdingEveryGuard(random))))
                 {
                     Interlocked.Increment(ref nothingDrawable);
                 }
@@ -144,6 +146,13 @@ public sealed class PlaybookGenTests
 
         return seen;
     }
+
+    /// <summary>What a world that withholds every guard answers about a random choice.</summary>
+    /// <remarks>A drawn world sometimes withholds every guard, so a walk can meet this one.</remarks>
+    /// <param name="random">The random choice.</param>
+    /// <returns>Each key its random options' conditions ask about, answered with false.</returns>
+    private static Supply WithholdingEveryGuard(RandomChoiceNode random) =>
+        World.Answering([.. random.FindTruthsForPlaying().Select(key => (key, false))]);
 
     /// <summary>Where a line's speech holds its first command.</summary>
     /// <param name="speech">The line's speech.</param>

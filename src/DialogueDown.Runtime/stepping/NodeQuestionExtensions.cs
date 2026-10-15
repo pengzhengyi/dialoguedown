@@ -30,7 +30,8 @@ internal static class NodeQuestionExtensions
     /// <param name="node">The node being arrived at.</param>
     /// <returns>
     /// The keys the node's own condition asks about, each needing a truth; for a menu, the keys its
-    /// options' conditions ask about, in the order written and each named once. Empty when nothing
+    /// options' conditions ask about, in the order written and each named once, and for a random
+    /// choice, the keys its random options' conditions ask about, the same way. Empty when nothing
     /// guards it, and empty for a kind that carries no condition at all.
     /// </returns>
     public static ImmutableArray<string> FindTruthsForPlaying(this Node node)
@@ -40,6 +41,7 @@ internal static class NodeQuestionExtensions
         return node switch
         {
             ChoiceNode menu => ConditionKeysOfOptions(menu),
+            RandomChoiceNode random => ConditionKeysOfRandomOptions(random),
             IConditional guarded => KeysOf(guarded.Condition),
             _ => [],
         };
@@ -112,6 +114,11 @@ internal static class NodeQuestionExtensions
     // taken is known when the menu is shown.
     private static ImmutableArray<string> ConditionKeysOfOptions(ChoiceNode menu) =>
         [.. menu.Options().SelectMany(option => KeysOf(option.Condition)).Distinct(StringComparer.Ordinal)];
+
+    // A random choice reads every random option's condition before it asks for a draw, so the
+    // excluded random options are left out before the shares are worked out.
+    private static ImmutableArray<string> ConditionKeysOfRandomOptions(RandomChoiceNode random) =>
+        [.. random.RandomOptions().SelectMany(option => KeysOf(option.Condition)).Distinct(StringComparer.Ordinal)];
 
     // A menu's labels are shown when it is offered, so their queries are asked with its options'
     // conditions.

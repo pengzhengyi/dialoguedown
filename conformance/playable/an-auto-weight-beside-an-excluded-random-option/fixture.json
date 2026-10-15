@@ -1,0 +1,15 @@
+{
+  "$schema": "https://pengzhengyi.github.io/dialoguedown/schema/fixture-0.schema.json",
+  "name": "an auto weight beside an excluded random option takes what the numbers in play leave of 100",
+  "playbook": "playbook.json",
+  "because": "the world withholds the angry guard's random option, so its share is 0 and the auto weight takes what 30 leaves of 100; the draw of 0.5 then stands at 50 of 100, inside the auto weight's span, where a port that kept the withheld share would have picked Move along",
+  "session": [
+    { "expect": { "resolve": ["Guard.IsAngry"] } },
+    { "send": { "supply": { "Guard.IsAngry": false } } },
+    { "expect": { "draw": [0, 30, 70] } },
+    { "send": { "drawn": 0.5 } },
+    { "expect": { "said": { "speaker": "Guard", "speech": "Lovely day." } } },
+    { "send": "next" },
+    { "expect": { "ended": {} } }
+  ]
+}
