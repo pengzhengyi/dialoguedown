@@ -8,7 +8,7 @@ public sealed class AnswerKindExtensionsTests
 {
     /// <summary>One answer of every kind the protocol defines.</summary>
     public static ImmutableArray<Answer> OneOfEveryAnswerKind() =>
-        [new BooleanAnswer(true), new TextAnswer("Ada")];
+        [new BooleanAnswer(true), new TextAnswer("Ada"), new NumberAnswer(20)];
 
     [Fact]
     public void Kind_OfAYesOrNo_IsBoolean() =>
@@ -16,6 +16,9 @@ public sealed class AnswerKindExtensionsTests
 
     [Fact]
     public void Kind_OfWords_IsText() => Assert.Equal(AnswerKind.Text, new TextAnswer("Ada").Kind());
+
+    [Fact]
+    public void Kind_OfANumber_IsNumber() => Assert.Equal(AnswerKind.Number, new NumberAnswer(20).Kind());
 
     [Fact]
     public void Kind_IsNamedForEveryAnswerTheProtocolDefines()
@@ -50,6 +53,7 @@ public sealed class AnswerKindExtensionsTests
     {
         Assert.Equal("a truth", AnswerKind.Boolean.Describe());
         Assert.Equal("words", AnswerKind.Text.Describe());
+        Assert.Equal("a number", AnswerKind.Number.Describe());
     }
 
     [Fact]
