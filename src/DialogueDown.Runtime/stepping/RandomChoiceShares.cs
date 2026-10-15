@@ -35,8 +35,8 @@ internal static class RandomChoiceShares
     /// </returns>
     /// <remarks>
     /// <see langword="false"/> also when the shares cannot be worked out: a random option is guarded
-    /// or has a key weight, and nothing was asked. Such a random choice is not walked past, and the
-    /// runner refuses it as a node it cannot play.
+    /// or has a key weight, and nothing was asked. Such a random choice is not walked past: arrival
+    /// asks the world first.
     /// </remarks>
     /// <exception cref="ArgumentOutOfRangeException">
     /// A key weight in play was answered with a number that is negative or not finite.
