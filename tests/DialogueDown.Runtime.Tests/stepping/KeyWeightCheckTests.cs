@@ -112,6 +112,36 @@ public sealed class KeyWeightCheckTests
     }
 
     [Fact]
+    public void Refuses_SharesTooLargeToAddUp_SaysNoDrawCanBeMade()
+    {
+        Assert.True(
+            KeyWeightCheck.Refuses(
+                ARandomChoiceWithTwoKeyWeights(),
+                Answering(("Guard.Mood", 1e308), ("Guard.Temper", 1e308)),
+                out var refusal));
+
+        Assert.Equal(RefusalReason.InvalidWeight, refusal.Reason);
+        Assert.Equal(
+            "The random options' shares are too large to add up, so no draw can be made against them.",
+            refusal.Explanation);
+    }
+
+    [Fact]
+    public void Refuses_AKeyWeightOnAnExcludedRandomOption_AddsNothingToTheTotal()
+    {
+        // Each 1e308 is valid, and only one of them is in play, so the total is finite.
+        Assert.False(
+            KeyWeightCheck.Refuses(
+                ARandomChoiceWithAGuardedKeyWeightBesideAKeyWeight(),
+                Answering(
+                    ("Guard.IsAngry", new BooleanAnswer(false)),
+                    ("Guard.Mood", new NumberAnswer(1e308)),
+                    ("Guard.Temper", new NumberAnswer(1e308))),
+                out var refusal));
+        Assert.Null(refusal);
+    }
+
+    [Fact]
     public void Refuses_ANodeThatIsNotARandomChoice_IsFalse()
     {
         // `Hero.HasSword?` Alice: Nice sword.
@@ -161,6 +191,21 @@ public sealed class KeyWeightCheckTests
     /// <returns>The random choice.</returns>
     private static RandomChoiceNode ARandomChoiceWithAGuardedKeyWeight() =>
         RandomChoice(Chance("Guard.Mood", condition: "Guard.IsAngry", target: 1), EvenChance(target: 2));
+
+    /// <summary>
+    /// A random choice whose first random option is guarded and has a key weight, beside another
+    /// key weight.
+    /// </summary>
+    /// <remarks>
+    /// <code>
+    /// - `Guard.IsAngry?` `Guard.Mood%` Guard: Halt!
+    /// - `Guard.Temper%` Guard: Move along.
+    /// </code>
+    /// </remarks>
+    /// <returns>The random choice.</returns>
+    private static RandomChoiceNode ARandomChoiceWithAGuardedKeyWeightBesideAKeyWeight() =>
+        RandomChoice(
+            Chance("Guard.Mood", condition: "Guard.IsAngry", target: 1), Chance("Guard.Temper", target: 2));
 
     /// <summary>
     /// A random choice whose two random options have the same key weight, and only the first is

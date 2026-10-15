@@ -42,10 +42,14 @@ public enum RefusalReason
     /// <summary>The world answered a key with something other than the kind its use needs.</summary>
     WrongAnswerKind,
 
-    /// <summary>The world answered a key weight with an invalid number.</summary>
+    /// <summary>
+    /// The world answered a key weight with an invalid number, or key weights with numbers whose
+    /// shares are too large to add up.
+    /// </summary>
     /// <remarks>
     /// A number is valid as a weight when it is finite and not negative, so <c>-10</c> for
-    /// <c>`Guard.Mood%`</c> is refused.
+    /// <c>`Guard.Mood%`</c> is refused. So is <c>1e308</c> for each of two key weights: each number
+    /// is valid, but their shares are too large to add up.
     /// </remarks>
     InvalidWeight,
 
