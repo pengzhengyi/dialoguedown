@@ -72,9 +72,9 @@ public abstract record DrawingWeight
         return total;
     }
 
-    /// <summary>Whether a number can be a weight: finite and not negative.</summary>
+    /// <summary>Whether a number is valid as a weight: finite and not negative.</summary>
     /// <param name="percentage">The number.</param>
-    /// <returns><see langword="true"/> when the number can be a weight.</returns>
+    /// <returns><see langword="true"/> when the number is valid as a weight.</returns>
     public static bool IsNonNegativeAndFinite(double percentage) =>
         double.IsFinite(percentage) && percentage >= 0;
 
@@ -96,7 +96,7 @@ public abstract record DrawingWeight
     /// <summary>A number, which is its own share.</summary>
     /// <param name="Percentage">The percentage, as written or as the world answered it.</param>
     /// <exception cref="ArgumentOutOfRangeException">
-    /// The percentage is negative or not finite, which no share can be.
+    /// The percentage is negative or not finite.
     /// </exception>
     public sealed record Number(double Percentage) : DrawingWeight
     {

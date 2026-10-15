@@ -15,7 +15,7 @@ public sealed class KeyWeightCheckTests
     [InlineData(0.0)]
     [InlineData(20.0)]
     [InlineData(1e308)]
-    public void Refuses_AKeyWeightAnsweredWithAWeight_IsFalse(double number)
+    public void Refuses_AKeyWeightAnsweredWithAValidNumber_IsFalse(double number)
     {
         Assert.False(
             KeyWeightCheck.Refuses(ARandomChoiceWithAKeyWeight(), Answering(("Guard.Mood", number)), out var refusal));
@@ -27,7 +27,7 @@ public sealed class KeyWeightCheckTests
     [InlineData(double.PositiveInfinity, "Infinity")]
     [InlineData(double.NegativeInfinity, "-Infinity")]
     [InlineData(double.NaN, "NaN")]
-    public void Refuses_AKeyWeightAnsweredWithANumberNoWeightCanBe_SaysWhatTheWorldAnswered(
+    public void Refuses_AKeyWeightAnsweredWithAnInvalidNumber_SaysWhatTheWorldAnswered(
         double number, string written)
     {
         Assert.True(
@@ -41,7 +41,7 @@ public sealed class KeyWeightCheckTests
     }
 
     [Fact]
-    public void Refuses_SeveralKeyWeightsAnsweredWithNumbersNoWeightCanBe_NamesThemInOneOrder()
+    public void Refuses_SeveralKeyWeightsAnsweredWithInvalidNumbers_NamesThemInOneOrder()
     {
         // Named in sorted order, whatever order they are written in, so the same step always words
         // the refusal the same way.

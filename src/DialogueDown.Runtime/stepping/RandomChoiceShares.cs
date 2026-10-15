@@ -39,7 +39,7 @@ internal static class RandomChoiceShares
     /// runner refuses it as a node it cannot play.
     /// </remarks>
     /// <exception cref="ArgumentOutOfRangeException">
-    /// A key weight in play was answered with a number no share can be.
+    /// A key weight in play was answered with a number that is negative or not finite.
     /// </exception>
     public static bool HasNothingDrawable(RandomChoiceNode random, Supply? supply = null)
     {
@@ -68,7 +68,7 @@ internal static class RandomChoiceShares
     /// option is guarded or has a key weight, and nothing was asked.
     /// </returns>
     /// <exception cref="ArgumentOutOfRangeException">
-    /// A key weight in play was answered with a number no share can be.
+    /// A key weight in play was answered with a number that is negative or not finite.
     /// </exception>
     public static bool TryWorkOut(RandomChoiceNode random, Supply? supply, out ImmutableArray<double> shares)
     {

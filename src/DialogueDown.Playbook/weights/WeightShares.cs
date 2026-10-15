@@ -36,7 +36,7 @@ public static class WeightShares
     /// A random option in play has a key weight, and no numbers were given for key weights.
     /// </exception>
     /// <exception cref="ArgumentOutOfRangeException">
-    /// A number in play, written or answered, is negative or not finite, which no share can be.
+    /// A number in play, written or answered, is negative or not finite.
     /// </exception>
     public static ImmutableArray<double> Of(
         IEnumerable<RandomOptionEdge> randomOptions,

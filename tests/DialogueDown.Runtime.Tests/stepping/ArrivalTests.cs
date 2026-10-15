@@ -231,7 +231,7 @@ public sealed class ArrivalTests
     }
 
     [Fact]
-    public void Supplied_AKeyWeightAnsweredWithANumberNoWeightCanBe_RefusesAndStaysWhereItAsked()
+    public void Supplied_AKeyWeightAnsweredWithAnInvalidNumber_RefusesAndStaysWhereItAsked()
     {
         var result = Arrival.Supplied(
             ARandomChoiceWithAKeyWeightStanding(), Waiting(0, "Guard.Mood"), Answering(("Guard.Mood", -10.0)));
@@ -246,7 +246,7 @@ public sealed class ArrivalTests
 
     [Fact]
     public void Supplied_WhenTheWorldWithholdsAGuard_TheKeyWeightItGuardsIsNotChecked() =>
-        // The number is never read, so one no weight can be leaves the draw as it would be.
+        // The number is never read, so a negative one there changes nothing about the draw.
         AssertAskedForADraw(
             Arrival.Supplied(
                 ARandomChoiceWithAGuardedKeyWeightStanding(),

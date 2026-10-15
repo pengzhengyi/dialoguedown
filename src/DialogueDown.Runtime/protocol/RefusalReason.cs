@@ -42,9 +42,10 @@ public enum RefusalReason
     /// <summary>The world answered a key with something other than the kind its use needs.</summary>
     WrongAnswerKind,
 
-    /// <summary>The world answered a key weight with a number no weight can be.</summary>
+    /// <summary>The world answered a key weight with an invalid number.</summary>
     /// <remarks>
-    /// A weight is finite and not negative, so <c>-10</c> for <c>`Guard.Mood%`</c> is refused.
+    /// A number is valid as a weight when it is finite and not negative, so <c>-10</c> for
+    /// <c>`Guard.Mood%`</c> is refused.
     /// </remarks>
     InvalidWeight,
 

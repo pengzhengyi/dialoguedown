@@ -129,7 +129,7 @@ public sealed class DrawingWeightTests
     [InlineData(0.0)]
     [InlineData(20.0)]
     [InlineData(double.MaxValue)]
-    public void IsNonNegativeAndFinite_ANumberAWeightCanBe_IsTrue(double percentage) =>
+    public void IsNonNegativeAndFinite_AFiniteNumberNotBelowZero_IsTrue(double percentage) =>
         Assert.True(IsNonNegativeAndFinite(percentage));
 
     [Theory]
@@ -137,6 +137,6 @@ public sealed class DrawingWeightTests
     [InlineData(double.NaN)]
     [InlineData(double.PositiveInfinity)]
     [InlineData(double.NegativeInfinity)]
-    public void IsNonNegativeAndFinite_ANumberNoWeightCanBe_IsFalse(double percentage) =>
+    public void IsNonNegativeAndFinite_ANegativeOrNonFiniteNumber_IsFalse(double percentage) =>
         Assert.False(IsNonNegativeAndFinite(percentage));
 }
