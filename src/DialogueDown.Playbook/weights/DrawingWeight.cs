@@ -75,7 +75,7 @@ public abstract record DrawingWeight
     /// <summary>Whether a number can be a weight: finite and not negative.</summary>
     /// <param name="percentage">The number.</param>
     /// <returns><see langword="true"/> when the number can be a weight.</returns>
-    internal static bool IsNonNegativeAndFinite(double percentage) =>
+    public static bool IsNonNegativeAndFinite(double percentage) =>
         double.IsFinite(percentage) && percentage >= 0;
 
     // What the numbers leave of 100, added up in the order written.

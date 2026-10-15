@@ -124,4 +124,19 @@ public sealed class DrawingWeightTests
     [Fact]
     public void Total_OfNoShares_IsZero() =>
         Assert.Equal(0, DrawingWeight.Total([]));
+
+    [Theory]
+    [InlineData(0.0)]
+    [InlineData(20.0)]
+    [InlineData(double.MaxValue)]
+    public void IsNonNegativeAndFinite_ANumberAWeightCanBe_IsTrue(double percentage) =>
+        Assert.True(IsNonNegativeAndFinite(percentage));
+
+    [Theory]
+    [InlineData(-10.0)]
+    [InlineData(double.NaN)]
+    [InlineData(double.PositiveInfinity)]
+    [InlineData(double.NegativeInfinity)]
+    public void IsNonNegativeAndFinite_ANumberNoWeightCanBe_IsFalse(double percentage) =>
+        Assert.False(IsNonNegativeAndFinite(percentage));
 }
