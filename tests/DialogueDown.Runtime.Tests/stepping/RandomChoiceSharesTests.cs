@@ -128,6 +128,37 @@ public sealed class RandomChoiceSharesTests
     public void TryWorkOut_OfNoRandomChoice_IsRejected() =>
         Assert.Throws<ArgumentNullException>(() => RandomChoiceShares.TryWorkOut(null!, supply: null, out _));
 
+    [Fact]
+    public void WithoutExcluded_LeavesOutARandomOptionWhoseGuardTheWorldWithholds() =>
+        // "Halt!" is left out; "Move along." and "Lovely day." stay.
+        Assert.Equal(
+            [2, 3],
+            RandomChoiceShares.WithoutExcluded(ARandomChoiceWithAGuardedNumber(), Answering(("Guard.IsAngry", false)))
+                .Select(option => option.Target));
+
+    [Fact]
+    public void WithoutExcluded_KeepsARandomOptionWhoseGuardTheWorldAllows() =>
+        Assert.Equal(
+            [1, 2, 3],
+            RandomChoiceShares.WithoutExcluded(ARandomChoiceWithAGuardedNumber(), Answering(("Guard.IsAngry", true)))
+                .Select(option => option.Target));
+
+    [Fact]
+    public void WithoutExcluded_KeepsEveryRandomOptionNobodyGuarded() =>
+        Assert.Equal(
+            [1, 2, 3],
+            RandomChoiceShares.WithoutExcluded(ARandomChoiceOfTwoNumbersAndAnAutoWeight(), Answering())
+                .Select(option => option.Target));
+
+    [Fact]
+    public void WithoutExcluded_OfNoRandomChoice_IsRejected() =>
+        Assert.Throws<ArgumentNullException>(() => RandomChoiceShares.WithoutExcluded(null!, Answering()));
+
+    [Fact]
+    public void WithoutExcluded_WithoutWhatTheWorldSaid_IsRejected() =>
+        Assert.Throws<ArgumentNullException>(
+            () => RandomChoiceShares.WithoutExcluded(ARandomChoiceWithAGuardedNumber(), null!));
+
     /// <summary>A random choice of two numbers and an auto weight.</summary>
     /// <remarks>
     /// <code>

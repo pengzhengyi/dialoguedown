@@ -58,17 +58,57 @@ public sealed class KeyWeightCheckTests
     }
 
     [Fact]
-    public void Refuses_AnExcludedRandomOptionsKeyWeight_AnsweredWithANumberNoWeightCanBe()
+    public void Refuses_AKeyWeightOnARandomOptionTheWorldAllows_IsChecked()
     {
-        // The guard is withheld, so the key weight counts for nothing in the draw, but it was asked
-        // about all the same.
         Assert.True(
+            KeyWeightCheck.Refuses(
+                ARandomChoiceWithAGuardedKeyWeight(),
+                Answering(("Guard.IsAngry", new BooleanAnswer(true)), ("Guard.Mood", new NumberAnswer(-10))),
+                out var refusal));
+
+        Assert.Equal(RefusalReason.InvalidWeight, refusal.Reason);
+    }
+
+    [Fact]
+    public void Refuses_AKeyWeightOnAnExcludedRandomOption_IsNotChecked()
+    {
+        // The guard is withheld, so the number is never read, whatever it is.
+        Assert.False(
             KeyWeightCheck.Refuses(
                 ARandomChoiceWithAGuardedKeyWeight(),
                 Answering(("Guard.IsAngry", new BooleanAnswer(false)), ("Guard.Mood", new NumberAnswer(-10))),
                 out var refusal));
+        Assert.Null(refusal);
+    }
 
-        Assert.Equal(RefusalReason.InvalidWeight, refusal.Reason);
+    [Fact]
+    public void Refuses_AKeyWeightReadByAnExcludedRandomOptionAndOneInPlay_IsChecked()
+    {
+        Assert.True(
+            KeyWeightCheck.Refuses(
+                ARandomChoiceWithOneKeyWeightGuardedAndNot(),
+                Answering(("Guard.IsAngry", new BooleanAnswer(false)), ("Guard.Mood", new NumberAnswer(-10))),
+                out var refusal));
+
+        Assert.Equal(
+            "The world answered Guard.Mood with -10, but the number for a key weight must be finite and not "
+                + "negative.",
+            refusal.Explanation);
+    }
+
+    [Fact]
+    public void Refuses_AKeyWeightReadByTwoRandomOptionsInPlay_NamesItOnce()
+    {
+        Assert.True(
+            KeyWeightCheck.Refuses(
+                ARandomChoiceWithOneKeyWeightGuardedAndNot(),
+                Answering(("Guard.IsAngry", new BooleanAnswer(true)), ("Guard.Mood", new NumberAnswer(-10))),
+                out var refusal));
+
+        Assert.Equal(
+            "The world answered Guard.Mood with -10, but the number for a key weight must be finite and not "
+                + "negative.",
+            refusal.Explanation);
     }
 
     [Fact]
@@ -121,4 +161,19 @@ public sealed class KeyWeightCheckTests
     /// <returns>The random choice.</returns>
     private static RandomChoiceNode ARandomChoiceWithAGuardedKeyWeight() =>
         RandomChoice(Chance("Guard.Mood", condition: "Guard.IsAngry", target: 1), EvenChance(target: 2));
+
+    /// <summary>
+    /// A random choice whose two random options have the same key weight, and only the first is
+    /// guarded.
+    /// </summary>
+    /// <remarks>
+    /// <code>
+    /// - `Guard.IsAngry?` `Guard.Mood%` Guard: Halt!
+    /// - `Guard.Mood%` Guard: Lovely day.
+    /// </code>
+    /// </remarks>
+    /// <returns>The random choice.</returns>
+    private static RandomChoiceNode ARandomChoiceWithOneKeyWeightGuardedAndNot() =>
+        RandomChoice(
+            Chance("Guard.Mood", condition: "Guard.IsAngry", target: 1), Chance("Guard.Mood", target: 2));
 }

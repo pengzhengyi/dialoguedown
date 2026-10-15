@@ -7,7 +7,8 @@ using DialogueDown.Runtime.Protocol;
 namespace DialogueDown.Runtime.Stepping;
 
 /// <summary>
-/// Works out a random choice's shares, and whether any of its random options is drawable.
+/// Works out a random choice's shares, which of its random options are excluded, and whether any
+/// of them is drawable.
 /// </summary>
 /// <remarks>
 /// A random option is drawable when its share is above zero, so a random choice with nothing
@@ -83,6 +84,28 @@ internal static class RandomChoiceShares
 
         shares = WeightShares.Of(randomOptions, new GuardArbiter(supply), new AnsweredKeyWeights(supply));
         return true;
+    }
+
+    /// <summary>The random options of a random choice, without the excluded ones.</summary>
+    /// <param name="random">The random choice.</param>
+    /// <param name="supply">What the world said about the random options' conditions.</param>
+    /// <returns>The random options in play, in the order written.</returns>
+    /// <remarks>
+    /// A random option is excluded when the world withholds its guard. Told
+    /// <c>{ "Guard.IsAngry": false }</c>, this random choice is left with "Move along." only:
+    /// <code>
+    /// - `Guard.IsAngry?` `50%` Guard: Halt!
+    /// - `%` Guard: Move along.
+    /// </code>
+    /// </remarks>
+    public static ImmutableArray<RandomOptionEdge> WithoutExcluded(RandomChoiceNode random, Supply supply)
+    {
+        ArgumentNullException.ThrowIfNull(random);
+        ArgumentNullException.ThrowIfNull(supply);
+
+        var arbiter = new GuardArbiter(supply);
+
+        return [.. random.RandomOptions().Where(option => !arbiter.Excludes(option))];
     }
 
     // A guarded random option is in play only when the world allows its condition, and a key weight

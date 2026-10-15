@@ -1,3 +1,4 @@
+using System.Collections.Immutable;
 using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using DialogueDown.Playbook.Nodes;
@@ -16,6 +17,17 @@ namespace DialogueDown.Runtime.Stepping;
 /// on to draw. Told <c>{ "Guard.Mood": -10 }</c>, it has no share to give that random option, and
 /// refuses the supply as <see cref="RefusalReason.InvalidWeight"/>.
 /// <para>
+/// Only the random options in play are checked, since an excluded one's weight is never read. A
+/// game may work a key weight's number out from other values, and the result need not be a
+/// weight while a guard keeps its random option out:
+/// <code>
+/// - `Hero.CanAttack?` `Hit.Chance%` Hero: Strike!
+/// - `%` Hero: Back away.
+/// </code>
+/// Told <c>{ "Hero.CanAttack": false, "Hit.Chance": -10 }</c>, the run goes on to draw, and only
+/// "Back away." can be drawn.
+/// </para>
+/// <para>
 /// The numbers are checked only once <see cref="AnswerCheck"/> finds every key answered with the
 /// kind its use needs, so each key weight has a number to read.
 /// </para>
@@ -33,9 +45,8 @@ internal static class KeyWeightCheck
     /// the run refuses the supply.
     /// </returns>
     /// <remarks>
-    /// A key weight on an excluded random option was asked too, so its number is held to the same
-    /// rule, though it counts for nothing in the draw. Keys are listed in ordinal order, so a log
-    /// replays exactly.
+    /// A key read by an excluded random option and by one in play is checked. Keys are listed in
+    /// ordinal order, so a log replays exactly.
     /// </remarks>
     public static bool Refuses(Node node, Supply supply, [NotNullWhen(true)] out Refused? refusal)
     {
@@ -58,9 +69,19 @@ internal static class KeyWeightCheck
     }
 
     private static IReadOnlyList<string> InvalidWeights(Node node, Supply supply) =>
-        [.. node.FindNumbersForPlaying()
+        [.. KeyWeightsInPlay(node, supply)
             .Order(StringComparer.Ordinal)
             .Select(key => (Key: key, Number: supply.Number(key)))
             .Where(answer => !DrawingWeight.IsNonNegativeAndFinite(answer.Number))
             .Select(answer => $"{answer.Key} with {answer.Number.ToString(CultureInfo.InvariantCulture)}")];
+
+    private static ImmutableArray<string> KeyWeightsInPlay(Node node, Supply supply)
+    {
+        if (node is not RandomChoiceNode random)
+        {
+            return [];
+        }
+
+        return RandomChoiceShares.WithoutExcluded(random, supply).WeightKeys();
+    }
 }

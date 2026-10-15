@@ -245,6 +245,18 @@ public sealed class ArrivalTests
     }
 
     [Fact]
+    public void Supplied_WhenTheWorldWithholdsAGuard_TheKeyWeightItGuardsIsNotChecked() =>
+        // The number is never read, so one no weight can be leaves the draw as it would be.
+        AssertAskedForADraw(
+            Arrival.Supplied(
+                ARandomChoiceWithAGuardedKeyWeightStanding(),
+                Waiting(0, "Guard.IsAngry", "Guard.Mood"),
+                Answering(("Guard.IsAngry", new BooleanAnswer(false)), ("Guard.Mood", new NumberAnswer(-10)))),
+            0,
+            0,
+            100);
+
+    [Fact]
     public void Supplied_WhenTheWorldAllowsTheLine_SpeaksIt()
     {
         var context = AConditionalLine();
