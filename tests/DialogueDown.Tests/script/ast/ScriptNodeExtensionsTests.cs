@@ -319,6 +319,41 @@ public sealed class ScriptNodeExtensionsTests
         Assert.Empty(Choices(Choice(Line(Text("pick")))).Jumps());
     }
 
+    [Fact]
+    public void Shown_ALine_IsWhatItSaysWithoutTheJumpItEndsIn()
+    {
+        var words = Text("Follow me. ");
+        var line = Line(words, Jump("#the-market", Text("the market")));
+
+        Assert.Equal([words], line.Shown());
+    }
+
+    [Fact]
+    public void Shown_AJump_IsItsLabel()
+    {
+        var label = Text("the market");
+        var jump = Jump("#the-market", label);
+
+        Assert.Equal([label], jump.Shown());
+    }
+
+    [Fact]
+    public void Shown_AnOption_IsNothing_ItsLabelIsShownByItsLine()
+    {
+        var line = Line(Text("I'll wait here."));
+        var option = Choice(line);
+
+        Assert.Empty(option.Shown());
+        Assert.Equal(option.Label(), line.Shown());
+    }
+
+    [Fact]
+    public void Shown_ANodeThePlayerNeverSees_IsNothing()
+    {
+        Assert.Empty(SceneHeading("The Tavern").Shown());
+        Assert.Empty(ControlLine(DefaultCommand("fade out")).Shown());
+    }
+
     // Script nodes the traversal helpers do not recognize, so each category's dispatch can be
     // shown to throw on an unhandled type.
     private sealed record UnknownNode(SourceSpan Span) : ScriptNode(Span);

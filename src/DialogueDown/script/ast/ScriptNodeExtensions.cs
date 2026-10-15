@@ -65,6 +65,26 @@ internal static class ScriptNodeExtensions
     }
 
     /// <summary>
+    /// The words a node shows the player: a line's spoken words, or a jump's label. Empty for any
+    /// other node.
+    /// </summary>
+    /// <remarks>
+    /// These are the lists the playbook carries as speech.
+    /// <code>
+    /// Alice: Follow me. =&gt; [the market](#the-market)
+    /// </code>
+    /// shows <c>Follow me.</c> for the line and <c>the market</c> for the jump. An option's label is
+    /// the words of its first line or the label of its jump, so reading every node's words reads
+    /// each label once. A heading's title and a control line's commands are never shown.
+    /// </remarks>
+    internal static IReadOnlyList<InlineFragment> Shown(this ScriptNode node) => node switch
+    {
+        Line line => line.Spoken(),
+        Jump jump => jump.Label,
+        _ => [],
+    };
+
+    /// <summary>
     /// Yields <paramref name="node"/> and then each descendant, depth-first in document
     /// order (a node before its children). Returning a sequence lets callers compose with
     /// LINQ; the script's nesting is shallow, so recursion is safe.
