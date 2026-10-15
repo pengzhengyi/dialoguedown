@@ -22,6 +22,7 @@ internal static class Architecture
     public const string Visualization = "DialogueDown.Visualization";
     public const string VisualizationLive = "DialogueDown.Visualization.Live";
     public const string ConfigurationLoader = "DialogueDown.ConfigurationLoader";
+    public const string ConfigurationLoaderToml = "DialogueDown.ConfigurationLoader.Toml";
     public const string Playbook = "DialogueDown.Playbook";
     public const string Play = "DialogueDown.Play";
     public const string Runtime = "DialogueDown.Runtime";
@@ -42,6 +43,7 @@ internal static class Architecture
 
     // External libraries that some layers must not depend on.
     public const string Markdig = "Markdig";
+    public const string Tomlyn = "Tomlyn";
     public const string SpectreConsole = "Spectre.Console";
     public const string Godot = "Godot";
     public const string SystemConsole = "System.Console";
