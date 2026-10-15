@@ -102,15 +102,26 @@ internal static class ScriptNodeExtensions
     }
 
     /// <summary>
+    /// Every <see cref="Text"/> within the fragments, in document order, including the texts held
+    /// inside other fragments, such as styled text, a link's label, or an image's alt text.
+    /// </summary>
+    /// <remarks>
+    /// <code>
+    /// Take **the ![old](key.png) key**.
+    /// </code>
+    /// holds the texts <c>Take </c>, <c>the </c>, <c>old</c>, <c> key</c>, and <c>.</c>: the bold
+    /// text holds three of them, one inside the image it holds.
+    /// </remarks>
+    internal static IEnumerable<Text> Texts(this IEnumerable<InlineFragment> fragments) =>
+        fragments.SelectMany(fragment => fragment.DescendantsAndSelf()).OfType<Text>();
+
+    /// <summary>
     /// The visible text of a fragment sequence: every <see cref="Text"/> anywhere within the
     /// fragments, concatenated in document order. Styled text or a link label still
     /// contributes its words, so this reads a heading title or label as plain text.
     /// </summary>
     internal static string PlainText(this IEnumerable<InlineFragment> fragments) =>
-        string.Concat(fragments
-            .SelectMany(fragment => fragment.DescendantsAndSelf())
-            .OfType<Text>()
-            .Select(text => text.Content));
+        string.Concat(fragments.Texts().Select(text => text.Content));
 
     /// <summary>
     /// The node's direct children in document order. A block, speaker, or other node of an

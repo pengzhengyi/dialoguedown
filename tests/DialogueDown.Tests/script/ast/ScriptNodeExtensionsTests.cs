@@ -246,6 +246,39 @@ public sealed class ScriptNodeExtensionsTests
     }
 
     [Fact]
+    public void Texts_ReachesTheTextsHeldInsideOtherFragments_InDocumentOrder()
+    {
+        // Take **the ![old](key.png) key** to [the inn](#the-inn).
+        var take = Text("Take ");
+        var the = Text("the ");
+        var old = Text("old");
+        var key = Text(" key");
+        var to = Text(" to ");
+        var inn = Text("the inn");
+        var stop = Text(".");
+        IReadOnlyList<InlineFragment> fragments =
+        [
+            take,
+            StyledText(SpeechStyle.Bold, the, Image("key.png", old), key),
+            to,
+            Link("#the-inn", inn),
+            stop,
+        ];
+
+        Assert.Equal([take, the, old, key, to, inn, stop], fragments.Texts());
+    }
+
+    [Fact]
+    public void Texts_SkipsFragmentsThatAreNotText()
+    {
+        var words = Text("Wait.");
+        IReadOnlyList<InlineFragment> fragments =
+            [words, LineBreak(), DefaultCommand("fade out"), CustomTag("calm")];
+
+        Assert.Equal([words], fragments.Texts());
+    }
+
+    [Fact]
     public void PlainText_ConcatenatesEveryTextFragment()
     {
         IReadOnlyList<InlineFragment> fragments =
