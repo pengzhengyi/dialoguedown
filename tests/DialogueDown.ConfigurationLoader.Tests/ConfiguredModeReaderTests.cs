@@ -1,119 +1,95 @@
 using DialogueDown.Configuration;
-using DialogueDown.ConfigurationLoader.Errors;
 using DialogueDown.ConfigurationLoader.Readers;
-using DialogueDown.ConfigurationLoader.Tests.Support;
-using Tomlyn.Syntax;
 using static DialogueDown.ConfigurationLoader.Tests.Support.ConfigurationErrorAssert;
+using static DialogueDown.ConfigurationLoader.Tests.Support.TomlConfigReading;
 
 namespace DialogueDown.ConfigurationLoader.Tests;
 
 public sealed class ConfiguredModeReaderTests
 {
     [Fact]
-    public void Read_EmptyDocument_ReturnsNull() =>
-        Assert.Null(Read(string.Empty));
+    public void Read_NullRoot_Throws() =>
+        Assert.Throws<ArgumentNullException>(() => new ConfiguredModeReader().Read(null!));
 
     [Fact]
-    public void Read_OnlySpeakers_ReturnsNull()
+    public void Read_NoMode_KeepsTheDefaultMode()
     {
-        var mode = Read("""
+        var options = Parse("""
             [[speakers]]
             name = "Alice"
             """);
 
-        Assert.Null(mode);
+        Assert.Equal(CompilationMode.StageBoundary, options.Mode);
     }
 
     [Theory]
     [InlineData("stage-boundary", CompilationMode.StageBoundary)]
     [InlineData("best-effort", CompilationMode.BestEffort)]
-    public void Read_ASettableMode_ReturnsIt(string value, CompilationMode expected) =>
-        Assert.Equal(expected, Read($"mode = \"{value}\""));
+    public void Read_ASettableMode_SetsIt(string value, CompilationMode expected) =>
+        Assert.Equal(expected, Parse($"mode = \"{value}\"").Mode);
 
     [Fact]
     public void Read_QuotedModeKey_IsEquivalentToBareKey()
     {
-        var mode = Read("""
+        var options = Parse("""
             "mode" = "best-effort"
             """);
 
-        Assert.Equal(CompilationMode.BestEffort, mode);
+        Assert.Equal(CompilationMode.BestEffort, options.Mode);
     }
 
     [Fact]
     public void Read_ModeBeforeSpeakers_IsFound()
     {
-        var mode = Read("""
+        var options = Parse("""
             mode = "best-effort"
 
             [[speakers]]
             name = "Alice"
             """);
 
-        Assert.Equal(CompilationMode.BestEffort, mode);
+        Assert.Equal(CompilationMode.BestEffort, options.Mode);
     }
 
     [Fact]
-    public void Read_UnknownMode_ThrowsLocated()
-    {
-        var exception = AssertRejects("""
+    public void Read_UnknownMode_IsRejectedAtTheValue() =>
+        AssertRejects(
+            """
             mode = "turbo"
-            """);
-
-        AssertRejectedAt(exception, line: 1, "turbo", "stage-boundary");
-    }
+            """,
+            "Unknown mode 'turbo'. Use 'stage-boundary' or 'best-effort'.",
+            line: 1,
+            column: 8);
 
     [Fact]
-    public void Read_FailFast_IsRejected()
-    {
+    public void Read_FailFast_IsRejected() =>
         // Fail-fast is an embedding contract that throws, not a settable reporting mode.
-        var exception = AssertRejects("""
+        AssertRejects(
+            """
             mode = "fail-fast"
-            """);
-
-        AssertMentions(exception, "fail-fast");
-    }
+            """,
+            "Unknown mode 'fail-fast'. Use 'stage-boundary' or 'best-effort'.",
+            line: 1,
+            column: 8);
 
     [Fact]
-    public void Read_NonStringMode_Throws()
-    {
-        var exception = AssertRejects("""
+    public void Read_NonStringMode_IsRejectedAtTheValue() =>
+        AssertRejects(
+            """
             mode = 42
-            """);
-
-        AssertMentions(exception, "string");
-    }
-
-    [Fact]
-    public void Read_UnrelatedRootKey_IsIgnored()
-    {
-        var mode = Read("""
-            title = "My project"
-            """);
-
-        // Root keys other than 'mode' stay lenient so new settings can be added without breaking
-        // older loaders.
-        Assert.Null(mode);
-    }
+            """,
+            "'mode' must be a string.",
+            line: 1,
+            column: 8);
 
     [Fact]
-    public void Read_DottedModeKey_IsNotReadAsMode()
-    {
-        var mode = Read("""
+    public void Read_DottedModeKey_IsAModeThatIsNotAString() =>
+        // A dotted key is a nested table, so this sets 'mode' to { strategy = "best-effort" }.
+        AssertRejects(
+            """
             mode.strategy = "best-effort"
-            """);
-
-        // A dotted key keeps its full name ('mode.strategy'), so it is an unrelated root key, not
-        // the flat 'mode' setting — ignored rather than misread.
-        Assert.Null(mode);
-    }
-
-    private static CompilationMode? Read(string toml) =>
-        TomlConfigReading.Read(toml, ReadMode);
-
-    private static DialogueConfigurationException AssertRejects(string toml) =>
-        TomlConfigReading.AssertRejects(toml, ReadMode);
-
-    private static CompilationMode? ReadMode(DocumentSyntax document) =>
-        new ConfiguredModeReader().Read(document);
+            """,
+            "'mode' must be a string.",
+            line: 1,
+            column: 1);
 }
