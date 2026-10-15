@@ -1,4 +1,5 @@
 using DialogueDown.Configuration;
+using DialogueDown.ConfigurationLoader.Errors;
 using DialogueDown.TestSupport;
 using static DialogueDown.ConfigurationLoader.Tests.Support.ConfigurationErrorAssert;
 using static DialogueDown.ConfigurationLoader.Tests.Support.ConfiguredSpeakerAssert;
@@ -85,10 +86,46 @@ public sealed class TomlConfigurationLoaderTests
             mode = "turbo"
             """);
 
-        var error = Assert.Throws<Errors.DialogueConfigurationException>(() => TomlConfigurationLoader.Load(path));
+        var error = Assert.Throws<DialogueConfigurationException>(() => TomlConfigurationLoader.Load(path));
 
         Assert.Equal(new ConfigurationSourceLocation(path, 1, 8), error.Location);
     }
+
+    [Fact]
+    public void Parse_MisspelledSetting_IsRejectedAtTheKey() =>
+        AssertRejects(
+            """
+            # The project's compilation mode.
+            modee = "best-effort"
+            """,
+            "Unknown setting 'modee'. Use 'mode', 'speakers', 'markdown'.",
+            line: 2,
+            column: 1);
+
+    [Fact]
+    public void Parse_SingularSpeakerHeader_IsRejectedAtTheKey() =>
+        AssertRejects(
+            """
+            mode = "best-effort"
+
+            [[speaker]]
+            name = "Alice"
+            """,
+            "Unknown setting 'speaker'. Use 'mode', 'speakers', 'markdown'.",
+            line: 3,
+            column: 3);
+
+    [Fact]
+    public void Parse_QuotedKeyWithADot_IsOneUnknownSetting() =>
+        // A quoted key is one name, so this is not the [markdown.unmodeled] section.
+        AssertRejects(
+            """
+            ["markdown.unmodeled"]
+            table = "keep"
+            """,
+            "Unknown setting 'markdown.unmodeled'. Use 'mode', 'speakers', 'markdown'.",
+            line: 1,
+            column: 2);
 
     [Fact]
     public void Parse_MalformedToml_IsRejectedAtTheSyntaxError()
