@@ -13,12 +13,13 @@ namespace DialogueDown.Runtime.Stepping;
 /// <remarks>
 /// A run asks the world about a node on arrival, before a line continues after a command, and on
 /// leaving, because the node may change the world in between. Arriving asks what decides whether
-/// the node plays at all and what its first words say. Leaving asks what decides which way out is
-/// taken, by which time whatever the node performs has been performed.
+/// the node plays at all, what its first words say, and, at a random choice, how likely each random
+/// option is. Leaving asks what decides which way out is taken, by which time whatever the node
+/// performs has been performed.
 /// <para>
-/// Arriving asks two kinds of question at once. A guard is answered with a truth, and a query
-/// standing in what the node says is answered with words, so the two are read apart and put back
-/// together as one request.
+/// Arriving can ask several kinds of question at once. A guard is answered with a truth, a query
+/// standing in what the node says with words, and a key weight with a number, so each kind is read
+/// apart and all are put back together as one request.
 /// </para>
 /// <para>
 /// Within one moment a key is asked about once however many places name it, so a menu cannot offer

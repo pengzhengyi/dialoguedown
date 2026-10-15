@@ -12,8 +12,9 @@ namespace DialogueDown.Runtime.Stepping;
 /// <remarks>
 /// A random option is drawable when its share is above zero, so a random choice with nothing
 /// drawable has a total of zero. The compiler reports a zero total it can see in the weights
-/// written. At runtime the total can also be zero because the world withholds the condition of
-/// every random option that would otherwise be drawable.
+/// written. At runtime the total can also be zero by what the world says: it answers <c>0</c> for
+/// <c>`Guard.Mood%`</c> beside <c>`0%`</c>, or withholds the condition of every random option that
+/// would otherwise be drawable.
 /// <para>
 /// A random choice with nothing drawable asks for no draw: it is walked past by its fall-through,
 /// or refused as leading nowhere when it has none.
@@ -24,18 +25,21 @@ internal static class RandomChoiceShares
     /// <summary>Whether a random choice has nothing drawable.</summary>
     /// <param name="random">The random choice.</param>
     /// <param name="supply">
-    /// What the world said about the random options' conditions, or <see langword="null"/> when
-    /// nothing was asked.
+    /// What the world said about the random options' conditions and key weights, or
+    /// <see langword="null"/> when nothing was asked.
     /// </param>
     /// <returns>
     /// <see langword="true"/> when every random option's share is zero, so the random choice is
     /// walked past rather than drawn at.
     /// </returns>
     /// <remarks>
-    /// <see langword="false"/> also when the shares cannot be worked out: a random option has a key
-    /// weight, whatever the world said, or is guarded and nothing was asked. Such a random choice
-    /// is not walked past, and the runner refuses it as a node it cannot play.
+    /// <see langword="false"/> also when the shares cannot be worked out: a random option is guarded
+    /// or has a key weight, and nothing was asked. Such a random choice is not walked past, and the
+    /// runner refuses it as a node it cannot play.
     /// </remarks>
+    /// <exception cref="ArgumentOutOfRangeException">
+    /// A key weight in play was answered with a number no share can be.
+    /// </exception>
     public static bool HasNothingDrawable(RandomChoiceNode random, Supply? supply = null)
     {
         ArgumentNullException.ThrowIfNull(random);
@@ -51,8 +55,8 @@ internal static class RandomChoiceShares
     /// <summary>Works out each random option's share, which is zero for an excluded one.</summary>
     /// <param name="random">The random choice.</param>
     /// <param name="supply">
-    /// What the world said about the random options' conditions, or <see langword="null"/> when
-    /// nothing was asked.
+    /// What the world said about the random options' conditions and key weights, or
+    /// <see langword="null"/> when nothing was asked.
     /// </param>
     /// <param name="shares">
     /// One share per random option, in the order written; unset when the shares cannot be worked
@@ -60,8 +64,11 @@ internal static class RandomChoiceShares
     /// </param>
     /// <returns>
     /// <see langword="true"/> when the shares are worked out; <see langword="false"/> when a random
-    /// option has a key weight, whatever the world said, or is guarded and nothing was asked.
+    /// option is guarded or has a key weight, and nothing was asked.
     /// </returns>
+    /// <exception cref="ArgumentOutOfRangeException">
+    /// A key weight in play was answered with a number no share can be.
+    /// </exception>
     public static bool TryWorkOut(RandomChoiceNode random, Supply? supply, out ImmutableArray<double> shares)
     {
         ArgumentNullException.ThrowIfNull(random);
@@ -74,13 +81,12 @@ internal static class RandomChoiceShares
             return false;
         }
 
-        shares = WeightShares.Of(randomOptions, new GuardArbiter(supply));
+        shares = WeightShares.Of(randomOptions, new GuardArbiter(supply), new AnsweredKeyWeights(supply));
         return true;
     }
 
-    // A guarded random option is in play only when the world allows its condition, so it needs an
-    // answer. A key weight needs a number from the world, and the world answers only with truths
-    // and words.
+    // A guarded random option is in play only when the world allows its condition, and a key weight
+    // counts as the number the world answers for it, so either needs the world to have been asked.
     private static bool CannotBeWorkedOut(ImmutableArray<RandomOptionEdge> randomOptions, Supply? supply) =>
-        randomOptions.Any(option => option.Weight is QueryWeight || (supply is null && option.Condition is not null));
+        supply is null && randomOptions.Any(option => option.Condition is not null || option.Weight is QueryWeight);
 }

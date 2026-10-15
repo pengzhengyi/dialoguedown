@@ -26,24 +26,32 @@ internal readonly record struct NodeQuestions(
     {
         ArgumentNullException.ThrowIfNull(node);
 
-        return new NodeQuestions(node.FindTruthsForPlaying(), node.FindWordsForPlaying(), Numbers: []);
+        return new NodeQuestions(node.FindTruthsForPlaying(), node.FindWordsForPlaying(), node.FindNumbersForPlaying());
     }
 
     /// <summary>What a node needs answered before it plays from one of its segments.</summary>
     /// <param name="node">The node being played.</param>
     /// <param name="segmentIndex">The index of the segment playing starts from; zero from the node's start.</param>
-    /// <returns>The guard, when playing from the start, and the queries in that segment's words.</returns>
+    /// <returns>
+    /// The guards and a random choice's key weights, when playing from the start, and the queries in
+    /// that segment's words.
+    /// </returns>
     /// <remarks>
     /// A line stops before any later segment whose words ask the world something, so the segment it
-    /// plays from is the only one that can ask before the next stop. The guard is read once, on
-    /// arrival.
+    /// plays from is the only one that can ask before the next stop. Guards and key weights are read
+    /// once, on arrival.
     /// </remarks>
     public static NodeQuestions RequiredToPlayFrom(Node node, int segmentIndex)
     {
         ArgumentNullException.ThrowIfNull(node);
 
-        return new NodeQuestions(
-            segmentIndex == 0 ? node.FindTruthsForPlaying() : [], node.FindWordsForSegment(segmentIndex), Numbers: []);
+        var words = node.FindWordsForSegment(segmentIndex);
+        if (segmentIndex == 0)
+        {
+            return new NodeQuestions(node.FindTruthsForPlaying(), words, node.FindNumbersForPlaying());
+        }
+
+        return new NodeQuestions(Truths: [], words, Numbers: []);
     }
 
     /// <summary>What a node needs answered before a run can tell which way out it takes.</summary>

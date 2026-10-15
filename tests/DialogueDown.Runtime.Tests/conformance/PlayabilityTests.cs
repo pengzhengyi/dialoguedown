@@ -4,7 +4,6 @@ using DialogueDown.Playbook.Nodes;
 using DialogueDown.TestSupport;
 using static DialogueDown.Runtime.Tests.Conformance.PlayabilityAssert;
 using static DialogueDown.Runtime.Tests.Conformance.SessionEntries;
-using static DialogueDown.TestSupport.PlaybookNodeFactory;
 
 namespace DialogueDown.Runtime.Tests.Conformance;
 
@@ -35,21 +34,6 @@ public sealed class PlayabilityTests
         // A key no matcher owns would end the run where it is read, so the screen reports it before
         // the run starts.
         AssertNotPlayable(Expected("""{ "invalidated": {} }"""));
-    }
-
-    [Fact]
-    public void WhyNotPlayable_OfAPlaybook_NamesEachKindOnce()
-    {
-        // Two random choices this build cannot play yet, each with a key weight.
-        var context = PlayContextFactory.Of(
-            [
-                RandomChoice(Chance("Guard.Mood", target: 2), EvenChance(target: 2)),
-                RandomChoice(id: 1, Chance("Guard.Patience", target: 2), EvenChance(target: 2)),
-                End(id: 2),
-            ],
-            ["Guard"]);
-
-        AssertNotPlayable(context, "nothing plays a RandomChoiceNode yet");
     }
 
     [Fact]
