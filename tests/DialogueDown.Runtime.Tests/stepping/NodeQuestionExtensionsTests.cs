@@ -107,6 +107,47 @@ public sealed class NodeQuestionExtensionsTests
         Assert.Throws<ArgumentNullException>(() => ((Node)null!).FindWordsForPlaying());
 
     [Fact]
+    public void FindNumbersForPlaying_OfARandomChoice_NameItsKeyWeightsInTheOrderWritten() =>
+        Assert.Equal(
+            ["Guard.Mood", "Guard.Patience"],
+            RandomChoice(
+                Chance("Guard.Mood", target: 1),
+                Chance(20, target: 2),
+                Chance("Guard.Patience", target: 3))
+                .FindNumbersForPlaying());
+
+    [Fact]
+    public void FindNumbersForPlaying_OfARandomChoice_NameARepeatedKeyOnce() =>
+        // One reading of the world answers every key weight, so the same key is not asked about twice.
+        Assert.Equal(
+            ["Guard.Mood"],
+            RandomChoice(
+                Chance("Guard.Mood", target: 1),
+                Chance("Guard.Mood", target: 2))
+                .FindNumbersForPlaying());
+
+    [Fact]
+    public void FindNumbersForPlaying_NameTheKeyWeightOfAGuardedRandomOption_BecauseItsGuardIsAskedAlongsideIt() =>
+        Assert.Equal(
+            ["Guard.Mood"],
+            RandomChoice(
+                Chance("Guard.Mood", condition: "Guard.IsAngry", target: 1),
+                EvenChance(target: 2))
+                .FindNumbersForPlaying());
+
+    [Fact]
+    public void FindNumbersForPlaying_OfARandomChoiceWhoseOddsAreAllWritten_AreNone() =>
+        Assert.Empty(RandomChoice(Chance(50, target: 1), EvenChance(target: 2)).FindNumbersForPlaying());
+
+    [Fact]
+    public void FindNumbersForPlaying_OfAKindWithNoRandomOptions_AreNone() =>
+        Assert.Empty(Line("Hello.").FindNumbersForPlaying());
+
+    [Fact]
+    public void FindNumbersForPlaying_AreNotReadFromNothing() =>
+        Assert.Throws<ArgumentNullException>(() => ((Node)null!).FindNumbersForPlaying());
+
+    [Fact]
     public void FindTruthsForLeaving_WhenTheOnlyWayOutIsTheFallThrough_AreNone() =>
         Assert.Empty(SilentLine(next: 1).FindTruthsForLeaving());
 

@@ -3,6 +3,7 @@ using DialogueDown.Playbook.Conditions;
 using DialogueDown.Playbook.Edges;
 using DialogueDown.Playbook.Nodes;
 using DialogueDown.Playbook.Speech;
+using DialogueDown.Playbook.Weights;
 
 namespace DialogueDown.Runtime.Stepping;
 
@@ -89,6 +90,28 @@ internal static class NodeQuestionExtensions
         };
     }
 
+    /// <summary>What the world must answer before a run can tell how likely each random option is.</summary>
+    /// <param name="node">The node being arrived at.</param>
+    /// <returns>
+    /// For a random choice, the keys its random options' key weights ask about, each needing a
+    /// number, in the order written and each named once. Empty for a random choice whose odds are
+    /// all written, and for every other kind.
+    /// </returns>
+    /// <remarks>
+    /// A guarded random option's key weight is asked about too. Its guard goes out in the same
+    /// request, so whether the random option is in play is not known until both are answered.
+    /// </remarks>
+    public static ImmutableArray<string> FindNumbersForPlaying(this Node node)
+    {
+        ArgumentNullException.ThrowIfNull(node);
+
+        return node switch
+        {
+            RandomChoiceNode random => WeightKeysOfRandomOptions(random),
+            _ => [],
+        };
+    }
+
     /// <summary>What the world must answer before a run can tell which way out it takes.</summary>
     /// <param name="node">The node being left.</param>
     /// <returns>The keys its ways out ask about, each named once. Empty when none is guarded.</returns>
@@ -124,6 +147,17 @@ internal static class NodeQuestionExtensions
     // conditions.
     private static ImmutableArray<string> QueryKeysOfLabels(ChoiceNode menu) =>
         [.. menu.Options().SelectMany(option => SpeechTemplate.Keys(option.Label)).Distinct(StringComparer.Ordinal)];
+
+    // A random choice reads every key weight before it asks for a draw, so each random option in
+    // play has its number when the shares are worked out.
+    private static ImmutableArray<string> WeightKeysOfRandomOptions(RandomChoiceNode random) =>
+    [
+        .. random.RandomOptions()
+            .Select(option => option.Weight)
+            .OfType<QueryWeight>()
+            .Select(keyWeight => keyWeight.Key)
+            .Distinct(StringComparer.Ordinal),
+    ];
 
     private static ImmutableArray<string> KeysOf(Condition? condition) => condition?.Keys() ?? [];
 }
