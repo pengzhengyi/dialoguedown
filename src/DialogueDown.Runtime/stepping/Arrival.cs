@@ -78,8 +78,9 @@ internal static class Arrival
             return RefuseBothWays(waiting.Node, bothWays);
         }
 
-        if (AnswerCheck.Disagrees(
-            NodeQuestions.RequiredToPlayFrom(arrived, 0).Asked(), supply.Answers, out var refusal))
+        var asked = NodeQuestions.RequiredToPlayFrom(arrived, 0).Asked();
+        if (AnswerCheck.Disagrees(asked, supply.Answers, out var refusal)
+            || KeyWeightCheck.Refuses(arrived, supply, out refusal))
         {
             // The run stays where it asked, so the driver can send a corrected supply.
             return new StepResult(new PlayState(waiting), [refusal]);

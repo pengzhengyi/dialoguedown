@@ -231,6 +231,20 @@ public sealed class ArrivalTests
     }
 
     [Fact]
+    public void Supplied_AKeyWeightAnsweredWithANumberNoWeightCanBe_RefusesAndStaysWhereItAsked()
+    {
+        var result = Arrival.Supplied(
+            ARandomChoiceWithAKeyWeightStanding(), Waiting(0, "Guard.Mood"), Answering(("Guard.Mood", -10.0)));
+
+        AssertRefused(
+            result,
+            RefusalReason.InvalidWeight,
+            "The world answered Guard.Mood with -10, but the number for a key weight must be finite and not "
+                + "negative.");
+        AssertAwaitingSupply(result.State, node: 0, Moment.BeforePlaying, "Guard.Mood");
+    }
+
+    [Fact]
     public void Supplied_WhenTheWorldAllowsTheLine_SpeaksIt()
     {
         var context = AConditionalLine();
