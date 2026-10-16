@@ -102,6 +102,17 @@ public sealed class DiagnosticProjectionTests
     }
 
     [Fact]
+    public void Project_DisabledDiagnostic_IsLeftOut()
+    {
+        var shown = Located(code: "DLG1113", severity: DiagnosticSeverity.Warning);
+        var disabled = Located(code: "DLG3002", severity: DiagnosticSeverity.Warning) with { IsDisabled = true };
+
+        var projected = _projection.Project([shown, disabled]);
+
+        Assert.Equal("DLG1113", Assert.Single(projected).Code);
+    }
+
+    [Fact]
     public void Project_NoFixes_LeavesFixesNull() =>
         Assert.Null(ProjectOne(Located()).Fixes);
 

@@ -12,9 +12,9 @@ namespace DialogueDown.Diagnostics;
 /// </para>
 /// <para>
 /// Two diagnostics are equal when they report the same problem — the same descriptor, span,
-/// severity, and message arguments by value. A suggested repair is not part of that identity, so an
-/// expected diagnostic equals a produced one even when only the latter carries a
-/// <see cref="Fixes">fix</see>.
+/// severity, and message arguments by value — and are both disabled or both enabled. A suggested
+/// repair is not part of that identity, so an expected diagnostic equals a produced one even when
+/// only the latter carries a <see cref="Fixes">fix</see>.
 /// </para>
 /// </summary>
 [Equatable]
@@ -57,6 +57,13 @@ internal sealed partial record Diagnostic
     /// </summary>
     [IgnoreEquality]
     public IReadOnlyList<DiagnosticFix> Fixes { get; }
+
+    /// <summary>Whether a project disabled this diagnostic's code.</summary>
+    /// <remarks>
+    /// A disabled diagnostic is still reported, so a surface can list it separately or count it. It
+    /// is never an error.
+    /// </remarks>
+    public bool IsDisabled { get; init; }
 
     /// <summary>Whether this diagnostic is an <see cref="DiagnosticSeverity.Error"/> — the severity
     /// that fails a compile.</summary>

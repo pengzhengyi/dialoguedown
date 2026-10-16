@@ -181,6 +181,7 @@ cover individual rules and the surfaces that render them.
 | 4 | [Dangling Arrow Diagnostic](./diagnostics/Dangling%20Arrow%20Diagnostic.md) | A warning when a `=>` has no link after it, so the intended jump degrades to plain text | Implemented |
 | 5 | [Ignored Markdown Diagnostic](./diagnostics/Ignored%20Markdown%20Diagnostic.md) | A neutral note when the front end ignores unmodeled Markdown, such as a table or a divider | Implemented |
 | 6 | [CLI Diagnostic Rendering](./diagnostics/CLI%20Diagnostic%20Rendering.md) | Renders collected diagnostics on the `ddown` CLI (rich Errata blocks or greppable one-liners), sets the exit code, and exposes `--mode` | Implemented |
+| 7 | [Disabled Diagnostics](./diagnostics/Disabled%20Diagnostics.md) | Turns a non-error diagnostic off by code from `dialogue.toml` or `ddown compile --disable`, marking it disabled rather than dropping it | Implemented |
 
 ### Command-line interface
 

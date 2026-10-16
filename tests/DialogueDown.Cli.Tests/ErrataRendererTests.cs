@@ -317,6 +317,104 @@ public sealed class ErrataRendererTests
             "Fixed s.dialogue.md (1 fix)");
     }
 
+    [Fact]
+    public void Render_DisabledDiagnostics_AreCountedByCodeAfterTheHint()
+    {
+        var console = PlainConsole();
+
+        new ErrataRenderer(console).Render(
+            "s.dialogue.md",
+            "",
+            [
+                At("DLG1113", 5, 1, "dangling arrow") with { Fixes = [Escape(0)] },
+                At("DLG1114", 7, 1, "divider", DiagnosticSeverity.Info) with { IsDisabled = true },
+                At("DLG3002", 12, 13, "deep nesting") with { IsDisabled = true },
+            ]);
+
+        Assert.Equal(
+            [
+                "s.dialogue.md(5,1): warning DLG1113: dangling arrow",
+                $"  {MoreInformation}#dlg1113",
+                "1 warning",
+                "1 fixable with --fix",
+                "2 disabled: 1 DLG1114, 1 DLG3002",
+            ],
+            console.Lines);
+    }
+
+    [Fact]
+    public void Render_DisabledDiagnosticWithAFix_IsNotCountedAsFixable()
+    {
+        var console = PlainConsole();
+
+        new ErrataRenderer(console).Render(
+            "s.dialogue.md",
+            "",
+            [
+                At("DLG1113", 5, 1, "dangling arrow") with { Fixes = [Escape(0)], IsDisabled = true },
+                At("DLG3002", 12, 13, "deep nesting"),
+            ]);
+
+        Assert.Equal(
+            [
+                "s.dialogue.md(12,13): warning DLG3002: deep nesting",
+                $"  {MoreInformation}#dlg3002",
+                "1 warning",
+                "1 disabled: 1 DLG1113",
+            ],
+            console.Lines);
+    }
+
+    [Fact]
+    public void Render_OnlyDisabledDiagnostics_WritesOnlyTheDisabledLine()
+    {
+        var console = PlainConsole();
+
+        new ErrataRenderer(console).Render(
+            "s.dialogue.md",
+            "",
+            [
+                At("DLG3002", 12, 13, "deep nesting") with { IsDisabled = true },
+                At("DLG1114", 7, 1, "divider", DiagnosticSeverity.Info) with { IsDisabled = true },
+                At("DLG1114", 9, 1, "divider", DiagnosticSeverity.Info) with { IsDisabled = true },
+            ]);
+
+        Assert.Equal(["3 disabled: 2 DLG1114, 1 DLG3002"], console.Lines);
+    }
+
+    [Fact]
+    public void Render_NothingDisabled_WritesNoDisabledLine()
+    {
+        var console = PlainConsole();
+
+        new ErrataRenderer(console).Render("s.dialogue.md", "", [At("DLG3002", 1, 1, "deep nesting")]);
+
+        Assert.Equal(
+            ["s.dialogue.md(1,1): warning DLG3002: deep nesting", $"  {MoreInformation}#dlg3002", "1 warning"],
+            console.Lines);
+    }
+
+    [Fact]
+    public void Render_FixRun_LeavesDisabledDiagnosticsOutOfTheRemainingCount()
+    {
+        var console = PlainConsole();
+        var escape = EscapeTheArrow();
+
+        new ErrataRenderer(console).Render(
+            "s.dialogue.md",
+            DanglingArrowScript,
+            [DanglingArrowWarning(escape)],
+            RunThatEscapedTheArrow(
+                escape,
+                remaining:
+                [
+                    At("DLG1107", 2, 1, "styled prefix"),
+                    At("DLG3002", 3, 1, "deep nesting") with { IsDisabled = true },
+                ]));
+
+        Assert.Contains("Fixed s.dialogue.md (1 fix; 1 warning remains)", console.Output, StringComparison.Ordinal);
+    }
+
     /// <summary>The fix that writes a backslash before the arrow in <see cref="DanglingArrowScript"/>.</summary>
     private static LocatedFix EscapeTheArrow() => Escape(4);
 

@@ -1,3 +1,5 @@
+using DialogueDown.Diagnostics;
+
 namespace DialogueDown.Tests.Diagnostics;
 
 public sealed class DiagnosticCatalogTests
@@ -5,9 +7,12 @@ public sealed class DiagnosticCatalogTests
     [Fact]
     public void EveryDescriptorHasAUniqueCode()
     {
-        var codes = DiagnosticCatalogReflection.Descriptors().Select(descriptor => descriptor.Code).ToList();
+        var duplicates = DiagnosticCatalog.All
+            .GroupBy(descriptor => descriptor.Code)
+            .Where(group => group.Count() > 1)
+            .Select(group => group.Key);
 
-        Assert.NotEmpty(codes);
-        Assert.Equal(codes.Count, codes.Distinct().Count());
+        Assert.NotEmpty(DiagnosticCatalog.All);
+        Assert.Empty(duplicates);
     }
 }

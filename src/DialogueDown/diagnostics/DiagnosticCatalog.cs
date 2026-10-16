@@ -1,3 +1,5 @@
+using System.Reflection;
+
 namespace DialogueDown.Diagnostics;
 
 /// <summary>
@@ -299,4 +301,21 @@ internal static class DiagnosticCatalog
             + "effect. Remove the weight to make it a plain line, or add more options.",
         DiagnosticCategory.Style,
         DiagnosticSeverity.Warning);
+
+    private static readonly Lazy<IReadOnlyList<DiagnosticDescriptor>> _all = new(Declared);
+
+    /// <summary>Every descriptor declared in this catalog.</summary>
+    /// <remarks>
+    /// Read from the catalog's public static fields on first use, so declaring a descriptor is
+    /// enough to list it.
+    /// </remarks>
+    public static IReadOnlyList<DiagnosticDescriptor> All => _all.Value;
+
+    private static IReadOnlyList<DiagnosticDescriptor> Declared() =>
+    [
+        .. typeof(DiagnosticCatalog)
+            .GetFields(BindingFlags.Public | BindingFlags.Static)
+            .Select(field => field.GetValue(null))
+            .OfType<DiagnosticDescriptor>(),
+    ];
 }
