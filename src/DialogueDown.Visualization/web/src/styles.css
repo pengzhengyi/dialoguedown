@@ -4867,12 +4867,12 @@ body.zen .playbook-view > .playbook-source {
     color: var(--pico-color);
 }
 
-/* Pressed while whitespace is shown, the way Word marks its own ¶ button: a solid gray tile with
-   a fine outline, and the glyph at full strength. */
+/* Pressed while whitespace is shown, the way Word marks its own ¶ button: a tinted tile with a
+   fine outline. It takes the View/Edit color, like the selected script in the Explorer. */
 .app-footer .whitespace-toggle[aria-pressed="true"] {
-    background: color-mix(in srgb, var(--pico-color) 22%, transparent);
-    box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--pico-color) 35%, transparent);
-    color: var(--pico-color);
+    background: color-mix(in srgb, var(--mode-accent, var(--pico-primary)) 28%, transparent);
+    box-shadow: inset 0 0 0 1px var(--mode-accent, var(--pico-primary));
+    color: var(--mode-accent, var(--pico-primary));
 }
 
 /* Pico rings every focused button; a mouse click should leave only the pressed state. */

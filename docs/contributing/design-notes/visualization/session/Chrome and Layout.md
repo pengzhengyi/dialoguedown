@@ -220,7 +220,8 @@ editor without destroying it, and a strong list would keep each replaced editor 
 The button keeps the name "Show whitespace" and carries the state in `aria-pressed`, as a toggle
 button should, and it follows the setting however it changes. It sits 6px from Help, as VS Code
 spaces its status-bar icons, rather than a full group gap away, and reads pressed the way Word's own
-¶ button does: a solid gray tile with a fine outline. <kbd>Alt-W</kbd> joins the editor's
+¶ button does: a tinted tile with a fine outline, in the View/Edit accent like the Explorer's
+selected script. <kbd>Alt-W</kbd> joins the editor's
 other Alt-letter shortcuts. Unlike <kbd>z</kbd> it works inside the editors, where a reader checking
 indentation is, so it reads the physical key (`event.code`), because macOS reports Option-W as `∑`,
 and takes the event so an editable editor does not type that character.

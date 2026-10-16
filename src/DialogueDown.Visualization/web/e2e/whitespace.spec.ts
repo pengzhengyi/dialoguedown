@@ -95,6 +95,33 @@ for (const scheme of ["light", "dark"] as const) {
     });
 }
 
+test("the pressed toggle wears the View/Edit color", async ({ page }) => {
+    await page.goto(writeReport(REPORT));
+    await toggle(page).click();
+
+    /** The mode accent as a computed color, and the pressed toggle's glyph color beside it. */
+    const colors = () =>
+        toggle(page).evaluate(async (element) => {
+            // Pico eases a button's color; read the settled color, not a frame of the fade.
+            await Promise.all(element.getAnimations().map((animation) => animation.finished));
+            const probe = document.createElement("span");
+            probe.style.color = "var(--mode-accent)";
+            element.after(probe);
+            const accent = getComputedStyle(probe).color;
+            probe.remove();
+            return { accent, glyph: getComputedStyle(element).color };
+        });
+
+    const view = await colors();
+    // The served shell marks Edit on the root element; a static report only ever shows View.
+    await page.evaluate(() => (document.documentElement.dataset.servedMode = "edit"));
+    const edit = await colors();
+
+    expect(view.glyph).toBe(view.accent);
+    expect(edit.glyph).toBe(edit.accent);
+    expect(edit.accent).not.toBe(view.accent);
+});
+
 /** The contrast between an element's own fill, as painted, and the background behind it. */
 async function fillContrastOf(locator: Locator): Promise<number> {
     const rendered = await locator.evaluate(async (element) => {
