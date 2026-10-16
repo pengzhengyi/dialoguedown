@@ -4533,9 +4533,9 @@ body.zen .playbook-view > .playbook-source {
     color: var(--mode-accent-contrast);
 }
 
-/* Frozen on read-only graph tabs: the mode governs only the Source editor, so the
-   control is dimmed and inert there (the pressed mode stays visible so it is still
-   legible). A tooltip on the group explains how to unfreeze it. */
+/* Disabled on the Playbook tab, whose editor is compiled output that no mode makes writable: the
+   control is dimmed and inert there, and the pressed mode stays visible so it is still legible.
+   A tooltip on the group says where to edit instead. */
 .mode-toggle[aria-disabled="true"] {
     opacity: 0.5;
 }
