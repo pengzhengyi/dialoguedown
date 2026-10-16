@@ -41,6 +41,7 @@ function fakePorts(overrides: Partial<ModeControllerPorts> = {}) {
         markSourceDirty: vi.fn(),
         markConfigDirty: vi.fn(),
         isConfigTabActive: vi.fn(() => false),
+        isPlaybookTabActive: vi.fn(() => false),
         showConfigTab: vi.fn(),
         showBanner: vi.fn(),
     };

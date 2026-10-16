@@ -210,6 +210,23 @@ describe("runApp Playbook tab", () => {
         expect(document.querySelector(".playbook-side")?.textContent).toContain("Bob");
     });
 
+    // The served page disables View/Edit there: the Playbook's editor is compiled output.
+    it("reports whether it is the active tab", () => {
+        const app = runApp({ source: "root", stages: [stage()], playbook: playbook() });
+        const open = (title: string) =>
+            [...document.querySelectorAll<HTMLElement>("#tabs .tab")]
+                .find((tab) => tab.textContent === title)!
+                .click();
+
+        const onSource = app.isPlaybookTabActive();
+        open("Playbook");
+        const onPlaybook = app.isPlaybookTabActive();
+        open("AST");
+        const onGraph = app.isPlaybookTabActive();
+
+        expect([onSource, onPlaybook, onGraph]).toEqual([false, true, false]);
+    });
+
     it("keeps the last playbook when a recompile does not carry one", () => {
         const app = runApp({ source: "root", stages: [stage()], playbook: playbook() });
 

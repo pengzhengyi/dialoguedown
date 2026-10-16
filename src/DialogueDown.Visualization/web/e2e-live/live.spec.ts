@@ -257,7 +257,8 @@ test("keeps the View/Edit toggle enabled on graph tabs so editing can begin ther
     // Source tab is active first: the toggle is interactive.
     await expect(view).toBeEnabled();
 
-    // A graph tab keeps the toggle interactive too: a node can be edited there.
+    // A graph tab keeps the toggle interactive too: the mode is the session's, so a reader can
+    // switch to Edit there before going to the editor.
     await page.locator(".tab", { hasText: "Markdown AST" }).click();
     await expect(page.locator("section.stage.active g.node").first()).toBeVisible();
     await expect(view).toBeEnabled();
@@ -266,6 +267,35 @@ test("keeps the View/Edit toggle enabled on graph tabs so editing can begin ther
     // Back on Source it is still interactive.
     await page.locator(".tab", { hasText: "Source" }).click();
     await expect(view).toBeEnabled();
+});
+
+test("disables the View/Edit toggle on the read-only Playbook tab, keeping the mode", async ({
+    page,
+}) => {
+    const toggle = page.locator(".mode-toggle");
+    const edit = page.locator('.mode-toggle-option[data-mode="edit"]');
+    await edit.click();
+    await expect(edit).toHaveAttribute("aria-pressed", "true");
+
+    await page.locator(".tab", { hasText: "Playbook" }).click();
+
+    await expect(toggle).toHaveAttribute("aria-disabled", "true");
+    await expect(toggle).toHaveAttribute("title", /compiled output/);
+    await expect(edit).toBeDisabled();
+    await expect(edit).toHaveAttribute("aria-pressed", "true");
+
+    await page.locator(".tab", { hasText: "Source" }).click();
+
+    await expect(toggle).toHaveAttribute("aria-disabled", "false");
+    await expect(edit).toBeEnabled();
+    await expect(edit).toHaveAttribute("aria-pressed", "true");
+
+    // The report reopens on the tab the reader left, and the toggle is disabled there from the
+    // first paint, not only after a tab change.
+    await page.locator(".tab", { hasText: "Playbook" }).click();
+    await page.reload();
+    await expect(page.locator(".tab.active")).toHaveText("Playbook");
+    await expect(toggle).toHaveAttribute("aria-disabled", "true");
 });
 
 test("Zen mode hides the Explorer sidebar on a served report", async ({ page }) => {
@@ -1621,8 +1651,8 @@ test("recompiles the Playbook tab on save, so it always matches the saved script
     await expect(speakers).not.toContainText("Bruno");
 
     // Rename the speaker in Source and save; the playbook is regenerated from the saved script.
-    await page.locator('.mode-toggle-option[data-mode="edit"]').click();
     await page.locator("#tabs .tab", { hasText: "Source" }).click();
+    await page.locator('.mode-toggle-option[data-mode="edit"]').click();
     await page.locator(".source-stage .cm-content").click();
     await page.keyboard.press("ControlOrMeta+a");
     await page.keyboard.type("# Original Scene\n\nBruno: The original line.\n");
