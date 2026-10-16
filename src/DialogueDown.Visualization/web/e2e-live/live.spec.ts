@@ -1651,8 +1651,8 @@ test("recompiles the Playbook tab on save, so it always matches the saved script
     await expect(speakers).not.toContainText("Bruno");
 
     // Rename the speaker in Source and save; the playbook is regenerated from the saved script.
-    await page.locator('.mode-toggle-option[data-mode="edit"]').click();
     await page.locator("#tabs .tab", { hasText: "Source" }).click();
+    await page.locator('.mode-toggle-option[data-mode="edit"]').click();
     await page.locator(".source-stage .cm-content").click();
     await page.keyboard.press("ControlOrMeta+a");
     await page.keyboard.type("# Original Scene\n\nBruno: The original line.\n");
