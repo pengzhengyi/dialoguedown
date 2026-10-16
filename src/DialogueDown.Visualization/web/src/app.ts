@@ -53,6 +53,7 @@ import { createDiagnosticSummary } from "./diagnostic-summary";
 import { orderDiagnostics } from "./diagnostic-order";
 import { createFooterDrawer } from "./footer-drawer";
 import type { DebugController } from "./debug-controller";
+import { createWhitespaceToggle, installWhitespaceShortcut } from "./whitespace-toggle";
 
 /**
  * Whether a stage renders `=>` as the jump ligature the writer meant rather than two characters
@@ -303,6 +304,12 @@ export function runApp(
           })
         : null;
     if (drawer) helpToggle?.addEventListener("click", () => drawer.open("help", helpToggle));
+    // Showing whitespace is an editor setting, so a report with no editor offers neither the
+    // status-line toggle nor its shortcut.
+    if (report.source != null || report.configuration != null || report.playbook != null) {
+        helpToggle?.before(createWhitespaceToggle().element);
+        installWhitespaceShortcut();
+    }
     if (summary) document.querySelector(".status-bar")?.appendChild(summary.element);
 
     /**
