@@ -19,6 +19,10 @@ public sealed class RunnerWalkPropertyTests
 {
     private const int Samples = 200;
 
+    // For a check that some walk meets a shape few drawn playbooks hold, so that a run of the suite
+    // all but never misses it by chance.
+    private const int ManySamples = 1000;
+
     // A drawn playbook may loop, so a walk is cut off rather than run to an end. Passing a node can
     // take five steps: answering what playing it needs, the host finishing a command inside a line,
     // answering what the rest of the line needs, moving on, and answering which way out to take. So
@@ -206,7 +210,8 @@ public sealed class RunnerWalkPropertyTests
                 {
                     Interlocked.Increment(ref excluded);
                 }
-            });
+            },
+            walks: ManySamples);
 
         Assert.True(excluded > 0, "No walk was asked for a draw with a random option excluded.");
     }
@@ -248,7 +253,7 @@ public sealed class RunnerWalkPropertyTests
     // it, taking an option the player can take at every menu, picked by a number drawn for it, and
     // drawing at every random choice with a draw made for it. Every step the walk takes is checked,
     // not only the one it stops at.
-    private static void ForEveryWalk(Action<PlayContext, StepResult> everyStepHolds) =>
+    private static void ForEveryWalk(Action<PlayContext, StepResult> everyStepHolds, int walks = Samples) =>
         Gen.Select(PlaybookGen.Valid(), PlaybookGen.Worlds(), Gen.Int.NonNegative, Draws()).Sample(
             (playbook, world, pick, draw) =>
             {
@@ -266,7 +271,7 @@ public sealed class RunnerWalkPropertyTests
                     command = MovesOnFrom(state.Situation, world, pick, draw);
                 }
             },
-            iter: Samples);
+            iter: walks);
 
     // A draw from 0 to 1, with both ends drawn on their own, because a host may send either.
     private static Gen<double> Draws() => Gen.OneOf(Gen.Const(0.0), Gen.Const(1.0), Gen.Double[0.0, 1.0]);
