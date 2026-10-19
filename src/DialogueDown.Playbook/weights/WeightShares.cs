@@ -17,10 +17,7 @@ public static class WeightShares
     /// whose key <paramref name="keyWeights"/> answers.
     /// </param>
     /// <param name="arbiter">Decides which random options are excluded.</param>
-    /// <param name="keyWeights">
-    /// The numbers the world answered for the key weights, or <see langword="null"/> when none
-    /// were answered.
-    /// </param>
+    /// <param name="keyWeights">The numbers the world answered for the key weights.</param>
     /// <returns>One share per random option, in the same order.</returns>
     /// <remarks>
     /// The random options in play share the draw as if the excluded ones were not written, so an
@@ -32,19 +29,15 @@ public static class WeightShares
     /// <c>`Guard.Mood%`</c> answered <c>20</c> beside <c>`%`</c> comes to 20 and 80.
     /// </para>
     /// </remarks>
-    /// <exception cref="ArgumentException">
-    /// A random option in play has a key weight, and no numbers were given for key weights.
-    /// </exception>
     /// <exception cref="ArgumentOutOfRangeException">
     /// A number in play, written or answered, is negative or not finite.
     /// </exception>
     public static ImmutableArray<double> Of(
-        IEnumerable<RandomOptionEdge> randomOptions,
-        IRandomOptionArbiter arbiter,
-        IKeyWeightAnswers? keyWeights = null)
+        IEnumerable<RandomOptionEdge> randomOptions, IRandomOptionArbiter arbiter, IKeyWeightAnswers keyWeights)
     {
         ArgumentNullException.ThrowIfNull(randomOptions);
         ArgumentNullException.ThrowIfNull(arbiter);
+        ArgumentNullException.ThrowIfNull(keyWeights);
 
         return DrawingWeight.Shares(randomOptions.Select(option => ToDrawingWeight(option, arbiter, keyWeights)));
     }
@@ -59,7 +52,7 @@ public static class WeightShares
     // An excluded random option weighs nothing: a number of zero adds nothing to the numbers, and
     // takes no part of what they leave.
     private static DrawingWeight ToDrawingWeight(
-        RandomOptionEdge option, IRandomOptionArbiter arbiter, IKeyWeightAnswers? keyWeights) =>
+        RandomOptionEdge option, IRandomOptionArbiter arbiter, IKeyWeightAnswers keyWeights) =>
         option switch
         {
             null => throw new ArgumentNullException(nameof(option), "A random choice has no missing random options."),
@@ -67,13 +60,11 @@ public static class WeightShares
             _ => ToDrawingWeight(option.Weight, keyWeights),
         };
 
-    private static DrawingWeight ToDrawingWeight(ChoiceWeight weight, IKeyWeightAnswers? keyWeights) => weight switch
+    private static DrawingWeight ToDrawingWeight(ChoiceWeight weight, IKeyWeightAnswers keyWeights) => weight switch
     {
         NumberWeight number => new DrawingWeight.Number(number.Percentage),
         AutoWeight => new DrawingWeight.Auto(),
-        QueryWeight { Key: var key } when keyWeights is not null => new DrawingWeight.Number(keyWeights.NumberFor(key)),
-        QueryWeight { Key: var key } => throw new ArgumentException(
-            $"The key weight '{key}' has no share until the world answers it.", nameof(keyWeights)),
+        QueryWeight { Key: var key } => new DrawingWeight.Number(keyWeights.NumberFor(key)),
         _ => throw new NotSupportedException($"No drawing weight is defined for {weight.GetType().Name}."),
     };
 }
