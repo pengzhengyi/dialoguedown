@@ -381,6 +381,36 @@ internal static class DiagnosticDocs
                     """,
                     ["Alice: The road was long."]))),
         new(
+            DiagnosticCatalog.TypedSpacing,
+            "A Markdown preview shows spaces typed together as one, and so does the game: where two "
+            + "or more spaces, tabs, or encoded line breaks stand together in text the player reads, "
+            + "the player sees one space. That is usually what you want, so this is a note, not a "
+            + "fault, and it exists so the collapse is never a surprise. Two spaces after a sentence "
+            + "get no exemption; one space reads the same. If you meant the width, name the space: "
+            + "a non-breaking space (`&nbsp;`) never collapses.",
+            new(
+                """
+                # The Tavern
+
+                Alice: Welcome.  Sit anywhere.
+                """,
+                """
+                # The Tavern
+
+                Alice: Welcome. Sit anywhere.
+                """,
+                ["Welcome.  Sit"],
+                ["Welcome. Sit"],
+                "if the extra width was a habit",
+                new(
+                    "if the width was meant",
+                    """
+                    # The Tavern
+
+                    Alice: Welcome.&nbsp; Sit anywhere.
+                    """,
+                    ["Welcome.&nbsp; Sit"]))),
+        new(
             DiagnosticCatalog.DuplicateAnchor,
             "Each scene heading becomes a jump target — an anchor slugged from its text. Two headings "
             + "with the same text produce the same anchor, so a jump to it is ambiguous.",
