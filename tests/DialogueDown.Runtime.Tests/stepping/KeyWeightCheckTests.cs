@@ -18,7 +18,10 @@ public sealed class KeyWeightCheckTests
     public void Refuses_AKeyWeightAnsweredWithAValidNumber_IsFalse(double number)
     {
         Assert.False(
-            KeyWeightCheck.Refuses(ARandomChoiceWithAKeyWeight(), Answering(("Guard.Mood", number)), out var refusal));
+            KeyWeightCheck.Refuses(
+                PlayContextFactory.ARandomChoiceWithAKeyWeight(),
+                Answering(("Guard.Mood", number)),
+                out var refusal));
         Assert.Null(refusal);
     }
 
@@ -31,7 +34,10 @@ public sealed class KeyWeightCheckTests
         double number, string written)
     {
         Assert.True(
-            KeyWeightCheck.Refuses(ARandomChoiceWithAKeyWeight(), Answering(("Guard.Mood", number)), out var refusal));
+            KeyWeightCheck.Refuses(
+                PlayContextFactory.ARandomChoiceWithAKeyWeight(),
+                Answering(("Guard.Mood", number)),
+                out var refusal));
 
         Assert.Equal(RefusalReason.InvalidWeight, refusal.Reason);
         Assert.Equal(
@@ -157,18 +163,8 @@ public sealed class KeyWeightCheckTests
 
     [Fact]
     public void Refuses_IsNotCheckedAgainstNothing() =>
-        Assert.Throws<ArgumentNullException>(() => KeyWeightCheck.Refuses(ARandomChoiceWithAKeyWeight(), null!, out _));
-
-    /// <summary>A random choice whose first random option has a key weight.</summary>
-    /// <remarks>
-    /// <code>
-    /// - `Guard.Mood%` Guard: Lovely day.
-    /// - `%` Guard: Move along.
-    /// </code>
-    /// </remarks>
-    /// <returns>The random choice.</returns>
-    private static RandomChoiceNode ARandomChoiceWithAKeyWeight() =>
-        RandomChoice(Chance("Guard.Mood", target: 1), EvenChance(target: 2));
+        Assert.Throws<ArgumentNullException>(
+            () => KeyWeightCheck.Refuses(PlayContextFactory.ARandomChoiceWithAKeyWeight(), null!, out _));
 
     /// <summary>A random choice whose random options each have a key weight.</summary>
     /// <remarks>
