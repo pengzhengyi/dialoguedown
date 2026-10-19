@@ -5,7 +5,7 @@ using Ast = DialogueDown.Script.Ast;
 namespace DialogueDown.Emission;
 
 /// <summary>
-/// Writes what a line says: the AST's inline fragments as a playbook's speech, with typed spacing
+/// Writes what a line says: the AST's inline fragments as a playbook's speech, with extra spaces
 /// collapsed so the playbook reads the way a Markdown preview shows it.
 /// </summary>
 /// <remarks>
@@ -22,7 +22,7 @@ namespace DialogueDown.Emission;
 /// </remarks>
 internal static class SpeechMapping
 {
-    /// <summary>Writes a whole line's speech, in order, with typed spacing collapsed.</summary>
+    /// <summary>Writes a whole line's speech, in order, with extra spaces collapsed.</summary>
     /// <param name="fragments">What the line says.</param>
     /// <returns>The same speech as a playbook carries it.</returns>
     public static ImmutableArray<SpeechFragment> Write(

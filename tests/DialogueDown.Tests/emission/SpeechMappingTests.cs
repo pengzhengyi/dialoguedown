@@ -115,7 +115,7 @@ public sealed class SpeechMappingTests
     }
 
     [Fact]
-    public void Write_ALineOfSpeech_HasItsTypedSpacingCollapsed()
+    public void Write_ALineOfSpeech_HasItsExtraSpacesCollapsed()
     {
         AssertSays(SpeechMapping.Write([Text("Hello,    Bob.  ")]), "Hello, Bob.");
     }

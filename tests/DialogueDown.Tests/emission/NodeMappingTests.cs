@@ -40,7 +40,7 @@ public sealed class NodeMappingTests
     }
 
     [Fact]
-    public void Write_ALine_HasTheTypedSpacingOfItsSpeechCollapsed()
+    public void Write_ALine_HasTheExtraSpacesOfItsSpeechCollapsed()
     {
         var written = Assert.IsType<LineNode>(Write(LineNode(12, _alice, Text("Hello,   Bob. "))));
 

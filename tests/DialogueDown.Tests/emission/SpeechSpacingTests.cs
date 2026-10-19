@@ -115,7 +115,7 @@ public sealed class SpeechSpacingTests
             [Text("Hello."), Tag("mood", "happy")]);
 
     [Fact]
-    public void Normalize_TypedSpacingBeforeATrailingCommand_IsRemoved() =>
+    public void Normalize_ExtraSpacesBeforeATrailingCommand_AreRemoved() =>
         AssertNormalizes(
             [Text("Hello  "), DefaultCommand()],
             [Text("Hello"), DefaultCommand()]);

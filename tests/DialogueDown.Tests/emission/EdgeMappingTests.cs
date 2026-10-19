@@ -40,7 +40,7 @@ public sealed class EdgeMappingTests
     }
 
     [Fact]
-    public void Write_AnOption_HasTheTypedSpacingOfItsLabelCollapsed()
+    public void Write_AnOption_HasTheExtraSpacesOfItsLabelCollapsed()
     {
         var written = AssertLeadsTo<OptionEdge>(
             Write(OptionEdge(NodeId(SecondId), "Ask  about the inn ")), SecondPosition);
@@ -77,7 +77,7 @@ public sealed class EdgeMappingTests
     }
 
     [Fact]
-    public void Write_ADivert_HasTheTypedSpacingOfItsLabelCollapsed()
+    public void Write_ADivert_HasTheExtraSpacesOfItsLabelCollapsed()
     {
         var written = AssertLeadsTo<DivertEdge>(
             Write(DivertEdge(NodeId(SecondId), " Back  home ")), SecondPosition);

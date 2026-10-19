@@ -72,7 +72,7 @@ namespace DialogueDown.Emission;
 /// </remarks>
 internal static class SpeechSpacing
 {
-    /// <summary>Returns the list as the playbook carries it, with typed spacing collapsed.</summary>
+    /// <summary>Returns the list as the playbook carries it, with extra spaces collapsed.</summary>
     /// <param name="fragments">One speech list, as mapped from the script.</param>
     /// <returns>The same list, normalized.</returns>
     public static ImmutableArray<SpeechFragment> Normalize(IReadOnlyList<SpeechFragment> fragments)
