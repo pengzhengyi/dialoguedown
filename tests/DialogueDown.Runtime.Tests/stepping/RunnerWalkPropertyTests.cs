@@ -218,6 +218,31 @@ public sealed class RunnerWalkPropertyTests
     }
 
     /// <summary>
+    /// Some walk is asked for a draw with a share the world answered.
+    /// </summary>
+    /// <remarks>
+    /// This checks the walk rather than the runner. If no walk drew with a key weight in play, the
+    /// walks above would pass without a number the world answered ever reaching a draw.
+    /// </remarks>
+    [Fact]
+    public void SomeWalk_IsAskedForADrawWithAShareTheWorldAnswered()
+    {
+        var answered = 0;
+
+        ForEveryWalk(
+            (context, stepped) =>
+            {
+                if (stepped.State.Situation is AwaitingDraw waiting && HasAShareTheWorldAnswered(context, waiting))
+                {
+                    Interlocked.Increment(ref answered);
+                }
+            },
+            walks: ManySamples);
+
+        Assert.True(answered > 0, "No walk was asked for a draw with a share the world answered.");
+    }
+
+    /// <summary>
     /// Every answer a walk gives is one the run accepts.
     /// </summary>
     /// <remarks>
@@ -316,6 +341,14 @@ public sealed class RunnerWalkPropertyTests
                     drawn.First.Condition is not null
                     && drawn.First.Weight is not (NumberWeight { Percentage: 0 } or QueryWeight)
                     && drawn.Second == 0);
+
+    // A key weight in play comes to the number the world answered for it, so a key weight with a
+    // share above zero was given one by the world.
+    private static bool HasAShareTheWorldAnswered(PlayContext context, AwaitingDraw waiting) =>
+        context.NodeAt(waiting.Node) is RandomChoiceNode random
+            && random.RandomOptions()
+                .Zip(waiting.Shares)
+                .Any(drawn => drawn.First.Weight is QueryWeight && drawn.Second > 0);
 
     private static void AssertAddressable(PlayContext context, Situation situation)
     {
