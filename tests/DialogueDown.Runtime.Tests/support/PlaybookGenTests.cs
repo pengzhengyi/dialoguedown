@@ -45,7 +45,7 @@ public sealed class PlaybookGenTests
     }
 
     [Fact]
-    public void EveryNodeKindLeftOut_IsStillOneTheRunnerRefuses()
+    public void EveryNodeKindLeftOut_IsStillOneTheRunnerCannotPlay()
     {
         // Fails once the runner plays a listed kind, naming the kind the generator must now draw.
         foreach (var node in PlayContextFactory.OneOfEveryNodeKind())

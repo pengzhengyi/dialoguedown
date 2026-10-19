@@ -72,20 +72,20 @@ public sealed class PlayabilityTests
     }
 
     [Fact]
-    public void WhatTheHarnessDeclines_IsWhatTheRunnerRefuses()
+    public void WhatTheHarnessDeclines_IsWhatTheRunnerCannotPlay()
     {
         // The harness screens a playbook before stepping, and the screen restates what the runner
         // can play, so the two must agree: on every kind, and on each way a menu or a random choice
         // asks the world.
         foreach (var (name, node) in EveryKindAndEachNodeThatAsksTheWorld())
         {
-            var refused = node.RefusalOnArrival() is not null;
+            var unplayable = node.IsUnplayableKind();
 
             Assert.True(
-                Playability.CanPlay(node) == !refused,
+                Playability.CanPlay(node) == !unplayable,
                 $"{name}: the harness calls it "
                     + $"{(Playability.CanPlay(node) ? "playable" : "unplayable")}, "
-                    + $"but arriving at it {(refused ? "refuses" : "does not refuse")}.");
+                    + $"but the runner {(unplayable ? "cannot play it" : "can")}.");
         }
     }
 
