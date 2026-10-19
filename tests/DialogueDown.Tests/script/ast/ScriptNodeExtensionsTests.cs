@@ -211,6 +211,14 @@ public sealed class ScriptNodeExtensionsTests
     }
 
     [Fact]
+    public void Children_UnhandledFragmentType_Throws()
+    {
+        var fragment = new UnknownFragment(SourceSpanFactory.Span());
+
+        Assert.Throws<ArgumentOutOfRangeException>(() => fragment.Children());
+    }
+
+    [Fact]
     public void TypeChainToScriptNode_YieldsConcreteTypeUpToScriptNode()
     {
         var node = SpeakerNameReference("Alice");
@@ -394,4 +402,6 @@ public sealed class ScriptNodeExtensionsTests
     private sealed record UnknownBlock(SourceSpan Span) : ScriptBlock(Span);
 
     private sealed record UnknownSpeaker(SourceSpan Span) : Speaker(Span);
+
+    private sealed record UnknownFragment(SourceSpan Span) : InlineFragment(Span);
 }

@@ -124,9 +124,8 @@ internal static class ScriptNodeExtensions
         string.Concat(fragments.Texts().Select(text => text.Content));
 
     /// <summary>
-    /// The node's direct children in document order. A block, speaker, or other node of an
-    /// unknown type throws, so a new node type is not skipped by accident; an inline fragment
-    /// other than the four that hold fragments is a leaf.
+    /// The node's direct children in document order. A block, speaker, inline fragment, or other
+    /// node of an unknown type throws, so a new node type is not skipped by accident.
     /// </summary>
     internal static IEnumerable<ScriptNode> Children(this ScriptNode node) => node switch
     {
@@ -184,17 +183,21 @@ internal static class ScriptNodeExtensions
             nameof(speaker), speaker.GetType(), "Unhandled speaker type in Children()."),
     };
 
-    // Only the four inline containers expose nested fragments; every other fragment (text,
-    // breaks, game calls, tags) is a leaf, so an unrecognized one defaults to no children.
     private static IEnumerable<ScriptNode> FragmentChildren(InlineFragment fragment) => fragment switch
     {
         StyledText styled => styled.Children,
         Image image => image.Alt,
         Link link => link.Label,
         Jump jump => jump.IsConditional() ? [jump.Condition!, .. jump.Label] : jump.Label,
+        _ when IsLeaf(fragment) => [],
 
-        _ => [],
+        _ => throw new ArgumentOutOfRangeException(
+            nameof(fragment), fragment.GetType(), "Unhandled inline fragment type in Children()."),
     };
+
+    // The inline fragments that hold no other fragment.
+    private static bool IsLeaf(InlineFragment fragment) =>
+        fragment is Text or LineBreak or JumpIndicator or Condition or GameCall or Tag;
 
     private static IEnumerable<ScriptNode> ConditionalBodyChildren(
         Condition? condition, IReadOnlyList<ScriptBlock> body) =>
