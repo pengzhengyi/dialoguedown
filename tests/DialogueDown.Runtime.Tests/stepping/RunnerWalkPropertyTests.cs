@@ -37,6 +37,7 @@ public sealed class RunnerWalkPropertyTests
             RefusalReason.UnansweredKey,
             RefusalReason.UnaskedKey,
             RefusalReason.WrongAnswerKind,
+            RefusalReason.InvalidWeight,
             RefusalReason.NoSuchOption,
             RefusalReason.UnavailableOption,
             RefusalReason.InvalidDraw,
@@ -300,19 +301,20 @@ public sealed class RunnerWalkPropertyTests
     private static bool SaysTheWorldsWords(OfferedOption option) =>
         option.Label.Contains(new TextFragment(DrawnWorld.Words));
 
-    // A random option's share is zero for one of three reasons: the world excluded it, its weight
-    // is `0%`, or it is an auto weight the numbers in play leave nothing. The drawn numbers, 0 and
-    // 60, never reach 100 between them, so the last cannot happen here. A guarded random option
-    // with a share of zero and a weight other than `0%` was therefore excluded. Checking the guard
-    // alone would also count a guarded `0%` the world allowed, so a walk would pass this check
-    // even if nothing were ever excluded.
+    // A random option's share is zero for one of four reasons: the world excluded it, its weight
+    // is `0%`, it is a key weight the world answered 0, or it is an auto weight the numbers in play
+    // leave nothing. The drawn numbers, written or answered, are 0 and 60, and an auto weight has
+    // only one number beside it, so the last cannot happen here. A guarded random option with a
+    // share of zero and a weight other than `0%` or a key weight was therefore excluded. Checking
+    // the guard alone would also count a guarded `0%` the world allowed, so a walk would pass this
+    // check even if nothing were ever excluded.
     private static bool LeavesARandomOptionOut(PlayContext context, AwaitingDraw waiting) =>
         context.NodeAt(waiting.Node) is RandomChoiceNode random
             && random.RandomOptions()
                 .Zip(waiting.Shares)
                 .Any(drawn =>
                     drawn.First.Condition is not null
-                    && drawn.First.Weight is not NumberWeight { Percentage: 0 }
+                    && drawn.First.Weight is not (NumberWeight { Percentage: 0 } or QueryWeight)
                     && drawn.Second == 0);
 
     private static void AssertAddressable(PlayContext context, Situation situation)

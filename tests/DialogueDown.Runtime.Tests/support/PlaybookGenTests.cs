@@ -97,17 +97,17 @@ public sealed class PlaybookGenTests
     }
 
     [Fact]
-    public void TheDraw_GivesSomeRandomChoiceNothingDrawable_OnceTheWorldWithholdsEveryGuard()
+    public void TheDraw_GivesSomeRandomChoiceNothingDrawable_InAWorldDrawnBesideIt()
     {
         // A random choice is walked past only when no random option has a share, so the walk covers
         // that only if some drawn random choice has nothing drawable in a world the walk can meet.
         var nothingDrawable = 0;
 
-        PlaybookGen.Valid().Sample(
-            playbook =>
+        Gen.Select(PlaybookGen.Valid(), PlaybookGen.Worlds()).Sample(
+            (playbook, world) =>
             {
                 if (playbook.Nodes.OfType<RandomChoiceNode>()
-                    .Any(random => RandomChoiceShares.HasNothingDrawable(random, WithholdingEveryGuard(random))))
+                    .Any(random => RandomChoiceShares.HasNothingDrawable(random, ArrivingAt(random, world))))
                 {
                     Interlocked.Increment(ref nothingDrawable);
                 }
@@ -147,12 +147,12 @@ public sealed class PlaybookGenTests
         return seen;
     }
 
-    /// <summary>What a world that withholds every guard answers about a random choice.</summary>
-    /// <remarks>A drawn world sometimes withholds every guard, so a walk can meet this one.</remarks>
+    /// <summary>What a drawn world answers when a run arrives at a random choice.</summary>
     /// <param name="random">The random choice.</param>
-    /// <returns>Each key its random options' conditions ask about, answered with false.</returns>
-    private static Supply WithholdingEveryGuard(RandomChoiceNode random) =>
-        World.Answering([.. random.FindTruthsForPlaying().Select(key => (key, false))]);
+    /// <param name="world">The world drawn beside its playbook.</param>
+    /// <returns>Each key its guards and key weights ask about, answered.</returns>
+    private static Supply ArrivingAt(RandomChoiceNode random, DrawnWorld world) =>
+        world.Answering(NodeQuestions.RequiredToPlay(random).Keys());
 
     /// <summary>Where a line's speech holds its first command.</summary>
     /// <param name="speech">The line's speech.</param>

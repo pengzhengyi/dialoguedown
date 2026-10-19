@@ -16,19 +16,20 @@ namespace DialogueDown.Runtime.Tests;
 /// </summary>
 /// <remarks>
 /// Only what the runner plays is drawn: a line, an end, a jump, a line or a control block that
-/// asks the host to perform something, a block condition, a menu, and a random choice of number
-/// and auto weights. A line may hold a command before, between, or after its words, or say nothing
-/// but a command. A node or edge kind the runner gains belongs here too, so a walk covers
+/// asks the host to perform something, a block condition, a menu, and a random choice of number,
+/// auto, and key weights. A line may hold a command before, between, or after its words, or say
+/// nothing but a command. A node or edge kind the runner gains belongs here too, so a walk covers
 /// everything a run can meet.
 /// <para>
 /// Any of them but an end may ask the world something. A line or a control block may be guarded, a
 /// jump may fire only when the world allows it, a block condition's first branch is always
-/// guarded, a menu's options and a random choice's random options may be guarded, and a line or an
-/// option's label may have a query in what it says. A guard and a query never read the same key,
-/// so a world drawn beside the playbook can answer each key in the kind it needs. A menu whose
-/// every option is guarded has a fall-through beside them, as a script compiles to, so a walk
-/// sometimes passes a menu by. So does a random choice whose every random option is guarded, and
-/// one whose random options all weigh zero, so a walk sometimes passes a random choice by.
+/// guarded, a menu's options and a random choice's random options may be guarded, a random option
+/// may have a key weight, and a line or an option's label may have a query in what it says. A
+/// guard, a key weight, and a query never read the same key, so a world drawn beside the playbook
+/// can answer each key in the kind it needs. A menu whose every option is guarded has a
+/// fall-through beside them, as a script compiles to, so a walk sometimes passes a menu by. So
+/// does a random choice whose every random option is guarded, and one whose random options all
+/// weigh zero, so a walk sometimes passes a random choice by.
 /// </para>
 /// <para>
 /// A drawn playbook may loop, may begin anywhere, and may leave an end unreachable. All three are
@@ -46,6 +47,14 @@ internal static class PlaybookGen
     // The keys a drawn guard reads, each answered with a truth. Two, so two nodes, or a line and
     // its jump, sometimes ask about the same one.
     private static readonly ImmutableArray<string> _truthKeys = ["Rainy", "Late"];
+
+    // The keys a drawn key weight reads, each answered with a number. Two, so a random choice's
+    // two key weights sometimes read the same one.
+    private static readonly ImmutableArray<string> _weightKeys = ["Mood", "Luck"];
+
+    // The numbers a weight comes to, written or answered. Zero, so a random option sometimes has
+    // no share, and 60, which leaves an auto weight beside it 40.
+    private static readonly ImmutableArray<double> _numbers = [0, 60];
 
     /// <summary>What a drawn node turns out to be.</summary>
     private enum Draws
@@ -79,7 +88,7 @@ internal static class PlaybookGen
 
         /// <summary>
         /// A random choice of two random options, one carrying on and one leading elsewhere, each
-        /// weighed by a number or an auto weight, either of which the world may withhold.
+        /// with a number, auto, or key weight, either of which the world may withhold.
         /// </summary>
         RandomChoice,
     }
@@ -118,10 +127,10 @@ internal static class PlaybookGen
     /// <summary>Worlds that answer whatever a drawn playbook asks.</summary>
     /// <returns>The generator.</returns>
     public static Gen<DrawnWorld> Worlds() =>
-        Gen.Bool.Array[_truthKeys.Length].Select(holds =>
-            new DrawnWorld(
-                _truthKeys.Zip(holds).ToImmutableDictionary(
-                    truth => truth.First, truth => truth.Second, StringComparer.Ordinal)));
+        Gen.Select(
+            Gen.Bool.Array[_truthKeys.Length],
+            Gen.OneOfConst([.. _numbers]).Array[_weightKeys.Length],
+            (holds, numbers) => new DrawnWorld(ByKey(_truthKeys, holds), ByKey(_weightKeys, numbers)));
 
     // Drawn without an index, then given one: a node states its own position, so it can only be
     // built once its place among the others is known.
@@ -186,9 +195,19 @@ internal static class PlaybookGen
                 new RandomChoiceDraft(onwardWeight, elsewhereWeight, onwardGuard, elsewhereGuard));
 
     // A number beside an auto weight leaves the auto weight the rest of 100, and two zeros leave
-    // nothing drawable.
+    // nothing drawable. A key weight comes to whichever number the world answers for it.
     private static Gen<ChoiceWeight> Weight() =>
-        Gen.OneOfConst<ChoiceWeight>(new AutoWeight(), new NumberWeight(0), new NumberWeight(60));
+        Gen.OneOfConst<ChoiceWeight>(
+            [
+                new AutoWeight(),
+                .. _numbers.Select(number => new NumberWeight(number)),
+                .. _weightKeys.Select(key => new QueryWeight(key)),
+            ]);
+
+    // Each key with the answer drawn for it.
+    private static ImmutableDictionary<string, T> ByKey<T>(ImmutableArray<string> keys, T[] answers) =>
+        keys.Zip(answers).ToImmutableDictionary(
+            answered => answered.First, answered => answered.Second, StringComparer.Ordinal);
 
     private static PlaybookDocument Document(NodeDraft[] drafts, int speakers, int entry) =>
         PlayContextFactory.Document(
