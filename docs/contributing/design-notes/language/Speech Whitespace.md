@@ -6,7 +6,7 @@
 > makes the playbook carry a line the way a preview shows it, with commands and
 > tags taken out: spaces typed together become one, a command or a tag takes no
 > room, and no space stands before a line's first word or after its last.
-> `DLG1116`, an `Info` note, tells the writer where typed spacing collapses.
+> `DLG1116`, an `Info` note, tells the writer where extra spaces collapse.
 
 ## Table of contents
 
@@ -20,7 +20,7 @@
   - [D3 — A command or a tag takes no room, and no space stands outside the words](#d3--a-command-or-a-tag-takes-no-room-and-no-space-stands-outside-the-words)
   - [D4 — Normalized at emission, not in desugar](#d4--normalized-at-emission-not-in-desugar)
   - [D5 — Only what the player reads](#d5--only-what-the-player-reads)
-  - [D6 — `DLG1116` is an `Info` note where typed spacing collapses](#d6--dlg1116-is-an-info-note-where-typed-spacing-collapses)
+  - [D6 — `DLG1116` is an `Info` note where extra spaces collapse](#d6--dlg1116-is-an-info-note-where-extra-spaces-collapse)
   - [D7 — One note per place, with a fix that keeps what the player reads](#d7--one-note-per-place-with-a-fix-that-keeps-what-the-player-reads)
 - [How it works](#how-it-works)
 - [Error and boundary cases](#error-and-boundary-cases)
@@ -77,7 +77,7 @@ with during a playthrough.
 | **Speech list** | One list of speech fragments the playbook carries as words: a line's speech, an option's label, a jump's label, or an image's alt text. Each is normalized on its own. |
 | **Unseen fragment** | A command or a tag. It acts or annotates where it stands, and the player never sees it. |
 | **Visible piece** | Anything in a speech list that is neither a collapsible space nor an unseen fragment: a character of a text, an image, or a query. |
-| **Typed spacing** | Two or more collapsible spaces the writer typed next to each other inside the words, entities included. What `DLG1116` reports. |
+| **Extra spaces** | Two or more collapsible spaces the writer typed next to each other inside the words, entities included; all but one of them do not show. What `DLG1116` reports. |
 
 ## Writer-facing behavior
 
@@ -113,7 +113,7 @@ in the preview, and in every host:
 | `&emsp;` | U+2003 em space | a wide gap |
 | `&thinsp;` | U+2009 thin space | a narrow gap |
 
-Where typed spacing collapses, the compiler says so once for each place (D6):
+Where extra spaces collapse, the compiler says so once for each place (D6):
 
 ```markdown
 # The Tavern
@@ -237,7 +237,7 @@ The rule covers speech lists and nothing else:
   works in a GitHub preview works in the game.
 - **Whitespace between a control line's effects** is not emitted at all.
 
-### D6 — `DLG1116` is an `Info` note where typed spacing collapses
+### D6 — `DLG1116` is an `Info` note where extra spaces collapse
 
 With D1 in place the preview and the game agree, so nothing in the script is
 suspect, and a warning would be wrong. What remains is that the compiler changed
@@ -254,10 +254,10 @@ The rule visits each text once. It reads a line's speech, with the styled text,
 link labels, and alt text inside it, and a jump's label. An option's label needs no
 visit of its own: it is the same fragments as its line's speech, or its jump's
 label. The rule skips the text between a control line's effects, which is never
-emitted. Adjacent texts are read together, so typed spacing split across entities
-is found.
+emitted. Adjacent texts are read together, so extra spaces split across entities
+are found.
 
-It reports typed spacing only. Every other change D3 makes comes from one space
+It reports extra spaces only. Every other change D3 makes comes from one space
 the writer typed, or none, and is not reported:
 
 - a single space merged with another across a command, a tag, the edge of
@@ -271,8 +271,8 @@ beside `DLG1114`, because the note is about the script's surface.
 
 ### D7 — One note per place, with a fix that keeps what the player reads
 
-Each typed spacing gets its own note at its span, as each ignored construct gets
-its own `DLG1114`. It comes with up to two fixes:
+Each place with extra spaces gets its own note at its span, as each ignored
+construct gets its own `DLG1114`. It comes with up to two fixes:
 
 - **Use one space** (preferred) replaces the spacing with one space. With D1 in
   place, what the player reads is the same either way, so this fix is safe to
@@ -298,7 +298,7 @@ directly.
 ```mermaid
 flowchart LR
     SRC["Alice: a    b"] --> DT["Desugared tree<br/>text 'a    b', as typed"]
-    DT --> VAL["Structural validator<br/>TypedSpacingRule"]
+    DT --> VAL["Structural validator<br/>ExtraSpacesRule"]
     VAL -. "DLG1116 (Info)" .-> SINK["Diagnostics"]
     DT --> MID["Semantic model, graph"]
     MID --> EM["Emission<br/>SpeechMapping, SpeechSpacing"]
@@ -326,7 +326,7 @@ other fragment, and every character that is not a collapsible space, stays where
 it was. A link or an image whose label or alt text is left empty stays, with an
 empty label.
 
-`TypedSpacingRule` is a structural-validator rule beside `CommandInLabelRule`. It
+`ExtraSpacesRule` is a structural-validator rule beside `CommandInLabelRule`. It
 visits each text once as D6 describes, reads each sequence of adjacent texts as
 one string, and reports each place where two or more collapsible spaces stand
 together. To decide whether to offer the second fix of D7, it looks for a visible
@@ -336,7 +336,7 @@ piece on each side within the same list, passing over commands and tags.
 
 | Case | Behavior |
 | --- | --- |
-| Typed spacing split across texts, as in `a&#32;&#32;b` or `a &#32;b` | Collapsed, since the rule reads the whole list. One `DLG1116` spanning all of it. |
+| Extra spaces split across texts, as in `a&#32;&#32;b` or `a &#32;b` | Collapsed, since the rule reads the whole list. One `DLG1116` spanning all of it. |
 | An encoded line break between spaces, as in `x &#10; y` | Collapsed to `"x y"`; reported. |
 | Spaces around several commands or tags in a row | One space kept between the visible pieces on either side. |
 | A list holding only unseen fragments and spaces | Every space removed; the commands and tags stay. |
@@ -346,18 +346,18 @@ piece on each side within the same list, passing over commands and tags.
 | A query or an image between spaces | Kept: each is a visible piece. A query's answer is not normalized. |
 | A space written only after a command, as ``Hi`Wave()` there`` | Kept; the part after the command begins with it. |
 | A space alone between two commands, as ``Hi.`Bow()` `Wave()`Bye.`` | Moved past the commands to the words after them, so no part of the line holds only a space. |
-| Typed spacing inside emphasis or a link's label | Collapsed with the list around it; reported. |
-| Typed spacing in alt text | Collapsed within the alt text; reported. |
+| Extra spaces inside emphasis or a link's label | Collapsed with the list around it; reported. |
+| Extra spaces in alt text | Collapsed within the alt text; reported. |
 | A soft line break after a command, as ``a `Wave()` `` and `b` on the next line | The break follows a kept space and is removed: `"a "`, the command, `"b"`. |
-| Typed spacing before a trailing command, as ``Hello  `Wave()` `` | Removed after the last word; reported, with only the preferred fix. |
+| Extra spaces before a trailing command, as ``Hello  `Wave()` `` | Removed after the last word; reported, with only the preferred fix. |
 | An option `- a  b` | One `DLG1116`: the label and the line's speech are the same fragments. |
-| Typed spacing before a dangling arrow, as `x  => y` | `DLG1116` and `DLG1113` each carry a fix; `--fix` applies both. |
+| Extra spaces before a dangling arrow, as `x  => y` | `DLG1116` and `DLG1113` each carry a fix; `--fix` applies both. |
 | U+00A0 beside a space, as in `a&nbsp; b` | Both kept: U+00A0 does not collapse. |
 | A named space before the first word or after the last | Kept. |
 | A named space alone between two commands | Kept, and the runner speaks it as a part of the line (see [Integration](#integration)). |
 | Spaces between a control line's effects | Not emitted; not reported. |
 | Whitespace after a speaker's colon | Already removed by the transpiler; unchanged. |
-| A scene heading with typed spacing | Not speech: the anchor is unchanged, and nothing is reported. |
+| A scene heading with extra spaces | Not speech: the anchor is unchanged, and nothing is reported. |
 | A playbook compiled before this rule | Loads and plays as written. The format is unchanged, and the runtime does not normalize. |
 
 ## Integration
@@ -366,7 +366,7 @@ The code changed with the implementation:
 
 - **Emission.** `SpeechSpacing` is new; `SpeechMapping` calls it as
   [How it works](#how-it-works) describes. Its callers do not change.
-- **Validation.** `TypedSpacingRule` joins `StructuralValidatorFactory`'s default
+- **Validation.** `ExtraSpacesRule` joins `StructuralValidatorFactory`'s default
   set.
 - **Catalog.** `DLG1116`, titled "Spaces typed together collapse", `Syntax`,
   `Info`, with the message in [Writer-facing behavior](#writer-facing-behavior).
@@ -411,7 +411,7 @@ The documentation changed with the implementation:
   no longer says a label whose command came first starts with a space.
 - **[Speech as Plain Text](../runtime/Speech%20as%20Plain%20Text.md).** Its
   agreement table says the readings agree fragment by fragment, and that a whole
-  list read before emission keeps its typed spacing (D4).
+  list read before emission keeps its extra spaces (D4).
 - **[Compile CLI — Fix Mode](../cli/Compile%20CLI%20-%20Fix%20Mode.md).** Its claim
   that `DLG1113` is the only producer, so overlap cannot occur, names `DLG1116`.
 
@@ -419,14 +419,14 @@ The documentation changed with the implementation:
 
 - [ ] Spaces, tabs, and encoded line breaks typed together in a line's speech, an
       option's label, a jump's label, and alt text reach the playbook as one space.
-- [ ] Typed spacing split across texts by entities collapses the same way.
+- [ ] Extra spaces split across texts by entities collapse the same way.
 - [ ] Named spaces reach the playbook unchanged, and the runner speaks a part that
       holds only one.
 - [ ] A command or a tag takes no room, and no collapsible space stands before the
       first visible piece or after the last.
 - [ ] A text emptied by the rule, and a removed soft line break, are omitted.
-- [ ] `DLG1116` reports each typed spacing once, at its span, as `Info`, with the
-      preferred fix and, between visible pieces, the alternative.
+- [ ] `DLG1116` reports each place with extra spaces once, at its span, as
+      `Info`, with the preferred fix and, between visible pieces, the alternative.
 - [ ] Merges beside commands, tags, and boundaries, the ends of a list, a single
       tab, a control line's effects, and headings report nothing.
 - [ ] The six changed corpus cases, the new ones, and the four goldens pass.
@@ -443,9 +443,9 @@ The documentation changed with the implementation:
 | `SpeechSpacing` | Each row of [Writer-facing behavior](#writer-facing-behavior) and [Error and boundary cases](#error-and-boundary-cases) that concerns the playbook, built from fragments directly. |
 | `SpeechMapping` and `EdgeMapping` | A line's speech, an option's label, a jump's label, and alt text each arrive normalized; a styled text is normalized with its line, not alone. |
 | `SpeechSegment` | A part holding only a named space says something; a part holding only collapsible spaces and line breaks does not. |
-| `TypedSpacingRule` | It reports typed spacing in speech, emphasis, a link's label, alt text, and a jump's label, at the right span, including spacing split across entity texts, and reports an option's label once. It offers the alternative fix only between visible pieces. It stays silent for single spaces, a single tab, named spaces, a control line's effects, and a heading. |
-| Compilation | A script with typed spacing compiles, reports `DLG1116`, and emits one space. |
-| CLI fix | `--fix` on a script with typed spacing rewrites it, and the recompile reports no `DLG1116`. On `x  => y` it applies both the `DLG1116` and the `DLG1113` fix. |
+| `ExtraSpacesRule` | It reports extra spaces in speech, emphasis, a link's label, alt text, and a jump's label, at the right span, including spacing split across entity texts, and reports an option's label once. It offers the alternative fix only between visible pieces. It stays silent for single spaces, a single tab, named spaces, a control line's effects, and a heading. |
+| Compilation | A script with extra spaces compiles, reports `DLG1116`, and emits one space. |
+| CLI fix | `--fix` on a script with extra spaces rewrites it, and the recompile reports no `DLG1116`. On `x  => y` it applies both the `DLG1116` and the `DLG1113` fix. |
 
 ### Property tests
 
