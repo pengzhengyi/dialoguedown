@@ -6,7 +6,7 @@ using DialogueDown.Script.Desugar;
 namespace DialogueDown.Script.Validation;
 
 /// <summary>
-/// Notes typed spacing: two or more collapsible spaces written together in what the player reads.
+/// Notes extra spaces: two or more collapsible spaces written together in what the player reads.
 /// The playbook carries them as one space, as a Markdown preview shows them, so a writer who meant
 /// the width learns that it does not show.
 /// </summary>
@@ -29,22 +29,22 @@ namespace DialogueDown.Script.Validation;
 /// one space in each place rather than two together, so it is not reported.
 /// </para>
 /// </remarks>
-internal sealed class TypedSpacingRule : DiagnosticRule
+internal sealed class ExtraSpacesRule : DiagnosticRule
 {
-    protected override DiagnosticDescriptor Descriptor { get; } = DiagnosticCatalog.TypedSpacing;
+    protected override DiagnosticDescriptor Descriptor { get; } = DiagnosticCatalog.ExtraSpaces;
 
     protected override void Analyze(DialogueTreeIndex nodes, Reporter report)
     {
-        foreach (var spacing in nodes.OfType<ScriptNode>().SelectMany(TypedSpacingIn))
+        foreach (var spaces in nodes.OfType<ScriptNode>().SelectMany(ExtraSpacesIn))
         {
-            report(spacing);
+            report(spaces);
         }
     }
 
     // Each place in the words a node shows where two or more spaces are typed together, as one
     // span from the first space to the last. Anything written between two spaces, such as a
     // command or the edge of a link, sets them apart.
-    private static IEnumerable<SourceSpan> TypedSpacingIn(ScriptNode node) =>
+    private static IEnumerable<SourceSpan> ExtraSpacesIn(ScriptNode node) =>
         ContiguousRuns(node.Shown().Texts().SelectMany(SpacesIn))
             .Where(run => run.Count > 1)
             .Select(run => SourceSpan.Covering(run[0], run[^1]));

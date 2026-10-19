@@ -19,6 +19,6 @@ internal static class StructuralValidatorFactory
             new OrphanConditionRule(),
             new CommandInLabelRule(),
             new SceneHeadingPlacementRule(),
-            new TypedSpacingRule(),
+            new ExtraSpacesRule(),
         ]);
 }

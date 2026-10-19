@@ -149,7 +149,7 @@ internal static class DiagnosticCatalog
         DiagnosticSeverity.Info);
 
     /// <summary>DLG1116 — spaces typed together in speech collapse to one.</summary>
-    public static readonly DiagnosticDescriptor TypedSpacing = new(
+    public static readonly DiagnosticDescriptor ExtraSpaces = new(
         "DLG1116",
         "Spaces typed together collapse",
         "Spaces typed together collapse, in a Markdown preview and in the game alike, so the extra "

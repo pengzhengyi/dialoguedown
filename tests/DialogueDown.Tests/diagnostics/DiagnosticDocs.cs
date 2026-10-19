@@ -381,7 +381,7 @@ internal static class DiagnosticDocs
                     """,
                     ["Alice: The road was long."]))),
         new(
-            DiagnosticCatalog.TypedSpacing,
+            DiagnosticCatalog.ExtraSpaces,
             "A Markdown preview shows spaces typed together as one, and so does the game: where two "
             + "or more spaces, tabs, or encoded line breaks stand together in text the player reads, "
             + "the player sees one space. That is usually what you want, so this is a note, not a "

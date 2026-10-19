@@ -7,14 +7,14 @@ using static DialogueDown.Tests.Support.DiagnosticsAssert;
 
 namespace DialogueDown.Tests.Script.Validation;
 
-public sealed class TypedSpacingRuleTests
+public sealed class ExtraSpacesRuleTests
 {
     [Fact]
     public void Check_SpacesTypedTogetherInSpeech_NotesThemAtTheirSpan()
     {
         const string Source = "Alice: a    b";
 
-        var note = AssertReported(Check(Source), DiagnosticCatalog.TypedSpacing);
+        var note = AssertReported(Check(Source), DiagnosticCatalog.ExtraSpaces);
 
         Assert.Equal(DiagnosticSeverity.Info, note.Severity);
         Assert.Equal(SpanOf(Source, "    "), note.Span);
@@ -126,7 +126,7 @@ public sealed class TypedSpacingRuleTests
     {
         var notes = Check(source);
 
-        Assert.All(notes, note => Assert.Equal(DiagnosticCatalog.TypedSpacing, note.Descriptor));
+        Assert.All(notes, note => Assert.Equal(DiagnosticCatalog.ExtraSpaces, note.Descriptor));
         Assert.Equal(spacings.Select(spacing => SpanOf(source, spacing)), notes.Select(note => note.Span));
     }
 
@@ -137,7 +137,7 @@ public sealed class TypedSpacingRuleTests
     private static IReadOnlyList<Diagnostic> Check(string source)
     {
         var bag = new DiagnosticBag();
-        new TypedSpacingRule().Check(DialogueTreeIndex.Build(Pipeline.UntilDesugared(source)), bag);
+        new ExtraSpacesRule().Check(DialogueTreeIndex.Build(Pipeline.UntilDesugared(source)), bag);
         return bag.Diagnostics;
     }
 }
