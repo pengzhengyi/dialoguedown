@@ -116,6 +116,8 @@ rather than a script.
 | `an-auto-weight-beside-an-excluded-random-option` | Does an auto weight beside a random option the world withholds take what the numbers in play leave of 100? | yes |
 | `a-random-choice-with-nothing-drawable` | Is a random choice whose every random option the world withholds walked past by its fall-through? | yes |
 | `a-random-choice-leading-nowhere` | Is a random choice the world leaves nothing drawable, with no fall-through, refused as leading nowhere? | yes |
+| `a-key-weight` | Is a key weight asked on arrival, and its random option drawn as the number the world answered? | yes |
+| `an-excluded-key-weight-left-unchecked` | Is an excluded random option's key weight asked, but its number neither checked nor counted? | yes |
 
 The `readable/` half covers every refusal the reader makes — version, capability,
 node position, the four dangling references, and the
