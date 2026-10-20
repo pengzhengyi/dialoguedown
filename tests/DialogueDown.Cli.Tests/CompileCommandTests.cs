@@ -23,6 +23,13 @@ public sealed class CompileCommandTests
         Alice: The rule is simple => the lever opens the door.
         """;
 
+    /// <summary>Two spaces after a sentence: a DLG1116 note that <c>--fix</c> makes one space.</summary>
+    private const string TwoSpacesAfterASentence = """
+        # The Tavern
+
+        Alice: Welcome.  Sit anywhere.
+        """;
+
     /// <summary>Two scenes with the same name: a DLG2001 error, so the compile fails.</summary>
     private const string TwoScenesNamedAlike = """
         # Gate
@@ -240,6 +247,47 @@ public sealed class CompileCommandTests
         var output = AssertSucceeded(result, "(2 fixes)");
         AssertOccurs(output, "Applied Fix: Escape as literal text", times: 2);
         AssertOccurs(output, "| +Alice: Go", times: 2);
+    }
+
+    [Fact]
+    public void Compile_ScriptWithOnlyANote_CountsItAsFixable()
+    {
+        using var script = new TempScript(TwoSpacesAfterASentence);
+        var tester = CliTester.Create();
+
+        var result = tester.Run("compile", script.Path);
+
+        var output = AssertSucceeded(result);
+        AssertInOrder(output, "info DLG1116", "1 info", "1 fixable with --fix");
+    }
+
+    [Fact]
+    public void Compile_Fix_ExtraSpaces_LeavesOneSpaceAndNothingToNote()
+    {
+        using var script = new TempScript(TwoSpacesAfterASentence);
+
+        var result = CliTester.Create().Run("compile", script.Path, "--fix");
+
+        AssertSucceeded(result, "1. Applied Fix: Use one space");
+        Assert.Contains("Welcome. Sit", File.ReadAllText(script.Path), StringComparison.Ordinal);
+        Assert.Equal(string.Empty, CliTester.Create().Run("compile", script.Path).Output);
+    }
+
+    [Fact]
+    public void Compile_Fix_ExtraSpacesBeforeADanglingArrow_AppliesBothFixes()
+    {
+        var source = """
+            # The Workshop
+
+            Alice: Pull  => the lever.
+            """;
+        using var script = new TempScript(source);
+        var tester = CliTester.Create();
+
+        var result = tester.Run("compile", script.Path, "--fix");
+
+        AssertSucceeded(result, "(2 fixes)", "Applied Fix: Use one space", "Applied Fix: Escape as literal text");
+        Assert.Contains("Pull \\=> the lever", File.ReadAllText(script.Path), StringComparison.Ordinal);
     }
 
     [Fact]
