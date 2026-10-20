@@ -37,7 +37,7 @@ internal sealed class ExtraSpacesRule : DiagnosticRule
     {
         foreach (var spaces in nodes.OfType<ScriptNode>().SelectMany(ExtraSpacesIn))
         {
-            report(spaces);
+            report(spaces, fixes: [UseOneSpace(spaces)]);
         }
     }
 
@@ -48,6 +48,10 @@ internal sealed class ExtraSpacesRule : DiagnosticRule
         ContiguousRuns(node.Shown().Texts().SelectMany(SpacesIn))
             .Where(run => run.Count > 1)
             .Select(run => SourceSpan.Covering(run[0], run[^1]));
+
+    // The preferred fix: one space in place of all of them, which reads the same to the player.
+    private static DiagnosticFix UseOneSpace(SourceSpan spaces) =>
+        new("Use one space", [new DiagnosticEdit(spaces, " ")]);
 
     // Each collapsible space in the text, at the span it is written over. A text's characters
     // stand one for one in its span, unless it was decoded from source of another length, such as

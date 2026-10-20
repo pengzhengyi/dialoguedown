@@ -79,6 +79,27 @@ public sealed class ExtraSpacesRuleTests
     }
 
     [Fact]
+    public void Check_SpacesTypedTogether_OffersOneSpaceFirst()
+    {
+        const string Source = "Alice: a    b";
+
+        var fix = AssertPreferredFix(Source);
+
+        Assert.Equal("Use one space", fix.Title);
+        Assert.Equal("Alice: a b", Applied(Source, fix));
+    }
+
+    [Fact]
+    public void Check_SpacingSplitAcrossEntities_OffersOneSpaceForAllOfIt()
+    {
+        const string Source = "Alice: a&#32;&#32;b";
+
+        var fix = AssertPreferredFix(Source);
+
+        Assert.Equal("Alice: a b", Applied(Source, fix));
+    }
+
+    [Fact]
     public void Check_SingleSpaces_NotesNothing() =>
         AssertNotReported(Check("Alice: Hello, Bob."));
 
@@ -128,6 +149,21 @@ public sealed class ExtraSpacesRuleTests
 
         Assert.All(notes, note => Assert.Equal(DiagnosticCatalog.ExtraSpaces, note.Descriptor));
         Assert.Equal(spacings.Select(spacing => SpanOf(source, spacing)), notes.Select(note => note.Span));
+    }
+
+    // Asserts the source gets one note, and returns the fix it offers first.
+    private static DiagnosticFix AssertPreferredFix(string source)
+    {
+        var fixes = AssertReported(Check(source), DiagnosticCatalog.ExtraSpaces).Fixes;
+        Assert.NotEmpty(fixes);
+        return fixes[0];
+    }
+
+    // The source with the fix applied, after asserting the fix is one edit.
+    private static string Applied(string source, DiagnosticFix fix)
+    {
+        var edit = Assert.Single(fix.Edits);
+        return string.Concat(source[..edit.Span.Start], edit.NewText, source[edit.Span.End..]);
     }
 
     // The span of the first place the spacing is written in the source.
