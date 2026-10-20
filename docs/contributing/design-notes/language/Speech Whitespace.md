@@ -128,8 +128,8 @@ usually what you want, and one space reads the same. To keep the width, write a
 non-breaking space for each extra space: `a&nbsp;&nbsp; b`.
 ```
 
-It offers **Use one space**, the preferred fix, and **Keep the width with
-`&nbsp;`** where there is a width to keep (D7).
+It offers one fix, **Use one space**. A writer who meant the width types the
+non-breaking spaces the message shows (D7).
 
 ## Prior art
 
@@ -272,19 +272,18 @@ beside `DLG1114`, because the note is about the script's surface.
 ### D7 — One note per place, with a fix that keeps what the player reads
 
 Each place with extra spaces gets its own note at its span, as each ignored
-construct gets its own `DLG1114`. It comes with up to two fixes:
+construct gets its own `DLG1114`. It comes with one fix, **Use one space**, which
+replaces the spacing with one space. With D1 in place, what the player reads is
+the same either way, so this fix is safe to apply in bulk: `ddown compile --fix`
+or the editor's Fix All clears a script written with two spaces after every
+sentence in one step, and the notes stop.
 
-- **Use one space** (preferred) replaces the spacing with one space. With D1 in
-  place, what the player reads is the same either way, so this fix is safe to
-  apply in bulk: `ddown compile --fix` or the editor's Fix All clears a script
-  written with two spaces after every sentence in one step, and the notes stop.
-- **Keep the width with `&nbsp;`** replaces every collapsible space but the last
-  with `&nbsp;`, so the line shows the width the source did and can still wrap at
-  the last space: `a   b` becomes `a&nbsp;&nbsp; b`. It is offered only where
-  visible pieces stand on both sides of the spacing. Before the first or after the
-  last, the spacing shows as nothing, and there is no width to keep.
+A writer who meant the width keeps it by hand. The message and the error-code
+reference show how: a non-breaking space for each extra space, as in
+`a&nbsp;&nbsp; b`. No fix writes it for them (see
+[Alternatives not chosen](#alternatives-not-chosen)).
 
-The preferred fix can change one fragment without changing what the player reads.
+The fix can change one fragment without changing what the player reads.
 Entity spaces before a line ending (`end&#32;&#32;`) are kept by Markdown, which
 strips only literal trailing spaces; after the fix, the one literal space is
 stripped, and the line ending becomes a soft line break. Both read as one space.
@@ -329,8 +328,7 @@ empty label.
 `ExtraSpacesRule` is a structural-validator rule beside `CommandInLabelRule`. It
 visits each text once as D6 describes, reads each sequence of adjacent texts as
 one string, and reports each place where two or more collapsible spaces stand
-together. To decide whether to offer the second fix of D7, it looks for a visible
-piece on each side within the same list, passing over commands and tags.
+together.
 
 ## Error and boundary cases
 
@@ -349,7 +347,7 @@ piece on each side within the same list, passing over commands and tags.
 | Extra spaces inside emphasis or a link's label | Collapsed with the list around it; reported. |
 | Extra spaces in alt text | Collapsed within the alt text; reported. |
 | A soft line break after a command, as ``a `Wave()` `` and `b` on the next line | The break follows a kept space and is removed: `"a "`, the command, `"b"`. |
-| Extra spaces before a trailing command, as ``Hello  `Wave()` `` | Removed after the last word; reported, with only the preferred fix. |
+| Extra spaces before a trailing command, as ``Hello  `Wave()` `` | Removed after the last word; reported. |
 | An option `- a  b` | One `DLG1116`: the label and the line's speech are the same fragments. |
 | Extra spaces before a dangling arrow, as `x  => y` | `DLG1116` and `DLG1113` each carry a fix; `--fix` applies both. |
 | U+00A0 beside a space, as in `a&nbsp; b` | Both kept: U+00A0 does not collapse. |
@@ -375,8 +373,7 @@ The code changed with the implementation:
   would never be spoken; it narrows to collapsible spaces and line breaks.
 - **Fixes.** Fix mode and the editor need no change: both apply a diagnostic's
   preferred fix whatever its severity. `DLG1116` is the first `Info` note with a
-  fix, and the first producer to offer an alternative, so the plain compile's
-  `N fixable with --fix` hint counts notes too.
+  fix, so the plain compile's `N fixable with --fix` hint counts notes too.
 - **Conformance corpus.** A playable playbook must equal what its source compiles
   to, and each fixture pins the strings it expects. Six cases change:
   `a-command-mid-line` continues with `"I will not argue."`;
@@ -393,8 +390,8 @@ The code changed with the implementation:
 The documentation changed with the implementation:
 
 - **Error-code reference.** A `DiagnosticDocs` entry for `DLG1116` with a triggering
-  example and both fixes, compiled by the docs tests, and the regenerated
-  `docs/guide/error-codes.md`.
+  example and two ways to fix it, one space or non-breaking spaces, compiled by the
+  docs tests, and the regenerated `docs/guide/error-codes.md`.
 - **The writer's guide to speakers and lines.** A section on spacing: spaces typed
   together show as one, the named spaces above, and a command or a tag takes no
   room. The colon section's reason names HTML, not Markdown, as what collapses
@@ -426,7 +423,7 @@ The documentation changed with the implementation:
       first visible piece or after the last.
 - [ ] A text emptied by the rule, and a removed soft line break, are omitted.
 - [ ] `DLG1116` reports each place with extra spaces once, at its span, as
-      `Info`, with the preferred fix and, between visible pieces, the alternative.
+      `Info`, with the fix to use one space.
 - [ ] Merges beside commands, tags, and boundaries, the ends of a list, a single
       tab, a control line's effects, and headings report nothing.
 - [ ] The six changed corpus cases, the new ones, and the four goldens pass.
@@ -443,7 +440,7 @@ The documentation changed with the implementation:
 | `SpeechSpacing` | Each row of [Writer-facing behavior](#writer-facing-behavior) and [Error and boundary cases](#error-and-boundary-cases) that concerns the playbook, built from fragments directly. |
 | `SpeechMapping` and `EdgeMapping` | A line's speech, an option's label, a jump's label, and alt text each arrive normalized; a styled text is normalized with its line, not alone. |
 | `SpeechSegment` | A part holding only a named space says something; a part holding only collapsible spaces and line breaks does not. |
-| `ExtraSpacesRule` | It reports extra spaces in speech, emphasis, a link's label, alt text, and a jump's label, at the right span, including spacing split across entity texts, and reports an option's label once. It offers the alternative fix only between visible pieces. It stays silent for single spaces, a single tab, named spaces, a control line's effects, and a heading. |
+| `ExtraSpacesRule` | It reports extra spaces in speech, emphasis, a link's label, alt text, and a jump's label, at the right span, including spacing split across entity texts, and reports an option's label once. Its fix leaves one space in place of all the spacing. It stays silent for single spaces, a single tab, named spaces, a control line's effects, and a heading. |
 | Compilation | A script with extra spaces compiles, reports `DLG1116`, and emits one space. |
 | CLI fix | `--fix` on a script with extra spaces rewrites it, and the recompile reports no `DLG1116`. On `x  => y` it applies both the `DLG1116` and the `DLG1113` fix. |
 
@@ -458,14 +455,14 @@ images, queries, commands, tags, and soft line breaks.
 | **Normalizing twice changes nothing** | `SpeechSpacing` applied to its own output returns it unchanged. |
 | **The three rules hold** | In the output, passing over unseen fragments, no collapsible space follows another, and none stands before the first visible piece or after the last. |
 | **Only collapsible spaces change** | Removing every collapsible space from the input and the output leaves the same characters and the same other fragments, in the same order. |
-| **The preferred fix keeps what the player reads** | A generated script, and the same script after every `DLG1116` preferred fix, compile to playbooks whose speech lists read the same through `SpeechText.Of` and hold the same commands, tags, images, and queries in the same order. |
+| **The fix keeps what the player reads** | A generated script, and the same script after every `DLG1116` fix, compile to playbooks whose speech lists read the same through `SpeechText.Of` and hold the same commands, tags, images, and queries in the same order. |
 
 ### Shown to writers
 
 | Where | What the writer sees |
 | --- | --- |
 | The writer's guide to speakers and lines | Spaces typed together show as one, and the named spaces that widen. |
-| The error-code reference, `DLG1116` | Spacing that collapses, and its two fixes. The docs tests compile all three: the triggering example reports `DLG1116`, and neither fix does. |
+| The error-code reference, `DLG1116` | Spacing that collapses, and two ways to fix it: one space, or a non-breaking space for each extra space where the width was meant. The docs tests compile all three: the triggering example reports `DLG1116`, and neither fix does. |
 
 ## Alternatives not chosen
 
@@ -487,6 +484,11 @@ images, queries, commands, tags, and soft line breaks.
   each place; the bulk fix already handles volume.
 - **Exempt two spaces after a sentence.** A hidden rule, tied to some languages'
   punctuation (D7).
+- **A second fix that keeps the width with `&nbsp;`.** Spacing before the first
+  visible piece or after the last shows as nothing, so the fix would be right only
+  between visible pieces. Telling those apart would repeat emission's reading of
+  what the player sees, in the rule, for the less common choice. The message and
+  the error-code reference show the non-breaking spaces to type instead.
 - **A backslash before a space as the escape.** CommonMark keeps that backslash, so
   the preview would show it and the game would not.
 
