@@ -34,7 +34,9 @@ const SOURCE_HELP = `
      <kbd>Ctrl-G</kbd> (Control on every platform, as in VS Code), and fold a section from the
      gutter arrow. Go to line takes more than a number — <kbd>12:5</kbd> for a column,
      <kbd>+10</kbd> or <kbd>-10</kbd> to move relative, <kbd>50%</kbd> for a place in the file —
-     and says what it will do before you press Enter. In Live Edit, format the selection with <kbd>⌘/Ctrl-B</kbd> (bold),
+     and says what it will do before you press Enter. <strong>Show whitespace</strong> — each
+     space as a faint dot, each tab as an arrow — with the ¶ button on the status line or
+     <kbd>Alt-W</kbd>; it applies to every editor and is remembered. In Live Edit, format the selection with <kbd>⌘/Ctrl-B</kbd> (bold),
      <kbd>⌘/Ctrl-I</kbd> (italic) and <kbd>⌘/Ctrl-K</kbd> (link), or type <kbd>*</kbd>
      around a selection to emphasize it. <strong>Quote a block</strong> with
      <kbd>⌘/Ctrl-.</kbd> and <strong>unquote</strong> with <kbd>⌘/Ctrl-Shift-.</kbd>: quoting

@@ -210,6 +210,23 @@ describe("runApp Playbook tab", () => {
         expect(document.querySelector(".playbook-side")?.textContent).toContain("Bob");
     });
 
+    // The served page disables View/Edit there: the Playbook's editor is compiled output.
+    it("reports whether it is the active tab", () => {
+        const app = runApp({ source: "root", stages: [stage()], playbook: playbook() });
+        const open = (title: string) =>
+            [...document.querySelectorAll<HTMLElement>("#tabs .tab")]
+                .find((tab) => tab.textContent === title)!
+                .click();
+
+        const onSource = app.isPlaybookTabActive();
+        open("Playbook");
+        const onPlaybook = app.isPlaybookTabActive();
+        open("AST");
+        const onGraph = app.isPlaybookTabActive();
+
+        expect([onSource, onPlaybook, onGraph]).toEqual([false, true, false]);
+    });
+
     it("keeps the last playbook when a recompile does not carry one", () => {
         const app = runApp({ source: "root", stages: [stage()], playbook: playbook() });
 
@@ -266,6 +283,20 @@ describe("runApp — what the footer offers", () => {
 
         expect(drawerTabs().map((tab) => tab.textContent)).toContain("Problems");
         expect(document.querySelector(".status-bar .diagnostic-summary")).not.toBeNull();
+    });
+
+    it("puts the whitespace toggle on the status line, just before Help", () => {
+        runApp(reportWith("alpha"));
+
+        const help = document.getElementById("help-toggle");
+        expect(help?.previousElementSibling?.classList).toContain("whitespace-toggle");
+    });
+
+    // Whitespace is an editor setting; the file selector has no editor to show it in.
+    it("leaves the whitespace toggle out of a report with no editor", () => {
+        runApp({ stages: [] });
+
+        expect(document.querySelector(".whitespace-toggle")).toBeNull();
     });
 });
 

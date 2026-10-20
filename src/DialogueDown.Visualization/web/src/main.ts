@@ -43,6 +43,9 @@ import {
 } from "./model";
 import { parentPath, type BrowseListing, type CreateOutcome } from "./project-fs";
 
+/** Why View/Edit is disabled on the Playbook tab, shown as the control's tooltip. */
+const PLAYBOOK_READ_ONLY = "The Playbook is compiled output — edit the script on the Source tab.";
+
 /**
  * The Explorer's pinned configuration entry for a report — present only when a `dialogue.toml`
  * was applied. The label is the file's leaf (separator-robust, so a Windows-authored report
@@ -159,6 +162,12 @@ if ((report.mode === "view" || report.mode === "edit") && report.source == null 
         });
     }
 
+    // The Playbook's editor is compiled output that no mode makes writable, so View/Edit is
+    // disabled while it is open. The session keeps its mode, and Save still writes the script.
+    function reflectPlaybookTab(): void {
+        toggle.setEnabled(!app.isPlaybookTabActive(), PLAYBOOK_READ_ONLY);
+    }
+
     const app = runApp(report, {
         editable: initialMode === "edit",
         onChange: (buffer) => controller.onEditorChange(buffer),
@@ -168,7 +177,9 @@ if ((report.mode === "view" || report.mode === "edit") && report.source == null 
         },
         beginNavigation,
         onActiveTabChange: () => {
-            if (controllersReady) ui.reflectActiveDocument();
+            if (!controllersReady) return;
+            ui.reflectActiveDocument();
+            reflectPlaybookTab();
         },
         symbols: () => currentSymbols,
     });
@@ -250,6 +261,8 @@ if ((report.mode === "view" || report.mode === "edit") && report.source == null 
     // speakers pane reflects the last valid compile, not the invalid buffer now in the editor.
     if (configInitiallyInvalid) app.setConfigStale(true);
     controllersReady = true;
+    // A report reopens on the tab the reader left, which may be the Playbook.
+    reflectPlaybookTab();
     const controller = createModeController(initialMode, {
         app,
         dialogueLive,
