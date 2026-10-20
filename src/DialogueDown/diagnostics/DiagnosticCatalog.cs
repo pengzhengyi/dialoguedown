@@ -153,8 +153,9 @@ internal static class DiagnosticCatalog
         "DLG1116",
         "Spaces typed together collapse",
         "Spaces typed together collapse, in a Markdown preview and in the game alike, so the extra "
-            + "width here does not show. That is usually what you want. To keep the width, write a "
-            + "non-breaking space for each extra space: `a&nbsp;&nbsp; b`.",
+            + "width here does not show. That is usually what you want, and one space reads the "
+            + "same. To keep the width, write a non-breaking space for each extra space: "
+            + "`a&nbsp;&nbsp; b`.",
         DiagnosticCategory.Syntax,
         DiagnosticSeverity.Info);
 
