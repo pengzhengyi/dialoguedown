@@ -112,10 +112,17 @@ public sealed class SpeechSpacingTests
 
     [Fact]
     public void Normalize_ASpaceOpeningStyledTextAfterACommand_MovesBeforeItsFirstWord() =>
-        // Hi.`Bow()`*&#32;`Wave()`Bye.*
+        // No script writes this, since emphasis never opens with a space, but a list built by hand can.
         AssertNormalizes(
             [Text("Hi."), CustomCommand("Bow"), Italic(Text(" "), CustomCommand("Wave"), Text("Bye."))],
             [Text("Hi."), CustomCommand("Bow"), Italic(CustomCommand("Wave"), Text(" "), Text("Bye."))]);
+
+    [Fact]
+    public void Normalize_StyledTextHoldingOnlyASpaceAfterACommand_IsOmittedAsTheSpaceMoves() =>
+        // No script writes this, since emphasis never holds only a space, but a list built by hand can.
+        AssertNormalizes(
+            [Text("a"), CustomCommand("Bow"), Italic(Text(" ")), Text(" b")],
+            [Text("a"), CustomCommand("Bow"), Text(" "), Text("b")]);
 
     [Fact]
     public void Normalize_ASpaceLeftAtTheEndOfStyledText_MovesOutBeforeTheNextWord() =>

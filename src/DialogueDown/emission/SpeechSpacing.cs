@@ -171,18 +171,22 @@ internal static class SpeechSpacing
                     _held = null;
                 }
 
-                placed.Add(Placed(fragment));
+                if (Placed(fragment) is { } kept)
+                {
+                    placed.Add(kept);
+                }
             }
 
             return placed.ToImmutable();
         }
 
-        private SpeechFragment Placed(SpeechFragment fragment)
+        // Returns null for a styled text left empty, because all it held was a space that moved on.
+        private SpeechFragment? Placed(SpeechFragment fragment)
         {
             switch (fragment)
             {
                 case StyledTextFragment styled:
-                    return new StyledTextFragment(styled.Style, PlaceEach(styled.Children));
+                    return TryRestyle(styled, PlaceEach(styled.Children), out var restyled) ? restyled : null;
 
                 case LinkFragment link:
                     _afterUnseen = false;
