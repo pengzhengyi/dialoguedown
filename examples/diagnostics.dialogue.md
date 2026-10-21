@@ -4,7 +4,7 @@ author: DialogueDown examples
 ---
 
 <!--
-  This script is DELIBERATELY broken. It exists to show how the report surfaces
+  This script is DELIBERATELY broken. It exists to show how the report presents
   diagnostics — errors and warnings — in the Diagnostics panel and inline on the
   source. Each mistake is labeled with the DLG code it triggers; the other
   examples show the same constructs used correctly.

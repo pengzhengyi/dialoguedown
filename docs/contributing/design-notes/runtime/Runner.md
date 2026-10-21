@@ -35,7 +35,7 @@
 | **Event** | What a step reports: `Said`, `Continued`, `Ended`, `Refused`, or a request. |
 | **Request** | An event the run waits on until the driver answers it: `Perform`, answered by `Done` or `Failed`; `Resolve`, answered by `Supply`; `Offer`, answered by `Choose`; `Draw`, answered by `Drawn`. |
 | **Menu** | A choice node: offered to the player with `Offer`, and left by the option they take with `Choose`. |
-| **Random choice** | A random-choice node: drawn at with `Draw`, and left by the random option the host's `Drawn` lands on. |
+| **Random choice** | A random-choice node: drawn at with `Draw`, and left by the random option the host's `Drawn` picks. |
 | **Situation** | Where a run is, and what it is doing there. |
 | **Walk** | What arriving does: visit a node, and carry on only while it hands the host nothing. |
 
@@ -131,7 +131,7 @@ What may be sent where is one matrix:
 | `AwaitingDone` | arrive at the entry | refused: `misplaced` | at a line, go on from where it stopped or give the player the turn; otherwise leave by the way onward | stand still, report nothing | refused: `misplaced` | refused: `misplaced` | refused: `misplaced` |
 | `AwaitingSupply` | arrive at the entry | refused: `misplaced` | refused: `misplaced` | refused: `misplaced` | play or leave the node, by its moment | refused: `misplaced` | refused: `misplaced` |
 | `AwaitingChoice` | arrive at the entry | refused: `misplaced` | refused: `misplaced` | refused: `misplaced` | refused: `misplaced` | arrive where the chosen option leads, or refused: `no-such-option` or `unavailable-option` | refused: `misplaced` |
-| `AwaitingDraw` | arrive at the entry | refused: `misplaced` | refused: `misplaced` | refused: `misplaced` | refused: `misplaced` | refused: `misplaced` | arrive where the random option the draw lands on leads, or refused: `invalid-draw` |
+| `AwaitingDraw` | arrive at the entry | refused: `misplaced` | refused: `misplaced` | refused: `misplaced` | refused: `misplaced` | refused: `misplaced` | arrive where the random option the draw picks leads, or refused: `invalid-draw` |
 | `AtEnd` | arrive at the entry | refused: `already-ended` | refused: `misplaced` | refused: `misplaced` | refused: `misplaced` | refused: `misplaced` | refused: `misplaced` |
 
 The way onward is the node's `divert` when it carries one, otherwise its
@@ -139,7 +139,7 @@ The way onward is the node's `divert` when it carries one, otherwise its
 beside a succession leaves the succession unreachable, which plays no differently.
 A `Choose` names an option by its position among those the menu offered, counting
 from 0 in the order written. A menu's succession is not an option, so it is never
-counted. A `Drawn` carries a number from 0 to 1, which lands on one random option's
+counted. A `Drawn` carries a number from 0 to 1, which falls in one random option's
 span of the shares the `Draw` named; [Drawing a Random Option](./Drawing%20a%20Random%20Option.md)
 owns how.
 
@@ -214,7 +214,7 @@ runtimes.
 | `wrong-answer-kind` | an answer is the wrong kind for its question — words for a condition, a truth for a query, or anything but a number for a key weight |
 | `invalid-weight` | a `Supply` answers a key weight in play with a number that is negative or not finite, or key weights with numbers whose shares are too large to add up |
 | `key-needed-both-ways` | one node needs the same key as two kinds of answer — a truth, words, or a number — which one answer cannot be |
-| `unplayable-node` | the node is of a kind this build does not play; the C# runner plays every kind, so only a runner still learning one refuses this |
+| `unplayable-node` | the node is of a kind this build does not play; the C# runner plays every kind, so only a runner that does not yet play one refuses this |
 | `no-such-option` | a `Choose` names a position outside the options the menu offered: below 0, or past the last |
 | `unavailable-option` | a `Choose` names an option the menu offered as one the player cannot take |
 | `invalid-draw` | a `Drawn` carries a number below 0 or above 1, or one that is not a number |
@@ -247,8 +247,8 @@ session and judging it are separate pieces, each tested alone:
 
 Each case reports **conformed**, **diverged**, or **not yet playable**. The
 screening asks the playbook and the session before a step is taken, so a construct
-the runner does not play reads as that rather than as a hang. A divergence outranks
-not-yet-playable. `PlayableConformanceTests` names every case this build cannot
+the runner does not play reads as that rather than as a hang. A divergence takes
+precedence over not-yet-playable. `PlayableConformanceTests` names every case this build cannot
 play yet, with the reasons it gives, and holds every other case to the whole
 conversation. A new case must conform unless it is listed, and a listed case that
 starts conforming, or is held back by something else, is noticed.
@@ -268,12 +268,12 @@ class would invite a field, and a field is what stops replay from working.
 
 ### D3 — The situation says where the run is and what it is doing
 
-`AwaitingDone`, `AwaitingSupply`, and `AwaitingChoice` stand at the same node
-`AtNode` would, doing something else there. Holding that in the situation rather
+`AwaitingDone`, `AwaitingSupply`, `AwaitingChoice`, and `AwaitingDraw` stand at the
+same node `AtNode` would, doing something else there. Holding that in the situation rather
 than beside the node means the two cannot disagree, and the protocol stays a
 relation between a situation and a command without looking at the playbook. No field declares what
 may be sent next: a driver reacts to the events it just received — `Perform`,
-`Resolve`, and `Offer` mean answer, and a step that leaves nothing to answer means
+`Resolve`, `Offer`, and `Draw` mean answer, and a step that leaves nothing to answer means
 advance ([speaking a line](./Speaking%20a%20Line.md#s4--the-players-turn-comes-when-a-step-leaves-nothing-to-answer)).
 
 ### D4 — A misplaced command is an event, not an exception
@@ -325,7 +325,7 @@ control node with no effects, so it concerns nobody and the run walks past it.
 
 The runner branches on what it reads, so an effect still in flight would send the
 run a different way. `Perform` is answered by `Done`, and the run does not go
-past it until `Done` lands — the *read your own writes* guarantee. A driver that
+past it until `Done` arrives — the *read your own writes* guarantee. A driver that
 does not care answers at once; one awaiting a database awaits it. `Next` while the
 run waits is refused as `misplaced`, so a fast-forward cannot skip a causal wait.
 
@@ -347,14 +347,14 @@ picks.
 ### D14 — What the runner cannot play is refused, not guessed
 
 Drawing at a random choice without asking the world about its guards, or offering a
-menu without asking about its options, would look like correct play. Refusing keeps a construct the runner cannot
-play yet showing as unplayable until the runner supports it.
+menu without asking about its options, would look like correct play. Refusing keeps a
+construct a runner does not play showing as unplayable rather than misplayed.
 
 The C# runner plays every kind of node, so it refuses nothing as `unplayable-node`.
 Reaching what it does not play — a random choice whose shares need the world's
 answers, played with none, or a block condition, which arrival always walks past —
 is a fault in the runner, and throws. The reason stays in the closed set for a
-runner still learning a kind.
+runtime that does not yet play every kind.
 
 ### D15 — A failed effect holds the run
 

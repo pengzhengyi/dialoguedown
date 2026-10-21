@@ -186,7 +186,7 @@ added and removed.
 
 ### D5 — A condition binds at the level it is written
 
-A condition on a **jump** rides its divert, and the node keeps its fall-through as the
+A condition on a **jump** is carried by its divert, and the node keeps its fall-through as the
 path taken when the condition fails. A condition on a **block** withholds the block's
 content, so it sits on the node (`IConditionalNode`). Either way the host decides the
 condition at play time, and "force this path" in a debugger is one action over a
@@ -222,7 +222,7 @@ it lives beside it as `Scene.EntryBlocks` and is tested without building a graph
 | Case | Behavior |
 | --- | --- |
 | Empty document | A graph whose `Entry` is the End node. |
-| Heading-only scene | No region (it owns no nodes); a divert to it lands on the next block, or End. |
+| Heading-only scene | No region (it owns no nodes); a divert to it goes to the next block, or End. |
 | Content before the first heading | Nodes in no region; the root scene has no heading. |
 | Content after an unconditional divert | Not wired; analysis already reported `DLG1003`. |
 | `UnresolvedJump` / `FileScopedJump` | No divert; the line reads on. Already reported by analysis. |

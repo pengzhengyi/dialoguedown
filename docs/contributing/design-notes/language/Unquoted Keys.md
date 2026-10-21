@@ -205,8 +205,8 @@ key. So `` `X?` `` and `` `"X"?` `` both mean the key `X`, and `` `"Rainy?"?` ``
 the literal key `Rainy?`. Quotes never *change* a key — they only let it carry a
 character (a trailing `?`/`%`) the unquoted form would read as the operator.
 
-The quoted form has **no escape for an inner `"`** — it wraps any run of non-quote
-characters, matching the existing value-read grammar. A key that must contain a `"`
+The quoted form has **no escape for an inner `"`** — it wraps any sequence of
+non-quote characters, matching the value-read grammar. A key that must contain a `"`
 is therefore written **unquoted**, where the `"` is an ordinary character
 (`` `He said "hi"?` `` → key `He said "hi"`). Text that opens a quote but is not one
 clean `"…"` string (`` `"a"b"?` ``) is not treated as quoted; it is read as the raw

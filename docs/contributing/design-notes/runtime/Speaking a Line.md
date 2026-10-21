@@ -1,7 +1,7 @@
 # Speaking a line
 
 > [!NOTE]
-> Status: **implemented**. The pass that plays a line whose speech carries commands:
+> Status: **implemented**. How the runner plays a line whose speech carries commands:
 > its words and its commands reach the host in the order they were written, and
 > the run stops inside the line only before a query written after a command. It
 > builds on [asking the world](./Asking%20the%20World.md) and the
@@ -34,16 +34,9 @@ The host needs to know when to perform each command, a command there must be
 able to report failure, and a query after a command must see what the command
 changed. So the runner plays such a line in the order it was written: the line
 opens with a `Said` that names its speaker, each command arrives as a `Perform`,
-and each run of words after a command arrives as a `Continued`. A step stops
+and the words after each command arrive as a `Continued`. A step stops
 inside the line only before a query written after a command, so that query is
 read once the command has run.
-
-The pass has two milestones:
-
-| Milestone | What it delivers |
-| --- | --- |
-| **M1 — a line performs its commands in place** | Words and commands in written order in one step; the run waits for `Done`, then stands at the line for `Next` |
-| **M2 — a query after a command stops the line** | The step stops after the last command before that query; once the host is done, the world is asked, and the line resumes |
 
 In scope:
 
@@ -55,8 +48,8 @@ In scope:
   `Departure`;
 - a `continued` expectation in the fixture schema, its matcher, and corpus cases.
 
-Out of scope: choices (C2b), `Describe` (C2e), and saves (C2f), though the
-resume place is designed to be saved; a command written before a line's speaker
+Out of scope: a menu, which [Offering a Choice](./Offering%20a%20Choice.md) owns;
+`Describe`; and saves, though the resume place is designed to be saved; a command written before a line's speaker
 prefix, as in `` `Wave()` Alice: Hello. ``, losing that speaker, which the compiler
 owns; and how whitespace and quotes in speech are normalized, which the language
 owns ([Speech Whitespace](../language/Speech%20Whitespace.md) for whitespace).
@@ -65,7 +58,7 @@ owns ([Speech Whitespace](../language/Speech%20Whitespace.md) for whitespace).
 
 | Term | Meaning |
 | --- | --- |
-| **Segment** | A run of words and the command that follows them, as `SpeechTemplate.Segments` returns. A line is one or more segments; either half of one may be empty |
+| **Segment** | Some words and the command that follows them, as `SpeechTemplate.Segments` returns. A line is one or more segments; either half of one may be empty |
 | **Part** | The words of one segment as the host receives them. The first segment's words are the `Said`; the words of each later segment are a `Continued` |
 | **Says something** | A segment says something when its words hold anything other than collapsible spaces (a space, a tab, a line feed, a carriage return) and line breaks, judged on the fragments before any query is filled. A named space, such as `&nbsp;`, says something |
 | **Stop** | A point inside a line where the step ends before the line does |
@@ -73,7 +66,7 @@ owns ([Speech Whitespace](../language/Speech%20Whitespace.md) for whitespace).
 
 ## Functionality checklist
 
-M1:
+Performing commands in place:
 
 - [x] A line's words and commands reach the host in written order, in one step.
 - [x] Every line opens with a `Said` that names its speaker, carrying the words
@@ -88,7 +81,7 @@ M1:
 - [x] An option's label is never performed: a menu offers its words and performs
       nothing.
 
-M2:
+Stopping before a query written after a command:
 
 - [x] A step stops after the last command before a query written after it.
 - [x] Once the host is done, the run asks about the keys of the segment it
@@ -171,7 +164,7 @@ sequenceDiagram
 | --- | --- | --- |
 | `SpeechTemplate.Segments` | Breaks speech into segments at each command | `Playing` |
 | `SpeechSegment.SaysSomething` | Whether a segment's words say something, judged before any query is filled | `LineEventsBuilder` |
-| `SpeechTemplate.HasQueries` | Whether a run of speech holds a query, which is where a step stops | `Playing` |
+| `SpeechTemplate.HasQueries` | Whether speech holds a query, which is where a step stops | `Playing` |
 | `LineEventsBuilder` | Gathers the events of the part of a line a step plays, one segment at a time: the `Said` when the part starts the line, each `Continued`, and each `Perform` | `Playing` |
 | `Continued(speech)` | An event: the words after a command, in the utterance the line's `Said` opened | `Event`, alongside `Said` |
 | `AwaitingDone(node, resume)` | Waiting for the host, and where the node carries on once it is done | `Situation` |
@@ -217,7 +210,7 @@ belong to the same utterance, or it opens a second speech box for one sentence;
 `Continued` is that signal, as its own event. It carries no speaker, because a
 continuation is spoken by whoever opened the line, and a field that could
 disagree with the `Said` would only raise the question of what a mismatch means.
-As its own event, a port that has not learned it fails a fixture rather than
+As its own event, a port that does not handle it fails a fixture rather than
 quietly showing two name plates.
 
 A `Continued` is sent only when its words say something, so collapsible spaces
@@ -253,7 +246,7 @@ leaves nothing to answer, the player has the turn and the driver waits for `Next
 After a `Failed`, the run is still waiting on the host, so the driver's own retry
 or give-up decides.
 
-That rule holds for every shape this pass creates. A line with no commands sends
+That rule holds for every shape a line can take. A line with no commands sends
 `Said` and nothing to answer. A line that ends with a command sends `Said` and
 `Perform`; after `Done`, the step sends nothing new, and with nothing left to
 answer, the player has the turn. A control block sends `Perform`s; after `Done`,
@@ -281,8 +274,8 @@ text an effect contained.
 
 ### S6 — `Done` means the world has changed, not that the show is over
 
-A host answers a `Perform` with `Done` once the command's effect on the world has
-landed. It need not wait for the presentation to finish: a host may start Alice's
+A host answers a `Perform` with `Done` once the command has changed the
+world. It need not wait for the presentation to finish: a host may start Alice's
 wave, answer `Done`, and keep her waving until the player moves on. A query after
 the command needs the changed world, not the finished animation, and that is all
 `Done` promises.
@@ -303,12 +296,12 @@ A control block's `Done` is always `FromNodeEnd`; so is a line's once its last
 segment has been played.
 
 A resume place is an index into `SpeechTemplate.Segments`, so how speech is
-segmented becomes part of what a saved run depends on. The save version (C2f)
-covers it along with the playbook's fingerprint.
+segmented becomes part of what a saved run depends on. A save's version is to
+cover it along with the playbook's fingerprint.
 
 The runner trusts a resume place as it trusts a node position: it produces
 only places the node has, which the walk property checks, and checking a restored
-state against its playbook is the save pass's job.
+state against its playbook belongs to saves.
 
 ### S8 — The world is asked once per stop
 
@@ -324,8 +317,9 @@ already set for two lines asking one key.
 
 A key needed as a truth and as words both is refused for the whole node,
 before anything is asked, even where the two uses fall either side of a stop. The
-compiler is to reject that script outright, and one rule for the whole node is the
-one it will enforce.
+compiler rejects that script as
+[`DLG2018`](../../../guide/error-codes.md#dlg2018), by the same rule for the whole
+node.
 
 ### S9 — An option's label is shown, never performed
 
@@ -373,20 +367,20 @@ decides what follows (S5) sits beside the code that made the host a request.
 | A guarded line the world withholds | Stepped over before any of it is played |
 | A query whose answer is empty | Said as empty words; whether its segment says something was decided before the answer |
 | One key asked before and after a stop | Asked twice |
-| A resume place the line does not have | Never produced by the runner; a restored state is checked by the save pass |
+| A resume place the line does not have | Never produced by the runner; checking a restored state belongs to saves |
 
 ## Integration
 
-| Seam | Change |
+| Part | What it holds |
 | --- | --- |
-| `protocol` | `Continued` joins the events; `Said` carries the words before a line's first command, with queries filled and no commands |
-| `situations` | `AwaitingDone` carries `Resume`; `Moment` becomes a closed union |
+| `protocol` | `Continued`, an event; `Said` carries the words before a line's first command, with queries filled and no commands |
+| `situations` | `AwaitingDone` carries `Resume`; `Moment` is a closed union |
 | Playbook | `SpeechSegment.SaysSomething` and `SpeechTemplate.HasQueries`; `SpeechTemplate.Fill` leaves nothing where a query is answered with no words |
 | `stepping` | `Playing` plays a node (S10) and walks a line's segments; `LineEventsBuilder` gathers a line's events; `NodeQuestions.RequiredToPlayFrom` reads from a starting segment |
 | `Runner.Step` | `(AwaitingDone, Done)` goes to `Playing`, which continues or stands at a line, and leaves a control block; a `Supply` answering a later segment goes to `Playing` |
 | Fixture schema | A `continued` expectation beside `said` |
-| Harness | `ContinuedMatcher`; the screen learns `continued` |
-| Corpus | New cases: a command at the end of a line, one mid-line, one opening a line, a line whose only speech is a command, a query after a command, and a failed command inside a line |
+| Harness | `ContinuedMatcher`; the screen checks `continued` |
+| Corpus | Cases for a command at the end of a line, one mid-line, one opening a line, a line whose only speech is a command, a query after a command, and a failed command inside a line |
 | `PlaybookGen` | Draws lines with commands, and queries after commands, so the walk property stops inside lines |
 | Guide | The Commands section says a command in a line is performed where it is written, and a query after it reads what the command changed |
 | Asking the world | A1 counts one more moment at each stop inside a line |
@@ -404,4 +398,4 @@ decides what follows (S5) sits beside the code that made the host a request.
 | Unit — situations | `Resume` and `Moment` each covering their members, and `Describe` wording each |
 | Unit — the protocol | `Done` resuming inside a line; `Done` at the end of a line standing; `Done` at a control block leaving |
 | Property | The walk property draws lines with commands and queries after commands, and only ever stands where the playbook has a node — and, inside a line, at a resume place the line has; some walk does stop inside a line |
-| Conformance | The new cases, each written with the speaker first, since a command written before the speaker prefix loses the speaker in the compiler; every existing case unchanged |
+| Conformance | The cases above, each written with the speaker first, since a command written before the speaker prefix loses the speaker in the compiler |

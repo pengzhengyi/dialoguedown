@@ -29,11 +29,11 @@
 ## Goal and scope
 
 A writer often wants *variety* rather than a *decision*: a guard who greets you
-one of several ways, a crowd that reacts unpredictably, a coin that lands one of
-two ways. A **player choice** offers options to the player; a **random choice**
+one of several ways, a crowd that reacts unpredictably, a coin that comes up one
+of two ways. A **player choice** offers options to the player; a **random choice**
 lets the engine pick one, with some outcomes more likely than others.
 
-A random choice It reuses the familiar choice list, but each
+A random choice reuses the familiar choice list, but each
 option leads with a **weight** — a code span ending in `%`. When any option in a
 list carries a weight, the whole list becomes a random choice: at runtime the
 engine selects exactly one option by weight and runs its body. The player sees
@@ -49,9 +49,9 @@ applies.
 | --- | --- |
 | **Random choice** | A choice group the engine resolves by selecting one option at random by weight; the selected option's body runs. No player menu is shown. |
 | **Choice weight** | The leading code span ending in `%` on an option that gives its relative selection probability. |
-| **Explicit weight** | A numeric weight, `` `N%` `` — a concrete percentage. |
+| **Explicit weight** | A numeric weight, `` `N%` `` — a concrete percentage. The AST, the playbook, and the runtime call it a number weight (`NumberWeight`). |
 | **Auto weight** | A bare `` `%` `` — claims an equal share of the percentage left over after the explicit weights. |
-| **Dynamic weight** | `` `key%` `` — a key whose runtime numeric result becomes the option's explicit weight. |
+| **Dynamic weight** | `` `key%` `` — a key whose runtime numeric result becomes the option's explicit weight. The playbook library and the runtime call it a key weight; its type is `QueryWeight` in the AST and the playbook. |
 | **Query weight** | The AST form of a dynamic weight: the query key plus the exact source span of its code span. |
 | **Leftover** | `max(0, 100 − sum of explicit weights)`, divided equally among the auto weights. |
 | **Normalization** | Dividing every resolved weight by their total so the probabilities sum to 1; owned by a swappable strategy so it can be tested and replaced in isolation. |
@@ -365,7 +365,7 @@ node because a weight is not an inline game call and must participate in the
 
 Turning weights into probabilities — normalizing by the total, and the uniform
 recovery the compiler uses after reporting a zero total (`DLG2010`) — lives behind
-an `IWeightNormalization` seam, not inline in `BlockBuilder` or `WeightTotalRule`.
+an `IWeightNormalization` interface, not inline in `BlockBuilder` or `WeightTotalRule`.
 This keeps the arithmetic a pure, table-testable unit independent of parsing, and
 leaves room to swap the policy (for example, a strict "must total 100" variant)
 without touching recognition.
@@ -410,7 +410,7 @@ it so the code span is no longer the option's weight prefix.
 | `DLG1104` | Missing weight in a random choice | Syntax | Error | An option in a random choice has no leading weight span. |
 | `DLG1105` | Invalid choice weight | Syntax | Error | A weight value is a negative number (`` `-10%` ``), or an infinite one (`` `Infinity%` ``, or more digits than a double holds). Any non-numeric text is a key. |
 | `DLG2010` | Random choice weights sum to zero | Semantic | Error | A fully static, unconditional random choice's weights all resolve to 0, so no option can be selected. |
-| `DLG3003` | Choice weights do not total 100% | Style | Warning | A fully static, unconditional random choice's weights do not total ≈100% (within 0.5, and not all zero); the odds are normalized anyway. |
+| `DLG3003` | Choice weights do not total 100% | Style | Warning | A fully static, unconditional random choice of more than one option has weights that do not total ≈100% (within 0.5, and not all zero); the odds are normalized anyway. |
 | `DLG3004` | Single-option random choice | Style | Warning | A random choice offers only one option, so it is always selected and the weight has no effect. A lone, unguarded option with a `` `0%` `` chance is `DLG2010` instead. |
 
 `DLG1104`/`DLG1105` sit in the `DLG11xx` line/inline-surface band alongside the
@@ -440,6 +440,7 @@ one, so it takes a semantic (`DLG2xxx`) code. `DLG3003` and `DLG3004` are style
 | Static + query + auto | Resolve the query, subtract all explicit values from 100, split the non-negative remainder across autos, then normalize. |
 | Resolved dynamic total is zero | Select no option: walk past by the fall-through, which the compiler writes for any random choice whose total can be zero. |
 | Resolved dynamic total differs from 100 by more than 0.5 | Runtime warning equivalent to `DLG3003`; normalize and continue. |
+| One key as an option's condition and as a key weight in one random choice | [`DLG2018`](../../../guide/error-codes.md#dlg2018): the runner asks the game for both at once, and the game gives one answer per key. |
 | Nested random choice | Composes recursively; the choice-nesting rule (`DLG3002`) still applies. |
 | Ordered vs unordered list | Both may be random; a random choice shows no menu, so list ordering is not observed. |
 
@@ -458,8 +459,9 @@ one, so it takes a semantic (`DLG2xxx`) code. `DLG3003` and `DLG3004` are style
   answer key weights as the world would, and cover a valid number, an answer that
   is not a number, negative and non-finite numbers, autos beside them, and a zero
   total. The drift warning waits for a warning channel in the runner.
-- **Diagnostics:** `DLG1104`, `DLG1105`, `DLG2010`, and `DLG3003` fire on the
-  right inputs with located spans, and a well-formed random choice produces none.
+- **Diagnostics:** `DLG1104`, `DLG1105`, `DLG2010`, `DLG3003`, and `DLG3004` fire
+  on the right inputs with located spans, and a well-formed random choice produces
+  none.
 - **Boundaries:** every row in the table above, especially auto distribution,
   over-100 totals, and the zero-total error.
 - **Composition:** a nested random choice inside a player choice (and vice

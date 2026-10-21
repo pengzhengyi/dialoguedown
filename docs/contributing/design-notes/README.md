@@ -193,7 +193,7 @@ Spectre.Console.Cli; they are not needed to understand the compiler.
 | 1 | [Command-Line Interface](./cli/Command-Line%20Interface.md) | The `ddown` CLI: `compile` and `visualize`, and the Live server as a library | Implemented |
 | 2 | [Compile CLI — Emit DOT](./cli/Compile%20CLI%20-%20Emit%20DOT.md) | `compile --emit dot` emits each stage's graph as portable Graphviz text | Implemented |
 | 3 | [Compile CLI — Fix Mode](./cli/Compile%20CLI%20-%20Fix%20Mode.md) | `compile --fix` applies a diagnostic's preferred fix in place, then verifies by recompiling | Implemented |
-| 4 | [Play CLI — Terminal Player](./cli/Play%20CLI%20-%20Terminal%20Player.md) | The terminal player's presentation — speech rendering, the choice menu, and the player's turns (part 1 of `ddown play`) | Implemented |
+| 4 | [Play CLI — Terminal Player](./cli/Play%20CLI%20-%20Terminal%20Player.md) | The terminal player's presentation — speech rendering, the choice menu, and the player's turns; the `ddown play` command that drives it is not built | Implemented |
 
 ### Visualization
 
@@ -271,7 +271,7 @@ project, and the window's chrome.
 | [Served Shell](./visualization/session/Served%20Shell.md) | The one loopback server behind `ddown visualize`: its routes, roots, security, View and Edit, and the watcher | Implemented |
 | [Live Edit and Autosave](./visualization/session/Live%20Edit%20and%20Autosave.md) | Editing the source in the report and saving it: Auto and Manual modes, conflicts, and save-before-navigation | Implemented |
 | [Explorer](./visualization/session/Explorer.md) | The project tree, the Files toggle, and opening a script without reloading the page | Implemented |
-| [Chrome and Layout](./visualization/session/Chrome%20and%20Layout.md) | Zen mode, the narrow-screen layout, and the Problems panel | Implemented |
+| [Chrome and Layout](./visualization/session/Chrome%20and%20Layout.md) | Zen mode, the narrow-screen layout, the Problems panel, and the switch that shows whitespace in the editors | Implemented |
 | [Served Client Packaging](./visualization/session/Served%20Client%20Packaging.md) | How the served page loads its client: hashed assets, and Mermaid fetched on demand | Implemented |
 
 ### Other notes

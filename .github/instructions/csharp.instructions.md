@@ -92,10 +92,11 @@ license does not affect the library's MIT license or reach consumers.
   are explicitly *not* violations and must not be "fixed": reading across the
   immutable AST records (`node.Span.Start`) is data navigation, a fluent chain
   (`parser.Or(x).Or(y).Located()`) returns the same abstraction, and third-party
-  APIs (`context.Response.Headers.Location`) follow their own shape. Enforcement is
-  by review for now; an automated depth check is parked in
-  [#217](https://github.com/pengzhengyi/dialoguedown/issues/217) until the runtime
-  introduces stateful object graphs.
+  APIs (`context.Response.Headers.Location`) follow their own shape. Review
+  enforces it: an automated depth check cannot tell data navigation from reaching
+  through behavior without a semantic model, so none is adopted
+  ([#217](https://github.com/pengzhengyi/dialoguedown/issues/217) records the
+  attempt and when to revisit it).
 - Throw **specific, meaningful exceptions** that name the offending input and the
   expectation. Extract non-trivial validation into a small, well-named helper.
 - Use the project **error model** (exception hierarchy, spans, message

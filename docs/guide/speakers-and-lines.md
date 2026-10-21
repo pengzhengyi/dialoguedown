@@ -213,7 +213,7 @@ as the preview:
 
 Where spaces typed together collapse, the compiler notes it with
 [`DLG1116`](error-codes.md#dlg1116), an information note that never fails a
-compile. `ddown compile --fix` writes one space in place of each.
+compile. `ddown compile --fix` leaves one space in each such place.
 
 To widen spacing on purpose, name the space with an entity. A named space shows
 in the source, in the preview, and in the game, and never collapses:
@@ -294,8 +294,8 @@ set. A tag that carries a value (`#name=value`) is a **tag group**.
 
 Tags may appear wherever they attach to content: in a **speaker declaration**, in
 a **link or image label**, and **anywhere within speech text**. A custom or
-reserved tag must never start a line at block scope — a tag always rides along
-with the element it annotates, never standing alone as a line. A `#word` meant as
+reserved tag must never start a line at block scope — a tag always stays with
+the element it annotates, never standing alone as a line. A `#word` meant as
 ordinary text is escaped (`\#word`); see
 [Literal punctuation](script-language.md#literal-punctuation).
 
@@ -323,6 +323,6 @@ The compiler keeps the source path and the alt text (including any tags) as
 written, spaced the way [speech is](#spacing-in-speech) on its own; the
 presentation layer decides what the tags mean and how the image renders. Spaces
 at the ends of the alt text are removed, so put the spaces that separate an image
-from its words outside the brackets. A [query](game-state.md#a-query-in-a-label) in the alt text is the one
-exception: it is filled like a query in speech, so a portrait can name who it
-shows.
+from its words outside the brackets. A [query](game-state.md#a-query-in-a-label)
+in the alt text is the one exception: it is filled like a query in speech, so a
+portrait can name who it shows.

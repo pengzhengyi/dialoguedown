@@ -173,7 +173,7 @@ weight. At runtime:
 - An auto weight takes an equal share of what the other weights in play leave of
   100, the numbers from the game included: `max(0, 100 − others) / autos`.
 - The engine then normalizes the weights by their sum, as it does for static
-  weights. It does not yet warn when the total is far from 100.
+  weights. It does not warn when the total is far from 100.
 
 When every weight is 0, there is nothing to pick, so the random choice is passed
 by and the run carries on with whatever follows the list, as it does when every
@@ -539,7 +539,7 @@ between utterances (which every line needs) is written with `>` inside a block, 
 the quote never breaks. That quoted blank line is also what **ends a nested block**:
 after a `> >` branch, a bare `>` line returns you to the outer branch. Omit it and
 Markdown pulls the next line — even an `elseif` or `else` — *into* the nested
-branch, so a marker that lands mid-paragraph is an error. Always write the bare `>`
+branch, so a marker that ends up mid-paragraph is an error. Always write the bare `>`
 line where a nested block ends.
 
 **Choosing a scene by condition.** A conditional block groups *content*, not

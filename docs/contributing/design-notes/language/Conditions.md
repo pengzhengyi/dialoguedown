@@ -210,6 +210,7 @@ changing `?`.
 | Code | Meaning | Severity | When |
 | --- | --- | --- | --- |
 | `DLG1106` | A condition guards nothing | Error | The condition is not bound: not immediately before a `=>`, not at the start of a line or option with content, and not after an `` `if` `` / `` `elseif` `` marker. |
+| `DLG2018` | Key needed both ways | Error | One key is a condition and also a query or a dynamic weight in the same line, menu, or random choice. The runner asks the game for both at once, and the game gives one answer per key. |
 
 A code span that is not a clean condition falls back to game-call recognition,
 and if that fails it is `DLG1102` and kept as literal text. There is no
@@ -232,6 +233,4 @@ invalid-value diagnostic: a condition always resolves to true or false.
 
 ## Deferred work
 
-- **A condition on a choice option.** It is compiled and carried into the
-  playbook, and the runner evaluates it once it plays choices.
 - **Negation and expressions.** Deferred by [D10](#d10--no-negation-no-expressions).

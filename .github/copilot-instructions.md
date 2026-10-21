@@ -60,9 +60,9 @@ forwards an argument it does not recognize to the test app, which then exits
 without running anything and reports **"Zero tests ran"** with exit code 5 — output
 that reads like a normal run. Keep the floor on any full-suite command you invent,
 and treat a shortfall (exit code 9) as a broken command rather than a broken
-suite. A framework-specific test-module glob fails the same way: two test projects
-multi-target `net8.0;net10.0`, so six projects produce **eight** modules and a
-`net10.0`-only glob silently runs 1,956 of 3,371 tests.
+suite. A framework-specific test-module glob fails the same way: several test
+projects multi-target `net8.0;net10.0`, so the suite builds more test modules than
+it has projects, and a `net10.0`-only glob silently skips every `net8.0` module.
 
 ## Conventions
 

@@ -55,6 +55,7 @@ are the reason this page exists.
 | `DialogueDown.ConfigurationLoader.Tests` | Reading `dialogue.toml`. |
 | `DialogueDown.Playbook.Tests` | The published playbook format, its schema, and the readable half of the corpus. |
 | `DialogueDown.Runtime.Tests` | The runner — stepping, positions, the protocol — and the harness that plays the corpus against it. |
+| `DialogueDown.Play.Tests` | The terminal player's presentation: speech as terminal markup, the choice menu, and the player's turns, against Spectre's test console. |
 | `DialogueDown.Conformance` | Not tests: the reader both halves of the corpus load their cases with. |
 | `DialogueDown.TestSupport` | Not tests: what more than one suite needs — the concrete types under a base, the shipped examples, temporary files and folders, the playbook's mothers (`PlaybookFactory`, `PlaybookNodeFactory`, `SpeechFactory`), a reader for a report's JSON (`ReportPayload`), and assertions that compare JSON as JSON (`JsonAssert`). |
 | `DialogueDown.Conformance.Tests` | That reader, and the corpus's own integrity. |
@@ -145,7 +146,7 @@ Both read objects rather than rendered text, and both have caught real drift —
 the demo page went a whole stage out of date before the second one existed.
 
 Add a construct to the language and the first test fails until an example uses
-it. That is deliberate: an undemonstrated construct is a documentation hole, not
+it. That is deliberate: an undemonstrated construct is a documentation gap, not
 a compiler bug.
 
 ### Conformance tests
@@ -439,7 +440,7 @@ list should have grown.
 | Test | Covers | Widens when | Tells you when to widen |
 | --- | --- | --- | --- |
 | `PlayableConformanceTests` | The playable cases the runner can play, named one by one | The runner learns a construct that lets a whole case play | Yes — a case that starts passing fails the test until the list admits it |
-| `PlaybookGen` | Every node and edge kind the runner plays, and the guards, queries, and key weights it asks the world about | Each runtime pass teaches the runner a node or edge kind | Yes — teaching the runner a kind the generator skips fails a test that names the kind |
+| `PlaybookGen` | Every node and edge kind the runner plays, and the guards, queries, and key weights it asks the world about | The runner plays a new node or edge kind | Yes — a node kind the runner plays but the generator leaves out fails a test that names the kind |
 
 `PlaybookGen` is held to the format the way `ExampleConstructCoverageTests` is
 held to the compiler: both enumerate what exists by reflection, then fail naming

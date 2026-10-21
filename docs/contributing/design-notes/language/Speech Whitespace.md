@@ -32,31 +32,31 @@
 ## Goal and scope
 
 Every place a writer previews a script draws HTML: the VS Code preview, GitHub,
-and the report. HTML shows spaces typed together as one. Before this note, the
-compiler kept them all, and a host that draws its own text, such as a game
-engine's label or the terminal player, showed every one:
+and the report. HTML shows spaces typed together as one. A playbook that kept
+them as typed would have a host that draws its own text, such as a game engine's
+label or the terminal player, show every one:
 
 ```text
 Alice: a    b      preview "a b"      playbook "a    b"      terminal "a    b"
 ```
 
 The writer cannot see the difference anywhere they write, and one playbook reads
-differently on each host. The guide already rules this out for the spaces after a
+differently on each host. The guide rules this out for the spaces after a
 speaker's colon, for the same reason. This note extends that reason into a
 principle for all of speech: DialogueDown syntax may be visible but unrendered in
 a Markdown preview, but it must never be invisible and significant. Spaces typed
 together are invisible in the preview and significant in the game.
 
-The compiler also doubled spaces the writer never typed. A command or a tag is
-never shown to the player, but the spaces on both sides of it stayed:
+Text kept as typed also doubles spaces the writer never typed. A command or a tag
+is never shown to the player, but the spaces on both sides of it would stay:
 
 ```text
 - Say goodbye `Wave()` and leave      the menu shows "Say goodbye  and leave"
 ```
 
 A preview draws the command as code, so it shows both spaces with a word between
-them. The game draws no word there, so the two spaces met. The playbook now reads
-as the preview would with the command taken out.
+them. The game draws no word there, so the two spaces would meet. The playbook
+reads as the preview would with the command taken out.
 
 **In scope:** what the playbook carries for spaces, tabs, and line breaks in what
 the player reads (D1–D5), and the note that tells the writer about it (D6–D7).
@@ -246,7 +246,7 @@ The rule covers speech lists and nothing else:
 ### D6 — `DLG1116` is an `Info` note where extra spaces collapse
 
 With D1 in place the preview and the game agree, so nothing in the script is
-suspect, and a warning would be wrong. What remains is that the compiler changed
+suspect, and a warning would be wrong. What remains is that the compiler changes
 what the writer typed. A writer who meant the width should hear it once, with the
 remedy. This follows the [ignored Markdown](../diagnostics/Ignored%20Markdown%20Diagnostic.md)
 note: a neutral note, so a change is never a surprise. `Info` never affects
@@ -339,9 +339,9 @@ still leads somewhere or draws something.
 visits each text once as D6 describes, through `ScriptNodeExtensions.Shown` for
 the words a node shows and `Texts` for every text within them. It takes each
 collapsible space at the span it is written over, an entity as one space, and
-reports each run of two or more in which every space starts where the one before
-it ends in the source. Anything written between two spaces, such as a command or
-the edge of a link, sets them apart.
+reports each sequence of two or more in which every space starts where the one
+before it ends in the source. Anything written between two spaces, such as a
+command or the edge of a link, sets them apart.
 
 ## Error and boundary cases
 
@@ -351,7 +351,7 @@ the edge of a link, sets them apart.
 | An encoded line break between spaces, as in `x &#10; y` | Collapsed to `"x y"`; reported. |
 | Spaces around several commands or tags in a row | One space kept between the visible pieces on either side. |
 | A list holding only unseen fragments and spaces | Every space removed; the commands and tags stay. |
-| An option whose label is only spaces, as `- &#32;` | Offered with an empty label, as an option holding only a command is already. |
+| An option whose label is only spaces, as `- &#32;` | Offered with an empty label, as an option holding only a command is. |
 | A link or an image whose label is only spaces, as `[ ](#s)` | The link or image stays, with an empty label. |
 | A text, or a styled text, emptied by the rule | Omitted. |
 | A query or an image between spaces | Kept: each is a visible piece. A query's answer is not normalized. |
@@ -369,24 +369,25 @@ the edge of a link, sets them apart.
 | A named space before the first word or after the last | Kept. |
 | A named space alone between two commands | Kept, and the runner speaks it as a part of the line (see [Integration](#integration)). |
 | Spaces between a control line's effects | Not emitted; not reported. |
-| Whitespace after a speaker's colon | Already removed by the transpiler; unchanged. |
+| Whitespace after a speaker's colon | Removed by the transpiler; not reported. |
 | A scene heading with extra spaces | Not speech: the anchor is unchanged, and nothing is reported. |
-| A playbook compiled before this rule | Loads and plays as written. The format is unchanged, and the runtime does not normalize. |
+| A playbook with spaces typed together, such as one built by hand | Loads and plays as written: the runtime does not normalize. |
 
 ## Integration
 
-The code changed with the implementation:
+Where the design sits in the code:
 
-- **Emission.** `SpeechSpacing` is new; `SpeechMapping` calls it as
-  [How it works](#how-it-works) describes. Its callers do not change.
+- **Emission.** `SpeechSpacing` normalizes a speech list, and `SpeechMapping` calls
+  it as [How it works](#how-it-works) describes, so its callers hold no spacing
+  rule of their own.
 - **Markdown and transpiler.** `TextInline.IsEntity` marks a text decoded from an
   entity, and `InlineBuilder` makes it one text over the whole entity rather than
   tokenizing it, so its span covers the entity the writer typed.
 - **AST.** `ScriptNodeExtensions.Shown` gives the words a node shows the player,
-  and `Texts` every text within fragments. `Children` now throws for an inline
+  and `Texts` every text within fragments. `Children` throws for an inline
   fragment of an unknown kind, as it does for a block, so a new kind is not
   skipped by accident.
-- **Validation.** `ExtraSpacesRule` joins `StructuralValidatorFactory`'s default
+- **Validation.** `ExtraSpacesRule` is in `StructuralValidatorFactory`'s default
   set. `DiagnosticRule`'s reporter carries fixes, so a rule attaches them as it
   reports.
 - **Common.** `CharExtensions.IsCollapsibleSpace` names the collapsible set. The
@@ -395,49 +396,43 @@ The code changed with the implementation:
 - **Catalog.** `DLG1116`, titled "Spaces typed together collapse", `Syntax`,
   `Info`, with the message in [Writer-facing behavior](#writer-facing-behavior).
 - **Runtime.** `SpeechSegment.SaysSomething` counts a named space as something
-  said. It treated any white space as saying nothing, so a part holding only
-  `&nbsp;` was never spoken; now only collapsible spaces and line breaks say
-  nothing.
-- **Fixes.** Fix mode and the editor need no change: both apply a diagnostic's
-  preferred fix whatever its severity. `DLG1116` is the first `Info` note with a
-  fix, so the plain compile's `N fixable with --fix` hint counts notes too.
+  said: only collapsible spaces and line breaks say nothing, so a part holding
+  only `&nbsp;` is spoken.
+- **Fixes.** Fix mode and the editor apply a diagnostic's preferred fix whatever
+  its severity, so `DLG1116` needs nothing of its own there. The plain compile's
+  `N fixable with --fix` hint counts every diagnostic with a fix, notes included.
 - **Conformance corpus.** A playable playbook must equal what its source compiles
-  to, and each fixture pins the strings it expects. Six cases change:
-  `a-command-mid-line` continues with `"I will not argue."`;
-  `a-command-opening-a-line` continues with `"Hello."`; `a-command-in-a-label`
-  offers and continues with `"and leave"`; `a-command-ending-a-line` and
-  `a-failed-command-in-a-line` say `"Hello."`; and `a-query-after-a-command`
-  continues with `"Now it is 15."`. New playable cases pin spaces typed together
-  arriving as one, a named space between two commands being said, and a space
-  alone between two commands moving to the words after them.
-- **Emission goldens.** All four change (`gallery`, `highrise-fire`, `rpg-quest`,
-  `visual-novel`): nearly every line that ends in a command or a tag loses the
-  space before it.
+  to, and each fixture pins the strings it expects. `spaces-typed-together` pins
+  spaces typed together arriving as one, `a-named-space-between-commands` a named
+  space between two commands being said, and `a-space-between-two-commands` a
+  space alone between two commands moving to the words after them. The cases with
+  a command in a line pin the space beside it: `a-command-mid-line` continues with
+  `"I will not argue."`, `a-command-opening-a-line` with `"Hello."`,
+  `a-command-in-a-label` offers and continues with `"and leave"`, and
+  `a-query-after-a-command` continues with `"Now it is 15."`.
+- **Emission goldens.** `gallery`, `highrise-fire`, `rpg-quest`, and
+  `visual-novel` pin whole playbooks, so a line that ends in a command or a tag
+  ends with its last word.
 
-The documentation changed with the implementation:
+Other notes that rely on this one:
 
-- **Error-code reference.** A `DiagnosticDocs` entry for `DLG1116` with a triggering
-  example and two ways to fix it, one space or non-breaking spaces, compiled by the
-  docs tests, and the regenerated `docs/guide/error-codes.md`.
-- **The writer's guide to speakers and lines.** A section on spacing: spaces typed
-  together show as one, the named spaces above, and a command or a tag takes no
-  room. The colon section's reason names HTML, not Markdown, as what collapses
-  spaces. A named space is shown as the way to begin speech with a space:
-  `Alice: &nbsp;Hello, Bob!`.
-- **[Diagnostics and Validation](../diagnostics/Diagnostics%20and%20Validation.md).**
-  `DLG1116` in the stage table and a row in the validator's rule table.
-- **[Speaking a Line](../runtime/Speaking%20a%20Line.md).** Its scope line links
-  here. Its examples and sequence diagrams show the new strings, and its
-  definition of saying something follows the runtime change above. The part about
-  a single space between two commands becomes a rule for playbooks the compiler no
-  longer writes, such as hand-built or older ones.
-- **[Offering a Choice](../runtime/Offering%20a%20Choice.md).** O4 links here, and
-  no longer says a label whose command came first starts with a space.
-- **[Speech as Plain Text](../runtime/Speech%20as%20Plain%20Text.md).** Its
-  agreement table says the readings agree fragment by fragment, and that a whole
-  list read before emission keeps its extra spaces (D4).
-- **[Compile CLI — Fix Mode](../cli/Compile%20CLI%20-%20Fix%20Mode.md).** Its claim
-  that `DLG1113` is the only producer, so overlap cannot occur, names `DLG1116`.
+- **[Diagnostics and Validation](../diagnostics/Diagnostics%20and%20Validation.md)**
+  lists `DLG1116` in its stage table and `ExtraSpacesRule` in its rule table.
+- **[Speaking a Line](../runtime/Speaking%20a%20Line.md)** links here from its
+  scope, and its definition of saying something matches the runtime rule above.
+  Its rule for a part holding only a space covers playbooks the compiler does not
+  write, such as hand-built ones.
+- **[Offering a Choice](../runtime/Offering%20a%20Choice.md)**, in O4: a label
+  whose command came first begins with its first word.
+- **[Speech as Plain Text](../runtime/Speech%20as%20Plain%20Text.md)**: its
+  readings agree fragment by fragment, and a whole list read before emission keeps
+  its extra spaces (D4).
+- **[Compile CLI — Fix Mode](../cli/Compile%20CLI%20-%20Fix%20Mode.md)** names
+  `DLG1116` and `DLG1113` as the two codes that carry fixes, and shows why their
+  fixes never overlap.
+
+The writer's guide and the error-code reference are listed under
+[Shown to writers](#shown-to-writers).
 
 ## Functionality checklist
 
@@ -454,7 +449,7 @@ The documentation changed with the implementation:
       `Info`, with the fix to use one space.
 - [x] Merges beside commands, tags, and boundaries, the ends of a list, a single
       tab, a control line's effects, and headings report nothing.
-- [x] The six changed corpus cases, the new ones, and the four goldens pass.
+- [x] The conformance cases and the emission goldens that pin spacing pass.
 - [x] The properties in [Property tests](#property-tests) hold.
 - [x] `DLG1116` has a compiled example in the error-code reference.
 - [x] The writer's guide explains spacing and the named spaces.
@@ -533,7 +528,7 @@ generator has a test that checks it reaches every kind it should.
   keeps typing two spaces after a sentence sees a note for each until they run the
   bulk fix.
 - **Quoting speech.** A quote mark is a visible piece: the preview draws it, and
-  today it reaches the playbook as text. `Alice: " Hello"` therefore keeps its
+  it reaches the playbook as text. `Alice: " Hello"` therefore keeps its
   space, which stands between the mark and the word. A quoting construct that
   removes the marks so that the host decides how to show them must remove them
   after this rule, not before. Then `Alice: " Hello"` and `Alice: "   Hello"`

@@ -105,8 +105,8 @@ marker `` `if Rich?` `` would parse as a single condition on the key `if Rich`, 
 `if` guarding `Rich`. The two-span form sidesteps that: `` `if` `` is a bare,
 sigil-less, quote-less span — a closed marker vocabulary that collides with nothing (a
 condition needs a sigil, a value read needs quotes, a command needs parens) — and
-`` `Rich?` `` is the *verbatim* condition, reusing its reader, highlighting,
-and completion. It composes even with spaces: `` `if` `` `` `Is Alice rich?` ``.
+`` `Rich?` `` is the *verbatim* condition, reusing its reader and highlighting.
+It composes even with spaces: `` `if` `` `` `Is Alice rich?` ``.
 
 ### Grouping — one connected blockquote
 
@@ -125,10 +125,9 @@ for free, so **no terminator keyword** (and no `#END` clash) is needed.
 branches through unbroken `>`, so each utterance's blank-line separator must be a bare `>`
 line, and reflowing means maintaining `>` (and `> >` when nested). DialogueDown already
 projects editor semantics from the compiler (see
-[Compiler-Projected Editor Semantics](../visualization/editor/Compiler-Projected%20Editor%20Semantics.md)
-and [Source Editor Autocompletion](../visualization/editor/Compiler-Projected%20Editor%20Semantics.md)); the same
-seam maintains the `>` prefixes as the writer types, completes the markers, and
-highlights them — so the friction is an editor affordance, not a manual chore.
+[Compiler-Projected Editor Semantics](../visualization/editor/Compiler-Projected%20Editor%20Semantics.md));
+the editor continues the `>` prefixes as the writer types and highlights the
+markers — so the friction is an editor affordance, not a manual chore.
 
 ### Rendering in a stock preview
 
@@ -296,9 +295,9 @@ introduced; existing recursion reaches inside.
 ### D5 — Editor support offsets the `>` authoring tax
 
 CodeMirror's Markdown support continues the connected blockquote's `>` prefix when the
-writer presses Enter. The compiler-projected editor seam (see
+writer presses Enter. The editor's compiler-projected semantics (see
 [Compiler-Projected Editor Semantics](../visualization/editor/Compiler-Projected%20Editor%20Semantics.md))
-highlights recognized `` `if` `` / `` `elseif` `` / `` `else` `` markers without a
+highlight recognized `` `if` `` / `` `elseif` `` / `` `else` `` markers without a
 second browser grammar. The raw preview stays readable without either aid.
 
 ### D6 — A scene is a top-level unit; no heading inside a branch
