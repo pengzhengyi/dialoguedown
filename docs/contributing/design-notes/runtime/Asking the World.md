@@ -327,7 +327,9 @@ the conversation.
 A key a node needs as two kinds of answer, such as a guard and a query, is a fourth
 reason, and not a driver mistake at all: the playbook asks one key two ways, and a
 single answer can only be one kind. It is refused on the way in, before a request goes out
-that nothing could read back.
+that nothing could read back. The compiler rejects a script that does this as
+[`DLG2018`](../../../guide/error-codes.md#dlg2018), so only a playbook written or edited by
+hand reaches the refusal.
 
 `UnansweredCondition` is removed rather than left unused. It is a published
 refusal reason, and a reason nothing can produce is a promise the corpus would
@@ -381,7 +383,3 @@ nothing guards, and a guarded node stops the walk before the bound is reached.
 - **No world interface exists yet.** Nothing in this pass reads a world directly:
   the runner asks the driver. So the world interface waits for C2g, where a driver
   answers `Resolve` from a world.
-- **A key used both ways is caught only at play time.** The compiler does not yet
-  reject a script that uses one key as two kinds on the same node — a guard and a
-  query on a line, or a guard and a key weight on a random choice — so
-  `KeyNeededBothWays` is what catches it.

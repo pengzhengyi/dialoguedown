@@ -397,6 +397,28 @@ often a second conditional line testing the opposite flag.
 A condition must lead the line it guards; a `` `key?` `` alone on a line, or one
 buried mid-line after the speaker, has nothing to guard and is an error.
 
+> [!NOTE]
+> **One key cannot be both a line's condition and one of its queries.** A line
+> asks your game for its condition and every query in what it says at once, and
+> the game gives one answer per key: the condition needs true or false, the query
+> words.
+>
+> ```markdown
+> `Hero.Title?` Guard: Welcome, `"Hero.Title"`.
+> ```
+>
+> The compiler rejects this as [`DLG2018`](error-codes.md#dlg2018). Give the
+> condition a key of its own:
+>
+> ```markdown
+> `Hero.HasTitle?` Guard: Welcome, `"Hero.Title"`.
+> ```
+>
+> The same goes for a menu's option conditions and the queries in its options'
+> words, and for a random choice's option conditions and
+> [dynamic weights](#dynamic-weights). One key may still be a condition on one
+> line and a query on another.
+
 ## Conditional choices
 
 Front a **choice option** with a condition to offer it only when the query reads
