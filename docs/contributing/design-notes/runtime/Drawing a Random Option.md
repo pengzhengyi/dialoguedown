@@ -161,14 +161,14 @@ anywhere: asking what that node needs, walking past a jump, or saying a line.
 | `NumberAnswer(value)` | An answer: a number, as a key weight needs | `Answer` |
 | `NodeQuestions` | For a random choice, its conditions as truths and its key weights as numbers; the same whether read for the whole node or from its start | `Arrival` |
 | `DrawingWeight` | A weight ready for the draw, `Number` or `Auto`, and the arithmetic over them: `Shares` and `Total`. The one definition the compiler and the runner share | The compiler's weight checks, `WeightShares` |
-| `WeightShares` | The playbook's adapter: turns a random choice's random options into drawing weights, an excluded one into a number of zero and a key weight in play into the number the world answered. It takes the answers even when no random option has a key weight | `IRandomOptionArbiter`, `IKeyWeightAnswers`, `RandomChoiceShares` |
+| `WeightShares` | The playbook's adapter: turns a random choice's random options into drawing weights, an excluded one into a number of zero and a key weight in play into the number the world answered. It takes the answers even when no random option has a key weight. `Total` adds shares up as `DrawingWeight.Total` does | `IRandomOptionArbiter`, `IKeyWeightAnswers`, `RandomChoiceShares`, `KeyWeightCheck`, `Drawing` |
 | `IRandomOptionArbiter` | Decides which random options are excluded: yes or no for each, nothing more | `WeightShares` |
 | `IKeyWeightAnswers` | Gives each key weight the number the world answered for its key | `WeightShares` |
 | `GuardArbiter` | The runner's arbiter: excludes a random option whose condition the world withholds | `RandomChoiceShares` |
 | `AnsweredKeyWeights` | The runner's answers for key weights: the numbers in the world's supply | `RandomChoiceShares` |
 | `RandomChoiceShares` | Works out a random choice's shares with the world's answers, and whether any is drawable, once the world has answered any guard or key weight. `WithoutExcluded` gives the random options in play | `WeightShares`, `GuardArbiter`, `AnsweredKeyWeights`, `Playing`, `Arrival`, `Drawing`, `KeyWeightCheck` |
-| `KeyWeightCheck` | Refuses a supply that answers a key weight in play with an invalid number, or whose shares in play are too large to add up. An excluded random option's key weight is not checked | `RandomChoiceShares`, `Arrival` |
-| `Drawing` | Sends `Draw` with the shares worked out; takes `Drawn`, finds the random option it lands on, and arrives where it leads. It reads only the shares, never the weights | `Playing`, `Runner` |
+| `KeyWeightCheck` | Refuses a supply that answers a key weight in play with an invalid number, or whose shares in play are too large to add up. An excluded random option's key weight is not checked | `RandomChoiceShares`, `DrawingWeight`, `WeightShares`, `Arrival` |
+| `Drawing` | Sends `Draw` with the shares worked out; takes `Drawn`, finds the random option it lands on, and arrives where it leads. It reads only the shares, never the weights | `RandomChoiceShares`, `WeightShares`, `Playing`, `Runner` |
 | `Arrival` | Walks past a random choice with nothing drawable, as it walks past a menu with nothing available | `RandomChoiceShares` |
 | `DrawnReader`, `DrawMatcher` | Read a fixture's `drawn` send, and hold a `Draw` to its `draw` expectation | The harness |
 
@@ -479,7 +479,7 @@ The runner can then trust a static share, and checks only what the world supplie
 | `stepping` | `Drawing` sends and takes the draw, and `Playing` hands it a random choice; `Arrival` walks past a random choice with nothing drawable; `GuardArbiter` judges a random option's condition by the world's answers, and `AnsweredKeyWeights` gives each key weight its number; `KeyWeightCheck` refuses an invalid number for a key weight in play; a random choice's questions are its conditions, then its key weights, asked on arrival and never on leaving; `NodeQuestions` gains the numbers, and its both-ways check covers any two kinds |
 | `Runner.Step` | `(AwaitingDraw, Drawn)` goes to `Drawing`; `Drawn` anywhere else is misplaced, so it joins the commands the runner knows |
 | Fixture schema | A `draw` expectation naming the shares and a `drawn` send; `supply` takes numbers; the two new refusal reasons |
-| Harness | A `drawn` reader, a `DrawMatcher`, and the screen plays a random choice |
+| Harness | A `drawn` reader, a `DrawMatcher`, and `Playability` counts a random choice as playable |
 | Corpus | New cases for a random choice, a draw at the end of a span, auto weights beside an excluded random option, every random option excluded, a key weight, weights all zero, and each refusal |
 | `PlaybookGen` | Draws random choices with number, auto, and key weights and guarded random options, and a fall-through when the world can leave nothing drawable, as the compiler gives one; the walk answers each draw from a number drawn for it, and the drawn world answers key weights with non-negative numbers |
 | Runner | The protocol matrix gains a `Drawn` column and an `AwaitingDraw` row; the arriving table draws; nothing is refused as `unplayable-node` |
@@ -506,5 +506,5 @@ The runner can then trust a static share, and checks only what the world supplie
 | Unit — answers | `NumberAnswer` read from and written to JSON; a number read from a supply |
 | Unit — the reader | A negative, infinite, and overflowing number weight refused |
 | Unit — the protocol | Each new matrix cell |
-| Property | The walk draws at random choices, every draw and answer it sends is accepted, and some walk sees a random option excluded, a random option with no share, a share the world answered, and a random choice walked past |
+| Property | The walk draws at random choices, is only ever asked for a draw that can land, and has every draw and answer it sends accepted; some walk is asked for a draw with a random option excluded, and some with a share the world answered. The generator's own tests check that some drawn random choice has nothing drawable in a world drawn beside it, and that each such one has a fall-through |
 | Conformance | The new cases above, with boundaries at draws a double holds exactly |
