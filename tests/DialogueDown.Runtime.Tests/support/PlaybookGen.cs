@@ -28,8 +28,8 @@ namespace DialogueDown.Runtime.Tests;
 /// guard, a key weight, and a query never read the same key, so a world drawn beside the playbook
 /// can answer each key in the kind it needs. A menu whose every option is guarded has a
 /// fall-through beside them, as a script compiles to, so a walk sometimes passes a menu by. So
-/// does a random choice whose every random option is guarded, and one whose random options all
-/// weigh zero, so a walk sometimes passes a random choice by.
+/// does a random choice the world can leave with nothing drawable, so a walk sometimes passes a
+/// random choice by.
 /// </para>
 /// <para>
 /// A drawn playbook may loop, may begin anywhere, and may leave an end unreachable. All three are
@@ -313,13 +313,11 @@ internal static class PlaybookGen
         private static OptionEdge Option(int target, string words, Condition? guard, bool asks) =>
             new(target, asks ? [Text($"{words}, "), Query(WordsKey), Text(".")] : [Text($"{words}.")], guard);
 
-        // A random choice whose every random option the world may withhold falls through past them,
-        // which is how a script compiles one. So does one whose random options both weigh zero, so
-        // the walk goes on rather than being refused there. A guarded random option beside an
-        // unguarded zero has no fall-through, as its script compiles to, so a walk is sometimes
-        // refused there as leading nowhere.
+        // A random choice the world can leave with nothing drawable falls through past its random
+        // options, which is how a script compiles one, so the walk goes on rather than being refused
+        // there as leading nowhere.
         private ImmutableArray<Edge> RandomOptions() =>
-            RandomChoice.EveryRandomOptionIsGuarded || RandomChoice.BothWeighZero
+            RandomChoice.MayHaveNothingToDraw
                 ? [.. TwoRandomOptions(), new SuccessionEdge(Onward)]
                 : [.. TwoRandomOptions()];
 
@@ -354,14 +352,16 @@ internal static class PlaybookGen
     private readonly record struct RandomChoiceDraft(
         ChoiceWeight OnwardWeight, ChoiceWeight ElsewhereWeight, Condition? OnwardGuard, Condition? ElsewhereGuard)
     {
-        /// <summary>Gets whether the world may withhold every random option.</summary>
-        public bool EveryRandomOptionIsGuarded => OnwardGuard is not null && ElsewhereGuard is not null;
-
         /// <summary>
-        /// Gets whether both random options weigh zero, so nothing is drawable whatever the world says.
+        /// Gets whether the world can leave nothing drawable. An unguarded random option with a number
+        /// above zero or an auto weight makes sure something is: the number is its own share, and
+        /// beside an auto weight the shares in play add up to at least 100.
         /// </summary>
-        public bool BothWeighZero => IsZero(OnwardWeight) && IsZero(ElsewhereWeight);
+        public bool MayHaveNothingToDraw =>
+            !GuaranteesSomethingDrawable(OnwardWeight, OnwardGuard)
+                && !GuaranteesSomethingDrawable(ElsewhereWeight, ElsewhereGuard);
 
-        private static bool IsZero(ChoiceWeight weight) => weight is NumberWeight { Percentage: 0 };
+        private static bool GuaranteesSomethingDrawable(ChoiceWeight weight, Condition? guard) =>
+            guard is null && weight is AutoWeight or NumberWeight { Percentage: > 0 };
     }
 }

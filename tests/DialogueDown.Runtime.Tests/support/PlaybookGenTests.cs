@@ -117,6 +117,25 @@ public sealed class PlaybookGenTests
         Assert.True(nothingDrawable > 0, "No drawn random choice had nothing drawable.");
     }
 
+    [Fact]
+    public void TheDraw_GivesARandomChoiceAFallThrough_WheneverAWorldCanLeaveItNothingDrawable()
+    {
+        // A script compiles a random choice with a fall-through whenever the game can leave it
+        // nothing drawable, so a walk over drawn playbooks is never refused there as leading nowhere.
+        Gen.Select(PlaybookGen.Valid(), PlaybookGen.Worlds()).Sample(
+            (playbook, world) =>
+            {
+                foreach (var random in playbook.Nodes.OfType<RandomChoiceNode>()
+                    .Where(random => RandomChoiceShares.HasNothingDrawable(random, ArrivingAt(random, world))))
+                {
+                    Assert.True(
+                        random.SuccessionTarget() is not null,
+                        $"Random choice {random.Id} has nothing drawable in a drawn world, and no fall-through.");
+                }
+            },
+            iter: Samples);
+    }
+
     /// <summary>
     /// The type name of every node and edge kind a sample of the generator produced.
     /// </summary>

@@ -479,7 +479,7 @@ The runner can then trust a static share, and checks only what the world supplie
 | Fixture schema | A `draw` expectation naming the shares and a `drawn` send; `supply` takes numbers; the two new refusal reasons |
 | Harness | A `drawn` reader, a `DrawMatcher`, and the screen plays a random choice |
 | Corpus | New cases for a random choice, a draw at the end of a span, auto weights beside an excluded random option, every random option excluded, a key weight, weights all zero, and each refusal |
-| `PlaybookGen` | Draws random choices with number, auto, and key weights and guarded random options, and a fall-through when every random option is guarded; the walk answers each draw from a number drawn for it, and the drawn world answers key weights with non-negative numbers |
+| `PlaybookGen` | Draws random choices with number, auto, and key weights and guarded random options, and a fall-through when the world can leave nothing drawable, as the compiler gives one; the walk answers each draw from a number drawn for it, and the drawn world answers key weights with non-negative numbers |
 | Runner | The protocol matrix gains a `Drawn` column and an `AwaitingDraw` row; the arriving table draws; nothing is refused as `unplayable-node` |
 | Asking the world | A1 names numbers after truths and words; A3 lists `NumberAnswer` and reads a JSON number as one |
 | Random choice | Its deferred runtime work is done and its entropy question settled. An auto weight takes what the random options in play leave; a zero total at runtime walks past by the fall-through, which the compiler writes whenever one may be needed; a single random option is always taken while its weight is above zero, and a single `0%` random option is `DLG2010` |
