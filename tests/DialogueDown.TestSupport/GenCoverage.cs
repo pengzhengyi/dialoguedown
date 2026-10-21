@@ -71,6 +71,17 @@ public static class GenCoverage
         return covered;
     }
 
+    /// <summary>Whether some draw from a generator has what a coverage test looks for.</summary>
+    /// <typeparam name="T">What the generator draws.</typeparam>
+    /// <param name="gen">The generator.</param>
+    /// <param name="has">
+    /// Whether one draw has it, such as a random choice with no option to draw.
+    /// </param>
+    /// <param name="samples">How many draws to make at most.</param>
+    /// <returns><see langword="true"/> as soon as a draw has it.</returns>
+    public static bool Covers<T>(Gen<T> gen, Func<T, bool> has, int samples = Samples) =>
+        Draws(gen, samples).Any(has);
+
     private static IEnumerable<T> Draws<T>(Gen<T> gen, int samples)
     {
         var pcg = PCG.Parse(Seed);

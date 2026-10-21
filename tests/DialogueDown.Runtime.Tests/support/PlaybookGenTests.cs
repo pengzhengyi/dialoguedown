@@ -1,5 +1,6 @@
 using System.Collections.Immutable;
 using CsCheck;
+using DialogueDown.Playbook;
 using DialogueDown.Playbook.Edges;
 using DialogueDown.Playbook.Nodes;
 using DialogueDown.Playbook.Speech;
@@ -76,24 +77,11 @@ public sealed class PlaybookGenTests
     {
         // A line reaches the host in parts around each command, so the walk covers every part only
         // if some drawn line holds its command first, between its words, last, and alone.
-        var places = new HashSet<string>(StringComparer.Ordinal);
-
-        // One thread, because every drawn playbook adds to the same set.
-        PlaybookGen.Valid().Sample(
-            playbook =>
-            {
-                foreach (var line in playbook.Nodes.OfType<LineNode>())
-                {
-                    if (WhereTheCommandStands(line.Speech) is { } place)
-                    {
-                        places.Add(place);
-                    }
-                }
-            },
-            iter: Samples,
-            threads: 1);
-
-        Assert.Equal(["alone", "between", "first", "last"], places.Order(StringComparer.Ordinal));
+        GenCoverageAssert.AssertCoversEvery(
+            PlaybookGen.Valid(),
+            ["alone", "between", "first", "last"],
+            (playbook, place) => playbook.Nodes.OfType<LineNode>()
+                .Any(line => WhereTheCommandStands(line.Speech) == place));
     }
 
     [Fact]
@@ -101,20 +89,11 @@ public sealed class PlaybookGenTests
     {
         // A random choice is walked past only when no random option has a share, so the walk covers
         // that only if some drawn random choice has nothing drawable in a world the walk can meet.
-        var nothingDrawable = 0;
+        var covered = GenCoverage.Covers(
+            Gen.Select(PlaybookGen.Valid(), PlaybookGen.Worlds(), LeftNothingDrawable),
+            randomChoices => randomChoices.Any());
 
-        Gen.Select(PlaybookGen.Valid(), PlaybookGen.Worlds()).Sample(
-            (playbook, world) =>
-            {
-                if (playbook.Nodes.OfType<RandomChoiceNode>()
-                    .Any(random => RandomChoiceShares.HasNothingDrawable(random, ArrivingAt(random, world))))
-                {
-                    Interlocked.Increment(ref nothingDrawable);
-                }
-            },
-            iter: Samples);
-
-        Assert.True(nothingDrawable > 0, "No drawn random choice had nothing drawable.");
+        Assert.True(covered, "No drawn random choice had nothing drawable.");
     }
 
     [Fact]
@@ -125,8 +104,7 @@ public sealed class PlaybookGenTests
         Gen.Select(PlaybookGen.Valid(), PlaybookGen.Worlds()).Sample(
             (playbook, world) =>
             {
-                foreach (var random in playbook.Nodes.OfType<RandomChoiceNode>()
-                    .Where(random => RandomChoiceShares.HasNothingDrawable(random, ArrivingAt(random, world))))
+                foreach (var random in LeftNothingDrawable(playbook, world))
                 {
                     Assert.True(
                         random.SuccessionTarget() is not null,
@@ -137,34 +115,26 @@ public sealed class PlaybookGenTests
     }
 
     /// <summary>
-    /// The type name of every node and edge kind a sample of the generator produced.
+    /// The type name of every node and edge kind the fixed draws from the generator hold.
     /// </summary>
     /// <remarks>
     /// Read from the playbooks the generator actually produced, so the answer keeps up with the
     /// generator as it changes.
     /// </remarks>
-    private static HashSet<string> DrawnKinds()
-    {
-        var seen = new HashSet<string>(StringComparer.Ordinal);
+    private static IReadOnlySet<string> DrawnKinds() =>
+        GenCoverage.Covered(
+            PlaybookGen.Valid(),
+            playbook => playbook.Nodes.SelectMany(
+                node => node.Out.Select(edge => edge.GetType().Name).Prepend(node.GetType().Name)));
 
-        // One thread, because every drawn playbook adds to the same set.
-        PlaybookGen.Valid().Sample(
-            playbook =>
-            {
-                foreach (var node in playbook.Nodes)
-                {
-                    seen.Add(node.GetType().Name);
-                    foreach (var edge in node.Out)
-                    {
-                        seen.Add(edge.GetType().Name);
-                    }
-                }
-            },
-            iter: Samples,
-            threads: 1);
-
-        return seen;
-    }
+    /// <summary>Every random choice in a playbook that a drawn world leaves nothing drawable.</summary>
+    /// <param name="playbook">The playbook.</param>
+    /// <param name="world">The world drawn beside it.</param>
+    /// <returns>The random choices none of whose random options has a share in that world.</returns>
+    private static IEnumerable<RandomChoiceNode> LeftNothingDrawable(
+        PlaybookDocument playbook, DrawnWorld world) =>
+        playbook.Nodes.OfType<RandomChoiceNode>()
+            .Where(random => RandomChoiceShares.HasNothingDrawable(random, ArrivingAt(random, world)));
 
     /// <summary>What a drawn world answers when a run arrives at a random choice.</summary>
     /// <param name="random">The random choice.</param>
