@@ -115,11 +115,9 @@ rather than a script.
 | `a-next-at-a-random-choice` | Is `next` refused at a random choice, which still takes a draw afterwards? | yes |
 | `an-auto-weight-beside-an-excluded-random-option` | Does an auto weight beside a random option the world withholds take what the numbers in play leave of 100? | yes |
 | `a-random-choice-with-nothing-drawable` | Is a random choice whose every random option the world withholds walked past by its fall-through? | yes |
-| `a-random-choice-leading-nowhere` | Is a random choice the world leaves nothing drawable, with no fall-through, refused as leading nowhere? | yes |
 | `a-key-weight` | Is a key weight asked on arrival, and its random option drawn as the number the world answered? | yes |
 | `an-excluded-key-weight-left-unchecked` | Is an excluded random option's key weight asked, but its number neither checked nor counted? | yes |
 | `key-weights-answered-zero` | Is a random choice whose key weights the world answers with 0 walked past by its fall-through? | yes |
-| `key-weights-answered-zero-leading-nowhere` | Is a random choice whose key weights the world answers with 0, with no fall-through, refused as leading nowhere? | yes |
 | `an-auto-weight-beside-key-weights-answered-zero` | Does an auto weight beside key weights the world answers with 0 take all of 100, so the run still draws? | yes |
 | `a-key-weight-answered-negative` | Is a key weight answered with a negative number refused, with the random choice still waiting for the answers? | yes |
 | `a-number-for-a-truth` | Is a number answered for a guard refused, with the random choice still waiting for the answers? | yes |
