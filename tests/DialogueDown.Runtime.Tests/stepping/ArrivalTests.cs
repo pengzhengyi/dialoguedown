@@ -214,8 +214,7 @@ public sealed class ArrivalTests
 
     [Fact]
     public void Supplied_WhenTheWorldAnswersZeroForAKeyWeightBesideAZero_RefusesAsLeadingNowhere() =>
-        // Nothing is drawable, and the compiler writes no fall-through beside random options that are
-        // not all guarded.
+        // Nothing is drawable, and the random choice has no fall-through.
         AssertRefused(
             Arrival.Supplied(
                 ARandomChoiceWithAKeyWeightBesideAZero(), Waiting(0, "Guard.Mood"), Answering(("Guard.Mood", 0.0))),
@@ -812,8 +811,8 @@ public sealed class ArrivalTests
     /// - `Guard.IsAngry?` `%` Guard: Halt!
     /// - `0%` Guard: Move along.
     /// </code>
-    /// The compiler writes no fall-through, because one random option has no condition. Once the
-    /// world withholds the guard, the zero is all that is left in play.
+    /// Built by hand without the fall-through the compiler would give it, since a <c>`0%`</c> is never
+    /// drawn. Once the world withholds the guard, the zero is all that is left in play.
     /// </remarks>
     /// <returns>A context whose random choice leads nowhere once the world withholds the guard.</returns>
     private static PlayContext ARandomChoiceWithAGuardedAutoWeightBesideAZero() =>
@@ -833,8 +832,8 @@ public sealed class ArrivalTests
     ///
     /// The guard says nothing.
     /// </code>
-    /// Built by hand rather than written: the compiler reports this random choice as a zero total,
-    /// and writes a fall-through only beside random options that are all guarded.
+    /// Built by hand rather than written, because the compiler reports this random choice as a
+    /// zero total.
     /// </remarks>
     /// <returns>A context whose entry has nothing to draw.</returns>
     private static PlayContext ARandomChoiceWithNothingDrawableThenALine() =>
@@ -894,8 +893,8 @@ public sealed class ArrivalTests
     /// - `Guard.Mood%` Guard: Halt!
     /// - `0%` Guard: Move along.
     /// </code>
-    /// The compiler writes no fall-through, because the random options are not all guarded. Once the
-    /// world answers <c>0</c> for the key weight, nothing is drawable.
+    /// Built by hand without the fall-through the compiler would give it, since the world can answer
+    /// <c>0</c> for the key weight. Once it does, nothing is drawable.
     /// </remarks>
     /// <returns>A context whose random choice leads nowhere once the world answers zero.</returns>
     private static PlayContext ARandomChoiceWithAKeyWeightBesideAZero() =>
