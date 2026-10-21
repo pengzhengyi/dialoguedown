@@ -48,10 +48,6 @@
           "weight": {
             "kind": "query",
             "key": "Guard.Mood"
-          },
-          "condition": {
-            "kind": "key",
-            "key": "Guard.IsAwake"
           }
         },
         {
@@ -60,10 +56,6 @@
           "weight": {
             "kind": "query",
             "key": "Guard.Temper"
-          },
-          "condition": {
-            "kind": "key",
-            "key": "Guard.IsAwake"
           }
         },
         {
