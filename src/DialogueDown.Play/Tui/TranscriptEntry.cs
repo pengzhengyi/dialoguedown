@@ -4,8 +4,8 @@ using DialogueDown.Playbook.Speech;
 namespace DialogueDown.Play.Tui;
 
 /// <summary>
-/// One thing the player read, in the order they read it. The player's own record of what the
-/// terminal showed — not the driver's history, which the runtime keeps as its own fold.
+/// One thing the player read, in the order they read it: the player's own record of what the
+/// terminal showed.
 /// </summary>
 public abstract record TranscriptEntry
 {
@@ -22,12 +22,16 @@ public abstract record TranscriptEntry
     /// <param name="Words">What was said, as the playbook holds it.</param>
     public sealed record Continuation(ImmutableArray<SpeechFragment> Words) : TranscriptEntry;
 
-    /// <summary>A menu as it was read, with the option taken or <see langword="null"/> when none was.</summary>
+    /// <summary>
+    /// A menu as it was read, with the option taken or <see langword="null"/> when none was.
+    /// </summary>
     /// <param name="Options">The options as offered.</param>
-    /// <param name="Taken">The position of the taken option, or <see langword="null"/> after a quit.</param>
+    /// <param name="Taken">
+    /// The position of the taken option, or <see langword="null"/> after a quit.
+    /// </param>
     public sealed record Menu(ImmutableArray<MenuOption> Options, int? Taken) : TranscriptEntry;
 
-    /// <summary>Something that is not speech: a refusal the player must read.</summary>
+    /// <summary>Something that is not speech, such as a refusal the player must read.</summary>
     /// <param name="Text">The words to show.</param>
     public sealed record Notice(string Text) : TranscriptEntry;
 

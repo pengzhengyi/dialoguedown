@@ -34,7 +34,7 @@ internal readonly record struct NodeQuestions(
     /// <param name="segmentIndex">The index of the segment playing starts from; zero from the node's start.</param>
     /// <returns>
     /// The guards and a random choice's key weights, when playing from the start, and the queries in
-    /// that segment's words.
+    /// that segment's words, or in every label of a menu.
     /// </returns>
     /// <remarks>
     /// A line stops before any later segment whose words ask the world something, so the segment it

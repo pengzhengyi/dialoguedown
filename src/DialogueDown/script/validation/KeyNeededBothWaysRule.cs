@@ -20,8 +20,8 @@ namespace DialogueDown.Script.Validation;
 /// Each place counts only what it asks about when it is reached: a line its condition and the
 /// queries in what it says, a menu its options' conditions and the queries in their labels, and a
 /// random choice its random options' conditions and dynamic weights. A jump's condition is asked
-/// when the line is left, and the text of a jump at the end of a line is never shown, so neither
-/// counts. One key used two ways in two places is fine.
+/// when the line is left, and the text of a jump at the end of a line is not part of what the line
+/// says, so neither counts. One key used two ways in two places is fine.
 /// </para>
 /// <para>
 /// Within a place, each way a key is used besides the way it is used first is reported once, at
@@ -78,7 +78,9 @@ internal sealed class KeyNeededBothWaysRule : DiagnosticRule
     private static IEnumerable<KeyUse> DynamicWeightOf(ChoiceWeight weight) =>
         weight is QueryWeight dynamic ? [new DynamicWeightUse(dynamic)] : [];
 
-    /// <summary>A line, menu, or random choice, and every key use it asks the game about at once.</summary>
+    /// <summary>
+    /// A line, menu, or random choice, and every key use it asks the game about at once.
+    /// </summary>
     private sealed record Place(string Name, IEnumerable<KeyUse> Uses);
 
     /// <summary>

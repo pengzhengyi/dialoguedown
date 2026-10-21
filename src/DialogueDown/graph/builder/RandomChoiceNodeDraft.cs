@@ -6,7 +6,7 @@ using DialogueDown.Script.Ast;
 namespace DialogueDown.Graph.Builder;
 
 /// <summary>
-/// An engine-resolved branch under construction; a graph pass adds its weighted option edges.
+/// A random choice under construction; a graph pass adds its random option edges.
 /// </summary>
 internal sealed class RandomChoiceNodeDraft(NodeId id, SourceSpan span) : NodeDraft(id, span)
 {

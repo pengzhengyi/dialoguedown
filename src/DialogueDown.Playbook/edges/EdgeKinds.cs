@@ -20,7 +20,7 @@ public static class EdgeKinds
     /// <summary>One random option of a random choice, carrying its odds.</summary>
     public const string RandomOption = "random-option";
 
-    /// <summary>One branch of a block condition, carrying its place in the order tried.</summary>
+    /// <summary>One branch of a block condition; an else has no condition.</summary>
     public const string Branch = "branch";
 
     /// <summary>A jump that does not return.</summary>

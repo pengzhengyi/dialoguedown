@@ -31,7 +31,9 @@ internal sealed class TomlDocumentReader
 
     private TomlDocumentReader(string sourceName) => _sourceName = sourceName;
 
-    /// <summary>Reads <paramref name="toml"/>, naming <paramref name="sourceName"/> in every location.</summary>
+    /// <summary>
+    /// Reads <paramref name="toml"/>, naming <paramref name="sourceName"/> in every location.
+    /// </summary>
     public static ConfigurationTable Read(string toml, string sourceName)
     {
         ArgumentNullException.ThrowIfNull(toml);
@@ -41,7 +43,9 @@ internal sealed class TomlDocumentReader
         return new TomlDocumentReader(sourceName).ReadDocument(document);
     }
 
-    /// <summary>Steps into the table one key segment names, creating it when it does not exist yet.</summary>
+    /// <summary>
+    /// Steps into the table one key segment names, creating it when it does not exist yet.
+    /// </summary>
     private static TableBuilder StepInto(TableBuilder table, KeySegment segment) =>
         table.OpenTable(segment.Name, segment.Location, segment.Location);
 
@@ -141,7 +145,10 @@ internal sealed class TomlDocumentReader
     private ConfigurationSourceLocation LocationOf(SourceSpan span) =>
         new(_sourceName, span.Start.Line + 1, span.Start.Column + 1);
 
-    /// <summary>A value under construction, frozen into a <see cref="ConfigurationValue"/> once the document is read.</summary>
+    /// <summary>
+    /// A value under construction, frozen into a <see cref="ConfigurationValue"/> once the document
+    /// is read.
+    /// </summary>
     private abstract class ValueBuilder
     {
         public abstract ConfigurationValue Build();
@@ -167,7 +174,10 @@ internal sealed class TomlDocumentReader
     {
         private readonly List<Slot> _slots = [];
 
-        /// <summary>The table named <paramref name="name"/>, entering the last table of an array of tables.</summary>
+        /// <summary>
+        /// The table named <paramref name="name"/>, or the last table of the array of tables it
+        /// names; a table is created when the name is not set yet.
+        /// </summary>
         public TableBuilder OpenTable(
             string name, ConfigurationSourceLocation keyLocation, ConfigurationSourceLocation tableLocation)
         {

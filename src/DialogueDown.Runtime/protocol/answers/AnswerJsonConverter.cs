@@ -21,7 +21,7 @@ namespace DialogueDown.Runtime.Protocol;
 /// </para>
 /// <para>
 /// A number too large for a double, such as <c>1e400</c>, reads as infinity rather than failing,
-/// so the run can refuse it as no weight at all. JSON has no way to write infinity, so writing
+/// so the run can refuse it as an invalid weight. JSON has no way to write infinity, so writing
 /// one back is refused.
 /// </para>
 /// </remarks>
