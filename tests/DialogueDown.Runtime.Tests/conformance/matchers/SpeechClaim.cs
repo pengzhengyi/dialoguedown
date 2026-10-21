@@ -1,4 +1,6 @@
 using System.Collections.Immutable;
+using System.Globalization;
+using System.Text;
 using System.Text.Json;
 using System.Text.Json.Nodes;
 using DialogueDown.Conformance;
@@ -35,8 +37,34 @@ internal static class SpeechClaim
 
         return words == claimed
             ? SessionOutcome.Conformed()
-            : SessionOutcome.Diverged($"expected \"{claimed}\", but heard \"{words}\"");
+            : SessionOutcome.Diverged($"expected {Quoted(claimed)}, but heard {Quoted(words)}");
     }
+
+    // The words in quotes, with each character that shows as a space or as nothing written as its
+    // code, such as \u00A0 for a no-break space, so two claims that differ only there read apart.
+    private static string Quoted(string words)
+    {
+        var quoted = new StringBuilder("\"");
+        foreach (var character in words)
+        {
+            if (IsUnseen(character))
+            {
+                quoted.Append(CultureInfo.InvariantCulture, $"\\u{(int)character:X4}");
+            }
+            else
+            {
+                quoted.Append(character);
+            }
+        }
+
+        return quoted.Append('"').ToString();
+    }
+
+    private static bool IsUnseen(char character) =>
+        character != ' '
+        && (char.IsWhiteSpace(character)
+            || char.IsControl(character)
+            || char.GetUnicodeCategory(character) == UnicodeCategory.Format);
 
     // Read through the playbook's own reader so the comparison is between speech and speech,
     // not between two spellings of it: a fixture may order a fragment's properties as it likes,

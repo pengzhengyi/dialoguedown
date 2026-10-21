@@ -69,6 +69,16 @@ public sealed class SaidMatcherTests
     }
 
     [Fact]
+    public void PlainTextSpeechDifferingInAnUnseenCharacter_DivergesNamingIt()
+    {
+        AssertDiverged(
+            Match(Spoke("Alice", "a\u00A0b\u200B"), """{ "speaker": "Alice", "speech": "a\tb" }"""),
+            """
+            expected "a\u0009b", but heard "a\u00A0b\u200B"
+            """);
+    }
+
+    [Fact]
     public void DifferentFragmentSpeechDiverges()
     {
         AssertDiverged(
