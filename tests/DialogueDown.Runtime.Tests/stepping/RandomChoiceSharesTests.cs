@@ -11,8 +11,8 @@ namespace DialogueDown.Runtime.Tests.Stepping;
 public sealed class RandomChoiceSharesTests
 {
     [Fact]
-    public void HasNothingDrawable_WhenEveryRandomOptionWeighsZero_IsTrue() =>
-        Assert.True(RandomChoiceShares.HasNothingDrawable(ARandomChoiceWhoseRandomOptionsAllWeighZero()));
+    public void HasNothingDrawable_WhenEveryWeightIsZero_IsTrue() =>
+        Assert.True(RandomChoiceShares.HasNothingDrawable(ARandomChoiceWhoseWeightsAreAllZero()));
 
     [Fact]
     public void HasNothingDrawable_WhenAnAutoWeightTakesWhatAZeroLeaves_IsFalse() =>
@@ -194,7 +194,7 @@ public sealed class RandomChoiceSharesTests
     private static RandomChoiceNode ARandomChoiceWhoseOnlyShareIsGuarded() =>
         RandomChoice(Chance(50, condition: "Guard.IsAngry", target: 1), Chance(0, target: 2));
 
-    /// <summary>A random choice whose random options all weigh nothing.</summary>
+    /// <summary>A random choice whose weights are all <c>`0%`</c>.</summary>
     /// <remarks>
     /// <code>
     /// - `0%` Guard: Halt!
@@ -203,7 +203,7 @@ public sealed class RandomChoiceSharesTests
     /// The compiler reports this as a zero total, so only a playbook built by hand carries it.
     /// </remarks>
     /// <returns>The random choice.</returns>
-    private static RandomChoiceNode ARandomChoiceWhoseRandomOptionsAllWeighZero() =>
+    private static RandomChoiceNode ARandomChoiceWhoseWeightsAreAllZero() =>
         RandomChoice(Chance(0, target: 1), Chance(0, target: 2));
 
     /// <summary>A random choice whose auto weight takes everything a zero leaves.</summary>

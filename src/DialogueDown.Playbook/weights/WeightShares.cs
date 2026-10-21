@@ -49,7 +49,7 @@ public static class WeightShares
     /// </returns>
     public static double Total(IEnumerable<double> shares) => DrawingWeight.Total(shares);
 
-    // An excluded random option weighs nothing: a number of zero adds nothing to the numbers, and
+    // An excluded random option counts as a number of zero, which adds nothing to the numbers and
     // takes no part of what they leave.
     private static DrawingWeight ToDrawingWeight(
         RandomOptionEdge option, IRandomOptionArbiter arbiter, IKeyWeightAnswers keyWeights) =>

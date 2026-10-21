@@ -369,7 +369,7 @@ internal static class PlayContextFactory
     public static RandomChoiceNode ARandomChoiceWithAGuardedRandomOption() =>
         RandomChoice(EvenChance(condition: "Guard.IsAngry", target: 1), EvenChance(target: 1));
 
-    /// <summary>A random choice whose first random option the world weighs.</summary>
+    /// <summary>A random choice whose first random option has a key weight.</summary>
     /// <remarks>
     /// <code>
     /// - `Guard.Mood%` Guard: Halt!

@@ -13,9 +13,9 @@ namespace DialogueDown.Playbook.Weights;
 /// relative: a draw is made against their total, whatever it is.
 /// <para>
 /// A key weight has no number until the world answers it, so there is no drawing weight for a
-/// key: once answered, it is a number. A random option left out of the draw weighs nothing, which
-/// is a number of zero: it adds nothing to the numbers, and it is not an auto weight, so it takes
-/// no part of the rest.
+/// key: once answered, it is a number. A random option left out of the draw counts as a number of
+/// zero: it adds nothing to the numbers, and it is not an auto weight, so it takes no part of the
+/// rest.
 /// </para>
 /// </remarks>
 public abstract record DrawingWeight

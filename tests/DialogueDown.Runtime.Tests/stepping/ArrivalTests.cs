@@ -825,7 +825,7 @@ public sealed class ArrivalTests
             ],
             ["Guard"]);
 
-    /// <summary>A random choice whose only random option weighs nothing, then a line.</summary>
+    /// <summary>A random choice whose only random option is <c>`0%`</c>, then a line.</summary>
     /// <remarks>
     /// <code>
     /// - `0%` Guard: Halt!
@@ -846,7 +846,7 @@ public sealed class ArrivalTests
             ],
             ["Guard"]);
 
-    /// <summary>A random choice whose only random option weighs nothing, with no fall-through.</summary>
+    /// <summary>A random choice whose only random option is <c>`0%`</c>, with no fall-through.</summary>
     /// <remarks>
     /// <code>
     /// - `0%` Guard: Halt!

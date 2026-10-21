@@ -232,7 +232,7 @@ internal static class PlaybookGen
     /// <param name="Asks">Whether a line has a query in what it says.</param>
     /// <param name="CommandAt">Where a line holds a command in what it says.</param>
     /// <param name="Menu">What a menu's options ask of the world.</param>
-    /// <param name="RandomChoice">How a random choice's random options are weighed and guarded.</param>
+    /// <param name="RandomChoice">The weights and guards of a random choice's random options.</param>
     private readonly record struct NodeDraft(
         Draws Draws,
         int Speaker,
@@ -340,7 +340,7 @@ internal static class PlaybookGen
         public bool EveryOptionIsGuarded => OnwardGuard is not null && ElsewhereGuard is not null;
     }
 
-    /// <summary>How a drawn random choice's random options are weighed and guarded.</summary>
+    /// <summary>The weights and guards of a drawn random choice's random options.</summary>
     /// <param name="OnwardWeight">The weight of the random option that carries on.</param>
     /// <param name="ElsewhereWeight">The weight of the random option leading elsewhere.</param>
     /// <param name="OnwardGuard">
