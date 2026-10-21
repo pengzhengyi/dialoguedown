@@ -23,6 +23,13 @@ public sealed class CompileCommandTests
         Alice: The rule is simple => the lever opens the door.
         """;
 
+    /// <summary><see cref="ADanglingArrow"/> once <c>--fix</c> has escaped its arrow as literal text.</summary>
+    private const string ADanglingArrowEscaped = """
+        # The Workshop
+
+        Alice: The rule is simple \=> the lever opens the door.
+        """;
+
     /// <summary>Two spaces after a sentence: a DLG1116 note that <c>--fix</c> makes one space.</summary>
     private const string TwoSpacesAfterASentence = """
         # The Tavern
@@ -228,7 +235,7 @@ public sealed class CompileCommandTests
             "-Alice: The rule is simple => the lever opens the door.",
             "+Alice: The rule is simple \\=> the lever opens the door.");
         Assert.DoesNotContain("  fix applied", output, StringComparison.Ordinal);
-        Assert.Contains("\\=> the lever", File.ReadAllText(script.Path), StringComparison.Ordinal);
+        Assert.Equal(ADanglingArrowEscaped, File.ReadAllText(script.Path));
     }
 
     [Fact]
@@ -269,7 +276,13 @@ public sealed class CompileCommandTests
         var result = CliTester.Create().Run("compile", script.Path, "--fix");
 
         AssertSucceeded(result, "1. Applied Fix: Use one space");
-        Assert.Contains("Welcome. Sit", File.ReadAllText(script.Path), StringComparison.Ordinal);
+        Assert.Equal(
+            """
+            # The Tavern
+
+            Alice: Welcome. Sit anywhere.
+            """,
+            File.ReadAllText(script.Path));
         Assert.Equal(string.Empty, CliTester.Create().Run("compile", script.Path).Output);
     }
 
@@ -287,7 +300,13 @@ public sealed class CompileCommandTests
         var result = tester.Run("compile", script.Path, "--fix");
 
         AssertSucceeded(result, "(2 fixes)", "Applied Fix: Use one space", "Applied Fix: Escape as literal text");
-        Assert.Contains("Pull \\=> the lever", File.ReadAllText(script.Path), StringComparison.Ordinal);
+        Assert.Equal(
+            """
+            # The Workshop
+
+            Alice: Pull \=> the lever.
+            """,
+            File.ReadAllText(script.Path));
     }
 
     [Fact]
@@ -333,7 +352,17 @@ public sealed class CompileCommandTests
             "1 error, 1 warning",
             "(1 fix; 1 error remains)",
             "1. Applied Fix: Escape as literal text");
-        Assert.Contains("\\=> the lever", File.ReadAllText(script.Path), StringComparison.Ordinal);
+        Assert.Equal(
+            """
+            # The Workshop
+
+            Alice: The rule is simple \=> the lever opens the door.
+
+            # The Workshop
+
+            Alice: Again, then.
+            """,
+            File.ReadAllText(script.Path));
     }
 
     [Fact]
@@ -352,7 +381,13 @@ public sealed class CompileCommandTests
 
         var output = AssertExited(result, ExitCodes.DataError, "(1 fix; 1 error remains)");
         Assert.DoesNotContain("after fixing:", output, StringComparison.Ordinal);
-        Assert.Contains("Go \\=> then", File.ReadAllText(script.Path), StringComparison.Ordinal);
+        Assert.Equal(
+            """
+            # Start
+
+            Alice: Go \=> then => [onward](#missing)
+            """,
+            File.ReadAllText(script.Path));
     }
 
     [Fact]
@@ -369,7 +404,7 @@ public sealed class CompileCommandTests
         var bytes = File.ReadAllBytes(path);
         var bom = Encoding.UTF8.GetPreamble();
         Assert.Equal(bom, bytes[..bom.Length]);
-        Assert.Contains("\\=>", Encoding.UTF8.GetString(bytes[bom.Length..]), StringComparison.Ordinal);
+        Assert.Equal(ADanglingArrowEscaped, Encoding.UTF8.GetString(bytes[bom.Length..]));
     }
 
     [Fact]

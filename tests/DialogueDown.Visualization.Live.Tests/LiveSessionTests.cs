@@ -6,6 +6,7 @@ using DialogueDown.Visualization.Live.Files;
 using DialogueDown.Visualization.Live.Serving;
 using DialogueDown.Visualization.Live.Tests.Support;
 using DialogueDown.Visualization.Render;
+using static DialogueDown.TestSupport.JsonAssert;
 using static DialogueDown.TestSupport.ReportPayload;
 using static DialogueDown.Visualization.Live.Tests.Support.LiveEventAssert;
 using static DialogueDown.Visualization.Live.Tests.Support.LivePageAssert;
@@ -96,13 +97,14 @@ public sealed class LiveSessionTests
     [Fact]
     public void Refresh_MissingDocument_BroadcastsAProblem()
     {
-        var session = new LiveSession(Path.Combine(Path.GetTempPath(), "missing-edit.dialogue.md"));
+        var missing = Path.Combine(Path.GetTempPath(), "missing-edit.dialogue.md");
+        var session = new LiveSession(missing);
         using var subscription = session.Broadcaster.Subscribe(out var reader);
 
         session.Refresh();
 
         var problem = AssertBroadcast(reader, "problem");
-        Assert.Contains("not found", problem.Message, StringComparison.OrdinalIgnoreCase);
+        Assert.Equal($"Document not found: {missing}", problem.Message);
         Assert.Equal("document", problem.Target); // routes through the document controller
     }
 
@@ -356,7 +358,7 @@ public sealed class LiveSessionTests
             ConfigSave(ASpeakerConfig("Bob", "B"), ASpeakerConfig("Alice", "A"))));
 
         Assert.Equal("saved", saved.Outcome);
-        Assert.Contains("Bob", File.ReadAllText(configPath));
+        Assert.Equal(ASpeakerConfig("Bob", "B"), File.ReadAllText(configPath));
         Assert.Equal(["Bob"], saved.SpeakerNames);
     }
 
@@ -430,7 +432,7 @@ public sealed class LiveSessionTests
 
         var document = Parse(session.CurrentDocumentJson());
         Assert.Equal(["Alice"], document.SpeakerNames); // still the last committed config, not the candidate
-        Assert.False(document.Json.ContainsKey("configStatus")); // state stayed valid, consistent with disk
+        AssertOmits(document.Json, "configStatus"); // state stayed valid, consistent with disk
         Assert.Equal(valid, File.ReadAllText(configPath)); // disk is unchanged
     }
 
@@ -495,8 +497,7 @@ public sealed class LiveSessionTests
         var result = session.CreateConfig(configPath);
 
         Assert.Equal(CreateConfigStatus.Created, result.Status);
-        Assert.True(File.Exists(configPath));
-        Assert.Contains("[[speakers]]", File.ReadAllText(configPath));
+        Assert.Equal(ConfigStarter.Template, File.ReadAllText(configPath));
         Assert.Equal("saved", Parse(result.Payload).Outcome);
         Assert.Equal(configPath, session.ConfigPath); // adopted: the session now applies it
         // No staging temp file is left behind.
@@ -507,7 +508,7 @@ public sealed class LiveSessionTests
         var saved = Parse(session.Save(
             ConfigSave(ASpeakerConfig("Bob", "B"), ConfigStarter.Template)));
         Assert.Equal(["Bob"], saved.SpeakerNames);
-        Assert.Contains("Bob", File.ReadAllText(configPath));
+        Assert.Equal(ASpeakerConfig("Bob", "B"), File.ReadAllText(configPath));
     }
 
     [Fact]
@@ -649,7 +650,7 @@ public sealed class LiveSessionTests
         session.Save(ConfigSave(ASpeakerConfig("Bob", "B"), AnInvalidConfig));
         var document = Parse(session.CurrentDocumentJson());
 
-        Assert.False(document.Json.ContainsKey("configStatus"));
+        AssertOmits(document.Json, "configStatus");
         Assert.Equal(["Bob"], document.SpeakerNames);
     }
 
@@ -782,7 +783,7 @@ public sealed class LiveSessionTests
         session.RefreshConfig();
 
         var problem = AssertBroadcast(reader, "problem");
-        Assert.Contains("not found", problem.Message, StringComparison.OrdinalIgnoreCase);
+        Assert.Equal($"Configuration not found: {configPath}", problem.Message);
         Assert.Equal("config", problem.Target); // routes through the config controller
     }
 
