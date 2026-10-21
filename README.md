@@ -220,3 +220,9 @@ Please don't report vulnerabilities in public issues. See
 ## License
 
 DialogueDown is released under the [MIT License](LICENSE).
+
+The `ddown` tool package bundles third-party libraries, and their licenses ask that
+their notices travel with every binary copy. [THIRD-PARTY-NOTICES.md](THIRD-PARTY-NOTICES.md)
+lists them, and the package carries it at its root. A game that ships the DialogueDown
+runtime ships DialogueDown's MIT notice, plus the entries for any third-party code compiled
+into the assemblies it embeds.

@@ -277,6 +277,11 @@ changes easy to categorize.
 
 ### Fixed
 
+- **The `ddown` tool package carries its third-party license notices** — the tool bundles
+  libraries whose licenses require their text or copyright notice to accompany every binary
+  copy, and the package shipped none. It now includes
+  [THIRD-PARTY-NOTICES.md](THIRD-PARTY-NOTICES.md), and a test fails when a bundled assembly
+  has no entry.
 - **Every TOML spelling of a `dialogue.toml` setting is read** — a setting written as an inline
   table, an inline array of tables, or a dotted key (`speakers = [{ name = "Alice" }]`,
   `markdown.unmodeled.table = "keep"`) was ignored without an error, so the compile ran on the
