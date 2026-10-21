@@ -97,6 +97,34 @@ public sealed class SpeechSpacingTests
                 Bold(Text("Bye."))]);
 
     [Fact]
+    public void Normalize_ASpaceAfterStyledTextEndingInACommand_MovesBeforeTheNextWord() =>
+        // **Hi.`Bow()`** `Wave()`Bye.
+        AssertNormalizes(
+            [Bold(Text("Hi."), CustomCommand("Bow")), Text(" "), CustomCommand("Wave"), Text("Bye.")],
+            [Bold(Text("Hi."), CustomCommand("Bow")), CustomCommand("Wave"), Text(" "), Text("Bye.")]);
+
+    [Fact]
+    public void Normalize_ASpaceBeforeStyledTextOpeningWithACommand_MovesInsideBeforeItsFirstWord() =>
+        // Hi.`Bow()` **`Wave()`Bye.**
+        AssertNormalizes(
+            [Text("Hi."), CustomCommand("Bow"), Text(" "), Bold(CustomCommand("Wave"), Text("Bye."))],
+            [Text("Hi."), CustomCommand("Bow"), Bold(CustomCommand("Wave"), Text(" "), Text("Bye."))]);
+
+    [Fact]
+    public void Normalize_ASpaceOpeningStyledTextAfterACommand_MovesBeforeItsFirstWord() =>
+        // Hi.`Bow()`*&#32;`Wave()`Bye.*
+        AssertNormalizes(
+            [Text("Hi."), CustomCommand("Bow"), Italic(Text(" "), CustomCommand("Wave"), Text("Bye."))],
+            [Text("Hi."), CustomCommand("Bow"), Italic(CustomCommand("Wave"), Text(" "), Text("Bye."))]);
+
+    [Fact]
+    public void Normalize_ASpaceLeftAtTheEndOfStyledText_MovesOutBeforeTheNextWord() =>
+        // **Hi.`Bow()` `Wave()`** Bye.
+        AssertNormalizes(
+            [Bold(Text("Hi."), CustomCommand("Bow"), Text(" "), CustomCommand("Wave")), Text("Bye.")],
+            [Bold(Text("Hi."), CustomCommand("Bow"), CustomCommand("Wave")), Text(" "), Text("Bye.")]);
+
+    [Fact]
     public void Normalize_ASpaceAfterWordsBeforeTwoCommands_StaysWithTheWords() =>
         AssertNormalizes(
             [Text("Hi."), Text(" "), CustomCommand("Bow"), CustomCommand("Wave"), Text("Bye.")],

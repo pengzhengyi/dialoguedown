@@ -325,7 +325,10 @@ passes:
    line feed, or carriage return becomes a space; a kept soft line break stays.
 2. **Backward.** Remove each collapsible space with no visible piece after it.
 3. **Placing.** Move a space kept right after an unseen fragment past any more
-   unseen fragments, to just before the next visible piece.
+   unseen fragments, to just before the next visible piece. It moves across the
+   edges of styled text: out to the words after it, and in when the styled text
+   opens with a command, but before one that opens with words. A link's label is
+   placed on its own, since a command never divides a link.
 
 A text left empty is omitted, and so is a soft line break that is removed and a
 styled text left with nothing inside it. Every other fragment, and every
@@ -355,6 +358,7 @@ the edge of a link, sets them apart.
 | A query or an image between spaces | Kept: each is a visible piece. A query's answer is not normalized. |
 | A space written only after a command, as ``Hi`Wave()` there`` | Kept; the part after the command begins with it. |
 | A space alone between two commands, as ``Hi.`Bow()` `Wave()`Bye.`` | Moved past the commands to the words after them, so no part of the line holds only a space. |
+| The same with emphasis between the commands, as ``**Hi.`Bow()`** `Wave()`Bye.`` | Moved across the emphasis's edge the same way. |
 | Extra spaces inside emphasis or a link's label | Collapsed with the list around it; reported. |
 | Extra spaces in alt text | Collapsed within the alt text; reported. |
 | Spaces at the ends of alt text, as `Here,![ the key ](k.png).` | Removed: the alt text is a list of its own, so the plain-text reading is `Here,the key.` (D3). |

@@ -61,9 +61,9 @@ namespace DialogueDown.Emission;
 /// </list>
 /// <para>
 /// A third pass, Placing, moves a space kept right after a command or a tag past any more of them,
-/// to just before the next visible piece. A host speaks the words between two commands as a part
-/// of the line and skips a part that is only a space, so the space must sit with the words it
-/// separates:
+/// to just before the next visible piece, across the edges of styled text too. A host speaks the
+/// words between two commands as a part of the line and skips a part that is only a space, so the
+/// space must sit with the words it separates:
 /// </para>
 /// <code>
 /// original:        "Hi."   Bow()   " "   Wave()   "Bye."
@@ -115,61 +115,84 @@ internal static class SpeechSpacing
 
     // Moves a space kept right after a command or a tag past any more of them, to just before the
     // next visible piece. It runs last, on what Trimming kept, where every space left has a visible
-    // piece after it, in the list or after the list, as words can follow a styled text.
-    private static class Placing
+    // piece after it. A styled text belongs to the list around it, so a space moves across its
+    // edges: out of it to the words after it, or into it when it opens with a command. A link is
+    // one thing, which a command never divides, so its label is placed on its own.
+    private sealed class Placing
     {
+        // The space waiting for the next visible piece. Left between two commands, it would be a
+        // part of the line that says nothing, which a host skips.
+        private SpeechFragment? _held;
+
+        // Whether the last thing placed was a command or a tag.
+        private bool _afterUnseen;
+
         public static ImmutableArray<SpeechFragment> Place(ImmutableArray<SpeechFragment> fragments)
         {
-            var placed = ImmutableArray.CreateBuilder<SpeechFragment>(fragments.Length);
+            var placing = new Placing();
+            var placed = placing.PlaceEach(fragments);
 
-            // The space waiting for the next visible piece. Left between two commands, it would be
-            // a part of the line that says nothing, which a host skips.
-            SpeechFragment? held = null;
-            var afterUnseen = false;
-            foreach (var fragment in fragments.Select(Placed))
-            {
-                if (afterUnseen && IsLoneSpace(fragment))
-                {
-                    held = fragment;
-                    continue;
-                }
-
-                afterUnseen = IsUnseen(fragment);
-                if (held is not null && !afterUnseen)
-                {
-                    placed.Add(held);
-                    held = null;
-                }
-
-                placed.Add(fragment);
-            }
-
-            // Nothing visible followed it in this list, so it goes at the end, the nearest it can
-            // come to the words after the list.
-            if (held is not null)
-            {
-                placed.Add(held);
-            }
-
-            return placed.ToImmutable();
+            // Nothing visible followed it in this list, which only a link's label can end that way,
+            // so it goes at the end, the nearest it can come to the words after the link.
+            return placing._held is { } held ? placed.Add(held) : placed;
         }
 
         // What Collapsing leaves of a text holding only collapsible spaces, or a soft line break.
         private static bool IsLoneSpace(SpeechFragment fragment) =>
             fragment is LineBreakFragment or TextFragment { Text: " " };
 
+        // Whether the fragment begins with something other than a command or a tag. A styled text
+        // begins with whatever its first child does; it is never empty once Trimming has run.
+        private static bool OpensVisibly(SpeechFragment fragment) =>
+            fragment is StyledTextFragment { Children: [var first, ..] }
+                ? OpensVisibly(first)
+                : !IsUnseen(fragment);
+
         private static bool IsUnseen(SpeechFragment fragment) =>
             fragment is not (TextFragment or LineBreakFragment or StyledTextFragment or LinkFragment)
             && !IsVisiblePiece(fragment);
 
-        private static SpeechFragment Placed(SpeechFragment fragment) =>
-            fragment switch
+        private ImmutableArray<SpeechFragment> PlaceEach(ImmutableArray<SpeechFragment> fragments)
+        {
+            var placed = ImmutableArray.CreateBuilder<SpeechFragment>(fragments.Length);
+            foreach (var fragment in fragments)
             {
-                StyledTextFragment styled =>
-                    new StyledTextFragment(styled.Style, Place(styled.Children)),
-                LinkFragment link => new LinkFragment(link.Target, Place(link.Label)),
-                _ => fragment,
-            };
+                if (_afterUnseen && IsLoneSpace(fragment))
+                {
+                    _held = fragment;
+                    continue;
+                }
+
+                // Before a styled text that opens with a command, the space waits to go inside it,
+                // where its words begin.
+                if (_held is not null && OpensVisibly(fragment))
+                {
+                    placed.Add(_held);
+                    _held = null;
+                }
+
+                placed.Add(Placed(fragment));
+            }
+
+            return placed.ToImmutable();
+        }
+
+        private SpeechFragment Placed(SpeechFragment fragment)
+        {
+            switch (fragment)
+            {
+                case StyledTextFragment styled:
+                    return new StyledTextFragment(styled.Style, PlaceEach(styled.Children));
+
+                case LinkFragment link:
+                    _afterUnseen = false;
+                    return new LinkFragment(link.Target, Place(link.Label));
+
+                default:
+                    _afterUnseen = IsUnseen(fragment);
+                    return fragment;
+            }
+        }
     }
 
     // Keeps the first collapsible space of each run, written as a space, and drops the rest along
