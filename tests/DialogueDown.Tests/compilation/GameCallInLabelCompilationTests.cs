@@ -77,7 +77,7 @@ public sealed class GameCallInLabelCompilationTests
         var failure = AssertFailure(Pipeline.Compile(Script));
 
         var diagnostic = AssertReported(failure.Diagnostics, DiagnosticCatalog.CommandInLabel);
-        Assert.Equal("`SlamDoor()`", SourceAt(Script, diagnostic));
+        Assert.Equal("`SlamDoor()`", SourceText.At(Script, diagnostic.Span));
     }
 
     [Fact]
@@ -96,7 +96,7 @@ public sealed class GameCallInLabelCompilationTests
         var failure = AssertFailure(Pipeline.Compile(Script));
 
         var diagnostic = AssertReported(failure.Diagnostics, DiagnosticCatalog.OrphanCondition);
-        Assert.Equal("`\"Met\"?`", SourceAt(Script, diagnostic));
+        Assert.Equal("`\"Met\"?`", SourceText.At(Script, diagnostic.Span));
     }
 
     [Fact]
@@ -122,7 +122,4 @@ public sealed class GameCallInLabelCompilationTests
 
     private static TNode First<TNode>(IEnumerable<Node> nodes) where TNode : Node =>
         nodes.OfType<TNode>().First();
-
-    private static string SourceAt(string source, Diagnostic diagnostic) =>
-        source.Substring(diagnostic.Span.Start, diagnostic.Span.Length);
 }

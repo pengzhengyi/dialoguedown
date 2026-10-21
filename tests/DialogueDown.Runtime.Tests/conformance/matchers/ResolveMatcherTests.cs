@@ -1,7 +1,7 @@
 using DialogueDown.Runtime.Protocol;
 using static DialogueDown.Runtime.Tests.Conformance.SessionEntries;
 using static DialogueDown.Runtime.Tests.Conformance.SessionOutcomeAssert;
-using static DialogueDown.TestSupport.SpeechFactory;
+using static DialogueDown.Runtime.Tests.EventFactory;
 
 namespace DialogueDown.Runtime.Tests.Conformance.Matchers;
 
@@ -30,7 +30,7 @@ public sealed class ResolveMatcherTests
     [Fact]
     public void ARunSpeakingInsteadOfAskingDiverges() =>
         AssertDiverged(
-            Match(Spoke(), """[ "Alice.HasKey" ]"""),
+            Match(Said("Alice", "Hi"), """[ "Alice.HasKey" ]"""),
             "expected the world to be asked something, but the run heard Alice speak");
 
     [Fact]
@@ -42,9 +42,6 @@ public sealed class ResolveMatcherTests
             "expected the run to end, but it asked the world about Alice.HasKey");
 
     private static Resolve Asked(params string[] keys) => new([.. keys]);
-
-    private static Said Spoke() =>
-        new("Alice", [Text("Hi")]);
 
     private SessionOutcome Match(Event happened, string expected) =>
         _matcher.Match(happened, Json(expected));
