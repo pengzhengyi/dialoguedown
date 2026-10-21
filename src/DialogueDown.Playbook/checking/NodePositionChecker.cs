@@ -1,4 +1,5 @@
 using System.Globalization;
+using static DialogueDown.Playbook.Checking.PlaybookRefusal;
 
 namespace DialogueDown.Playbook.Checking;
 
@@ -24,7 +25,7 @@ public sealed class NodePositionChecker : IPlaybookChecker
 
             if (claimed != index)
             {
-                throw new InvalidPlaybookException(
+                Refuse(
                     $"Node at index {Position(index)} claims id {Position(claimed)}; " +
                     "a node's id is its position.");
             }

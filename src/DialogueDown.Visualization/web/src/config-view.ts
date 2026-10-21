@@ -39,6 +39,7 @@ import { compactSearch } from "./search-panel";
 import { gotoLineKeymap } from "./goto-line";
 import { escapeHtml } from "./text";
 import { wireClickToCopy } from "./copy-on-click";
+import { whitespaceVisibility } from "./show-whitespace";
 
 /** Options for the Config tab. */
 export interface ConfigViewOptions {
@@ -243,6 +244,7 @@ function mountEditor(
         state: EditorState.create({
             doc: source,
             extensions: [
+                whitespaceVisibility(),
                 lineNumbers(),
                 highlightActiveLineGutter(),
                 foldGutter({ markerDOM: foldGutterMarker }),

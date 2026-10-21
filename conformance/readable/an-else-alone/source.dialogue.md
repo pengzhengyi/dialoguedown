@@ -1,4 +1,4 @@
-<!-- broken: the gated arm is removed, leaving only an else
+<!-- broken: the gated branch is removed, leaving only an else
 
      > `else`
      >

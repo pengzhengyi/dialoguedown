@@ -5,12 +5,13 @@ using DialogueDown.Script.Ast;
 namespace DialogueDown.Graph.Passes;
 
 /// <summary>
-/// Fans a choice group out into its arms: one edge per arm, leading to the first node of that
-/// arm's body and carrying the condition that decides whether the arm is offered. A player
-/// choice adds option edges carrying the words its menu shows; a random choice adds weighted
-/// edges the engine picks from, which are never shown. Runs after node creation and before
-/// succession, which then gives the choice a fall-through only when every arm is conditional,
-/// since then none may be available.
+/// Fans a choice group out into its options: one edge per option, leading to the first node of
+/// that option's body and carrying the condition that decides whether the option is offered. A
+/// player choice adds option edges carrying the words its menu shows; a random choice adds
+/// weighted edges the engine picks from, which are never shown. Runs after node creation and
+/// before succession, which gives a player choice a fall-through only when every option is
+/// conditional, since then none may be available, and a random choice a fall-through only when it
+/// may have nothing to draw.
 /// </summary>
 internal sealed class ChoicePass : GraphBuildPass
 {
@@ -29,13 +30,13 @@ internal sealed class ChoicePass : GraphBuildPass
     private static void FanOut(ChoiceGroup group, NodeId continuation, GraphDraft draft)
     {
         var choice = draft.IdOf(group);
-        foreach (var edge in ArmEdges(group, continuation, draft))
+        foreach (var edge in OptionEdges(group, continuation, draft))
         {
             draft.AddEdge(choice, edge);
         }
     }
 
-    private static IEnumerable<Edge> ArmEdges(
+    private static IEnumerable<Edge> OptionEdges(
         ChoiceGroup group, NodeId continuation, GraphDraft draft) => group switch
         {
             Choices choices => choices.Options.Select(option => (Edge)new OptionEdge(

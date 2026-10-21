@@ -123,7 +123,7 @@ public sealed class SuccessionPassTests
     }
 
     [Fact]
-    public void Apply_AChoiceWhoseArmsAreAllConditional_AlsoFallsThrough()
+    public void Apply_AChoiceWhoseOptionsAreAllConditional_AlsoFallsThrough()
     {
         var graph = Build("""
             - `"HasKey"?` Alice: Use the key.
@@ -135,6 +135,35 @@ public sealed class SuccessionPassTests
 
         // Neither condition need hold, so the fall-through is the path left when nothing is offered.
         AssertFallsThroughTo(graph.Nodes[0], graph.Nodes[3].Id);
+    }
+
+    [Fact]
+    public void Apply_ARandomChoiceOfKeyWeights_AlsoFallsThrough()
+    {
+        var graph = Build("""
+            - `Bob.Affection%` Bob: Good to see you.
+
+            - `Christina.Affection%` Christina: Oh, hello.
+
+            Guide: After.
+            """);
+
+        // The game can answer 0 for both, so the fall-through is the path left when nothing can be drawn.
+        AssertFallsThroughTo(graph.Nodes[0], graph.Nodes[3].Id);
+    }
+
+    [Fact]
+    public void Apply_ARandomChoiceWithAnUnguardedAutoWeight_DoesNotFallThrough()
+    {
+        var graph = Build("""
+            - `Bob.Affection%` Bob: Good to see you.
+
+            - `%` Guide: Nobody looks up.
+
+            Guide: After.
+            """);
+
+        AssertNoFallThrough(graph.Nodes[0]);
     }
 
     [Fact]

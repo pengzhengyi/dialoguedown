@@ -336,7 +336,7 @@ other ways out the node is given:
 
 ```csharp
 Line("Take a torch.", speaker: 1)
-Branch(Arm("Alice.HasMap", target: 16), Else(target: 18))
+Branch(Gated("Alice.HasMap", target: 16), Else(target: 18))
 Line("Hello.", id: 0, next: 1)
 ```
 
@@ -439,7 +439,7 @@ list should have grown.
 | Test | Covers | Widens when | Tells you when to widen |
 | --- | --- | --- | --- |
 | `PlayableConformanceTests` | The playable cases the runner can play, named one by one | The runner learns a construct that lets a whole case play | Yes — a case that starts passing fails the test until the list admits it |
-| `PlaybookGen` | Lines, ends, jumps, effects, and lines that jump | Each runtime pass teaches the runner a node or edge kind | Yes — teaching the runner a kind the generator skips fails a test that names the kind |
+| `PlaybookGen` | Every node and edge kind the runner plays, and the guards, queries, and key weights it asks the world about | Each runtime pass teaches the runner a node or edge kind | Yes — teaching the runner a kind the generator skips fails a test that names the kind |
 
 `PlaybookGen` is held to the format the way `ExampleConstructCoverageTests` is
 held to the compiler: both enumerate what exists by reflection, then fail naming

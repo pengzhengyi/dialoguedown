@@ -163,17 +163,44 @@ list:
 - `%`                Guard: Move along.
 ```
 
-Because the numbers are unknown until the game runs, the usual "weights should
-total 100%" check is **deferred to runtime** for any list that contains a
-dynamic weight. At runtime:
+Because the numbers are unknown until the game runs, the compiler skips the
+usual "weights should total 100%" check for any list that contains a dynamic
+weight. At runtime:
 
-- Each query must resolve to a **finite, non-negative number**. A missing,
-  non-numeric, negative, or infinite result is an error, and the engine selects
+- Each query must give a **finite number of 0 or more**. An answer that is
+  missing, not a number, negative, or infinite is an error, and the engine picks
   no option.
-- Auto weights take an equal share of what is left after **both** the static and
-  the resolved dynamic weights: `max(0, 100 − static − dynamic) / autoCount`.
-- The resolved weights are then normalized by their sum, exactly like static
-  weights: a zero total is an error, and a total far from 100 warns.
+- An auto weight takes an equal share of what the other weights in play leave of
+  100, the numbers from the game included: `max(0, 100 − others) / autos`.
+- The engine then normalizes the weights by their sum, as it does for static
+  weights. It does not yet warn when the total is far from 100.
+
+When every weight is 0, there is nothing to pick, so the random choice is passed
+by and the run carries on with whatever follows the list, as it does when every
+option is [left out](#conditional-choices):
+
+```markdown
+- `Bob.Affection%`       Bob: ...good to see you.
+- `Christina.Affection%` Christina: Oh — hello.
+
+You walk on across the courtyard.
+```
+
+While both affections are 0, the engine picks neither line, and the run goes
+straight on to "You walk on across the courtyard."
+
+To make sure the engine always has a line to pick, add an option with an auto
+weight:
+
+```markdown
+- `Bob.Affection%`       Bob: ...good to see you.
+- `Christina.Affection%` Christina: Oh — hello.
+- `%`                    Nobody looks up.
+```
+
+While both affections are 0, the auto weight takes all of 100, so the line
+"Nobody looks up." is always picked. Once the two affections add up to 100 or
+more, the auto weight is 0, and that line has no chance of being picked.
 
 ## Jumps
 
@@ -398,7 +425,34 @@ A [random option](#random-choices) can be conditional too — the condition come
 
 When `IsAngry` is true the engine picks among all three by weight; when it is false
 the first option is left out and the remaining weights are re-normalized — a random
-pool with a dynamic set of options.
+pool with a dynamic set of options. A calm guard waves you through 60% of the time
+and ignores you 40%.
+
+An auto weight (`` `%` ``) counts only the options still in play. Give the last
+option one:
+
+```markdown
+- `IsAngry?` `50%` The guard glares and blocks your path.
+- `30%` The guard waves you through.
+- `%` The guard ignores you.
+```
+
+An angry guard ignores you 20% of the time, the auto weight taking what `50%` and
+`30%` leave of 100. A calm guard ignores you 70% of the time: with the first option
+left out, the auto weight takes everything `30%` leaves.
+
+When every option is left out there is nothing to pick, so the random choice is
+passed by and the run carries on with whatever follows the list:
+
+```markdown
+- `IsAngry?` `%` The guard glares and blocks your path.
+- `IsTired?` `%` The guard yawns and waves you through.
+
+The guard says nothing.
+```
+
+A guard who is neither angry nor tired has no option left, so the run goes straight
+on to "The guard says nothing."
 
 As with a [conditional jump](#conditional-jumps) or line, each option's condition
 is independent and there is no inline *else*: query an inverse flag for the

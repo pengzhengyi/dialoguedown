@@ -1,46 +1,39 @@
 using DialogueDown.Configuration;
-using DialogueDown.ConfigurationLoader.Toml;
-using Tomlyn.Syntax;
+using DialogueDown.ConfigurationLoader.Document;
+using DialogueDown.ConfigurationLoader.Errors;
 
 namespace DialogueDown.ConfigurationLoader.Readers;
 
 /// <summary>
-/// Reads the top-level <c>mode</c> key of a parsed <see cref="DocumentSyntax"/> into a
-/// <see cref="CompilationMode"/>, validating it against the settable modes. Absent yields null, so
-/// the caller keeps the built-in default. A malformed value — a non-string, or a name that is not a
-/// settable mode (including <c>fail-fast</c>, which throws instead of reporting and is set only in
-/// code) — is rejected with a located <see cref="DialogueConfigurationException"/>. Unrelated root
-/// keys are ignored, so the format stays forward-compatible as new settings are added.
+/// Reads the top-level <c>mode</c> setting into a <see cref="CompilationMode"/>, validating it
+/// against the settable modes. Absent yields null, so the caller keeps the built-in default.
 /// </summary>
+/// <remarks>
+/// <code>
+/// mode = "best-effort"
+/// </code>
+/// A non-string, or a name that is not a settable mode, is rejected with a located
+/// <see cref="DialogueConfigurationException"/>. That includes <c>fail-fast</c>, which throws
+/// instead of reporting and is set only in code.
+/// </remarks>
 internal sealed class ConfiguredModeReader
 {
-    private const string ModeKey = "mode";
+    /// <summary>The root key this reader owns.</summary>
+    public const string Key = "mode";
 
-    public CompilationMode? Read(DocumentSyntax document)
+    public CompilationMode? Read(ConfigurationTable root)
     {
-        ArgumentNullException.ThrowIfNull(document);
+        ArgumentNullException.ThrowIfNull(root);
 
-        foreach (var entry in document.KeyValues)
-        {
-            if (TomlKeys.Name(entry.Key) == ModeKey)
-            {
-                return ReadMode(entry);
-            }
-        }
-
-        return null;
+        return root.Find(Key) is { } entry ? ReadMode(entry) : null;
     }
 
-    private static CompilationMode ReadMode(KeyValueSyntax entry)
+    private static CompilationMode ReadMode(ConfigurationEntry entry)
     {
-        if (entry.Value is not StringValueSyntax text)
-        {
-            throw TomlErrors.At("'mode' must be a string.", entry.Value!);
-        }
-
-        return CompilationModes.TryParse(text.Value!)
-            ?? throw TomlErrors.At(
-                $"Unknown mode '{text.Value}'. Use {CompilationModes.SettableNamesDescription}.",
-                entry.Value);
+        var name = entry.RequireString();
+        return CompilationModes.TryParse(name)
+            ?? throw new DialogueConfigurationException(
+                $"Unknown mode '{name}'. Use {CompilationModes.SettableNamesDescription}.",
+                entry.Value.Location);
     }
 }

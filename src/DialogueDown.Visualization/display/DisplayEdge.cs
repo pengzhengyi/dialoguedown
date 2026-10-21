@@ -4,7 +4,7 @@ namespace DialogueDown.Visualization.Display;
 /// A directed link between two display nodes, identified by their ids and tagged
 /// with a <see cref="Kind"/> — a normal child edge, or a reference back to an
 /// already-seen node — and an optional semantic <see cref="Category"/> naming what
-/// the link <em>means</em> (a fall-through, a jump, a chosen arm), which a renderer
+/// the link <em>means</em> (a fall-through, a jump, a chosen option), which a renderer
 /// maps to a color and a legend entry. A stage whose edges all mean the same thing —
 /// "this node contains that one" — leaves it null.
 /// </summary>
@@ -18,8 +18,8 @@ public sealed record DisplayEdge(string FromId, string ToId, DisplayEdgeKind Kin
     public string? Category { get; init; }
 
     /// <summary>
-    /// The words the writer gave this route: a jump's link text, or the words a choice arm offers.
-    /// Null for a route with no words of its own, such as a fall-through or a random arm.
+    /// The words the writer gave this route: a jump's link text, or the words a choice option offers.
+    /// Null for a route with no words of its own, such as a fall-through or a random option.
     /// </summary>
     public string? Label { get; init; }
 }

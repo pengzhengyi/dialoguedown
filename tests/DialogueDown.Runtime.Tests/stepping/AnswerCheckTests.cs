@@ -54,6 +54,19 @@ public sealed class AnswerCheckTests
     }
 
     [Fact]
+    public void Disagrees_WhenAGuardIsAnsweredWithANumber_SaysWhatItNeeded()
+    {
+        Assert.True(
+            AnswerCheck.Disagrees(
+                Guards("Alice.HasKey"),
+                Answered(("Alice.HasKey", new NumberAnswer(1))),
+                out var refusal));
+
+        Assert.Equal(RefusalReason.WrongAnswerKind, refusal.Reason);
+        Assert.Equal("Alice.HasKey needs a truth and was answered with a number.", refusal.Explanation);
+    }
+
+    [Fact]
     public void Disagrees_WhenAQueryIsAnsweredWithATruth_SaysWhatItNeeded()
     {
         Assert.True(

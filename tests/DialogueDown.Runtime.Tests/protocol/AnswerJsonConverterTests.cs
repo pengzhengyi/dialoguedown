@@ -8,7 +8,7 @@ namespace DialogueDown.Runtime.Tests.Protocol;
 /// </summary>
 /// <remarks>
 /// A supplied answer carries no tag naming its kind — the JSON value is the tag, so a boolean
-/// means a truth and a string means words.
+/// means a truth, a string means words, and a number means a number.
 /// </remarks>
 public sealed class AnswerJsonConverterTests
 {
@@ -19,61 +19,82 @@ public sealed class AnswerJsonConverterTests
     [InlineData("true", true)]
     [InlineData("false", false)]
     public void ABoolean_ReadsAsABooleanAnswer(string json, bool holds) =>
-        AssertSays(Read(json), holds);
+        AssertReadsAs(json, new BooleanAnswer(holds));
 
     [Theory]
     [InlineData("\"Robin\"", "Robin")]
     [InlineData("\"\"", "")]
     public void AString_ReadsAsATextAnswer(string json, string text) =>
-        AssertSays(Read(json), text);
+        AssertReadsAs(json, new TextAnswer(text));
 
     [Theory]
-    [InlineData("4")]
+    [InlineData("20", 20.0)]
+    [InlineData("12.5", 12.5)]
+    [InlineData("0", 0.0)]
+    public void ANumber_ReadsAsANumberAnswer(string json, double value) =>
+        AssertReadsAs(json, new NumberAnswer(value));
+
+    [Fact]
+    public void ANumberPastWhatADoubleHolds_ReadsAsInfinity() =>
+        // Read rather than refused, so the run can say the number is no weight, which a driver can
+        // act on, rather than call the whole supply unreadable.
+        AssertReadsAs("1e400", new NumberAnswer(double.PositiveInfinity));
+
+    [Theory]
     [InlineData("null")]
     [InlineData("[]")]
     [InlineData("{}")]
     public void AnythingElse_IsRefused(string json) =>
-        Assert.Throws<JsonException>(() => Read(json));
+        Assert.Throws<JsonException>(() => JsonSerializer.Deserialize<Answer>(json, _options));
 
     [Theory]
     [InlineData(true, "true")]
     [InlineData(false, "false")]
     public void ABooleanAnswer_WritesBackAsABoolean(bool holds, string json) =>
-        Assert.Equal(json, Write(new BooleanAnswer(holds)));
+        AssertWritesAs(new BooleanAnswer(holds), json);
 
     [Theory]
     [InlineData("Robin", "\"Robin\"")]
     [InlineData("", "\"\"")]
     public void ATextAnswer_WritesBackAsAString(string text, string json) =>
-        Assert.Equal(json, Write(new TextAnswer(text)));
+        AssertWritesAs(new TextAnswer(text), json);
+
+    [Theory]
+    [InlineData(20.0, "20")]
+    [InlineData(12.5, "12.5")]
+    public void ANumberAnswer_WritesBackAsANumber(double value, string json) =>
+        AssertWritesAs(new NumberAnswer(value), json);
+
+    [Fact]
+    public void ANumberAnswerNoJsonCanHold_IsRefusedOnTheWayOut() =>
+        // JSON has no form for infinity, so writing one would make a document nothing can read.
+        Assert.Throws<JsonException>(
+            () => JsonSerializer.Serialize<Answer>(new NumberAnswer(double.PositiveInfinity), _options));
 
     [Fact]
     public void AWholeSupply_ReadsKeyByKey()
     {
-        // The shape a fixture actually carries: one object, answers of both kinds inside it.
-        var answers = ReadSupply("""{ "Alice.HasKey": false, "playerName": "Robin" }""");
+        // The shape a fixture actually carries: one object, answers of every kind inside it.
+        var answers = ReadSupply("""{ "Alice.HasKey": false, "playerName": "Robin", "Guard.Mood": 20 }""");
 
-        AssertSays(answers["Alice.HasKey"], false);
-        AssertSays(answers["playerName"], "Robin");
+        Assert.Equal(new BooleanAnswer(false), answers["Alice.HasKey"]);
+        Assert.Equal(new TextAnswer("Robin"), answers["playerName"]);
+        Assert.Equal(new NumberAnswer(20), answers["Guard.Mood"]);
     }
 
-    /// <summary>Asserts an answer is a yes or a no, and which.</summary>
-    /// <param name="answer">The answer read.</param>
-    /// <param name="holds">What it should say.</param>
-    private static void AssertSays(Answer? answer, bool holds) =>
-        Assert.Equal(holds, Assert.IsType<BooleanAnswer>(answer).Holds);
+    /// <summary>Asserts a JSON value reads as the answer given: the same kind, saying the same.</summary>
+    /// <param name="json">The JSON value.</param>
+    /// <param name="expected">The answer it should read as.</param>
+    private static void AssertReadsAs(string json, Answer expected) =>
+        Assert.Equal(expected, JsonSerializer.Deserialize<Answer>(json, _options));
 
-    /// <summary>Asserts an answer is words, and which.</summary>
-    /// <param name="answer">The answer read.</param>
-    /// <param name="text">What it should say.</param>
-    private static void AssertSays(Answer? answer, string text) =>
-        Assert.Equal(text, Assert.IsType<TextAnswer>(answer).Text);
-
-    private static Answer? Read(string json) => JsonSerializer.Deserialize<Answer>(json, _options);
+    /// <summary>Asserts an answer writes as the JSON value given.</summary>
+    /// <param name="answer">The answer.</param>
+    /// <param name="json">The JSON value it should write as.</param>
+    private static void AssertWritesAs(Answer answer, string json) =>
+        Assert.Equal(json, JsonSerializer.Serialize(answer, _options));
 
     private static Dictionary<string, Answer> ReadSupply(string json) =>
         Assert.IsType<Dictionary<string, Answer>>(
             JsonSerializer.Deserialize<Dictionary<string, Answer>>(json, _options));
-
-    private static string Write(Answer answer) => JsonSerializer.Serialize(answer, _options);
 }

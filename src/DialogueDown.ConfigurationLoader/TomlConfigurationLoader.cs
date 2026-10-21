@@ -1,7 +1,6 @@
 using DialogueDown.Configuration;
 using DialogueDown.ConfigurationLoader.Readers;
 using DialogueDown.ConfigurationLoader.Toml;
-using Tomlyn.Syntax;
 
 namespace DialogueDown.ConfigurationLoader;
 
@@ -11,8 +10,16 @@ namespace DialogueDown.ConfigurationLoader;
 /// mode, and how unmodeled Markdown is handled; a config that sets none of them yields
 /// <see cref="CompilerOptions.Default"/>.
 /// </summary>
+/// <remarks>
+/// Every TOML spelling of a setting reads the same: <c>[[speakers]]</c> headers and an inline
+/// <c>speakers = [{ name = "Alice" }]</c> both declare speakers. A key the schema does not define is
+/// an error, at the root as anywhere else.
+/// </remarks>
 public static class TomlConfigurationLoader
 {
+    private static readonly string[] _sections =
+        [ConfiguredModeReader.Key, ConfiguredSpeakerReader.Key, ConfiguredUnmodeledReader.Key];
+
     /// <summary>
     /// Reads and parses the <c>dialogue.toml</c> at <paramref name="path"/>, which also names the
     /// source in diagnostics. A missing file throws the I/O exception from reading it, such as
@@ -34,11 +41,12 @@ public static class TomlConfigurationLoader
         ArgumentNullException.ThrowIfNull(toml);
         ArgumentNullException.ThrowIfNull(sourceName);
 
-        DocumentSyntax document = new TomlDocumentParser(sourceName).Parse(toml);
-        IReadOnlyList<ConfiguredSpeaker> speakers = new ConfiguredSpeakerReader().Read(document);
-        CompilationMode? mode = new ConfiguredModeReader().Read(document);
+        var root = TomlDocumentReader.Read(toml, sourceName);
+        root.RejectUnknownKeys(_sections, "setting");
+        IReadOnlyList<ConfiguredSpeaker> speakers = new ConfiguredSpeakerReader().Read(root);
+        CompilationMode? mode = new ConfiguredModeReader().Read(root);
         IReadOnlyDictionary<UnmodeledNodeKind, UnmodeledNodeHandling> unmodeled =
-            new ConfiguredUnmodeledReader().Read(document);
+            new ConfiguredUnmodeledReader().Read(root);
 
         if (speakers.Count == 0 && mode is null && unmodeled.Count == 0)
         {

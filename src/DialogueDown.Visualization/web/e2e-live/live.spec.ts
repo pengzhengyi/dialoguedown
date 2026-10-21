@@ -12,7 +12,7 @@ const PNG_1x1 = Buffer.from(
 );
 
 // Writes the document and waits for the recompile it triggers to *land* before the test drives the
-// page. The write arms a debounced rebuild (150 ms) that broadcasts to every open page; navigating
+// page. The write starts a debounced rebuild (150 ms) that broadcasts to every open page; navigating
 // straight away wins the race for content but not for that broadcast, which then arrives mid-test,
 // re-renders the report, and drops whatever was chosen — emptying the detail panel that a retrying
 // assertion is waiting on. `beforeEach` leaves a page open showing the previous document, so the
@@ -257,7 +257,8 @@ test("keeps the View/Edit toggle enabled on graph tabs so editing can begin ther
     // Source tab is active first: the toggle is interactive.
     await expect(view).toBeEnabled();
 
-    // A graph tab keeps the toggle interactive too: a node can be edited there.
+    // A graph tab keeps the toggle interactive too: the mode is the session's, so a reader can
+    // switch to Edit there before going to the editor.
     await page.locator(".tab", { hasText: "Markdown AST" }).click();
     await expect(page.locator("section.stage.active g.node").first()).toBeVisible();
     await expect(view).toBeEnabled();
@@ -266,6 +267,35 @@ test("keeps the View/Edit toggle enabled on graph tabs so editing can begin ther
     // Back on Source it is still interactive.
     await page.locator(".tab", { hasText: "Source" }).click();
     await expect(view).toBeEnabled();
+});
+
+test("disables the View/Edit toggle on the read-only Playbook tab, keeping the mode", async ({
+    page,
+}) => {
+    const toggle = page.locator(".mode-toggle");
+    const edit = page.locator('.mode-toggle-option[data-mode="edit"]');
+    await edit.click();
+    await expect(edit).toHaveAttribute("aria-pressed", "true");
+
+    await page.locator(".tab", { hasText: "Playbook" }).click();
+
+    await expect(toggle).toHaveAttribute("aria-disabled", "true");
+    await expect(toggle).toHaveAttribute("title", /compiled output/);
+    await expect(edit).toBeDisabled();
+    await expect(edit).toHaveAttribute("aria-pressed", "true");
+
+    await page.locator(".tab", { hasText: "Source" }).click();
+
+    await expect(toggle).toHaveAttribute("aria-disabled", "false");
+    await expect(edit).toBeEnabled();
+    await expect(edit).toHaveAttribute("aria-pressed", "true");
+
+    // The report reopens on the tab the reader left, and the toggle is disabled there from the
+    // first paint, not only after a tab change.
+    await page.locator(".tab", { hasText: "Playbook" }).click();
+    await page.reload();
+    await expect(page.locator(".tab.active")).toHaveText("Playbook");
+    await expect(toggle).toHaveAttribute("aria-disabled", "true");
 });
 
 test("Zen mode hides the Explorer sidebar on a served report", async ({ page }) => {
@@ -1621,8 +1651,8 @@ test("recompiles the Playbook tab on save, so it always matches the saved script
     await expect(speakers).not.toContainText("Bruno");
 
     // Rename the speaker in Source and save; the playbook is regenerated from the saved script.
-    await page.locator('.mode-toggle-option[data-mode="edit"]').click();
     await page.locator("#tabs .tab", { hasText: "Source" }).click();
+    await page.locator('.mode-toggle-option[data-mode="edit"]').click();
     await page.locator(".source-stage .cm-content").click();
     await page.keyboard.press("ControlOrMeta+a");
     await page.keyboard.type("# Original Scene\n\nBruno: The original line.\n");
@@ -1650,20 +1680,20 @@ test("hovering a route says what it is and what the writer called it", async ({ 
     await page.locator(".tab", { hasText: "Dialogue Graph" }).click();
     await expect(page.locator("section.stage.active path.edge-hit")).not.toHaveCount(0);
 
-    // A twin is drawn per route, in the same order, so the choice arm's target is the twin at the
-    // choice route's index. The script offers one arm, so there is exactly one.
-    const arm = await page
+    // A twin is drawn per route, in the same order, so the choice option's target is the twin at the
+    // choice route's index. The script offers one option, so there is exactly one.
+    const option = await page
         .locator("section.stage.active path.link.routed")
         .evaluateAll((routes) =>
             routes.findIndex((route) => route.querySelector("title")?.textContent === "Choice"),
         );
-    expect(arm).toBeGreaterThanOrEqual(0);
+    expect(option).toBeGreaterThanOrEqual(0);
 
     // A route is a hairline path, which Playwright will not treat as hoverable on its own.
-    await page.locator("section.stage.active path.edge-hit").nth(arm).hover({ force: true });
+    await page.locator("section.stage.active path.edge-hit").nth(option).hover({ force: true });
 
     const tip = page.locator(".tippy-content");
     await expect(tip).toContainText("Choice");
-    await expect(tip).toContainText("One arm of a choice");
+    await expect(tip).toContainText("One option of a choice");
     await expect(tip).toContainText("Brave the west road");
 });

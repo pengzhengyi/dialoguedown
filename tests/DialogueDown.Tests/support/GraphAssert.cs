@@ -75,8 +75,8 @@ internal static class GraphAssert
         Assert.Equal(key, Assert.IsAssignableFrom<IConditionalEdge>(edge).Condition?.Key);
 
     /// <summary>
-    /// Asserts the edge is a branch arm conditional by <paramref name="condition"/> — null for the
-    /// <c>else</c> arm, which is always taken when reached.
+    /// Asserts the edge is a branch conditional by <paramref name="condition"/> — null for the
+    /// <c>else</c>, which is always taken when reached.
     /// </summary>
     public static void AssertBranch(Edge edge, string? condition) =>
         Assert.Equal(condition, Assert.IsType<BranchEdge>(edge).Condition?.Key);
@@ -93,7 +93,7 @@ internal static class GraphAssert
     public static void AssertUnconditional(Edge edge) =>
         Assert.Null(Assert.IsAssignableFrom<IConditionalEdge>(edge).Condition);
 
-    /// <summary>Asserts the edge is a random arm weighted at <paramref name="percentage"/>.</summary>
+    /// <summary>Asserts the edge is a random option weighted at <paramref name="percentage"/>.</summary>
     public static void AssertNumberWeight(Edge edge, double percentage) =>
         Assert.Equal(
             percentage,

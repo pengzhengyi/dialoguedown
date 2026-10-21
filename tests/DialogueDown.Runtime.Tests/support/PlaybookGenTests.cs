@@ -3,6 +3,8 @@ using CsCheck;
 using DialogueDown.Playbook.Edges;
 using DialogueDown.Playbook.Nodes;
 using DialogueDown.Playbook.Speech;
+using DialogueDown.Runtime.Protocol;
+using DialogueDown.Runtime.Stepping;
 using DialogueDown.TestSupport;
 
 namespace DialogueDown.Runtime.Tests;
@@ -23,11 +25,7 @@ public sealed class PlaybookGenTests
     // Node and edge kinds the generator leaves out, each with a note on what must change first.
     // The test below checks the note on every node kind. An edge kind stays out for as long as the
     // node kind it belongs to does, because that node is the only place it can appear.
-    private static readonly Dictionary<string, string> _notDrawn = new(StringComparer.Ordinal)
-    {
-        [nameof(RandomChoiceNode)] = "nothing draws a random choice yet",
-        [nameof(RandomOptionEdge)] = "a random-option edge appears only on a random-choice node",
-    };
+    private static readonly Dictionary<string, string> _notDrawn = new(StringComparer.Ordinal);
 
     [Fact]
     public void EveryKindTheFormatDefines_IsDrawnOrLeftOutOnPurpose()
@@ -47,7 +45,7 @@ public sealed class PlaybookGenTests
     }
 
     [Fact]
-    public void EveryNodeKindLeftOut_IsStillOneTheRunnerRefuses()
+    public void EveryNodeKindLeftOut_IsStillOneTheRunnerCannotPlay()
     {
         // Fails once the runner plays a listed kind, naming the kind the generator must now draw.
         foreach (var node in PlayContextFactory.OneOfEveryNodeKind())
@@ -98,6 +96,46 @@ public sealed class PlaybookGenTests
         Assert.Equal(["alone", "between", "first", "last"], places.Order(StringComparer.Ordinal));
     }
 
+    [Fact]
+    public void TheDraw_GivesSomeRandomChoiceNothingDrawable_InAWorldDrawnBesideIt()
+    {
+        // A random choice is walked past only when no random option has a share, so the walk covers
+        // that only if some drawn random choice has nothing drawable in a world the walk can meet.
+        var nothingDrawable = 0;
+
+        Gen.Select(PlaybookGen.Valid(), PlaybookGen.Worlds()).Sample(
+            (playbook, world) =>
+            {
+                if (playbook.Nodes.OfType<RandomChoiceNode>()
+                    .Any(random => RandomChoiceShares.HasNothingDrawable(random, ArrivingAt(random, world))))
+                {
+                    Interlocked.Increment(ref nothingDrawable);
+                }
+            },
+            iter: Samples);
+
+        Assert.True(nothingDrawable > 0, "No drawn random choice had nothing drawable.");
+    }
+
+    [Fact]
+    public void TheDraw_GivesARandomChoiceAFallThrough_WheneverAWorldCanLeaveItNothingDrawable()
+    {
+        // A script compiles a random choice with a fall-through whenever the game can leave it
+        // nothing drawable, so a walk over drawn playbooks is never refused there as leading nowhere.
+        Gen.Select(PlaybookGen.Valid(), PlaybookGen.Worlds()).Sample(
+            (playbook, world) =>
+            {
+                foreach (var random in playbook.Nodes.OfType<RandomChoiceNode>()
+                    .Where(random => RandomChoiceShares.HasNothingDrawable(random, ArrivingAt(random, world))))
+                {
+                    Assert.True(
+                        random.SuccessionTarget() is not null,
+                        $"Random choice {random.Id} has nothing drawable in a drawn world, and no fall-through.");
+                }
+            },
+            iter: Samples);
+    }
+
     /// <summary>
     /// The type name of every node and edge kind a sample of the generator produced.
     /// </summary>
@@ -127,6 +165,13 @@ public sealed class PlaybookGenTests
 
         return seen;
     }
+
+    /// <summary>What a drawn world answers when a run arrives at a random choice.</summary>
+    /// <param name="random">The random choice.</param>
+    /// <param name="world">The world drawn beside its playbook.</param>
+    /// <returns>Each key its guards and key weights ask about, answered.</returns>
+    private static Supply ArrivingAt(RandomChoiceNode random, DrawnWorld world) =>
+        world.Answering(NodeQuestions.RequiredToPlay(random).Keys());
 
     /// <summary>Where a line's speech holds its first command.</summary>
     /// <param name="speech">The line's speech.</param>

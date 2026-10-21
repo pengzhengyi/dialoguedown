@@ -12,6 +12,15 @@ namespace DialogueDown.Runtime.Tests;
 /// </summary>
 public sealed class RunnerTests
 {
+    public static TheoryData<Command, string> EveryOtherAnswerToADraw() => new()
+    {
+        { new Next(), "A run cannot take Next at node 0, waiting for the host to draw." },
+        { new Done(), "A run cannot take Done at node 0, waiting for the host to draw." },
+        { new Failed("the dice are lost"), "A run cannot take Failed at node 0, waiting for the host to draw." },
+        { Answering(), "A run cannot take Supply at node 0, waiting for the host to draw." },
+        { new Choose(0), "A run cannot take Choose at node 0, waiting for the host to draw." },
+    };
+
     [Fact]
     public void Step_Start_StandsAtTheEntryAndSaysWhatIsThere()
     {
@@ -98,6 +107,65 @@ public sealed class RunnerTests
         var result = Runner.Step(context, Started(context), new Choose(0));
 
         AssertRefused(result, RefusalReason.Misplaced, "A run cannot take Choose at node 0.");
+        AssertAt(result, 0);
+    }
+
+    [Fact]
+    public void Step_StartAtARandomChoice_AsksTheHostForADraw()
+    {
+        var context = PlayContextFactory.ARandomChoice();
+
+        var result = Runner.Step(context, PlayState.Initial, new Start());
+
+        AssertAskedForADraw(result, 0, 50, 30, 20);
+    }
+
+    [Fact]
+    public void Step_DrawnAtARandomChoice_ArrivesWhereTheRandomOptionItPicksLeads()
+    {
+        // The shares [50, 30, 20] total 100, so a draw of 0.7 stands at 70, inside the second
+        // random option's span of [50, 80).
+        var context = PlayContextFactory.ARandomChoice();
+
+        var result = Runner.Step(context, Started(context), new Drawn(0.7));
+
+        AssertSaid(result, speaker: "Guard", text: "Move along.");
+        AssertAt(result, 2);
+    }
+
+    [Theory]
+    [MemberData(nameof(EveryOtherAnswerToADraw))]
+    public void Step_AnythingButADrawWhileWaitingForOne_IsRefusedAndKeepsWaiting(Command command, string explanation)
+    {
+        // Only the host's draw picks a random option, so moving on, or answering as if something
+        // else had been asked, would leave the random choice without one.
+        var context = PlayContextFactory.ARandomChoice();
+        var waiting = Started(context);
+
+        var result = Runner.Step(context, waiting, command);
+
+        AssertRefused(result, RefusalReason.Misplaced, explanation);
+        Assert.Equal(waiting, result.State);
+    }
+
+    [Fact]
+    public void Step_StartWhileWaitingForADraw_BeginsOver()
+    {
+        var context = PlayContextFactory.ARandomChoice();
+
+        var result = Runner.Step(context, Started(context), new Start());
+
+        AssertAskedForADraw(result, 0, 50, 30, 20);
+    }
+
+    [Fact]
+    public void Step_DrawnAwayFromARandomChoice_IsMisplacedRatherThanUnknown()
+    {
+        var context = PlayContextFactory.OneLine();
+
+        var result = Runner.Step(context, Started(context), new Drawn(0.5));
+
+        AssertRefused(result, RefusalReason.Misplaced, "A run cannot take Drawn at node 0.");
         AssertAt(result, 0);
     }
 

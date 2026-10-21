@@ -293,8 +293,8 @@ throws halfway through a playthrough is worse than a refusal before it starts.
 ### D8 — A menu stays in the transcript
 
 After a take, the menu's last frame stays visible with the cursor on the option taken, so
-the log records what was offered and what was chosen. Where the arm then repeats the
-label, that reads as the player's line, not as duplication.
+the log records what was offered and what was chosen. Where the option's body then repeats
+the label, that reads as the player's line, not as duplication.
 
 ### D9 — Every speaker has a color, and the name still says who
 

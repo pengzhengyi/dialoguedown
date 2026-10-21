@@ -1,0 +1,17 @@
+{
+  "$schema": "https://pengzhengyi.github.io/dialoguedown/schema/fixture-0.schema.json",
+  "name": "a random choice asks the host for a draw, and the draw leads into the random option it lands on",
+  "playbook": "playbook.json",
+  "because": "the random options converge afterwards, so only the line the draw leads to tells them apart, and the draw names each random option's share, the auto weight taking what the numbers leave of 100",
+  "session": [
+    { "expect": { "said": { "speech": "The guard looks up." } } },
+    { "send": "next" },
+    { "expect": { "draw": [50, 30, 20] } },
+    { "send": { "drawn": 0.75 } },
+    { "expect": { "said": { "speaker": "Guard", "speech": "Move along." } } },
+    { "send": "next" },
+    { "expect": { "said": { "speech": "The guard looks away." } } },
+    { "send": "next" },
+    { "expect": { "ended": {} } }
+  ]
+}

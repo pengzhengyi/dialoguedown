@@ -19,7 +19,8 @@ public static class PlaybookCheckerFactory
             new NodePositionChecker(),
             new ReferenceChecker(),
             new OutwardShapeChecker(),
-            new BranchArmOrderChecker());
+            new BranchOrderChecker(),
+            new NumberWeightChecker());
 
     /// <summary>
     /// Creates the check for whether this build can read a playbook's format at all.

@@ -1,0 +1,19 @@
+{
+  "$schema": "https://pengzhengyi.github.io/dialoguedown/schema/fixture-0.schema.json",
+  "name": "a key weight is asked on arrival, and its random option is drawn as the number the world answered",
+  "playbook": "playbook.json",
+  "because": "the world answers Guard.Mood with 20, so its random option counts as 20% would and the auto weight takes the 80 it leaves; the draw of 0.1 stands at 10 of 100, inside the key weight's span, where a port that gave the key weight no share would have picked Move along",
+  "session": [
+    { "expect": { "said": { "speech": "The guard looks up." } } },
+    { "send": "next" },
+    { "expect": { "resolve": ["Guard.Mood"] } },
+    { "send": { "supply": { "Guard.Mood": 20 } } },
+    { "expect": { "draw": [20, 80] } },
+    { "send": { "drawn": 0.1 } },
+    { "expect": { "said": { "speaker": "Guard", "speech": "Lovely day." } } },
+    { "send": "next" },
+    { "expect": { "said": { "speech": "The guard looks away." } } },
+    { "send": "next" },
+    { "expect": { "ended": {} } }
+  ]
+}

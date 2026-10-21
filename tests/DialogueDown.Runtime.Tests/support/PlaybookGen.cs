@@ -6,6 +6,7 @@ using DialogueDown.Playbook.Edges;
 using DialogueDown.Playbook.Nodes;
 using DialogueDown.Playbook.Speakers;
 using DialogueDown.Playbook.Speech;
+using DialogueDown.Playbook.Weights;
 using static DialogueDown.TestSupport.SpeechFactory;
 
 namespace DialogueDown.Runtime.Tests;
@@ -15,16 +16,20 @@ namespace DialogueDown.Runtime.Tests;
 /// </summary>
 /// <remarks>
 /// Only what the runner plays is drawn: a line, an end, a jump, a line or a control block that
-/// asks the host to perform something, a block condition, and a menu. A line may hold a command
-/// before, between, or after its words, or say nothing but a command. A node or edge kind the
-/// runner gains belongs here too, so a walk covers everything a run can meet.
+/// asks the host to perform something, a block condition, a menu, and a random choice of number,
+/// auto, and key weights. A line may hold a command before, between, or after its words, or say
+/// nothing but a command. A node or edge kind the runner gains belongs here too, so a walk covers
+/// everything a run can meet.
 /// <para>
-/// Any of them may ask the world something. A line or a control block may be guarded, a jump may
-/// fire only when the world allows it, a block condition's first arm is always guarded, a menu's
-/// options may be guarded, and a line or an option's label may have a query in what it says. A
-/// guard and a query never read the same key, so a world drawn beside the playbook can answer each
-/// key in the kind it needs. A menu whose every option is guarded has a fall-through beside them,
-/// as a script compiles to, so a walk sometimes passes a menu by.
+/// Any of them but an end may ask the world something. A line or a control block may be guarded, a
+/// jump may fire only when the world allows it, a block condition's first branch is always
+/// guarded, a menu's options and a random choice's random options may be guarded, a random option
+/// may have a key weight, and a line or an option's label may have a query in what it says. A
+/// guard, a key weight, and a query never read the same key, so a world drawn beside the playbook
+/// can answer each key in the kind it needs. A menu whose every option is guarded has a
+/// fall-through beside them, as a script compiles to, so a walk sometimes passes a menu by. So
+/// does a random choice the world can leave with nothing drawable, so a walk sometimes passes a
+/// random choice by.
 /// </para>
 /// <para>
 /// A drawn playbook may loop, may begin anywhere, and may leave an end unreachable. All three are
@@ -42,6 +47,14 @@ internal static class PlaybookGen
     // The keys a drawn guard reads, each answered with a truth. Two, so two nodes, or a line and
     // its jump, sometimes ask about the same one.
     private static readonly ImmutableArray<string> _truthKeys = ["Rainy", "Late"];
+
+    // The keys a drawn key weight reads, each answered with a number. Two, so a random choice's
+    // two key weights sometimes read the same one.
+    private static readonly ImmutableArray<string> _weightKeys = ["Mood", "Luck"];
+
+    // The numbers a weight comes to, written or answered. Zero, so a random option sometimes has
+    // no share, and 60, which leaves an auto weight beside it 40.
+    private static readonly ImmutableArray<double> _numbers = [0, 60];
 
     /// <summary>What a drawn node turns out to be.</summary>
     private enum Draws
@@ -61,10 +74,10 @@ internal static class PlaybookGen
         /// <summary>A line carrying a jump, with a succession beside it to fall through to.</summary>
         LineThatJumps,
 
-        /// <summary>A block condition with one arm, skipped when the world withholds it.</summary>
+        /// <summary>A block condition with one branch, skipped when the world withholds it.</summary>
         Block,
 
-        /// <summary>A block condition with one arm and an else.</summary>
+        /// <summary>A block condition with one gated branch and an else.</summary>
         BlockWithAnElse,
 
         /// <summary>
@@ -72,6 +85,12 @@ internal static class PlaybookGen
         /// world may withhold.
         /// </summary>
         Menu,
+
+        /// <summary>
+        /// A random choice of two random options, one carrying on and one leading elsewhere, each
+        /// with a number, auto, or key weight, either of which the world may withhold.
+        /// </summary>
+        RandomChoice,
     }
 
     /// <summary>Where a drawn line holds a command in what it says.</summary>
@@ -108,10 +127,10 @@ internal static class PlaybookGen
     /// <summary>Worlds that answer whatever a drawn playbook asks.</summary>
     /// <returns>The generator.</returns>
     public static Gen<DrawnWorld> Worlds() =>
-        Gen.Bool.Array[_truthKeys.Length].Select(holds =>
-            new DrawnWorld(
-                _truthKeys.Zip(holds).ToImmutableDictionary(
-                    truth => truth.First, truth => truth.Second, StringComparer.Ordinal)));
+        Gen.Select(
+            Gen.Bool.Array[_truthKeys.Length],
+            Gen.OneOfConst([.. _numbers]).Array[_weightKeys.Length],
+            (holds, numbers) => new DrawnWorld(ByKey(_truthKeys, holds), ByKey(_weightKeys, numbers)));
 
     // Drawn without an index, then given one: a node states its own position, so it can only be
     // built once its place among the others is known.
@@ -125,14 +144,15 @@ internal static class PlaybookGen
                 Draws.LineThatJumps,
                 Draws.Block,
                 Draws.BlockWithAnElse,
-                Draws.Menu),
+                Draws.Menu,
+                Draws.RandomChoice),
             Gen.Int[0, speakers - 1],
             Gen.Int[0, nodes - 1],
             Gen.Int[0, nodes - 1],
-            Gen.Select(Guard(), Guard(), ArmGuard()),
+            Gen.Select(Guard(), Guard(), BranchGuard()),
             Gen.Select(Gen.Bool, Gen.Enum<CommandAt>()),
-            Menu(),
-            (draws, speaker, onward, elsewhere, guards, speech, menu) =>
+            Gen.Select(Menu(), RandomChoice()),
+            (draws, speaker, onward, elsewhere, guards, speech, choices) =>
                 new NodeDraft(
                     draws,
                     speaker,
@@ -140,18 +160,20 @@ internal static class PlaybookGen
                     elsewhere,
                     Guard: guards.Item1,
                     JumpGuard: guards.Item2,
-                    ArmGuard: guards.Item3,
+                    BranchGuard: guards.Item3,
                     Asks: speech.Item1,
                     CommandAt: speech.Item2,
-                    Menu: menu));
+                    Menu: choices.Item1,
+                    RandomChoice: choices.Item2));
 
     // No guard is drawn as often as each key, so a walk still meets plenty of nodes it can pass
     // without asking.
     private static Gen<Condition?> Guard() =>
         Gen.OneOfConst<Condition?>([null, .. _truthKeys.Select(key => new KeyCondition(key))]);
 
-    // A block condition's arm is always guarded, so the walk meets both the arm and what follows it.
-    private static Gen<Condition> ArmGuard() =>
+    // A block condition's first branch is always guarded, so the walk meets both the branch and
+    // what follows it.
+    private static Gen<Condition> BranchGuard() =>
         Gen.OneOfConst([.. _truthKeys.Select(Condition (key) => new KeyCondition(key))]);
 
     private static Gen<MenuDraft> Menu() =>
@@ -162,6 +184,30 @@ internal static class PlaybookGen
             Gen.Bool,
             (onwardGuard, elsewhereGuard, onwardAsks, elsewhereAsks) =>
                 new MenuDraft(onwardGuard, elsewhereGuard, onwardAsks, elsewhereAsks));
+
+    private static Gen<RandomChoiceDraft> RandomChoice() =>
+        Gen.Select(
+            Weight(),
+            Weight(),
+            Guard(),
+            Guard(),
+            (onwardWeight, elsewhereWeight, onwardGuard, elsewhereGuard) =>
+                new RandomChoiceDraft(onwardWeight, elsewhereWeight, onwardGuard, elsewhereGuard));
+
+    // A number beside an auto weight leaves the auto weight the rest of 100, and two zeros leave
+    // nothing drawable. A key weight comes to whichever number the world answers for it.
+    private static Gen<ChoiceWeight> Weight() =>
+        Gen.OneOfConst<ChoiceWeight>(
+            [
+                new AutoWeight(),
+                .. _numbers.Select(number => new NumberWeight(number)),
+                .. _weightKeys.Select(key => new QueryWeight(key)),
+            ]);
+
+    // Each key with the answer drawn for it.
+    private static ImmutableDictionary<string, T> ByKey<T>(ImmutableArray<string> keys, T[] answers) =>
+        keys.Zip(answers).ToImmutableDictionary(
+            answered => answered.First, answered => answered.Second, StringComparer.Ordinal);
 
     private static PlaybookDocument Document(NodeDraft[] drafts, int speakers, int entry) =>
         PlayContextFactory.Document(
@@ -182,10 +228,11 @@ internal static class PlaybookGen
     /// <param name="Elsewhere">Where a jump leads, when the node carries one.</param>
     /// <param name="Guard">What the world must allow for a line or control block to play.</param>
     /// <param name="JumpGuard">What the world must allow for a jump to fire.</param>
-    /// <param name="ArmGuard">What the world must allow for a block condition's arm to be taken.</param>
+    /// <param name="BranchGuard">What the world must allow for a block condition's branch to be taken.</param>
     /// <param name="Asks">Whether a line has a query in what it says.</param>
     /// <param name="CommandAt">Where a line holds a command in what it says.</param>
     /// <param name="Menu">What a menu's options ask of the world.</param>
+    /// <param name="RandomChoice">The weights and guards of a random choice's random options.</param>
     private readonly record struct NodeDraft(
         Draws Draws,
         int Speaker,
@@ -193,10 +240,11 @@ internal static class PlaybookGen
         int Elsewhere,
         Condition? Guard,
         Condition? JumpGuard,
-        Condition ArmGuard,
+        Condition BranchGuard,
         bool Asks,
         CommandAt CommandAt,
-        MenuDraft Menu)
+        MenuDraft Menu,
+        RandomChoiceDraft RandomChoice)
     {
         /// <summary>The node, standing at a position.</summary>
         /// <param name="id">Its position in the playbook.</param>
@@ -211,9 +259,10 @@ internal static class PlaybookGen
                 Guard,
                 [new SuccessionEdge(Onward)]),
             Draws.LineThatJumps => Speaks(id, [Jump(), new SuccessionEdge(Onward)]),
-            Draws.Block => new BranchNode(id, [Arm(), new SuccessionEdge(Onward)]),
-            Draws.BlockWithAnElse => new BranchNode(id, [Arm(), new BranchEdge(Onward, Condition: null)]),
+            Draws.Block => new BranchNode(id, [GatedBranch(), new SuccessionEdge(Onward)]),
+            Draws.BlockWithAnElse => new BranchNode(id, [GatedBranch(), new BranchEdge(Onward, Condition: null)]),
             Draws.Menu => new ChoiceNode(id, Ordered: false, Options()),
+            Draws.RandomChoice => new RandomChoiceNode(id, RandomOptions()),
             _ => Speaks(id, [new SuccessionEdge(Onward)]),
         };
 
@@ -246,7 +295,7 @@ internal static class PlaybookGen
 
         private DivertEdge Jump() => new(Elsewhere, [], JumpGuard);
 
-        private BranchEdge Arm() => new(Elsewhere, ArmGuard);
+        private BranchEdge GatedBranch() => new(Elsewhere, BranchGuard);
 
         // A menu whose every option the world may withhold falls through past them, which is how a
         // script compiles one, so the walk goes on when the world withholds both.
@@ -263,6 +312,20 @@ internal static class PlaybookGen
         // menu is offered.
         private static OptionEdge Option(int target, string words, Condition? guard, bool asks) =>
             new(target, asks ? [Text($"{words}, "), Query(WordsKey), Text(".")] : [Text($"{words}.")], guard);
+
+        // A random choice the world can leave with nothing drawable falls through past its random
+        // options, which is how a script compiles one, so the walk goes on rather than being refused
+        // there as leading nowhere.
+        private ImmutableArray<Edge> RandomOptions() =>
+            RandomChoice.MayHaveNothingToDraw
+                ? [.. TwoRandomOptions(), new SuccessionEdge(Onward)]
+                : [.. TwoRandomOptions()];
+
+        private ImmutableArray<RandomOptionEdge> TwoRandomOptions() =>
+            [
+                new(Onward, RandomChoice.OnwardWeight, RandomChoice.OnwardGuard),
+                new(Elsewhere, RandomChoice.ElsewhereWeight, RandomChoice.ElsewhereGuard),
+            ];
     }
 
     /// <summary>What a drawn menu's options ask of the world.</summary>
@@ -275,5 +338,30 @@ internal static class PlaybookGen
     {
         /// <summary>Gets whether the world may withhold every option.</summary>
         public bool EveryOptionIsGuarded => OnwardGuard is not null && ElsewhereGuard is not null;
+    }
+
+    /// <summary>The weights and guards of a drawn random choice's random options.</summary>
+    /// <param name="OnwardWeight">The weight of the random option that carries on.</param>
+    /// <param name="ElsewhereWeight">The weight of the random option leading elsewhere.</param>
+    /// <param name="OnwardGuard">
+    /// What the world must allow for the random option that carries on to be in play.
+    /// </param>
+    /// <param name="ElsewhereGuard">
+    /// What the world must allow for the random option leading elsewhere to be in play.
+    /// </param>
+    private readonly record struct RandomChoiceDraft(
+        ChoiceWeight OnwardWeight, ChoiceWeight ElsewhereWeight, Condition? OnwardGuard, Condition? ElsewhereGuard)
+    {
+        /// <summary>
+        /// Gets whether the world can leave nothing drawable. An unguarded random option with a number
+        /// above zero or an auto weight makes sure something is: the number is its own share, and
+        /// beside an auto weight the shares in play add up to at least 100.
+        /// </summary>
+        public bool MayHaveNothingToDraw =>
+            !GuaranteesSomethingDrawable(OnwardWeight, OnwardGuard)
+                && !GuaranteesSomethingDrawable(ElsewhereWeight, ElsewhereGuard);
+
+        private static bool GuaranteesSomethingDrawable(ChoiceWeight weight, Condition? guard) =>
+            guard is null && weight is AutoWeight or NumberWeight { Percentage: > 0 };
     }
 }

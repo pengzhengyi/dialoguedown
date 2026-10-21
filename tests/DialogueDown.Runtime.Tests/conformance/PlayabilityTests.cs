@@ -4,7 +4,6 @@ using DialogueDown.Playbook.Nodes;
 using DialogueDown.TestSupport;
 using static DialogueDown.Runtime.Tests.Conformance.PlayabilityAssert;
 using static DialogueDown.Runtime.Tests.Conformance.SessionEntries;
-using static DialogueDown.TestSupport.PlaybookNodeFactory;
 
 namespace DialogueDown.Runtime.Tests.Conformance;
 
@@ -35,16 +34,6 @@ public sealed class PlayabilityTests
         // A key no matcher owns would end the run where it is read, so the screen reports it before
         // the run starts.
         AssertNotPlayable(Expected("""{ "invalidated": {} }"""));
-    }
-
-    [Fact]
-    public void WhyNotPlayable_OfAPlaybook_NamesEachKindOnce()
-    {
-        var context = PlayContextFactory.Of(
-            [RandomChoice(EvenChance(target: 2)), RandomChoice(id: 1, EvenChance(target: 2)), End(id: 2)],
-            ["Alice"]);
-
-        AssertNotPlayable(context, "nothing plays a RandomChoiceNode yet");
     }
 
     [Fact]
@@ -83,19 +72,20 @@ public sealed class PlayabilityTests
     }
 
     [Fact]
-    public void WhatTheHarnessDeclines_IsWhatTheRunnerRefuses()
+    public void WhatTheHarnessDeclines_IsWhatTheRunnerCannotPlay()
     {
         // The harness screens a playbook before stepping, and the screen restates what the runner
-        // can play, so the two must agree: on every kind, and on each way a menu asks the world.
-        foreach (var (name, node) in EveryKindAndEveryMenuThatAsksTheWorld())
+        // can play, so the two must agree: on every kind, and on each way a menu or a random choice
+        // asks the world.
+        foreach (var (name, node) in EveryKindAndEachNodeThatAsksTheWorld())
         {
-            var refused = node.RefusalOnArrival() is not null;
+            var unplayable = node.IsUnplayableKind();
 
             Assert.True(
-                Playability.CanPlay(node) == !refused,
+                Playability.CanPlay(node) == !unplayable,
                 $"{name}: the harness calls it "
                     + $"{(Playability.CanPlay(node) ? "playable" : "unplayable")}, "
-                    + $"but arriving at it {(refused ? "refuses" : "does not refuse")}.");
+                    + $"but the runner {(unplayable ? "cannot play it" : "can")}.");
         }
     }
 
@@ -108,16 +98,20 @@ public sealed class PlayabilityTests
     }
 
     /// <summary>
-    /// One node of every kind, named by its kind, and each menu that asks the world, named by the
-    /// scenario that builds it.
+    /// One node of every kind, named by its kind, and each menu and random choice that asks the
+    /// world, named by the scenario that builds it.
     /// </summary>
     /// <returns>Each node, with the name a failure reports it by.</returns>
-    private static IEnumerable<(string Name, Node Node)> EveryKindAndEveryMenuThatAsksTheWorld() =>
+    private static IEnumerable<(string Name, Node Node)> EveryKindAndEachNodeThatAsksTheWorld() =>
     [
         .. PlayContextFactory.OneOfEveryNodeKind().Select(node => (node.GetType().Name, node)),
         (
             nameof(PlayContextFactory.AMenuWithAConditionalOption),
             PlayContextFactory.AMenuWithAConditionalOption()),
         (nameof(PlayContextFactory.AMenuWithAQueryInALabel), PlayContextFactory.AMenuWithAQueryInALabel()),
+        (
+            nameof(PlayContextFactory.ARandomChoiceWithAGuardedRandomOption),
+            PlayContextFactory.ARandomChoiceWithAGuardedRandomOption()),
+        (nameof(PlayContextFactory.ARandomChoiceWithAKeyWeight), PlayContextFactory.ARandomChoiceWithAKeyWeight()),
     ];
 }

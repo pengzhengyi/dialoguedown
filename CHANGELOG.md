@@ -46,12 +46,12 @@ changes easy to categorize.
 
 - **A run asks the world what it needs to know** — `Resolve(keys)` joins `Perform` as a request the
   run stops for, answered by `Supply(answers)`: a truth for a guard, words for a query. A line or
-  control block the world withholds is stepped over; a jump or a block condition's arm is taken only
-  when the world allows it, and a block with no arm taken and no `else` is skipped; a query in a line
-  is said as the words that answered it, and an answer of no words leaves nothing in its place. A
-  node is asked about before it plays and again before the run leaves it, so a way out is judged
-  against the world an effect left behind. An answer that does not fit what was asked is refused and
-  the run keeps waiting, so the driver can answer again. See
+  control block the world withholds is stepped over; a jump or a block condition's branch is taken
+  only when the world allows it, and a block with no branch taken and no `else` is skipped; a query
+  in a line is said as the words that answered it, and an answer of no words leaves nothing in its
+  place. A node is asked about before it plays and again before the run leaves it, so a way out is
+  judged against the world an effect left behind. An answer that does not fit what was asked is
+  refused and the run keeps waiting, so the driver can answer again. See
   [Asking the world](docs/contributing/design-notes/runtime/Asking%20the%20World.md).
 
 - **A line carries out the commands written in it** — a line with a command in its speech reaches
@@ -98,26 +98,49 @@ changes easy to categorize.
   [Speech as plain text](docs/contributing/design-notes/runtime/Speech%20as%20Plain%20Text.md).
 
 - **A node's ways out are checked when a playbook loads** — the reader refuses a playbook where a
-  node carries an edge kind it cannot act on, more than one succession, no arm where one is
-  required, or no way onward at all; the schema and the conformance corpus enforce the same as far
-  as they reach. This catches a hand-edited or tool-written playbook that would play differently
-  between two conformant runtimes. See
+  node carries an edge kind it cannot act on, more than one succession, no option, random option,
+  or branch where one is required, or no way onward at all; the schema and the conformance corpus
+  enforce the same as far as they reach. This catches a hand-edited or tool-written playbook that
+  would play differently between two conformant runtimes. See
   [Node outward shape](docs/contributing/design-notes/runtime/Playbook%20Reader%20Rules.md).
 
-- **A branch's arms are checked for order when a playbook loads** — the reader refuses a branch whose
-  arms do not ascend by `order`, whose `else` is not the last arm, or that carries no gated arm, and
-  the schema requires at least one gated arm and allows at most one `else`. This keeps a reordered or
-  hand-edited if/elseif/else from telling a different story to two conformant runtimes. See
-  [Branch arm order](docs/contributing/design-notes/runtime/Playbook%20Reader%20Rules.md).
+- **A branch node's branches are checked for order when a playbook loads** — the reader refuses a
+  branch node whose `else` is not the last branch, or that carries no gated branch, and the schema
+  requires at least one gated branch and allows at most one `else`. This keeps a reordered or hand-edited if/elseif/else from telling a different story to two
+  conformant runtimes. See
+  [Branch order](docs/contributing/design-notes/runtime/Playbook%20Reader%20Rules.md).
+
+- **A run draws at a random choice** — `Draw(shares)` joins the requests a run stops for: a random
+  choice names every random option's share, in the order written, and the run waits for the host's
+  `Drawn(value)`, a number from 0 to 1, then follows the random option whose span holds it. The host
+  owns randomness and seeding, so replaying the commands replays every draw. A draw outside 0 to 1
+  is refused as `invalid-draw` and the run keeps waiting. A random choice's conditions are asked on
+  arrival in one `Resolve`, and a random option the world withholds is left out: its share is 0, and
+  an auto weight takes what the random options in play leave of 100. A key weight is asked with the
+  conditions and answered with a number, a JSON number in `supply`, and counts as that number
+  written as a percentage. A key weight in play answered with a number that is negative or not
+  finite, or answers whose shares are too large to add up, are refused as `invalid-weight` and the
+  run keeps waiting; an excluded random option's key weight is asked but neither checked nor
+  counted. A key a random choice needs as a condition and as a key weight is refused as
+  `key-needed-both-ways` before anything is asked. A random choice with nothing to draw is walked
+  past by its fall-through, which the compiler gives a random choice unless an unguarded random
+  option has a number above zero or an auto weight. See
+  [Drawing a random option](docs/contributing/design-notes/runtime/Drawing%20a%20Random%20Option.md).
+
+- **A random choice's number weights are checked when a playbook loads** — the reader refuses a
+  number weight that is negative or not finite, and number weights that add up to more than a
+  double can hold, so no runtime has to decide what a draw against them means; the schema gives a
+  number weight a minimum of 0. See
+  [Number weights](docs/contributing/design-notes/runtime/Playbook%20Reader%20Rules.md#number-weights).
 
 - **Jump from a playbook table into the JSON** — in the Playbook tab, clicking a node number,
   a speaker's name, or the entry node scrolls the serialized playbook to that element and centers
   it, so reading `#the-market → 33` no longer means hunting for node 33 by hand. See
   [Jumping into the Playbook](docs/contributing/design-notes/visualization/report/Navigating%20the%20Playbook.md).
 
-- **`DLG2017` warns about an option a player cannot read** — an arm with neither words nor a named
-  jump compiles to a blank line in the menu, which the compiler now points at instead of leaving
-  for a playtest to find. See
+- **`DLG2017` warns about an option a player cannot read** — an option with neither words nor a
+  named jump compiles to a blank line in the menu, which the compiler now points at instead of
+  leaving for a playtest to find. See
   [the error catalog](docs/guide/error-codes.md#dlg2017).
 
 - **A query in a label** — a link's text, an image's alt text, or a menu option written as a jump
@@ -128,6 +151,22 @@ changes easy to categorize.
   [Game Calls in Labels](docs/contributing/design-notes/language/Game%20Calls%20in%20Labels.md).
 
 ### Changed
+
+- **An unknown key in `dialogue.toml` is an error** — a misspelled setting (`modee`,
+  `[[speaker]]`) or an unknown key under `[markdown]` (`[markdown.unmodled]`) was ignored, which
+  left the setting at its default without a word. It is now rejected with its file, line, and
+  column, and the message lists the keys allowed there. A dotted key is a nested table by TOML's
+  rules, so `mode.strategy = "…"` is now reported as a `mode` that is not a string, and a dotted
+  speaker or kind key such as `name.first` as a `name` that is not a string.
+
+- **A `dialogue.toml` error points at the exact element** — an error about one element of an
+  array, such as a tag that is neither a string nor a table, points at that element, also when
+  the array spans several lines.
+
+- **A random choice whose only option has a `0%` chance of being picked is an error** — it
+  compiled with a warning that the option is always selected, but an option with no weight is
+  never selected. It is now reported as a zero total (`DLG2010`), as two options with `0%` each
+  already were, and the warning stays quiet for it.
 
 - **The conformance harness reports every divergence a case has** — an outcome carries a list of
   reasons rather than only the first, so a contributor meets every fault a fixture found in one run
@@ -149,7 +188,7 @@ changes easy to categorize.
 
 - **The Playbook tab's summary column is drawn as what each node actually is** — a menu's options
   and a control's commands are lists now, numbered when their order is meaning; a piece that names
-  a node (a branch arm's number, a jump's own words, an option's label) is a button that reveals
+  a node (a branch's number, a jump's own words, an option's label) is a button that reveals
   that node in the JSON beside the table, and hovering it lights the node's row; and a piece whose
   words do not carry its meaning explains itself on hover. A condition also reads as the query it
   is: `IF FoundKey? THEN 12`. See
@@ -203,9 +242,9 @@ changes easy to categorize.
   table, and a click copies it verbatim. See
   [Tag Capsules](docs/contributing/design-notes/visualization/report/Table%20Cell%20Conventions.md).
 
-- **Choosing a choice arm in the Dialogue Graph shows what the player would read** — the details
-  panel named the two nodes an arm joins but not the wording it offers, so answering "what is
-  picked here?" meant following the arm to find out. The drawing is unchanged.
+- **Choosing a choice's option in the Dialogue Graph shows what the player would read** — the
+  details panel named the two nodes an option joins but not the wording it offers, so answering
+  "what is picked here?" meant following the option to find out. The drawing is unchanged.
 
 - **A table cell with nothing in it is now empty** — the report wrote an absent speaker id, an
   empty tag list, or a speaker that is not the default as `—` or `N/A`, so a playbook where one
@@ -213,6 +252,12 @@ changes easy to categorize.
   Every table now says nothing when there is nothing to say, marks the default speaker with a
   tick, and names the nameless one `(anonymous)` in all three tabs rather than three ways. See
   [Saying Nothing Across the Report](docs/contributing/design-notes/visualization/report/Table%20Cell%20Conventions.md).
+
+- **The playbook names each way forward by its kind** — the reader's refusal messages, the
+  schema's descriptions, and the conformance cases `two-else-arms` and `else-arm-not-last` (now
+  `two-else-branches` and `else-branch-not-last`) say "option", "random option", "branch", or
+  "edge" instead of "arm". Wire names are unchanged, so every playbook reads as before. See
+  [Playbook Reader Rules](docs/contributing/design-notes/runtime/Playbook%20Reader%20Rules.md).
 
 ### Removed
 
@@ -222,6 +267,17 @@ changes easy to categorize.
   that answer from a world.
 
 ### Fixed
+
+- **Every TOML spelling of a `dialogue.toml` setting is read** — a setting written as an inline
+  table, an inline array of tables, or a dotted key (`speakers = [{ name = "Alice" }]`,
+  `markdown.unmodeled.table = "keep"`) was ignored without an error, so the compile ran on the
+  defaults. Each spelling now configures what its `[table]` or `[[array]]` form does. See
+  [Configuration Loader](docs/contributing/design-notes/configuration/Configuration%20Loader.md).
+
+- **An infinite weight is reported instead of stopping the compiler** — `` `Infinity%` ``, or a
+  weight written with more digits than a double holds, read as an infinite number, and the
+  compiler stopped with an error when it wrote the playbook. It is now reported as an invalid
+  weight (`DLG1105`), as a negative one is.
 
 - **A disabled action stays readable in the light theme** — the Discard button, and the
   Explorer's New file and New folder while in View, dimmed their labels to about 2:1 against
@@ -302,7 +358,7 @@ changes easy to categorize.
 - **A menu option written as a jump is offered by the words the writer gave it** — `- => [Take the
   east road](#the-market)`, the ordinary way to write a branching menu, compiled to a blank option
   label, so a runtime building a menu drew an empty row unless it read the words off the node the
-  arm led to. Those words now name the option as well as the jump. This filled 18 of the 52 option
+  option led to. Those words now name the option as well as the jump. This filled 18 of the 52 option
   labels across the shipped examples, and their playbooks change accordingly.
 
 ## [0.2.0] - 2026-08-25

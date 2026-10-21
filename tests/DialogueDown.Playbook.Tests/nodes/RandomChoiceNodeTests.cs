@@ -5,7 +5,7 @@ namespace DialogueDown.Playbook.Tests.Nodes;
 public sealed class RandomChoiceNodeTests
 {
     [Fact]
-    public void RoundTrip_ARandomChoice_CarriesOnlyItsArms()
+    public void RoundTrip_ARandomChoice_CarriesOnlyItsRandomOptions()
     {
         const string Json = """
             {

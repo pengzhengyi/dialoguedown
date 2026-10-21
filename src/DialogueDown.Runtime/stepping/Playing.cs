@@ -8,8 +8,9 @@ namespace DialogueDown.Runtime.Stepping;
 
 /// <summary>
 /// What playing a node hands the host — a line's words and commands, a control block's effects, a
-/// menu's options, or the end — and what follows once the host has done what the node asked, or
-/// once the world has answered what a line needs part-way through.
+/// menu's options, a random choice's request for a draw, or the end — and what follows once the
+/// host has done what the node asked, or once the world has answered what a line needs part-way
+/// through.
 /// </summary>
 /// <remarks>
 /// A node is played once the run has arrived at it and the world has answered what it asked, so
@@ -23,6 +24,12 @@ internal static class Playing
     /// <param name="node">The node itself.</param>
     /// <param name="supply">What the world said, when playing the node needed answers.</param>
     /// <returns>Where the run now stands, and what it has to say.</returns>
+    /// <exception cref="InvalidOperationException">
+    /// The node is a random choice whose shares need the world's answers, and none were given.
+    /// </exception>
+    /// <exception cref="NotSupportedException">
+    /// The node is a block condition, which is walked past rather than played.
+    /// </exception>
     public static StepResult At(PlayContext context, int position, Node node, Supply? supply = null)
     {
         ArgumentNullException.ThrowIfNull(context);
@@ -33,8 +40,9 @@ internal static class Playing
             LineNode line => Line(context, position, line, supply, segmentIndex: 0),
             ControlNode control => Control(position, control),
             ChoiceNode choice => Choosing.Offer(position, choice, supply),
+            RandomChoiceNode random => RandomChoice(position, random, supply),
             EndNode => End(),
-            var unplayable => Unplayable(position, unplayable),
+            _ => throw new NotSupportedException($"No playing is defined for {node.GetType().Name}."),
         };
     }
 
@@ -152,14 +160,17 @@ internal static class Playing
             new PlayState(new AwaitingDone(position, new Resume.FromNodeEnd())),
             [.. control.Effects.Select(Event (effect) => new Perform(effect))]);
 
-    private static StepResult End() => new(new PlayState(new AtEnd()), [new Ended()]);
+    // Arrival asks the world before it plays a random choice whose shares need answers, so the
+    // shares can always be worked out here.
+    private static StepResult RandomChoice(int position, RandomChoiceNode random, Supply? supply) =>
+        RandomChoiceShares.TryWorkOut(random, supply, out var shares)
+            ? Drawing.AskForADraw(position, shares)
+            : throw new InvalidOperationException(
+                $"The random choice at node {position} needs the world's answers before it is drawn at, "
+                    + "and none were given. Arrival asks for them first, so reaching this means that "
+                    + "step was skipped.");
 
-    // Refused rather than answered with no events, which would look like a hang.
-    private static StepResult Unplayable(int position, Node unplayable) =>
-        StepResults.Refuse(
-            position,
-            RefusalReason.UnplayableNode,
-            $"This build cannot play a node of kind {unplayable.GetType().Name} yet.");
+    private static StepResult End() => new(new PlayState(new AtEnd()), [new Ended()]);
 
     // Nothing new is said, and nothing is left for the host to answer, so the player has the turn.
     private static StepResult WaitForThePlayer(int position) =>

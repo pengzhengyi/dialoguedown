@@ -23,7 +23,11 @@ internal static class Playability
     /// <summary>Whether this build can play a node.</summary>
     /// <param name="node">The node to ask about.</param>
     /// <returns><see langword="true"/> when arriving at the node is something this build does.</returns>
-    public static bool CanPlay(Node node) => node is LineNode or EndNode or ControlNode or BranchNode or ChoiceNode;
+    public static bool CanPlay(Node node) => node switch
+    {
+        LineNode or EndNode or ControlNode or BranchNode or ChoiceNode or RandomChoiceNode => true,
+        _ => false,
+    };
 
     /// <summary>Whether this build can take a session entry at all.</summary>
     /// <param name="entry">The entry to ask about.</param>

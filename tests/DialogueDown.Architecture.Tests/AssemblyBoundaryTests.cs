@@ -53,6 +53,20 @@ public sealed class AssemblyBoundaryTests
     }
 
     [Fact]
+    public void ConfigurationLoader_OnlyItsTomlFrontEnd_DependsOnTomlyn()
+    {
+        // The section readers work on the format-neutral configuration tree, so a front end for
+        // another format would not change them.
+        Types.InAssembly(Architecture.ConfigurationLoaderAssembly)
+            .That()
+            .DoNotResideInNamespace(Architecture.ConfigurationLoaderToml)
+            .ShouldNot()
+            .HaveDependencyOnAny(Architecture.Tomlyn)
+            .GetResult()
+            .ShouldPass();
+    }
+
+    [Fact]
     public void Core_DoesNotDependOn_PresentationOrHostLibraries()
     {
         Types.InAssembly(Architecture.CoreAssembly)

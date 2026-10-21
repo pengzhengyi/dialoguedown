@@ -62,8 +62,8 @@ each construct flows is fixed by [Progression Order](../language/Progression%20O
 | **Edge** | A directed connection to a target node id, of a specific kind. |
 | **Succession** | Fall-through to the next block in document order. |
 | **Divert** | The edge a jump lowers to. It does not return. |
-| **Option** | One arm of a choice; a random option also carries a weight. |
-| **Branch edge** | One arm of a block control. The arms are tried in the order the node lists them, and the first whose condition holds is taken. |
+| **Option** | One way a choice offers forward; a random option also carries a weight. |
+| **Branch edge** | One branch of a block control. The branches are tried in the order the node lists them, and the first whose condition holds is taken. |
 | **Condition** | The AST `Condition`, opaque to the core. On an edge it withholds a **route**; on a node it withholds the node's **content**. |
 | **Effect** | A game call (`GameCall`) a node runs when it plays. |
 | **Region** | A named grouping overlaid on the flat graph — a scene. Its **own nodes** are held directly; **subregions** nest. |
@@ -125,8 +125,8 @@ flowchart LR
   a scene and plays nothing, so it gets no node.
 - `DivertPass` turns each jump resolution into a divert: a `SceneJump` to the target
   scene's entry node, a `TerminalJump` to End.
-- `ChoicePass` and `BranchPass` fan out option and branch edges; each arm's body
-  rejoins the block's continuation.
+- `ChoicePass` and `BranchPass` fan out option and branch edges; each option's or
+  branch's body rejoins the block's continuation.
 - `SuccessionPass` adds fall-through to every node that does not already leave
   unconditionally; the last block falls through to End.
 - `RegionPass` projects the scene tree into `SceneRegion`s.

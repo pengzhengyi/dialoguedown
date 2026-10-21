@@ -173,7 +173,7 @@ What they must not do is disagree. A test pairs corresponding fragments of the t
 types and asserts both helpers produce the same string, so a change to one that the
 other does not follow fails a build rather than a port's conformance run.
 
-That test is why `InlineText.Of` has a `Query` case: one arm before its catch-all,
+That test is why `InlineText.Of` has a `Query` case: one case before its catch-all,
 which leaves commands and tags contributing nothing.
 
 ### D4 — A query is answered by the caller, not by the function
@@ -295,7 +295,7 @@ control node by its effects.
 
 - **`speech/SpeechText.cs`** — public, in `DialogueDown.Playbook`: two `Of`
   overloads and `PlaceholderFor`, the library's whole addition to its public API.
-- **`script/ast/InlineText.cs`** — a `Query` arm that calls `PlaceholderFor`, so the
+- **`script/ast/InlineText.cs`** — a `Query` case that calls `PlaceholderFor`, so the
   braces have one definition. Kept rather than merged away; see D3.
 - **The conformance harness** — `SaidMatcher` compares a fixture's string form
   against `SpeechText.Of`, so the normative flattening and the implementation are the

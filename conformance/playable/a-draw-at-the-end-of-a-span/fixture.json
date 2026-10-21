@@ -1,0 +1,13 @@
+{
+  "$schema": "https://pengzhengyi.github.io/dialoguedown/schema/fixture-0.schema.json",
+  "name": "a draw at the exact end of one random option's span lands on the next",
+  "playbook": "playbook.json",
+  "because": "a span holds its start but not its end, so a draw of 0.5 against two equal shares stands where the second span begins -- a runner that closed its spans at the end would land on the first",
+  "session": [
+    { "expect": { "draw": [50, 50] } },
+    { "send": { "drawn": 0.5 } },
+    { "expect": { "said": { "speaker": "Guard", "speech": "Move along." } } },
+    { "send": "next" },
+    { "expect": { "ended": {} } }
+  ]
+}

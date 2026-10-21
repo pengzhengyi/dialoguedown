@@ -58,34 +58,34 @@ public sealed class NodeTraversalExtensionsTests
                 .OnwardTarget(Answering(("Alice.HasKey", false))));
 
     [Fact]
-    public void OnwardTarget_ABranchWhoseArmsBothHold_TakesTheFirst() =>
-        // The arms are tried in the order written, so a later arm that also holds is never reached.
+    public void OnwardTarget_ABranchWhoseBranchesBothHold_TakesTheFirst() =>
+        // The branches are tried in the order written, so a later branch that also holds is never reached.
         Assert.Equal(
             7, ABranchWithAnElse().OnwardTarget(Answering(("Alice.HasKey", true), ("Alice.HasPick", true))));
 
     [Fact]
-    public void OnwardTarget_ABranchWhoseFirstArmIsWithheld_TakesTheNextTheWorldAllows() =>
+    public void OnwardTarget_ABranchWhoseFirstBranchIsWithheld_TakesTheNextTheWorldAllows() =>
         Assert.Equal(
             8, ABranchWithAnElse().OnwardTarget(Answering(("Alice.HasKey", false), ("Alice.HasPick", true))));
 
     [Fact]
-    public void OnwardTarget_ABranchWhoseArmsAreAllWithheld_TakesItsElse() =>
+    public void OnwardTarget_ABranchWhoseBranchesAreAllWithheld_TakesItsElse() =>
         Assert.Equal(
             9, ABranchWithAnElse().OnwardTarget(Answering(("Alice.HasKey", false), ("Alice.HasPick", false))));
 
     [Fact]
-    public void OnwardTarget_ABranchWithoutAnElseWhoseArmIsWithheld_FallsThroughBeneathIt() =>
-        // The succession beneath a block leads past it, so a block with no arm taken is skipped.
+    public void OnwardTarget_ABranchWithoutAnElseWhoseBranchIsWithheld_FallsThroughBeneathIt() =>
+        // The succession beneath a block leads past it, so a block with no branch taken is skipped.
         Assert.Equal(4, ABranchWithoutAnElse().OnwardTarget(Answering(("Alice.HasKey", false))));
 
     [Fact]
-    public void OnwardTarget_ABranchWhoseArmIsWithheldAndNothingBeneathIt_IsNowhere() =>
+    public void OnwardTarget_ABranchWhoseBranchIsWithheldAndNothingBeneathIt_IsNowhere() =>
         Assert.Null(
-            Branch(Arm("Alice.HasKey", target: 7))
+            Branch(Gated("Alice.HasKey", target: 7))
                 .OnwardTarget(Answering(("Alice.HasKey", false))));
 
     [Fact]
-    public void OnwardTarget_WithoutAnswers_TakesAnArmNothingGuards() =>
+    public void OnwardTarget_WithoutAnswers_TakesABranchNothingGuards() =>
         Assert.Equal(9, Branch(Else(target: 9)).OnwardTarget());
 
     [Fact]
@@ -155,6 +155,20 @@ public sealed class NodeTraversalExtensionsTests
         Assert.Throws<ArgumentNullException>(() => ((ChoiceNode)null!).Options());
     }
 
+    [Fact]
+    public void RandomOptions_ARandomChoiceWithAFallThrough_AreOnlyItsRandomOptionsInTheOrderListed()
+    {
+        var random = RandomChoice(Chance(50, target: 7), Succession(4), EvenChance(target: 8));
+
+        Assert.Equal([7, 8], random.RandomOptions().Select(option => option.Target));
+    }
+
+    [Fact]
+    public void RandomOptions_NoRandomChoice_IsRefused()
+    {
+        Assert.Throws<ArgumentNullException>(() => ((RandomChoiceNode)null!).RandomOptions());
+    }
+
     /// <summary>A node whose jump the world must allow, with a fall-through beneath it.</summary>
     /// <remarks>
     /// <code>
@@ -173,7 +187,7 @@ public sealed class NodeTraversalExtensionsTests
     /// </remarks>
     /// <returns>The node.</returns>
     private static BranchNode ABranchWithAnElse() =>
-        Branch(Arm("Alice.HasKey", target: 7), Arm("Alice.HasPick", target: 8), Else(target: 9));
+        Branch(Gated("Alice.HasKey", target: 7), Gated("Alice.HasPick", target: 8), Else(target: 9));
 
     /// <summary>A block condition with an if and no else, and a succession beneath it.</summary>
     /// <remarks>
@@ -183,5 +197,5 @@ public sealed class NodeTraversalExtensionsTests
     /// </remarks>
     /// <returns>The node.</returns>
     private static BranchNode ABranchWithoutAnElse() =>
-        Branch(Arm("Alice.HasKey", target: 7), Succession(4));
+        Branch(Gated("Alice.HasKey", target: 7), Succession(4));
 }

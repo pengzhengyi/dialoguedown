@@ -116,20 +116,22 @@ flowchart LR
     RN --> AW["7. Asking the World"]
     AW --> SL["8. Speaking a Line"]
     SL --> OC["9. Offering a Choice"]
-    OC --> RUN(["players, adapters"])
+    OC --> DR["10. Drawing a Random Option"]
+    DR --> RUN(["players, adapters"])
 ```
 
 | Order | Note | What it covers | Status |
 | --- | --- | --- | --- |
 | 1 | [Dialogue Runtime Architecture](./runtime/Dialogue%20Runtime%20Architecture.md) | The umbrella: the portable playbook, the runner that plays it, and the protocol and seams a host implements | Partially implemented |
 | 2 | [Playbook Format](./runtime/Playbook%20Format.md) | Graph → a versioned JSON playbook, and the reader that loads one back | Implemented |
-| 3 | [Playbook Reader Rules](./runtime/Playbook%20Reader%20Rules.md) | The reader's structural rules beyond the schema: a node's ways out, and a `branch`'s arm order | Implemented |
+| 3 | [Playbook Reader Rules](./runtime/Playbook%20Reader%20Rules.md) | The reader's structural rules beyond the schema: a node's ways out, and the order a `branch` node tries its branches | Implemented |
 | 4 | [Conformance Corpus](./runtime/Conformance%20Corpus.md) | Language-neutral fixtures every runtime must reproduce, and the harness that runs them against the reference reader and runner | Implemented |
 | 5 | [Speech as Plain Text](./runtime/Speech%20as%20Plain%20Text.md) | One public flattening of a line's fragments to plain text, shared by the conformance harness, the report, and a host's fallback rendering | Implemented |
 | 6 | [Runner](./runtime/Runner.md) | The C# runner: the play state, the step that advances it, waiting on the host for a command, and the refusals | Partially implemented |
 | 7 | [Asking the World](./runtime/Asking%20the%20World.md) | How the runner asks the world: `Resolve` answered by `Supply`, for conditions, block conditions, and queries in speech | Implemented |
 | 8 | [Speaking a Line](./runtime/Speaking%20a%20Line.md) | How the runner plays a line's words and commands in written order, stopping inside the line only before a query written after a command | Implemented |
 | 9 | [Offering a Choice](./runtime/Offering%20a%20Choice.md) | How the runner offers a menu with `Offer`, and follows the option the player takes with `Choose` | Implemented |
+| 10 | [Drawing a Random Option](./runtime/Drawing%20a%20Random%20Option.md) | How the runner plays a random choice: the host supplies a draw with `Drawn`, and the runner turns it into the random option the weights give | Implemented |
 
 ### Language constructs
 

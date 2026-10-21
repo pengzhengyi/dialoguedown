@@ -1,0 +1,2 @@
+- `Guard.IsAngry?` `Guard.Mood%` Guard: Halt!
+- `%` Guard: Move along.

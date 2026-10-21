@@ -10,6 +10,10 @@ namespace DialogueDown.Script.Validation;
 /// option, so the weight has no effect and the list is not really random — usually a mistake,
 /// such as a plain line accidentally given a weight, or options that were meant to follow. The
 /// script still compiles, so this is a style warning.
+/// <para>
+/// A lone, unguarded option with a <c>`0%`</c> chance is the exception: it is never selected,
+/// and <see cref="WeightTotalRule"/> reports its zero total instead.
+/// </para>
 /// </summary>
 internal sealed class SingleOptionRandomChoiceRule : DiagnosticRule
 {
@@ -20,10 +24,15 @@ internal sealed class SingleOptionRandomChoiceRule : DiagnosticRule
     {
         foreach (var random in nodes.OfType<RandomChoices>())
         {
-            if (random.Options.Count == 1)
+            if (random.Options is [var only] && !HasAZeroTotal(only))
             {
                 report(SourceSpan.EmptyAt(random.Span.Start));
             }
         }
     }
+
+    private static bool HasAZeroTotal(RandomOption only) =>
+        !only.IsConditional()
+            && only.Weight is NumberWeight { Percentage: var percentage }
+            && WeightTotalRule.IsZeroTotal(percentage);
 }

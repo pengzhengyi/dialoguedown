@@ -28,10 +28,12 @@ internal static class RefusalReasonExtensions
         RefusalReason.UnansweredKey => "unanswered-key",
         RefusalReason.UnaskedKey => "unasked-key",
         RefusalReason.WrongAnswerKind => "wrong-answer-kind",
+        RefusalReason.InvalidWeight => "invalid-weight",
         RefusalReason.KeyNeededBothWays => "key-needed-both-ways",
         RefusalReason.UnplayableNode => "unplayable-node",
         RefusalReason.NoSuchOption => "no-such-option",
         RefusalReason.UnavailableOption => "unavailable-option",
+        RefusalReason.InvalidDraw => "invalid-draw",
         _ => throw new ArgumentOutOfRangeException(nameof(reason), reason, "No name is written for this reason."),
     };
 

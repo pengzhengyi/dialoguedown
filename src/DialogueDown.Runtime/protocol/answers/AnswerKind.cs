@@ -4,9 +4,9 @@ namespace DialogueDown.Runtime.Protocol;
 /// What kind of answer a question needs.
 /// </summary>
 /// <remarks>
-/// A guard is answered by a truth, and a query standing in a line is answered by words. The world
-/// is asked about a key once and answers it once, so a run has to know which of the two that one
-/// answer was meant to be before it can use it.
+/// A guard is answered by a truth, a query standing in a line by words, and a key weight by a
+/// number. The world is asked about a key once and answers it once, so a run has to know which of
+/// these that one answer was meant to be before it can use it.
 /// </remarks>
 internal enum AnswerKind
 {
@@ -15,4 +15,7 @@ internal enum AnswerKind
 
     /// <summary>Words, as a query standing in a line needs.</summary>
     Text,
+
+    /// <summary>A number, as a key weight needs.</summary>
+    Number,
 }

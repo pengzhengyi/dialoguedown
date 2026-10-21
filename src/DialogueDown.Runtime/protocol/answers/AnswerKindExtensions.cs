@@ -19,6 +19,7 @@ internal static class AnswerKindExtensions
         {
             BooleanAnswer => AnswerKind.Boolean,
             TextAnswer => AnswerKind.Text,
+            NumberAnswer => AnswerKind.Number,
 
             // Every kind is named above, so a kind added to the protocol arrives here as a failure
             // rather than as an answer nothing can tell apart from the others.
@@ -34,6 +35,7 @@ internal static class AnswerKindExtensions
     {
         AnswerKind.Boolean => "a truth",
         AnswerKind.Text => "words",
+        AnswerKind.Number => "a number",
         _ => throw new ArgumentOutOfRangeException(
             nameof(kind), kind, "No wording is written for this kind."),
     };

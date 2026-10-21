@@ -1,6 +1,6 @@
 using System.Text.Json.Nodes;
-using DialogueDown.Conformance;
 using DialogueDown.Runtime.Protocol;
+using static DialogueDown.Runtime.Tests.Conformance.Readers.CommandReaderAssert;
 
 namespace DialogueDown.Runtime.Tests.Conformance.Readers;
 
@@ -17,27 +17,32 @@ public sealed class SupplyReaderTests
         AssertReadAnswers("""{ "playerName": "Robin" }""", ("playerName", new TextAnswer("Robin")));
 
     [Fact]
-    public void Read_AnswersOfBothKindsTogether_KeepsEachToItsOwn() =>
+    public void Read_ANumber_IsANumberAnswer() =>
+        AssertReadAnswers("""{ "Guard.Mood": 20 }""", ("Guard.Mood", new NumberAnswer(20)));
+
+    [Fact]
+    public void Read_AnswersOfEveryKindTogether_KeepsEachToItsOwn() =>
         AssertReadAnswers(
-            """{ "Alice.HasKey": true, "playerName": "Robin" }""",
+            """{ "Alice.HasKey": true, "playerName": "Robin", "Guard.Mood": 20 }""",
             ("Alice.HasKey", new BooleanAnswer(true)),
-            ("playerName", new TextAnswer("Robin")));
+            ("playerName", new TextAnswer("Robin")),
+            ("Guard.Mood", new NumberAnswer(20)));
 
     [Fact]
     public void Read_AnEmptyObject_IsASupplyWithNoAnswers() => AssertReadAnswers("{ }");
 
     [Fact]
-    public void Read_AnAnswerOfNeitherKind_IsAFixtureBug() =>
-        AssertFixtureBug("""{ "Alice.HasKey": 3 }""");
+    public void Read_AnAnswerOfNoKind_IsAFixtureBug() =>
+        AssertRejected(_reader, """{ "Alice.HasKey": [] }""");
 
     [Fact]
     public void Read_AKeyAnsweredWithNothing_IsAFixtureBug() =>
-        AssertFixtureBug("""{ "Alice.HasKey": null }""");
+        AssertRejected(_reader, """{ "Alice.HasKey": null }""");
 
     [Fact]
     public void Read_TheBareNameWithNothingBesideIt_IsAFixtureBug() =>
         // A supply always carries what the world answered, so there is no bare form of it.
-        Assert.Throws<InvalidFixtureException>(() => _reader.Read(null));
+        AssertRejected(_reader, payload: null);
 
     /// <summary>Asserts a supply send reads as exactly these answers, and no others.</summary>
     /// <param name="payload">What the send carries beside its key.</param>
@@ -49,9 +54,4 @@ public sealed class SupplyReaderTests
         Assert.Equal(answers.Length, read.Count);
         Assert.All(answers, answer => Assert.Equal(answer.Answer, read[answer.Key]));
     }
-
-    /// <summary>Asserts a supply send gives the command a shape it cannot take.</summary>
-    /// <param name="payload">What the send carries beside its key.</param>
-    private void AssertFixtureBug(string payload) =>
-        Assert.Throws<InvalidFixtureException>(() => _reader.Read(JsonNode.Parse(payload)));
 }

@@ -56,7 +56,7 @@ internal static class DiagnosticCatalog
         DiagnosticCategory.Syntax,
         DiagnosticSeverity.Error);
 
-    /// <summary>DLG1105 — a choice weight is neither a non-negative number nor a bare percent.</summary>
+    /// <summary>DLG1105 — a choice weight is a number that is negative or infinite.</summary>
     public static readonly DiagnosticDescriptor InvalidChoiceWeight = new(
         "DLG1105",
         "Invalid choice weight",
@@ -262,7 +262,7 @@ internal static class DiagnosticCatalog
         DiagnosticCategory.Semantic,
         DiagnosticSeverity.Warning);
 
-    /// <summary>DLG2017 — a player-choice arm carries nothing a menu could show for it.</summary>
+    /// <summary>DLG2017 — a player-choice option carries nothing a menu could show for it.</summary>
     public static readonly DiagnosticDescriptor OptionWithNothingToShow = new(
         "DLG2017",
         "Option with nothing to show",

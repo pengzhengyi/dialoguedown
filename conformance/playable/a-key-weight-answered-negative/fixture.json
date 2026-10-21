@@ -1,0 +1,21 @@
+{
+  "$schema": "https://pengzhengyi.github.io/dialoguedown/schema/fixture-0.schema.json",
+  "name": "a key weight answered with a negative number is refused, and the random choice still takes the answers",
+  "playbook": "playbook.json",
+  "because": "a weight is a number from 0 up, so -10 for Guard.Mood is refused rather than read as 0 or as 10, and the run keeps waiting for the answers it asked for; once the world says 20 instead, the draw comes to 20 and 80, and 0.5 stands at 50 of 100, past the key weight's span",
+  "session": [
+    { "expect": { "said": { "speech": "The guard looks up." } } },
+    { "send": "next" },
+    { "expect": { "resolve": ["Guard.Mood"] } },
+    { "send": { "supply": { "Guard.Mood": -10 } } },
+    { "expect": { "refused": { "reason": "invalid-weight" } } },
+    { "send": { "supply": { "Guard.Mood": 20 } } },
+    { "expect": { "draw": [20, 80] } },
+    { "send": { "drawn": 0.5 } },
+    { "expect": { "said": { "speaker": "Guard", "speech": "Move along." } } },
+    { "send": "next" },
+    { "expect": { "said": { "speech": "The guard looks away." } } },
+    { "send": "next" },
+    { "expect": { "ended": {} } }
+  ]
+}

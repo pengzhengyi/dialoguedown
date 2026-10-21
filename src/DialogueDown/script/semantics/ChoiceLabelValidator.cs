@@ -4,18 +4,18 @@ using DialogueDown.Script.Ast;
 namespace DialogueDown.Script.Semantics;
 
 /// <summary>
-/// Reports each player-choice arm that carries nothing a menu could show for it, so a writer hears
-/// about a blank row before a player is offered one.
+/// Reports each player-choice option that carries nothing a menu could show for it, so a writer
+/// hears about a blank row before a player is offered one.
 /// </summary>
 /// <remarks>
-/// No label is made up for such an arm; it stays unlabelled and is reported. Only a player choice
-/// is checked — a random arm is picked by the engine and never shown, so it carries a weight
-/// rather than words.
+/// No label is made up for such an option; it stays unlabelled and is reported. Only a player
+/// choice is checked — a random option is picked by the engine and never shown, so it carries a
+/// weight rather than words.
 /// </remarks>
 internal static class ChoiceLabelValidator
 {
     /// <summary>
-    /// Checks every arm in <paramref name="options"/>, reporting each one with nothing to show
+    /// Checks every option in <paramref name="options"/>, reporting each one with nothing to show
     /// into <paramref name="diagnostics"/> and carrying on so a writer hears about all of them.
     /// </summary>
     public static void Validate(IEnumerable<Choice> options, IDiagnosticSink diagnostics)

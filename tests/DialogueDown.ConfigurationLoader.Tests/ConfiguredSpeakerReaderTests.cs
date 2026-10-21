@@ -1,58 +1,35 @@
 using DialogueDown.Configuration;
-using DialogueDown.ConfigurationLoader.Errors;
 using DialogueDown.ConfigurationLoader.Readers;
-using DialogueDown.ConfigurationLoader.Tests.Support;
-using Tomlyn.Syntax;
 using static DialogueDown.ConfigurationLoader.Tests.Support.ConfigurationErrorAssert;
 using static DialogueDown.ConfigurationLoader.Tests.Support.ConfiguredSpeakerAssert;
+using static DialogueDown.ConfigurationLoader.Tests.Support.TomlConfigReading;
 
 namespace DialogueDown.ConfigurationLoader.Tests;
 
 public sealed class ConfiguredSpeakerReaderTests
 {
     [Fact]
-    public void Read_NullDocument_Throws() =>
+    public void Read_NullRoot_Throws() =>
         Assert.Throws<ArgumentNullException>(() => new ConfiguredSpeakerReader().Read(null!));
 
     [Fact]
-    public void Read_EmptyDocument_ReturnsEmpty()
+    public void Read_NoSpeakers_ReturnsEmpty()
     {
-        Assert.Empty(Read(string.Empty));
-    }
-
-    [Fact]
-    public void Read_NonSpeakerTable_IsIgnored()
-    {
-        var speakers = Read("""
-            [compiler]
-            note = "not a speaker"
+        var options = Parse("""
+            mode = "best-effort"
             """);
 
-        Assert.Empty(speakers);
-    }
-
-    [Fact]
-    public void Read_UnrelatedTableArray_IsIgnored()
-    {
-        var speaker = AssertOnlySpeaker(Read("""
-            [[extras]]
-            note = "not a speaker"
-
-            [[speakers]]
-            name = "Alice"
-            """));
-
-        Assert.Equal("Alice", speaker.Name);
+        Assert.Empty(options.Speakers);
     }
 
     [Fact]
     public void Read_NameAndId_AreMapped()
     {
-        var speaker = AssertOnlySpeaker(Read("""
+        var speaker = AssertOnlySpeaker(Parse("""
             [[speakers]]
             name = "Alice"
             id = "A"
-            """));
+            """).Speakers);
 
         Assert.Equal("Alice", speaker.Name);
         Assert.Equal("A", speaker.Id);
@@ -60,115 +37,86 @@ public sealed class ConfiguredSpeakerReaderTests
         Assert.Empty(speaker.ReservedTags);
     }
 
+    [Theory]
+    [InlineData("""
+        [[speakers]]
+        name = "Narrator"
+        default = true
+
+        [[speakers]]
+        name = "Alice"
+        tags = ["main"]
+        """)]
+    [InlineData("""
+        speakers = [{ name = "Narrator", default = true }, { name = "Alice", tags = ["main"] }]
+        """)]
+    [InlineData("""
+        speakers = [
+          { name = "Narrator", default = true },
+          { name = "Alice", tags = ["main"] },
+        ]
+        """)]
+    [InlineData("""
+        [[speakers]]
+        name = "Narrator"
+        default = true
+
+        [[speakers]]
+        name = "Alice"
+
+        [[speakers.tags]]
+        name = "main"
+        """)]
+    public void Read_EverySpelling_DeclaresTheSameSpeakers(string toml)
+    {
+        var speakers = Parse(toml).Speakers;
+
+        Assert.Equal(
+            [
+                new ConfiguredSpeaker("Narrator", null, [], [new ConfiguredTag(ReservedTagNames.Default)]),
+                new ConfiguredSpeaker("Alice", null, [new ConfiguredTag("main")], []),
+            ],
+            speakers);
+    }
+
+    [Fact]
+    public void Read_SpeakersAroundAnotherSection_PreserveDocumentOrder()
+    {
+        var speakers = Parse("""
+            [[speakers]]
+            name = "Narrator"
+
+            [markdown.unmodeled]
+            table = "keep"
+
+            [[speakers]]
+            name = "Alice"
+            """).Speakers;
+
+        Assert.Equal(["Narrator", "Alice"], speakers.Select(speaker => speaker.Name));
+    }
+
     [Fact]
     public void Read_SpeakerWithoutId_LeavesIdNull()
     {
-        var speaker = AssertOnlySpeaker(Read("""
+        var speaker = AssertOnlySpeaker(Parse("""
             [[speakers]]
             name = "Narrator"
-            """));
+            """).Speakers);
 
         Assert.Null(speaker.Id);
     }
 
     [Fact]
-    public void Read_DefaultTrue_AddsDefaultReservedTag()
-    {
-        var speaker = AssertOnlySpeaker(Read("""
-            [[speakers]]
-            name = "Narrator"
-            default = true
-            """));
-
-        Assert.Equal([new ConfiguredTag(ReservedTagNames.Default)], speaker.ReservedTags);
-    }
-
-    [Fact]
     public void Read_DefaultFalse_AddsNoReservedTag()
     {
-        var speaker = AssertOnlySpeaker(Read("""
+        var speaker = AssertOnlySpeaker(Parse("""
             [[speakers]]
             name = "Alice"
             default = false
-            """));
+            """).Speakers);
 
         Assert.Empty(speaker.ReservedTags);
-    }
-
-    [Fact]
-    public void Read_ShorthandTagWithoutValue_MapsNameOnly()
-    {
-        var speaker = AssertOnlySpeaker(Read("""
-            [[speakers]]
-            name = "Alice"
-            tags = ["main"]
-            """));
-
-        Assert.Equal([new ConfiguredTag("main")], speaker.CustomTags);
-    }
-
-    [Fact]
-    public void Read_ShorthandTagWithValue_SplitsAtFirstEquals()
-    {
-        var speaker = AssertOnlySpeaker(Read("""
-            [[speakers]]
-            name = "Alice"
-            tags = ["mood=happy=ish"]
-            """));
-
-        Assert.Equal([new ConfiguredTag("mood", "happy=ish")], speaker.CustomTags);
-    }
-
-    [Fact]
-    public void Read_InlineTableTag_MapsNameAndValue()
-    {
-        var speaker = AssertOnlySpeaker(Read("""
-            [[speakers]]
-            name = "Alice"
-            tags = [{ name = "quest=intro", value = "ok" }]
-            """));
-
-        Assert.Equal([new ConfiguredTag("quest=intro", "ok")], speaker.CustomTags);
-    }
-
-    [Fact]
-    public void Read_InlineTableTagWithoutValue_LeavesValueNull()
-    {
-        var speaker = AssertOnlySpeaker(Read("""
-            [[speakers]]
-            name = "Alice"
-            tags = [{ name = "quest=intro" }]
-            """));
-
-        Assert.Equal([new ConfiguredTag("quest=intro")], speaker.CustomTags);
-    }
-
-    [Fact]
-    public void Read_MixedTagForms_PreserveArrayOrder()
-    {
-        var speaker = AssertOnlySpeaker(Read("""
-            [[speakers]]
-            name = "Alice"
-            tags = ["main", "mood=happy", { name = "role", value = "guide" }]
-            """));
-
-        Assert.Equal(
-            [new ConfiguredTag("main"), new ConfiguredTag("mood", "happy"), new ConfiguredTag("role", "guide")],
-            speaker.CustomTags);
-    }
-
-    [Fact]
-    public void Read_MultipleSpeakers_PreserveDocumentOrder()
-    {
-        var speakers = Read("""
-            [[speakers]]
-            name = "Narrator"
-
-            [[speakers]]
-            name = "Alice"
-            """);
-
-        Assert.Equal(["Narrator", "Alice"], speakers.Select(speaker => speaker.Name));
     }
 
     [Fact]
@@ -176,110 +124,268 @@ public sealed class ConfiguredSpeakerReaderTests
     {
         // The reader maps reserved keys generically: a bool is a name-only tag, a string a valued
         // one. 'default' is the only reserved name, so it stands in for the string path.
-        var speaker = AssertOnlySpeaker(Read("""
+        var speaker = AssertOnlySpeaker(Parse("""
             [[speakers]]
             name = "Narrator"
             default = "primary"
-            """));
+            """).Speakers);
 
         Assert.Equal([new ConfiguredTag(ReservedTagNames.Default, "primary")], speaker.ReservedTags);
     }
 
     [Fact]
-    public void Read_MissingName_ThrowsLocatedAtSpeaker()
+    public void Read_ShorthandTagWithValue_SplitsAtFirstEquals()
     {
-        var exception = AssertRejects("""
+        var speaker = AssertOnlySpeaker(Parse("""
             [[speakers]]
-            id = "A"
-            """);
+            name = "Alice"
+            tags = ["mood=happy=ish"]
+            """).Speakers);
 
-        Assert.Equal(new ConfigurationSourceLocation(TomlConfigReading.SourceName, 1, 1), exception.Location);
+        Assert.Equal([new ConfiguredTag("mood", "happy=ish")], speaker.CustomTags);
     }
 
     [Fact]
-    public void Read_EmptyName_Throws()
+    public void Read_TableTag_MapsNameAndValue()
     {
-        var exception = AssertRejects("""
+        var speaker = AssertOnlySpeaker(Parse("""
+            [[speakers]]
+            name = "Alice"
+            tags = [{ name = "quest=intro", value = "ok" }]
+            """).Speakers);
+
+        Assert.Equal([new ConfiguredTag("quest=intro", "ok")], speaker.CustomTags);
+    }
+
+    [Fact]
+    public void Read_TableTagWithoutValue_LeavesValueNull()
+    {
+        var speaker = AssertOnlySpeaker(Parse("""
+            [[speakers]]
+            name = "Alice"
+            tags = [{ name = "quest=intro" }]
+            """).Speakers);
+
+        Assert.Equal([new ConfiguredTag("quest=intro")], speaker.CustomTags);
+    }
+
+    [Fact]
+    public void Read_MixedTagForms_PreserveArrayOrder()
+    {
+        var speaker = AssertOnlySpeaker(Parse("""
+            [[speakers]]
+            name = "Alice"
+            tags = ["main", "mood=happy", { name = "role", value = "guide" }]
+            """).Speakers);
+
+        Assert.Equal(
+            [new ConfiguredTag("main"), new ConfiguredTag("mood", "happy"), new ConfiguredTag("role", "guide")],
+            speaker.CustomTags);
+    }
+
+    [Fact]
+    public void Read_QuotedStructuralKey_IsEquivalentToBareKey()
+    {
+        var speaker = AssertOnlySpeaker(Parse("""
+            [[speakers]]
+            "name" = "Alice"
+            """).Speakers);
+
+        Assert.Equal("Alice", speaker.Name);
+    }
+
+    [Fact]
+    public void Read_SpeakersNotAnArray_IsRejectedAtTheValue() =>
+        AssertRejects(
+            """
+            speakers = "Alice"
+            """,
+            "'speakers' must be an array of speaker tables, such as [[speakers]] entries.",
+            line: 1,
+            column: 12);
+
+    [Fact]
+    public void Read_SpeakersAsOneTable_IsRejectedAtItsHeader() =>
+        AssertRejects(
+            """
+            [speakers]
+            name = "Alice"
+            """,
+            "'speakers' must be an array of speaker tables, such as [[speakers]] entries.",
+            line: 1,
+            column: 1);
+
+    [Fact]
+    public void Read_SpeakerNotATable_IsRejectedAtTheElement() =>
+        AssertRejects(
+            """
+            speakers = ["Alice"]
+            """,
+            "A speaker must be a table with a 'name'.",
+            line: 1,
+            column: 13);
+
+    [Fact]
+    public void Read_MissingName_IsRejectedAtTheSpeakerHeader() =>
+        AssertRejects(
+            """
+            [[speakers]]
+            name = "Alice"
+
+            [[speakers]]
+            id = "B"
+            """,
+            "A speaker must have a 'name'.",
+            line: 4,
+            column: 1);
+
+    [Fact]
+    public void Read_MissingNameInline_IsRejectedAtTheSpeakerTable() =>
+        AssertRejects(
+            """
+            speakers = [{ id = "A" }]
+            """,
+            "A speaker must have a 'name'.",
+            line: 1,
+            column: 13);
+
+    [Fact]
+    public void Read_EmptyName_IsRejectedAtTheValue() =>
+        AssertRejects(
+            """
             [[speakers]]
             name = ""
-            """);
-
-        AssertRejectedAt(exception, line: 2);
-    }
+            """,
+            "'name' must not be empty.",
+            line: 2,
+            column: 8);
 
     [Fact]
-    public void Read_NonStringName_Throws()
-    {
-        AssertRejects("""
+    public void Read_EmptyId_IsRejectedAtTheValue() =>
+        // An empty id is as meaningless as a missing name; the core forbids it (an @id must name
+        // at least one character), so the loader rejects it too.
+        AssertRejects(
+            """
+            [[speakers]]
+            name = "Alice"
+            id = ""
+            """,
+            "'id' must not be empty.",
+            line: 3,
+            column: 6);
+
+    [Fact]
+    public void Read_NonStringName_IsRejectedAtTheValue() =>
+        AssertRejects(
+            """
             [[speakers]]
             name = 42
-            """);
-    }
+            """,
+            "'name' must be a string.",
+            line: 2,
+            column: 8);
 
     [Fact]
-    public void Read_TagsNotArray_Throws()
-    {
-        AssertRejects("""
+    public void Read_DottedNameKey_IsANameThatIsNotAString() =>
+        // A dotted key is a nested table, so this sets 'name' to { first = "Alice" }.
+        AssertRejects(
+            """
             [[speakers]]
-            name = "Alice"
-            tags = "main"
-            """);
-    }
+            name.first = "Alice"
+            """,
+            "'name' must be a string.",
+            line: 2,
+            column: 1);
 
     [Fact]
-    public void Read_TagElementOfWrongType_Throws()
-    {
-        AssertRejects("""
-            [[speakers]]
-            name = "Alice"
-            tags = [42]
-            """);
-    }
-
-    [Fact]
-    public void Read_UnknownKey_Throws()
-    {
-        AssertRejects("""
+    public void Read_UnknownKey_IsRejectedAtTheKey() =>
+        AssertRejects(
+            """
             [[speakers]]
             name = "Alice"
             color = "red"
-            """);
-    }
+            """,
+            "Unknown speaker key 'color'. Use 'name', 'id', 'tags', or a known reserved tag.",
+            line: 3,
+            column: 1);
 
     [Fact]
-    public void Read_ReservedTagOfWrongType_Throws()
-    {
-        AssertRejects("""
+    public void Read_UnknownKeyInline_IsRejectedAtTheKey() =>
+        AssertRejects(
+            """
+            speakers = [{ name = "Alice", color = "red" }]
+            """,
+            "Unknown speaker key 'color'. Use 'name', 'id', 'tags', or a known reserved tag.",
+            line: 1,
+            column: 31);
+
+    [Fact]
+    public void Read_ReservedTagOfWrongType_IsRejectedAtTheValue() =>
+        AssertRejects(
+            """
             [[speakers]]
             name = "Alice"
             default = 42
-            """);
-    }
+            """,
+            "Reserved tag 'default' must be a boolean or a string.",
+            line: 3,
+            column: 11);
 
     [Fact]
-    public void Read_InlineTableTagWithoutName_Throws()
-    {
-        AssertRejects("""
+    public void Read_TagsNotAnArray_IsRejectedAtTheValue() =>
+        AssertRejects(
+            """
+            [[speakers]]
+            name = "Alice"
+            tags = "main"
+            """,
+            "'tags' must be an array of tag strings or inline tables.",
+            line: 3,
+            column: 8);
+
+    [Fact]
+    public void Read_TagOfWrongType_IsRejectedAtTheElement() =>
+        AssertRejects(
+            """
+            [[speakers]]
+            name = "Alice"
+            tags = [
+              "main",
+              42,
+            ]
+            """,
+            "A tag must be a string or an inline table with a 'name'.",
+            line: 5,
+            column: 3);
+
+    [Fact]
+    public void Read_TableTagWithoutName_IsRejectedAtTheTable() =>
+        AssertRejects(
+            """
             [[speakers]]
             name = "Alice"
             tags = [{ value = "orphan" }]
-            """);
-    }
+            """,
+            "An inline-table tag must have a 'name'.",
+            line: 3,
+            column: 9);
 
     [Fact]
-    public void Read_InlineTableTagWithUnknownField_Throws()
-    {
-        AssertRejects("""
+    public void Read_TableTagWithUnknownField_IsRejectedAtTheValue() =>
+        AssertRejects(
+            """
             [[speakers]]
             name = "Alice"
             tags = [{ name = "role", extra = "x" }]
-            """);
-    }
+            """,
+            "An inline-table tag has only 'name' and 'value'; 'extra' is not allowed.",
+            line: 3,
+            column: 34);
 
     [Fact]
-    public void Read_TwoDefaultSpeakers_ThrowsLocatedAtSecond()
-    {
-        var exception = AssertRejects("""
+    public void Read_TwoDefaultSpeakers_IsRejectedAtTheSecond() =>
+        AssertRejects(
+            """
             [[speakers]]
             name = "Narrator"
             default = true
@@ -287,52 +393,18 @@ public sealed class ConfiguredSpeakerReaderTests
             [[speakers]]
             name = "Alice"
             default = true
-            """);
-
-        AssertRejectedAt(exception, line: 5, "Narrator", "Alice");
-    }
-
-    [Fact]
-    public void Read_QuotedStructuralKey_IsEquivalentToBareKey()
-    {
-        // TOML treats "name" and name as the same key.
-        var speaker = AssertOnlySpeaker(Read("""
-            [[speakers]]
-            "name" = "Alice"
-            """));
-
-        Assert.Equal("Alice", speaker.Name);
-    }
+            """,
+            "Two speakers are marked default ('Narrator' and 'Alice'); only one default speaker is allowed.",
+            line: 5,
+            column: 1);
 
     [Fact]
-    public void Read_EmptyId_Throws()
-    {
-        // An empty id is as meaningless as a missing name; the core forbids it (an @id must name
-        // at least one character), so the loader rejects it too.
-        AssertRejects("""
-            [[speakers]]
-            name = "Alice"
-            id = ""
-            """);
-    }
-
-    [Fact]
-    public void Read_DottedKey_Throws()
-    {
-        // A dotted key is not part of the flat speaker schema; it must be rejected, not read as
-        // its first segment (which would silently misread 'name.first' as 'name').
-        AssertRejects("""
-            [[speakers]]
-            name.first = "Alice"
-            """);
-    }
-
-    private static IReadOnlyList<ConfiguredSpeaker> Read(string toml) =>
-        TomlConfigReading.Read(toml, ReadSpeakers);
-
-    private static DialogueConfigurationException AssertRejects(string toml) =>
-        TomlConfigReading.AssertRejects(toml, ReadSpeakers);
-
-    private static IReadOnlyList<ConfiguredSpeaker> ReadSpeakers(DocumentSyntax document) =>
-        new ConfiguredSpeakerReader().Read(document);
+    public void Read_TwoDefaultSpeakersInline_IsRejectedAtTheSecond() =>
+        AssertRejects(
+            """
+            speakers = [{ name = "Narrator", default = true }, { name = "Alice", default = true }]
+            """,
+            "Two speakers are marked default ('Narrator' and 'Alice'); only one default speaker is allowed.",
+            line: 1,
+            column: 52);
 }

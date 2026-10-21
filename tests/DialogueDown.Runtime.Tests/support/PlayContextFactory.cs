@@ -178,15 +178,37 @@ internal static class PlayContextFactory
             ],
             [null]);
 
-    /// <summary>A random choice, which is a node kind the runner cannot play.</summary>
+    /// <summary>A random choice among three lines, each said as it is drawn, then the end.</summary>
     /// <remarks>
     /// <code>
-    /// - `%` Go east
+    /// - `50%` Guard: Halt!
+    /// - `30%` Guard: Move along.
+    /// - `%` Guard: Lovely day.
     /// </code>
     /// </remarks>
-    /// <returns>A context that begins at a random choice.</returns>
-    public static PlayContext NotYetPlayable() =>
-        Of([RandomChoice(EvenChance(target: 1)), End(id: 1)], ["Alice"]);
+    /// <returns>A context that begins at the random choice.</returns>
+    public static PlayContext ARandomChoice() =>
+        Of(
+            [
+                RandomChoice(Chance(50, target: 1), Chance(30, target: 2), EvenChance(target: 3)),
+                Line("Halt!", id: 1, next: 4),
+                Line("Move along.", id: 2, next: 4),
+                Line("Lovely day.", id: 3, next: 4),
+                End(id: 4),
+            ],
+            ["Guard"]);
+
+    /// <summary>A playbook that begins at a random choice whose first random option has a key weight.</summary>
+    /// <remarks>
+    /// <code>
+    /// - `Guard.Mood%` Guard: Halt!
+    /// - `%` Guard: Move along.
+    /// </code>
+    /// Both random options lead to the end, so the random choice is all the playbook holds to play.
+    /// </remarks>
+    /// <returns>A context that begins at the random choice.</returns>
+    public static PlayContext ARandomChoiceWithAKeyWeightStanding() =>
+        Of([ARandomChoiceWithAKeyWeight(), End(id: 1)], ["Guard"]);
 
     /// <summary>A loop of jumps, each leading to the next and the last back to the first.</summary>
     /// <remarks>
@@ -301,11 +323,11 @@ internal static class PlayContextFactory
     /// &gt; Alice: The door stays shut.
     /// </code>
     /// </remarks>
-    /// <returns>A context whose entry says nothing, and whose every arm says a different line.</returns>
+    /// <returns>A context whose entry says nothing, and whose every branch says a different line.</returns>
     public static PlayContext AConditionalBlock() =>
         Of(
             [
-                Branch(Arm("Alice.HasKey", target: 1), Arm("Alice.HasPick", target: 2), Else(target: 3)),
+                Branch(Gated("Alice.HasKey", target: 1), Gated("Alice.HasPick", target: 2), Else(target: 3)),
                 Line("The key turns.", id: 1, next: 4),
                 Line("The pick clicks.", id: 2, next: 4),
                 Line("The door stays shut.", id: 3, next: 4),
@@ -335,6 +357,28 @@ internal static class PlayContextFactory
     /// <returns>The menu.</returns>
     public static ChoiceNode AMenuWithAQueryInALabel() =>
         Choice(OptionOf([Text("Call "), Query("playerName"), Text(" over")], target: 1));
+
+    /// <summary>A random choice whose first random option only the world can allow.</summary>
+    /// <remarks>
+    /// <code>
+    /// - `Guard.IsAngry?` `%` Guard: Halt!
+    /// - `%` Guard: Move along.
+    /// </code>
+    /// </remarks>
+    /// <returns>The random choice, at position 0, with both random options leading to position 1.</returns>
+    public static RandomChoiceNode ARandomChoiceWithAGuardedRandomOption() =>
+        RandomChoice(EvenChance(condition: "Guard.IsAngry", target: 1), EvenChance(target: 1));
+
+    /// <summary>A random choice whose first random option has a key weight.</summary>
+    /// <remarks>
+    /// <code>
+    /// - `Guard.Mood%` Guard: Halt!
+    /// - `%` Guard: Move along.
+    /// </code>
+    /// </remarks>
+    /// <returns>The random choice, at position 0, with both random options leading to position 1.</returns>
+    public static RandomChoiceNode ARandomChoiceWithAKeyWeight() =>
+        RandomChoice(Chance("Guard.Mood", target: 1), EvenChance(target: 1));
 
     /// <summary>One node of every kind the playbook format defines, each the simplest of its kind.</summary>
     /// <remarks>

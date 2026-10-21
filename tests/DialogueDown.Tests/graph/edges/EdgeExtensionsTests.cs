@@ -29,7 +29,7 @@ public sealed class EdgeExtensionsTests
     [Fact]
     public void HasUnconditionalRoute_UnconditionalOption_IsTrue()
     {
-        // The arm is always offered, so the choice always leaves through one of them.
+        // The option is always offered, so the choice always has a way out to take.
         IReadOnlyList<Edge> edges = [OptionEdge(_target)];
 
         Assert.True(edges.HasUnconditionalRoute());

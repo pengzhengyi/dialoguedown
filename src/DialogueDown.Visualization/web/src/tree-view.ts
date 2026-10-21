@@ -1528,7 +1528,7 @@ export function createTreeView(
             .attr("class", "edge-hit")
             .attr("d", (route) => route.getAttribute("d"))
             // The pointer names the route before the tooltip does — a question mark over a
-            // conditional, a hand over a choice arm, the barred circle over what is never reached.
+            // conditional, a hand over a choice option, the barred circle over what is never reached.
             .style("cursor", (route) => route.dataset.cursor ?? null)
             .each(function (route) {
                 this.replaceChildren();

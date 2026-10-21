@@ -1,7 +1,8 @@
-import { describe, it, expect, vi } from "vitest";
+import { afterEach, describe, it, expect, vi } from "vitest";
 import { EditorView } from "@codemirror/view";
 import { insertNewlineAndIndent } from "@codemirror/commands";
 import { createPlaybookView } from "./playbook-view";
+import { setWhitespaceVisible } from "./show-whitespace";
 import type { PlaybookReport } from "./model";
 
 /** Real enough to jump inside: two speakers, and a second node whose id is not its position. */
@@ -572,7 +573,7 @@ describe("createPlaybookView Nodes table", () => {
 
     // A piece that names a node is a way to reach it, so it is a control rather than a stretch of
     // text: it carries the jump, the key that lights the node up elsewhere, and what it means.
-    it("offers a branch arm's target as a jump", () => {
+    it("offers a branch's target as a jump", () => {
         const report = compiled();
         report.nodes[3].segments = [
             { text: "IF ", role: "keyword" },
@@ -608,5 +609,22 @@ describe("createPlaybookView Nodes table", () => {
         expect(JSON.parse(piece?.dataset.jump ?? "null")).toEqual({ kind: "node", id: 7 });
         expect(piece?.getAttribute("data-tip")).toContain("Jump");
         expect(piece?.getAttribute("data-tip")).toContain("Click to reveal");
+    });
+});
+
+describe("createPlaybookView whitespace", () => {
+    afterEach(() => {
+        setWhitespaceVisible(false);
+        localStorage.removeItem("dd-show-whitespace");
+    });
+
+    it("draws the serialized playbook's indentation once whitespace is shown", () => {
+        const view = createPlaybookView(compiled());
+
+        setWhitespaceVisible(true);
+
+        expect(
+            view.querySelectorAll(".playbook-source .cm-content .cm-highlightSpace").length,
+        ).toBeGreaterThan(0);
     });
 });

@@ -7,13 +7,14 @@ namespace DialogueDown.Runtime.Stepping;
 /// The questions a run puts to the world at one moment.
 /// </summary>
 /// <remarks>
-/// Arriving at a node asks two things at once: whether the node plays, which a guard answers with
-/// a truth, and what its first words say, which a query answers with words. Both go out as one
-/// request, so they become one set of questions — each key named once, carrying the kind of answer
-/// its use needs. A line written <c>`Hero.HasSword?` Alice: You are `"HeroName"`.</c> asks about
-/// the two together, <c>Hero.HasSword</c> for a truth and <c>HeroName</c> for words.
+/// One moment can ask several kinds of question at once: whether a node plays, which a guard
+/// answers with a truth; what its words say, which a query answers with words; and how likely a
+/// random option is, which a key weight answers with a number. They go out as one request, so they
+/// become one set of questions — each key named once, carrying the kind of answer its use needs. A
+/// line written <c>`Hero.HasSword?` Alice: You are `"HeroName"`.</c> asks about two together,
+/// <c>Hero.HasSword</c> for a truth and <c>HeroName</c> for words.
 /// <para>
-/// A key can be written both ways on one node. <c>`Alice.HasKey?` Alice: You have
+/// A key can be written two ways on one node. <c>`Alice.HasKey?` Alice: You have
 /// `"Alice.HasKey"`.</c> guards the line and stands in what it says under one name. The request
 /// names that key once and the world answers it once, so whichever kind comes back leaves one of
 /// the two uses without an answer it can read. Naming those keys is what lets the run say so
@@ -22,41 +23,59 @@ namespace DialogueDown.Runtime.Stepping;
 /// </remarks>
 internal static class Questions
 {
-    /// <summary>The keys a moment needs answered as a truth and as words both.</summary>
+    /// <summary>The keys a moment needs answered as more than one kind.</summary>
     /// <param name="truths">The keys a guard reads.</param>
     /// <param name="words">The keys a query reads.</param>
-    /// <returns>The keys named in both, sorted. Empty when none is named twice over.</returns>
+    /// <param name="numbers">The keys a key weight reads.</param>
+    /// <returns>
+    /// The keys named in two kinds or more, sorted. Empty when none is named in more than one.
+    /// </returns>
     /// <remarks>
     /// Sorted, so a run meeting the same clash twice words it the same way both times.
     /// </remarks>
     public static IReadOnlyList<string> NeededBothWays(
-        ImmutableArray<string> truths, ImmutableArray<string> words) =>
-        [.. truths.Intersect(words, StringComparer.Ordinal).Order(StringComparer.Ordinal)];
+        ImmutableArray<string> truths, ImmutableArray<string> words, ImmutableArray<string> numbers)
+    {
+        var keysOncePerKind = truths.Distinct(StringComparer.Ordinal)
+            .Concat(words.Distinct(StringComparer.Ordinal))
+            .Concat(numbers.Distinct(StringComparer.Ordinal));
 
-    /// <summary>The keys a moment asks about: its truths, then its words.</summary>
+        return
+        [
+            .. keysOncePerKind
+                .GroupBy(key => key, StringComparer.Ordinal)
+                .Where(sameKey => sameKey.Count() > 1)
+                .Select(sameKey => sameKey.Key)
+                .Order(StringComparer.Ordinal),
+        ];
+    }
+
+    /// <summary>The keys a moment asks about: its truths, then its words, then its numbers.</summary>
     /// <param name="truths">The keys a guard reads.</param>
     /// <param name="words">The keys a query reads.</param>
+    /// <param name="numbers">The keys a key weight reads.</param>
     /// <returns>The keys, each named once. Empty when the moment asks nothing.</returns>
     /// <remarks>
     /// Each kind keeps the order the playbook names its keys in. For a line, truths first is also
     /// the order a reader meets them, since a guard is written before the line it guards. A menu
-    /// follows the same rule, every condition before any label's query, so every node names its
-    /// keys alike.
+    /// follows the same rule, every condition before any label's query, and so does a random
+    /// choice, every condition before any key weight, so every node names its keys alike.
     /// </remarks>
     public static ImmutableArray<string> Keys(
-        ImmutableArray<string> truths, ImmutableArray<string> words) =>
-        [.. truths.Concat(words).Distinct(StringComparer.Ordinal)];
+        ImmutableArray<string> truths, ImmutableArray<string> words, ImmutableArray<string> numbers) =>
+        [.. truths.Concat(words).Concat(numbers).Distinct(StringComparer.Ordinal)];
 
     /// <summary>The questions a moment puts, each key with the kind its use needs.</summary>
     /// <param name="truths">The keys a guard reads, each needing a truth.</param>
     /// <param name="words">The keys a query reads, each needing words.</param>
+    /// <param name="numbers">The keys a key weight reads, each needing a number.</param>
     /// <returns>The questions, each key named once. Empty when the moment asks nothing.</returns>
     /// <remarks>
-    /// A key needed as a truth and as words both has no single kind to be asked about, which
+    /// A key needed as more than one kind has no single kind to be asked about, which
     /// <see cref="NeededBothWays"/> answers before these are read.
     /// </remarks>
     public static ImmutableDictionary<string, AnswerKind> Asked(
-        ImmutableArray<string> truths, ImmutableArray<string> words)
+        ImmutableArray<string> truths, ImmutableArray<string> words, ImmutableArray<string> numbers)
     {
         var asked = ImmutableDictionary.CreateBuilder<string, AnswerKind>(StringComparer.Ordinal);
         foreach (var key in truths)
@@ -67,6 +86,11 @@ internal static class Questions
         foreach (var key in words)
         {
             asked[key] = AnswerKind.Text;
+        }
+
+        foreach (var key in numbers)
+        {
+            asked[key] = AnswerKind.Number;
         }
 
         return asked.ToImmutable();

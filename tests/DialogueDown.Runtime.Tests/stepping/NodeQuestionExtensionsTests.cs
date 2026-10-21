@@ -1,3 +1,4 @@
+using DialogueDown.Playbook.Edges;
 using DialogueDown.Playbook.Nodes;
 using DialogueDown.Runtime.Stepping;
 using static DialogueDown.TestSupport.PlaybookNodeFactory;
@@ -39,6 +40,26 @@ public sealed class NodeQuestionExtensionsTests
             Choice(
                 Option("Draw the sword", condition: "Hero.HasSword", target: 1),
                 Option("Swing the sword", condition: "Hero.HasSword", target: 2))
+                .FindTruthsForPlaying());
+
+    [Fact]
+    public void FindTruthsForPlaying_OfARandomChoice_NameItsRandomOptionsConditionsInTheOrderWritten() =>
+        Assert.Equal(
+            ["Guard.IsAngry", "Guard.IsTired"],
+            RandomChoice(
+                Chance(50, condition: "Guard.IsAngry", target: 1),
+                EvenChance(target: 2),
+                Chance(20, condition: "Guard.IsTired", target: 3))
+                .FindTruthsForPlaying());
+
+    [Fact]
+    public void FindTruthsForPlaying_OfARandomChoice_NameARepeatedKeyOnce() =>
+        // One reading of the world decides every random option's share.
+        Assert.Equal(
+            ["Guard.IsAngry"],
+            RandomChoice(
+                Chance(50, condition: "Guard.IsAngry", target: 1),
+                Chance(30, condition: "Guard.IsAngry", target: 2))
                 .FindTruthsForPlaying());
 
     [Fact]
@@ -87,6 +108,47 @@ public sealed class NodeQuestionExtensionsTests
         Assert.Throws<ArgumentNullException>(() => ((Node)null!).FindWordsForPlaying());
 
     [Fact]
+    public void FindNumbersForPlaying_OfARandomChoice_NameItsKeyWeightsInTheOrderWritten() =>
+        Assert.Equal(
+            ["Guard.Mood", "Guard.Patience"],
+            RandomChoice(
+                Chance("Guard.Mood", target: 1),
+                Chance(20, target: 2),
+                Chance("Guard.Patience", target: 3))
+                .FindNumbersForPlaying());
+
+    [Fact]
+    public void FindNumbersForPlaying_OfARandomChoice_NameARepeatedKeyOnce() =>
+        // One reading of the world answers every key weight, so the same key is not asked about twice.
+        Assert.Equal(
+            ["Guard.Mood"],
+            RandomChoice(
+                Chance("Guard.Mood", target: 1),
+                Chance("Guard.Mood", target: 2))
+                .FindNumbersForPlaying());
+
+    [Fact]
+    public void FindNumbersForPlaying_NameTheKeyWeightOfAGuardedRandomOption_BecauseItsGuardIsAskedAlongsideIt() =>
+        Assert.Equal(
+            ["Guard.Mood"],
+            RandomChoice(
+                Chance("Guard.Mood", condition: "Guard.IsAngry", target: 1),
+                EvenChance(target: 2))
+                .FindNumbersForPlaying());
+
+    [Fact]
+    public void FindNumbersForPlaying_OfARandomChoiceWhoseOddsAreAllWritten_AreNone() =>
+        Assert.Empty(RandomChoice(Chance(50, target: 1), EvenChance(target: 2)).FindNumbersForPlaying());
+
+    [Fact]
+    public void FindNumbersForPlaying_OfAKindWithNoRandomOptions_AreNone() =>
+        Assert.Empty(Line("Hello.").FindNumbersForPlaying());
+
+    [Fact]
+    public void FindNumbersForPlaying_AreNotReadFromNothing() =>
+        Assert.Throws<ArgumentNullException>(() => ((Node)null!).FindNumbersForPlaying());
+
+    [Fact]
     public void FindTruthsForLeaving_WhenTheOnlyWayOutIsTheFallThrough_AreNone() =>
         Assert.Empty(SilentLine(next: 1).FindTruthsForLeaving());
 
@@ -97,21 +159,21 @@ public sealed class NodeQuestionExtensionsTests
             SilentLine(next: 2, ways: [Divert("Hero.HasSword", target: 1)]).FindTruthsForLeaving());
 
     [Fact]
-    public void FindTruthsForLeaving_OfABlockCondition_NameWhatEveryGuardedArmAsks() =>
+    public void FindTruthsForLeaving_OfABlockCondition_NameWhatEveryGatedBranchAsks() =>
         Assert.Equal(
             ["Hero.HasSword", "Hero.HasShield"],
             Branch(
-                Arm("Hero.HasSword", target: 1),
-                Arm("Hero.HasShield", target: 2),
+                Gated("Hero.HasSword", target: 1),
+                Gated("Hero.HasShield", target: 2),
                 Succession(3))
                 .FindTruthsForLeaving());
 
     [Fact]
     public void FindTruthsForLeaving_NameARepeatedKeyOnce() =>
-        // One reading of the world decides every way out, so two arms on one key cannot disagree.
+        // One reading of the world decides every way out, so two branches on one key cannot disagree.
         Assert.Equal(
             ["Hero.HasSword"],
-            Branch(Arm("Hero.HasSword", target: 1), Arm("Hero.HasSword", target: 2)).FindTruthsForLeaving());
+            Branch(Gated("Hero.HasSword", target: 1), Gated("Hero.HasSword", target: 2)).FindTruthsForLeaving());
 
     [Fact]
     public void FindTruthsForLeaving_OfAMenu_AreNone() =>
@@ -121,10 +183,41 @@ public sealed class NodeQuestionExtensionsTests
                 .FindTruthsForLeaving());
 
     [Fact]
+    public void WeightKeys_NameTheKeyWeightsInTheOrderWritten_EachOnce() =>
+        Assert.Equal(
+            ["Guard.Mood", "Guard.Patience"],
+            RandomChoice(
+                Chance("Guard.Mood", target: 1),
+                Chance(20, target: 2),
+                Chance("Guard.Patience", target: 3),
+                Chance("Guard.Mood", target: 4))
+                .RandomOptions()
+                .WeightKeys());
+
+    [Fact]
+    public void WeightKeys_NameOnlyTheKeyWeightsOfTheRandomOptionsGiven() =>
+        Assert.Equal(
+            ["Guard.Patience"],
+            RandomChoice(
+                Chance("Guard.Mood", condition: "Guard.IsAngry", target: 1),
+                Chance("Guard.Patience", target: 2))
+                .RandomOptions()
+                .Where(option => option.Condition is null)
+                .WeightKeys());
+
+    [Fact]
+    public void WeightKeys_OfRandomOptionsWhoseOddsAreAllWritten_AreNone() =>
+        Assert.Empty(RandomChoice(Chance(50, target: 1), EvenChance(target: 2)).RandomOptions().WeightKeys());
+
+    [Fact]
     public void FindTruthsForPlaying_AreNotReadFromNothing() =>
         Assert.Throws<ArgumentNullException>(() => ((Node)null!).FindTruthsForPlaying());
 
     [Fact]
     public void FindTruthsForLeaving_AreNotReadFromNothing() =>
         Assert.Throws<ArgumentNullException>(() => ((Node)null!).FindTruthsForLeaving());
+
+    [Fact]
+    public void WeightKeys_AreNotReadFromNothing() =>
+        Assert.Throws<ArgumentNullException>(() => ((IEnumerable<RandomOptionEdge>)null!).WeightKeys());
 }

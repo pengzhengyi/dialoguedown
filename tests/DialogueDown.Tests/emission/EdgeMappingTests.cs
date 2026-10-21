@@ -59,7 +59,7 @@ public sealed class EdgeMappingTests
     }
 
     [Fact]
-    public void Write_ABranchArm_KeepsItsCondition()
+    public void Write_ABranch_KeepsItsCondition()
     {
         var written = AssertLeadsTo<BranchEdge>(
             Write(BranchEdge(NodeId(SecondId), Condition("IsBrave"))), SecondPosition);

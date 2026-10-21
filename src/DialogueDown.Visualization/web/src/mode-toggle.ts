@@ -28,6 +28,12 @@ export interface ModeToggle {
     readonly element: HTMLElement;
     /** Reflect the active mode (pressed state) on the control. */
     reflect(mode: ServedMode): void;
+    /**
+     * Enable the control, or disable it with the `reason` shown as its tooltip. Disabled, it
+     * still shows the pressed mode, so the session's mode stays legible; the mode itself is
+     * unchanged.
+     */
+    setEnabled(enabled: boolean, reason?: string): void;
 }
 
 /**
@@ -63,5 +69,13 @@ export function createModeToggle(
     };
     reflect(initial);
 
-    return { element: group, reflect };
+    const setEnabled = (enabled: boolean, reason = ""): void => {
+        group.setAttribute("aria-disabled", String(!enabled));
+        // On the group, because a disabled button shows no tooltip.
+        group.title = enabled ? "" : reason;
+        for (const button of buttons.values()) button.disabled = !enabled;
+    };
+    setEnabled(true);
+
+    return { element: group, reflect, setEnabled };
 }

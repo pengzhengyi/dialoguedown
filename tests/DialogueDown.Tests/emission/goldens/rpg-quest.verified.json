@@ -822,6 +822,10 @@
             "kind": "query",
             "key": "Dragon.Fury"
           }
+        },
+        {
+          "kind": "succession",
+          "target": 39
         }
       ]
     },
@@ -924,6 +928,10 @@
             "kind": "query",
             "key": "Dragon.Fury"
           }
+        },
+        {
+          "kind": "succession",
+          "target": 39
         }
       ]
     },

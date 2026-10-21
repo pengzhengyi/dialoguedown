@@ -78,8 +78,9 @@ internal static class Arrival
             return RefuseBothWays(waiting.Node, bothWays);
         }
 
-        if (AnswerCheck.Disagrees(
-            NodeQuestions.RequiredToPlayFrom(arrived, 0).Asked(), supply.Answers, out var refusal))
+        var asked = NodeQuestions.RequiredToPlayFrom(arrived, 0).Asked();
+        if (AnswerCheck.Disagrees(asked, supply.Answers, out var refusal)
+            || KeyWeightCheck.Refuses(arrived, supply, out refusal))
         {
             // The run stays where it asked, so the driver can send a corrected supply.
             return new StepResult(new PlayState(waiting), [refusal]);
@@ -111,7 +112,7 @@ internal static class Arrival
     /// Each check either brings the run to stand at this node or leaves the next check to decide:
     /// <code>
     /// arrive at the node
-    ///  1 ├─ it needs one key as a truth and as words both ─► refuse
+    ///  1 ├─ it needs one key as more than one kind ────────► refuse
     ///  2 ├─ it needs answers before it can play ───────────► ask what playing needs
     ///    └─ otherwise, enter it
     ///  3    ├─ it hands the host something ────────────────► play it
@@ -124,8 +125,8 @@ internal static class Arrival
     {
         var arrived = context.NodeAt(position);
 
-        // A key needed both as a truth and as words is refused wherever in the node it is used, so
-        // that check reads the whole node. Arrival asks only what the node needs up to its first stop.
+        // A key needed as more than one kind is refused wherever in the node it is used, so that
+        // check reads the whole node. Arrival asks only what the node needs up to its first stop.
         return RefuseIfAKeyIsNeededBothWays(position, NodeQuestions.RequiredToPlay(arrived))
             ?? AskIfPlayingNeedsAnswers(position, NodeQuestions.RequiredToPlayFrom(arrived, 0))
             ?? Enter(context, position, arrived);
@@ -175,15 +176,17 @@ internal static class Arrival
 
     // A node that hands the host nothing is walked past rather than stood at. A jump written on
     // its own line compiles to one of these: nothing said, nothing performed, one way out. A block
-    // condition is another, which only chooses the arm the run goes on by. Standing at either
+    // condition is another, which only chooses the branch the run goes on by. Standing at either
     // would ask the player to advance past something they were never shown. A menu with no option
     // the player can take is walked past too, by its fall-through, because standing there would
-    // wait for a choice the player cannot make.
+    // wait for a choice the player cannot make. So is a random choice with nothing drawable,
+    // because no draw could land anywhere.
     private static bool IsWalkedPast(Node node, Supply? supply) =>
         node switch
         {
             ControlNode { Effects.IsEmpty: true } or BranchNode => true,
             ChoiceNode menu => Choosing.HasNoOptionAvailable(menu, supply),
+            RandomChoiceNode random => RandomChoiceShares.HasNothingDrawable(random, supply),
             _ => false,
         };
 
@@ -198,8 +201,8 @@ internal static class Arrival
         StepResults.Refuse(
             position,
             RefusalReason.KeyNeededBothWays,
-            $"Node {position} needs {string.Join(", ", bothWays)} as a truth and as words both, "
-                + "and a single answer can only be one of those.");
+            $"Node {position} needs {string.Join(", ", bothWays)} as more than one kind of answer, "
+                + "and a single answer can only be one kind.");
 
     /// <summary>What one node means to a walk: the run stands there, or the walk goes on.</summary>
     private abstract record Visited

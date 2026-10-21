@@ -55,7 +55,7 @@ public sealed class GraphBuildContextTests
         var context = new GraphBuildContext(
             Pipeline.UntilAnalyzed(Source), DiagnosticsContextFactory.Context(Source));
 
-        // The question and the choice group are the document's own sequence; the two arms are not.
+        // The question and the choice group are the document's own sequence; the two options are not.
         Assert.Equal(2, context.TopLevelBlocks.Count);
         Assert.Equal(4, context.AllBlocks.Count);
         Assert.Equal(context.TopLevelBlocks, context.AllBlocks.Take(2));
