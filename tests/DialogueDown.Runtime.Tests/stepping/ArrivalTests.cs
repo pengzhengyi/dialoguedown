@@ -811,8 +811,9 @@ public sealed class ArrivalTests
     /// - `Guard.IsAngry?` `%` Guard: Halt!
     /// - `0%` Guard: Move along.
     /// </code>
-    /// Built by hand without the fall-through the compiler would give it, since a <c>`0%`</c> is never
-    /// drawn. Once the world withholds the guard, the zero is all that is left in play.
+    /// Built by hand without the fall-through the compiler would give it, since "Move along." has a
+    /// <c>`0%`</c> chance and is never drawn. Once the world withholds the guard, it is all that is
+    /// left in play.
     /// </remarks>
     /// <returns>A context whose random choice leads nowhere once the world withholds the guard.</returns>
     private static PlayContext ARandomChoiceWithAGuardedAutoWeightBesideAZero() =>
@@ -825,7 +826,7 @@ public sealed class ArrivalTests
             ],
             ["Guard"]);
 
-    /// <summary>A random choice whose only random option is <c>`0%`</c>, then a line.</summary>
+    /// <summary>A random choice whose only random option has a <c>`0%`</c> chance, then a line.</summary>
     /// <remarks>
     /// <code>
     /// - `0%` Guard: Halt!
@@ -846,7 +847,7 @@ public sealed class ArrivalTests
             ],
             ["Guard"]);
 
-    /// <summary>A random choice whose only random option is <c>`0%`</c>, with no fall-through.</summary>
+    /// <summary>A random choice whose only random option has a <c>`0%`</c> chance, with no fall-through.</summary>
     /// <remarks>
     /// <code>
     /// - `0%` Guard: Halt!

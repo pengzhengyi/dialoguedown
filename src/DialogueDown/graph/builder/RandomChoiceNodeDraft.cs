@@ -16,9 +16,9 @@ internal sealed class RandomChoiceNodeDraft(NodeId id, SourceSpan span) : NodeDr
     /// random option whose share is above zero. An unguarded random option with a number above
     /// zero or an auto weight makes sure something is always drawable: the number is its own
     /// share, and beside an auto weight the shares in play add up to at least 100. Any other random
-    /// option can have no share when the game runs, since its guard can read false and a key
-    /// weight or <c>`0%`</c> can be zero. A random choice of only those needs a fall-through, as
-    /// this one does for when the game answers 0 for both:
+    /// option can have no share when the game runs: its guard can read false, the game can answer 0
+    /// for its key weight, or its weight is <c>`0%`</c>. A random choice of only those needs a
+    /// fall-through, as this one does for when the game answers 0 for both:
     /// <code>
     /// - `Bob.Affection%` Bob: Good to see you.
     /// - `Christina.Affection%` Christina: Oh, hello.
