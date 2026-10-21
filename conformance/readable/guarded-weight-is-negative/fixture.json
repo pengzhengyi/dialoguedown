@@ -3,5 +3,5 @@
   "name": "a guarded random option's negative weight is refused",
   "playbook": "playbook.json",
   "verdict": "refuse",
-  "because": "the guarded random option weighs -10; a guard decides whether it is drawn, not whether its weight can be drawn against"
+  "because": "the guarded random option's weight is -10; a guard decides whether it is drawn, not whether its weight can be drawn against"
 }

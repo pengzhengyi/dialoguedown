@@ -44,7 +44,7 @@ The pass has three milestones:
 
 | Milestone | What it delivers |
 | --- | --- |
-| **M1 — static weights** | Number and auto weights resolved to shares; the `Draw` request, the `Drawn` command, and the wait between them; the draw mapped onto the shares; the reader refuses an invalid number weight; the compiler reports a random choice whose only random option weighs `0%` |
+| **M1 — static weights** | Number and auto weights resolved to shares; the `Draw` request, the `Drawn` command, and the wait between them; the draw mapped onto the shares; the reader refuses an invalid number weight; the compiler reports a random choice whose only random option has a `0%` chance of being drawn |
 | **M2 — guarded random options** | A random option's condition asked on arrival; an excluded random option left out before the shares are worked out; a random choice with nothing left to draw walked past by its fall-through, or refused as `leads-nowhere` without one |
 | **M3 — key weights** | A key weight asked on arrival and answered with a number; a number joins the answers; a key weight answered with an invalid number refused; the compiler gives a random choice a fall-through whenever it may have nothing to draw |
 
@@ -56,7 +56,8 @@ In scope:
 - a number among the world's answers;
 - refusals for a draw out of range and an invalid number for a weight;
 - a reader rule for a number weight;
-- the compiler's report of a random choice whose only random option weighs `0%`;
+- the compiler's report of a random choice whose only random option has a `0%` chance of being
+  drawn;
 - when the compiler gives a random choice a fall-through;
 - a `drawn` send and a `draw` matcher in the harness, and corpus cases;
 - random choices in `PlaybookGen`, so the walk property draws them.
@@ -96,9 +97,9 @@ M1:
       while a draw is awaited, is refused as misplaced.
 - [x] The reader refuses a number weight that is negative or not finite, and a
       random choice whose number weights sum to more than a double can hold.
-- [x] The compiler reports a random choice whose only random option weighs `0%` with
-      `DLG2010`, as it reports any zero total, and not with `DLG3004`, which says the
-      random option is always taken.
+- [x] When a random choice's only random option has a `0%` chance of being drawn,
+      the compiler reports `DLG2010`, as it does for any zero total, and not
+      `DLG3004`, which says the random option is always taken.
 
 M2:
 
@@ -340,10 +341,11 @@ drawable and no fall-through. The runner refuses it as `leads-nowhere`, and the 
 stands at it, as at any node that leads nowhere.
 
 The compiler reports a zero total for static weights as `DLG2010`, an error, and that
-includes a random choice whose only random option is `0%`. A single random option is
-always taken only while its share is above zero, so this one never is. `DLG3004`, which
-says a single random option is always taken, stays quiet for it. A single random option
-of any other weight is still spared the warning for a total far from 100.
+includes a random choice whose only random option has a `0%` chance of being drawn. A
+single random option is always taken only while its share is above zero, so this one
+never is. `DLG3004`, which says a single random option is always taken, stays quiet for
+it. A single random option of any other weight is still spared the warning for a total
+far from 100.
 
 ### R7 — A random choice always draws while it stands
 
@@ -441,16 +443,16 @@ The runner can then trust a static share, and checks only what the world supplie
 | A draw of `1` | Lands on the last drawable random option |
 | A draw at the exact end of a span | Lands on the next random option |
 | A draw below `0`, above `1`, or not a number | Refused as `invalid-draw`; the run keeps waiting for a draw |
-| A `0%` random option | Never drawn |
+| A random option with a `0%` chance | Never drawn |
 | Numbers in play that total more than 100 | Each auto weight's share is zero; the random options are drawn by their numbers |
 | An auto weight beside an excluded random option | Takes an equal part of what the random options in play leave of 100 |
 | Every random option excluded | Walked past by the fall-through |
 | Random options in play whose shares are all zero | Walked past by the fall-through |
 | Key weights with no guards, all answered `0` | Walked past by the fall-through the compiler writes, since the world can answer `0` for each |
-| An unguarded `0%` beside guarded random options the world withholds | Walked past by the fall-through the compiler writes, since a `0%` is never drawn |
+| An unguarded random option with a `0%` chance, beside guarded ones the world withholds | Walked past by the fall-through the compiler writes, since that random option is never drawn |
 | An unguarded random option with a number above zero or an auto weight | The compiler writes no fall-through, since something is always drawable |
 | Nothing drawable and no fall-through, in a playbook built without the compiler | Refused as `leads-nowhere` |
-| A random choice whose only random option is `0%` | The compiler reports `DLG2010` |
+| A random choice whose only random option has a `0%` chance | The compiler reports `DLG2010` |
 | A number weight that is negative or not finite, or number weights summing to infinity | The reader refuses the playbook |
 | A key weight in play answered with a number that is negative or not finite, or answers whose shares are too large to add up | Refused as `invalid-weight`; the run keeps waiting where it asked |
 | A key weight answered with a truth or words, or a guard answered with a number | Refused as `wrong-answer-kind`; the run keeps waiting where it asked |
@@ -471,7 +473,7 @@ The runner can then trust a static share, and checks only what the world supplie
 | --- | --- |
 | Playbook library | `DrawingWeight`, the `WeightShares` adapter, the `IRandomOptionArbiter` it asks which random options are excluded, and the `IKeyWeightAnswers` it asks for each key weight's number, beside the weight types; the reader refuses an invalid number weight |
 | Playbook schema | A number weight's `percentage` gains `minimum: 0` |
-| Compiler | The weight checks turn their weights into drawing weights and take the shares from `DrawingWeight`; normalizing, and its recovery from a zero total, stay. The zero-total check covers a single random option, and the single-option warning passes over a `0%` one. A random choice gets a fall-through unless an unguarded random option has a number above zero or an auto weight |
+| Compiler | The weight checks turn their weights into drawing weights and take the shares from `DrawingWeight`; normalizing, and its recovery from a zero total, stay. The zero-total check covers a single random option, and the single-option warning passes over one with a `0%` chance. A random choice gets a fall-through unless an unguarded random option has a number above zero or an auto weight |
 | `protocol` | `Draw` joins the requests and `Drawn` the commands; `NumberAnswer` joins the answers, and a JSON number in `supply` now reads as one; `RefusalReason` gains `InvalidDraw` and `InvalidWeight` |
 | `situations` | `AwaitingDraw`, with its wording in a refusal |
 | `stepping` | `Drawing` sends and takes the draw, and `Playing` hands it a random choice; `Arrival` walks past a random choice with nothing drawable; `GuardArbiter` judges a random option's condition by the world's answers, and `AnsweredKeyWeights` gives each key weight its number; `KeyWeightCheck` refuses an invalid number for a key weight in play; a random choice's questions are its conditions, then its key weights, asked on arrival and never on leaving; `NodeQuestions` gains the numbers, and its both-ways check covers any two kinds |
@@ -482,7 +484,7 @@ The runner can then trust a static share, and checks only what the world supplie
 | `PlaybookGen` | Draws random choices with number, auto, and key weights and guarded random options, and a fall-through when the world can leave nothing drawable, as the compiler gives one; the walk answers each draw from a number drawn for it, and the drawn world answers key weights with non-negative numbers |
 | Runner | The protocol matrix gains a `Drawn` column and an `AwaitingDraw` row; the arriving table draws; nothing is refused as `unplayable-node` |
 | Asking the world | A1 names numbers after truths and words; A3 lists `NumberAnswer` and reads a JSON number as one |
-| Random choice | Its deferred runtime work is done and its entropy question settled. An auto weight takes what the random options in play leave; a zero total at runtime walks past by the fall-through, which the compiler writes whenever one may be needed; a single random option is always taken while its weight is above zero, and a single `0%` random option is `DLG2010` |
+| Random choice | Its deferred runtime work is done and its entropy question settled. An auto weight takes what the random options in play leave; a zero total at runtime walks past by the fall-through, which the compiler writes whenever one may be needed; a single random option is always taken while its weight is above zero, and a single random option with a `0%` chance is `DLG2010` |
 | Guide | Random choices: an auto weight beside an excluded random option takes what the random options in play leave; a list with nothing to draw is passed by, and an auto weight gives it a line of its own for when every key weight is zero |
 | Runtime architecture | The entropy question is settled; the runner plays every node kind |
 
@@ -494,10 +496,10 @@ The runner can then trust a static share, and checks only what the world supplie
 | Unit — `WeightShares` | Each kind of playbook weight turned into a drawing weight, a key weight as the number the world answered; an excluded random option given no share, its weight unread; the answers required even when no random option has a key weight |
 | Unit — `GuardArbiter` | An unguarded random option never excluded; a guarded one excluded exactly when the world withholds its condition, and refused when the world was asked nothing |
 | Unit — `AnsweredKeyWeights` | The number the world supplied for a key, and refused when the world was asked nothing |
-| Unit — `RandomChoiceShares` | Shares worked out with the world's answers; nothing drawable once the world withholds every random option that would otherwise be drawable, or answers `0` for a key weight beside a `0%`; no shares while a random option is guarded or has a key weight and the world was asked nothing; the random options in play, without the excluded ones |
+| Unit — `RandomChoiceShares` | Shares worked out with the world's answers; nothing drawable once the world withholds every random option that would otherwise be drawable, or answers `0` for a key weight beside a random option with a `0%` chance; no shares while a random option is guarded or has a key weight and the world was asked nothing; the random options in play, without the excluded ones |
 | Unit — `KeyWeightCheck` | An invalid number for a key weight in play refused, each key named once and in one order; an excluded random option's key weight neither checked nor counted, unless a random option in play reads the same key; shares too large to add up refused |
-| Unit — `RandomChoiceNodeDraft` | A fall-through for key weights alone, for an unguarded `0%` beside a guarded number, and for guarded random options; none beside an unguarded number above zero or an unguarded auto weight |
-| Unit — the compiler's weight checks | A single `0%` random option reported with `DLG2010` and not `DLG3004`; a single random option of any other weight with `DLG3004` alone |
+| Unit — `RandomChoiceNodeDraft` | A fall-through for key weights alone, for an unguarded random option with a `0%` chance beside a guarded number, and for guarded random options; none beside an unguarded number above zero or an unguarded auto weight |
+| Unit — the compiler's weight checks | A single random option with a `0%` chance reported with `DLG2010` and not `DLG3004`; a single random option of any other weight with `DLG3004` alone |
 | Unit — `Drawing` | `Draw` sent with the right shares; a draw landing at the start, inside, and at the end of each span, and at `1`; a zero share skipped; each refusal, with the run left where it keeps waiting |
 | Unit — `Arrival` | Asking about a random choice's conditions and key weights; walking past one with nothing drawable, with and without a fall-through |
 | Unit — questions | A random choice's keys, conditions before key weights; the same whole or from its start; nothing asked on leaving it |

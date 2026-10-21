@@ -1,8 +1,8 @@
 {
   "$schema": "https://pengzhengyi.github.io/dialoguedown/schema/fixture-0.schema.json",
-  "name": "a random choice left only a 0% random option in play is walked past by its fall-through",
+  "name": "a random choice whose only random option in play has a 0% chance is walked past by its fall-through",
   "playbook": "playbook.json",
-  "because": "a 0% random option is never drawn, so the compiler writes a fall-through though it has no guard; once the world withholds Guard.IsAngry nothing is drawable, and the run goes on to the line after the random choice rather than asking for a draw that could pick nothing",
+  "because": "Move along has a 0% chance, so it is never drawn, and the compiler writes a fall-through though it has no guard; once the world withholds Guard.IsAngry nothing is drawable, and the run goes on to the line after the random choice rather than asking for a draw that could pick nothing",
   "session": [
     { "expect": { "said": { "speech": "The guard looks up." } } },
     { "send": "next" },
