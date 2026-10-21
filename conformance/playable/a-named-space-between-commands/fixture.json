@@ -1,0 +1,16 @@
+{
+  "$schema": "https://pengzhengyi.github.io/dialoguedown/schema/fixture-0.schema.json",
+  "name": "a named space alone between two commands is said",
+  "playbook": "playbook.json",
+  "because": "the writer named the space between the two commands, so it is part of what the line says and the host is sent it -- a port that judged it as ordinary white space would skip it, and a host joining the parts would run the two sentences together",
+  "session": [
+    { "expect": { "said": { "speaker": "Alice", "speech": "Hi." } } },
+    { "expect": { "perform": { "kind": "custom-command", "name": "Bow", "args": [] } } },
+    { "expect": { "continued": { "speech": " " } } },
+    { "expect": { "perform": { "kind": "custom-command", "name": "Wave", "args": [] } } },
+    { "expect": { "continued": { "speech": "Bye." } } },
+    { "send": "done" },
+    { "send": "next" },
+    { "expect": { "ended": {} } }
+  ]
+}

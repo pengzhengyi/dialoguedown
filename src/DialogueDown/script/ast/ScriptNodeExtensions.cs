@@ -65,6 +65,26 @@ internal static class ScriptNodeExtensions
     }
 
     /// <summary>
+    /// The words a node shows the player: a line's spoken words, or a jump's label. Empty for any
+    /// other node.
+    /// </summary>
+    /// <remarks>
+    /// These are the lists the playbook carries as speech.
+    /// <code>
+    /// Alice: Follow me. =&gt; [the market](#the-market)
+    /// </code>
+    /// shows <c>Follow me.</c> for the line and <c>the market</c> for the jump. An option's label is
+    /// the words of its first line or the label of its jump, so reading every node's words reads
+    /// each label once. A heading's title and a control line's commands are never shown.
+    /// </remarks>
+    internal static IReadOnlyList<InlineFragment> Shown(this ScriptNode node) => node switch
+    {
+        Line line => line.Spoken(),
+        Jump jump => jump.Label,
+        _ => [],
+    };
+
+    /// <summary>
     /// Yields <paramref name="node"/> and then each descendant, depth-first in document
     /// order (a node before its children). Returning a sequence lets callers compose with
     /// LINQ; the script's nesting is shallow, so recursion is safe.
@@ -82,20 +102,30 @@ internal static class ScriptNodeExtensions
     }
 
     /// <summary>
+    /// Every <see cref="Text"/> within the fragments, in document order, including the texts held
+    /// inside other fragments, such as styled text, a link's label, or an image's alt text.
+    /// </summary>
+    /// <remarks>
+    /// <code>
+    /// Take **the ![old](key.png) key**.
+    /// </code>
+    /// holds the texts <c>Take </c>, <c>the </c>, <c>old</c>, <c> key</c>, and <c>.</c>: the bold
+    /// text holds three of them, one inside the image it holds.
+    /// </remarks>
+    internal static IEnumerable<Text> Texts(this IEnumerable<InlineFragment> fragments) =>
+        fragments.SelectMany(fragment => fragment.DescendantsAndSelf()).OfType<Text>();
+
+    /// <summary>
     /// The visible text of a fragment sequence: every <see cref="Text"/> anywhere within the
     /// fragments, concatenated in document order. Styled text or a link label still
     /// contributes its words, so this reads a heading title or label as plain text.
     /// </summary>
     internal static string PlainText(this IEnumerable<InlineFragment> fragments) =>
-        string.Concat(fragments
-            .SelectMany(fragment => fragment.DescendantsAndSelf())
-            .OfType<Text>()
-            .Select(text => text.Content));
+        string.Concat(fragments.Texts().Select(text => text.Content));
 
     /// <summary>
-    /// The node's direct children in document order. A block, speaker, or other node of an
-    /// unknown type throws, so a new node type is not skipped by accident; an inline fragment
-    /// other than the four that hold fragments is a leaf.
+    /// The node's direct children in document order. A block, speaker, inline fragment, or other
+    /// node of an unknown type throws, so a new node type is not skipped by accident.
     /// </summary>
     internal static IEnumerable<ScriptNode> Children(this ScriptNode node) => node switch
     {
@@ -153,17 +183,21 @@ internal static class ScriptNodeExtensions
             nameof(speaker), speaker.GetType(), "Unhandled speaker type in Children()."),
     };
 
-    // Only the four inline containers expose nested fragments; every other fragment (text,
-    // breaks, game calls, tags) is a leaf, so an unrecognized one defaults to no children.
     private static IEnumerable<ScriptNode> FragmentChildren(InlineFragment fragment) => fragment switch
     {
         StyledText styled => styled.Children,
         Image image => image.Alt,
         Link link => link.Label,
         Jump jump => jump.IsConditional() ? [jump.Condition!, .. jump.Label] : jump.Label,
+        _ when IsLeaf(fragment) => [],
 
-        _ => [],
+        _ => throw new ArgumentOutOfRangeException(
+            nameof(fragment), fragment.GetType(), "Unhandled inline fragment type in Children()."),
     };
+
+    // The inline fragments that hold no other fragment.
+    private static bool IsLeaf(InlineFragment fragment) =>
+        fragment is Text or LineBreak or JumpIndicator or Condition or GameCall or Tag;
 
     private static IEnumerable<ScriptNode> ConditionalBodyChildren(
         Condition? condition, IReadOnlyList<ScriptBlock> body) =>

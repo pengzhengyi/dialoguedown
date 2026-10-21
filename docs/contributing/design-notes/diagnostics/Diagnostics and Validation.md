@@ -44,7 +44,7 @@ flowchart TB
 | Markdown front end | `DLG1114` |
 | Transpiler | `DLG1101`–`DLG1105`, `DLG1107`–`DLG1112` |
 | Desugar | `DLG1113` |
-| Structural validator | `DLG1003`, `DLG1106`, `DLG2010`, `DLG2015`, `DLG3002`–`DLG3004` |
+| Structural validator | `DLG1003`, `DLG1106`, `DLG1116`, `DLG2010`, `DLG2015`, `DLG3002`–`DLG3004` |
 | Semantic analyzer | `DLG2001`–`DLG2009`, `DLG2016`, `DLG2017` |
 
 ## Ubiquitous language
@@ -110,6 +110,7 @@ for both composition roots.
 | `UnreachableAfterJumpRule` — content after a jump on the same line | `DLG1003` | Warning |
 | `CommandInLabelRule` — [a command inside a label or alt text](../language/Game%20Calls%20in%20Labels.md) | `DLG1103` | Error |
 | `OrphanConditionRule` — a condition that guards nothing | `DLG1106` | Error |
+| `ExtraSpacesRule` — [spaces typed together in speech](../language/Speech%20Whitespace.md), which collapse | `DLG1116` | Info |
 | `WeightTotalRule` — random-choice weights sum to zero / not to 100% | `DLG2010` / `DLG3003` | Error / Warning |
 | `SceneHeadingPlacementRule` — a heading inside a branch or option | `DLG2015` | Error |
 | `ChoiceNestingDepthRule` — [choice nesting past level 3](Choice%20Nesting%20Diagnostic.md) | `DLG3002` | Warning |

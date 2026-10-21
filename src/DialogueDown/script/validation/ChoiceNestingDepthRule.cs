@@ -41,8 +41,7 @@ internal sealed class ChoiceNestingDepthRule : DiagnosticRule
             {
                 report(
                     SourceSpan.EmptyAt(group.Span.Start),
-                    enclosingChoiceCount + 1,
-                    _maximumNestingLevel);
+                    [enclosingChoiceCount + 1, _maximumNestingLevel]);
             }
         }
     }

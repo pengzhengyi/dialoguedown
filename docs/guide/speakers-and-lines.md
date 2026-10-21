@@ -15,6 +15,7 @@ Part of the [script language specification](script-language.md).
   - [Default speaker](#default-speaker)
   - [Escaping a speaker prefix](#escaping-a-speaker-prefix)
 - [Whitespace around the colon](#whitespace-around-the-colon)
+- [Spacing in speech](#spacing-in-speech)
 - [Styling](#styling)
 - [Tags](#tags)
 - [Images](#images)
@@ -181,15 +182,51 @@ Alice: Hello, Bob!
 Alice :   Hello, Bob!
 ```
 
-The amount of spacing never changes the speech. This matters because rendered
-Markdown collapses consecutive spaces visually, so relying on extra spaces would
-be an invisible trap — the author could not see the difference in a preview.
+The amount of spacing never changes the speech. This matters because a browser
+shows Markdown as HTML, which collapses consecutive spaces, so relying on extra
+spaces would be an invisible trap — the author could not see the difference in a
+preview.
 
-If speech must start with a literal leading space, quote it. Quoting is the
-single, explicit way to preserve leading whitespace:
+If speech must start with a space, name it with an entity, which shows in the
+preview and in the game alike:
 
 ```markdown
-Alice: " Hello, Bob!"
+Alice: &nbsp;Hello, Bob!
+```
+
+Quote marks do not keep a space: they are ordinary text, so the player sees them
+too. See [Spacing in speech](#spacing-in-speech) for the other named spaces.
+
+## Spacing in speech
+
+Speech is spaced the way a Markdown preview shows it, so the game reads the same
+as the preview:
+
+- **Spaces typed together show as one.** A tab counts as a space, and so does a
+  line break within a paragraph. `Alice: Welcome.  Sit anywhere.` says
+  `Welcome. Sit anywhere.`
+- **A command or a tag takes no room.** The preview draws a command as code, but
+  the game shows nothing in its place, so the spaces on either side of it become
+  one: ``- Say goodbye `Wave()` and leave`` offers `Say goodbye and leave`.
+- **No space stands before the first word or after the last.**
+  `Alice: Hello. #mood=happy` says `Hello.`
+
+Where spaces typed together collapse, the compiler notes it with
+[`DLG1116`](error-codes.md#dlg1116), an information note that never fails a
+compile. `ddown compile --fix` writes one space in place of each.
+
+To widen spacing on purpose, name the space with an entity. A named space shows
+in the source, in the preview, and in the game, and never collapses:
+
+| Entity | Shows as |
+| --- | --- |
+| `&nbsp;` | a space the line never breaks at; repeat it to widen |
+| `&ensp;` | a wider gap |
+| `&emsp;` | a wide gap |
+| `&thinsp;` | a narrow gap |
+
+```markdown
+Alice: Wait.&nbsp;&nbsp; Listen.
 ```
 
 ## Styling
@@ -283,7 +320,9 @@ Alice: ![Alice smiling #size=small #align=left](alice.png)
 ```
 
 The compiler keeps the source path and the alt text (including any tags) as
-written; the presentation layer decides what the tags mean and how the image
-renders. A [query](game-state.md#a-query-in-a-label) in the alt text is the one
+written, spaced the way [speech is](#spacing-in-speech) on its own; the
+presentation layer decides what the tags mean and how the image renders. Spaces
+at the ends of the alt text are removed, so put the spaces that separate an image
+from its words outside the brackets. A [query](game-state.md#a-query-in-a-label) in the alt text is the one
 exception: it is filled like a query in speech, so a portrait can name who it
 shows.

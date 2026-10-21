@@ -44,6 +44,13 @@ internal static class MarkdownAstFactory
         new(text, span, new SourceSpan(span.Start + 1, span.Length - 1),
             isFirstCharacterEscaped: true);
 
+    /// <summary>
+    /// A text inline decoded from an entity, such as <c>&amp;#32;</c> for a space: the
+    /// <paramref name="span"/> covers the whole entity, which runs longer than the text it names.
+    /// </summary>
+    public static TextInline Entity(string text, SourceSpan span) =>
+        new(text, span, isEntity: true);
+
     public static LinkInline Link(string? target = null, params MarkdownInline[] label) =>
         new(target ?? $"#{Faker.Lorem.Slug()}", label.Length == 0 ? [Text()] : label, Span());
 

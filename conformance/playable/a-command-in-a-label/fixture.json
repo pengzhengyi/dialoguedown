@@ -9,14 +9,14 @@
     { "expect": { "offer": { "ordered": false, "options": [
         { "label": [
             { "kind": "text", "text": "Say goodbye " },
-            { "kind": "text", "text": " and leave" }
+            { "kind": "text", "text": "and leave" }
           ], "available": true },
         { "label": "Stay a while", "available": true }
       ] } } },
     { "send": { "choose": 0 } },
     { "expect": { "said": { "speech": "Say goodbye " } } },
     { "expect": { "perform": { "kind": "custom-command", "name": "Wave", "args": [] } } },
-    { "expect": { "continued": { "speech": " and leave" } } },
+    { "expect": { "continued": { "speech": "and leave" } } },
     { "send": "done" },
     { "send": "next" },
     { "expect": { "ended": {} } }

@@ -1,0 +1,11 @@
+{
+  "$schema": "https://pengzhengyi.github.io/dialoguedown/schema/fixture-0.schema.json",
+  "name": "spaces typed together are said as one",
+  "playbook": "playbook.json",
+  "because": "a Markdown preview shows the writer's run of spaces as one, so the playbook carries one and the runner says it as written -- a port that kept the run would leave every host to collapse it, and a host that draws its own text would show a gap the writer never saw",
+  "session": [
+    { "expect": { "said": { "speaker": "Alice", "speech": "Hello, Bob." } } },
+    { "send": "next" },
+    { "expect": { "ended": {} } }
+  ]
+}

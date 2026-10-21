@@ -211,6 +211,14 @@ public sealed class ScriptNodeExtensionsTests
     }
 
     [Fact]
+    public void Children_UnhandledFragmentType_Throws()
+    {
+        var fragment = new UnknownFragment(SourceSpanFactory.Span());
+
+        Assert.Throws<ArgumentOutOfRangeException>(() => fragment.Children());
+    }
+
+    [Fact]
     public void TypeChainToScriptNode_YieldsConcreteTypeUpToScriptNode()
     {
         var node = SpeakerNameReference("Alice");
@@ -243,6 +251,39 @@ public sealed class ScriptNodeExtensionsTests
         var leaf = Text("x");
 
         Assert.Equal([leaf], leaf.DescendantsAndSelf());
+    }
+
+    [Fact]
+    public void Texts_ReachesTheTextsHeldInsideOtherFragments_InDocumentOrder()
+    {
+        // Take **the ![old](key.png) key** to [the inn](#the-inn).
+        var take = Text("Take ");
+        var the = Text("the ");
+        var old = Text("old");
+        var key = Text(" key");
+        var to = Text(" to ");
+        var inn = Text("the inn");
+        var stop = Text(".");
+        IReadOnlyList<InlineFragment> fragments =
+        [
+            take,
+            StyledText(SpeechStyle.Bold, the, Image("key.png", old), key),
+            to,
+            Link("#the-inn", inn),
+            stop,
+        ];
+
+        Assert.Equal([take, the, old, key, to, inn, stop], fragments.Texts());
+    }
+
+    [Fact]
+    public void Texts_SkipsFragmentsThatAreNotText()
+    {
+        var words = Text("Wait.");
+        IReadOnlyList<InlineFragment> fragments =
+            [words, LineBreak(), DefaultCommand("fade out"), CustomTag("calm")];
+
+        Assert.Equal([words], fragments.Texts());
     }
 
     [Fact]
@@ -319,6 +360,41 @@ public sealed class ScriptNodeExtensionsTests
         Assert.Empty(Choices(Choice(Line(Text("pick")))).Jumps());
     }
 
+    [Fact]
+    public void Shown_ALine_IsWhatItSaysWithoutTheJumpItEndsIn()
+    {
+        var words = Text("Follow me. ");
+        var line = Line(words, Jump("#the-market", Text("the market")));
+
+        Assert.Equal([words], line.Shown());
+    }
+
+    [Fact]
+    public void Shown_AJump_IsItsLabel()
+    {
+        var label = Text("the market");
+        var jump = Jump("#the-market", label);
+
+        Assert.Equal([label], jump.Shown());
+    }
+
+    [Fact]
+    public void Shown_AnOption_IsNothing_ItsLabelIsShownByItsLine()
+    {
+        var line = Line(Text("I'll wait here."));
+        var option = Choice(line);
+
+        Assert.Empty(option.Shown());
+        Assert.Equal(option.Label(), line.Shown());
+    }
+
+    [Fact]
+    public void Shown_ANodeThePlayerNeverSees_IsNothing()
+    {
+        Assert.Empty(SceneHeading("The Tavern").Shown());
+        Assert.Empty(ControlLine(DefaultCommand("fade out")).Shown());
+    }
+
     // Script nodes the traversal helpers do not recognize, so each category's dispatch can be
     // shown to throw on an unhandled type.
     private sealed record UnknownNode(SourceSpan Span) : ScriptNode(Span);
@@ -326,4 +402,6 @@ public sealed class ScriptNodeExtensionsTests
     private sealed record UnknownBlock(SourceSpan Span) : ScriptBlock(Span);
 
     private sealed record UnknownSpeaker(SourceSpan Span) : Speaker(Span);
+
+    private sealed record UnknownFragment(SourceSpan Span) : InlineFragment(Span);
 }
