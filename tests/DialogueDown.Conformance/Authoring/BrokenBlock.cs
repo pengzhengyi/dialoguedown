@@ -1,12 +1,13 @@
 namespace DialogueDown.Conformance.Authoring;
 
 /// <summary>
-/// A readable refusal's leading <c>broken:</c> block: the note naming the deliberate edit and the
-/// valid script below it.
+/// A hand-edited case's leading <c>broken:</c> block: the note naming the deliberate edit and the
+/// valid script below it. A readable refusal opens with one, and so does a playable case whose
+/// playbook no compiler emits.
 /// </summary>
 /// <remarks>
-/// Part of this repository's authoring checks, not the portable readable contract: a port reads a
-/// fixture and the document it names, never the source. The block names the edit on its first
+/// Part of this repository's authoring checks, not the portable contract: a port reads a fixture
+/// and the document it names, never the source. The block names the edit on its first
 /// line, then a blank line, then the evidence:
 /// <code>
 /// &lt;!-- broken: it requires a capability no version-0 runtime offers
@@ -43,7 +44,7 @@ public sealed record BrokenBlock(string Note, string Script)
         if (!source.StartsWith(Marker, StringComparison.Ordinal))
         {
             throw new MalformedBrokenBlockException(
-                $"A refused source must open with '{Marker}', but this one opens with '{Head(source)}'.");
+                $"A hand-edited source must open with '{Marker}', but this one opens with '{Head(source)}'.");
         }
 
         var close = source.IndexOf(Closer, Marker.Length, StringComparison.Ordinal);
@@ -51,7 +52,7 @@ public sealed record BrokenBlock(string Note, string Script)
         if (close < 0)
         {
             throw new MalformedBrokenBlockException(
-                $"A refused source's '{Marker}' block must close with '{Closer}'.");
+                $"A hand-edited source's '{Marker}' block must close with '{Closer}'.");
         }
 
         var body = source[Marker.Length..close];
@@ -59,7 +60,7 @@ public sealed record BrokenBlock(string Note, string Script)
         if (body.Contains("<!--", StringComparison.Ordinal))
         {
             throw new MalformedBrokenBlockException(
-                "A refused source's block must not hold '<!--', or the parser would nest a comment.");
+                "A hand-edited source's block must not hold '<!--', or the parser would nest a comment.");
         }
 
         var newline = body.IndexOf('\n');
@@ -67,7 +68,7 @@ public sealed record BrokenBlock(string Note, string Script)
         if (newline < 0 || !IsBlankLine(body[(newline + 1)..]))
         {
             throw new MalformedBrokenBlockException(
-                "A refused source's block must name the edit, then a blank line, then its evidence.");
+                "A hand-edited source's block must name the edit, then a blank line, then its evidence.");
         }
 
         return new BrokenBlock(body[..newline].Trim(), source[(close + Closer.Length)..].TrimStart('\r', '\n'));

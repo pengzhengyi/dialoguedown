@@ -144,7 +144,10 @@ A runtime has no compiler, so a fixture supplies the playbook it loads. The sour
 script is committed beside it, so a reviewer reads a dialogue rather than JSON, and a
 test recompiles every playable source and compares it to the committed playbook. A
 `readable/` refusal is an accepted document with one deliberate edit, and its source
-opens with a `broken:` block showing that edit.
+opens with a `broken:` block showing that edit. A playable case is written the same way
+when it plays a playbook no compiler emits, such as a key one node needs as two kinds of
+answer: the compiler rejects that script, so the case can only edit a playbook it does
+accept.
 
 ### F3 — A fixture is a session, not a transcript
 
@@ -215,7 +218,7 @@ everything a case needs. The verdict is **not yet playable**, matching
 | Harness unit | The harness fails when it should — a wrong verdict, a missing playbook, a malformed fixture |
 | Readable corpus | Every refusal the reader makes has a case, and every acceptance does too |
 | Fixture integrity | Every fixture validates against `schema/fixture-0.schema.json` in CI; every case ships a fixture, a playbook, and a source |
-| Source integrity | Every playable source recompiles to its committed playbook; every readable refusal's `broken:` block is well formed, and the script below it compiles to an accepted document that differs from the committed one |
+| Source integrity | Every playable source without a `broken:` block recompiles to its committed playbook; every `broken:` block, readable or playable, is well formed, and the script below it compiles to an accepted document that differs from the committed one |
 | Schema agreement | Every accepted playbook validates against `schema/playbook-0.schema.json` |
 
 The source comparison lives in `DialogueDown.Tests`, which owns the compiler; the

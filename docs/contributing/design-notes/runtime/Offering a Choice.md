@@ -327,7 +327,7 @@ it the writer never wrote, and to answer an `Offer` with something other than
 | Every option unavailable | The menu is walked past by its fall-through |
 | Every option unavailable and no fall-through | Refused as `leads-nowhere` |
 | A menu with no options, built by hand | Walked past, as one with nothing available |
-| One key as one option's condition and in another's label | Refused as `key-needed-both-ways` before anything is asked; the compiler does not yet reject the script |
+| One key as one option's condition and in another's label | Refused as `key-needed-both-ways` before anything is asked; the compiler rejects the script as [`DLG2018`](../../../guide/error-codes.md#dlg2018) |
 | An answer that does not fit the menu's request | Refused; the run keeps waiting where it asked |
 
 ## Integration

@@ -112,9 +112,10 @@ to a reader's message.
 1. Write `source.dialogue.md`, as small as it can be while showing the one thing
    the case is about.
 2. Compile it: `ddown compile <source> --emit playbook -o playbook.json`.
-3. For a refusal, change **one** field of that playbook by hand — a compiler will
-   not emit a broken document, so the edit is the only way to write the case.
-4. For a refusal, open `source.dialogue.md` with a **`broken:` block**: an HTML
+3. For a readable refusal, or a playable case whose playbook no compiler emits,
+   change **one** field of that playbook by hand — a compiler will not emit such a
+   document, so the edit is the only way to write the case.
+4. For such a case, open `source.dialogue.md` with a **`broken:` block**: an HTML
    comment naming the edit and showing it — the invalid script where the language
    can express it, otherwise the changed part of the playbook. The comment is
    ignored, and the script below it still compiles.

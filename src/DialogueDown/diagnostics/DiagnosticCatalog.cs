@@ -282,6 +282,15 @@ internal static class DiagnosticCatalog
         DiagnosticCategory.Semantic,
         DiagnosticSeverity.Error);
 
+    /// <summary>DLG2018 — one line, menu, or random choice needs a key as two kinds of answer.</summary>
+    public static readonly DiagnosticDescriptor KeyNeededBothWays = new(
+        "DLG2018",
+        "Key needed both ways",
+        "'{0}' is used here as {1}, and earlier in this {2} as {3}. The game gives one answer per "
+            + "key for the whole {2}, so it cannot answer both. Use a different key for one of them.",
+        DiagnosticCategory.Semantic,
+        DiagnosticSeverity.Error);
+
     // Style — DLG3xxx: a valid script shape that may be difficult to read or maintain.
 
     /// <summary>DLG3002 — a choice branch exceeds the recommended nesting depth.</summary>
