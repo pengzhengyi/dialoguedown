@@ -2,7 +2,7 @@ using DialogueDown.Play.Tui;
 using DialogueDown.Playbook.Speech;
 using static DialogueDown.Play.Tests.Support.Consoles;
 using static DialogueDown.Play.Tests.Support.MenuOptionFactory;
-using static DialogueDown.Play.Tests.Support.OutputAssert;
+using static DialogueDown.TestSupport.OutputAssert;
 using static DialogueDown.TestSupport.SpeechFactory;
 
 namespace DialogueDown.Play.Tests.Tui;

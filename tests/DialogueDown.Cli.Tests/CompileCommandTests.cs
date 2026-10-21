@@ -9,8 +9,8 @@ using DialogueDown.Visualization.Render;
 using NSubstitute;
 using static DialogueDown.Cli.Tests.Support.CliAssert;
 using static DialogueDown.Cli.Tests.Support.ConfigFiles;
-using static DialogueDown.Cli.Tests.Support.OutputAssert;
 using static DialogueDown.Cli.Tests.Support.VisualizeRunnerAssert;
+using static DialogueDown.TestSupport.OutputAssert;
 
 namespace DialogueDown.Cli.Tests;
 

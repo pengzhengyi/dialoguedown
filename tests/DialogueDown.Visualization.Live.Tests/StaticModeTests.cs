@@ -2,6 +2,7 @@ using DialogueDown.Configuration;
 using DialogueDown.TestSupport;
 using DialogueDown.Visualization.Configuration;
 using DialogueDown.Visualization.Live.Tests.Support;
+using static DialogueDown.TestSupport.OutputAssert;
 
 namespace DialogueDown.Visualization.Live.Tests;
 
@@ -82,6 +83,6 @@ public sealed class StaticModeTests
 
         Assert.Equal(1, code);
         Assert.Empty(browser.Opened);
-        Assert.Contains("not found", error.ToString(), StringComparison.OrdinalIgnoreCase);
+        AssertReads(error.ToString(), $"File not found: {missing}");
     }
 }

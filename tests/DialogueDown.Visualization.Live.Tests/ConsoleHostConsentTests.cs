@@ -1,4 +1,6 @@
 using DialogueDown.Visualization.Live.Serving;
+using static DialogueDown.TestSupport.OutputAssert;
+
 namespace DialogueDown.Visualization.Live.Tests;
 
 public sealed class ConsoleHostConsentTests
@@ -14,7 +16,11 @@ public sealed class ConsoleHostConsentTests
         var consent = new ConsoleHostConsent(interactive: true, new StringReader(answer), output);
 
         Assert.True(consent.AllowHosting(Request()));
-        Assert.Contains("Allow serving files from /proj-root", output.ToString());
+        AssertReads(
+            output.ToString(),
+            "This document references 1 image(s) outside its folder:",
+            "  /shared/a.png",
+            "Allow serving files from /proj-root to render them? [y/N]");
     }
 
     [Theory]
@@ -35,8 +41,11 @@ public sealed class ConsoleHostConsentTests
         var consent = new ConsoleHostConsent(interactive: false, new StringReader(string.Empty), output);
 
         Assert.False(consent.AllowHosting(Request()));
-        Assert.Contains("Re-run with --root \"/proj-root\"", output.ToString());
-        Assert.DoesNotContain("[y/N]", output.ToString());
+        AssertReads(
+            output.ToString(),
+            "This document references 1 image(s) outside its folder:",
+            "  /shared/a.png",
+            "Not hosting them (no interactive prompt). Re-run with --root \"/proj-root\" to allow.");
     }
 
     [Fact]
@@ -48,9 +57,12 @@ public sealed class ConsoleHostConsentTests
         consent.AllowHosting(new HostConsentRequest(
             "/proj/scene.dialogue.md", "/root", ["/shared/a.png", "/shared/b.png"]));
 
-        Assert.Contains("2 image(s)", output.ToString());
-        Assert.Contains("/shared/a.png", output.ToString());
-        Assert.Contains("/shared/b.png", output.ToString());
+        AssertReads(
+            output.ToString(),
+            "This document references 2 image(s) outside its folder:",
+            "  /shared/a.png",
+            "  /shared/b.png",
+            "Allow serving files from /root to render them? [y/N]");
     }
 
     [Fact]
