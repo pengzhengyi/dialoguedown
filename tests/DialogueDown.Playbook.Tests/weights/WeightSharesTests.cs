@@ -49,7 +49,7 @@ public sealed class WeightSharesTests
     }
 
     [Fact]
-    public void Of_AKeyWeightAnsweredWithANumberNoShareCanBe_IsRefused() =>
+    public void Of_AKeyWeightAnsweredWithAnInvalidNumber_IsRefused() =>
         Assert.Throws<ArgumentOutOfRangeException>(
             () => WeightShares.Of(
                 [Chance("Guard.Mood"), EvenChance()],
@@ -57,7 +57,7 @@ public sealed class WeightSharesTests
                 new KeyWeightAnswered("Guard.Mood", -10)));
 
     [Fact]
-    public void Of_ANumberNoShareCanBe_IsRefused() =>
+    public void Of_AnInvalidNumber_IsRefused() =>
         Assert.Throws<ArgumentOutOfRangeException>(
             () => WeightShares.Of([Chance(-10), EvenChance()], new EveryOptionInPlay(), new NoKeyWeightAnswered()));
 

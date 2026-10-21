@@ -15,7 +15,7 @@ public sealed class DrawingWeightTests
     [InlineData(-10)]
     [InlineData(double.NaN)]
     [InlineData(double.PositiveInfinity)]
-    public void Number_NoShareCanBe_IsRefusedNamingTheNumber(double percentage)
+    public void Number_Invalid_IsRefusedNamingTheNumber(double percentage)
     {
         void Unusable() => _ = new Number(percentage);
 
