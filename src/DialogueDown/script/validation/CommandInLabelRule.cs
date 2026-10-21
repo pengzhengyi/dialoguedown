@@ -25,7 +25,7 @@ internal sealed class CommandInLabelRule : DiagnosticRule
             // A label never holds a line, so any label above the command means it is inside one.
             if (nodes.AncestorsOf(command).Any(IsLabel))
             {
-                report(command.Span, command.Canonical());
+                report(command.Span, [command.Canonical()]);
             }
         }
     }

@@ -178,7 +178,7 @@
         },
         {
           "kind": "text",
-          "text": " after dark. "
+          "text": " after dark."
         },
         {
           "kind": "custom-command",
@@ -268,7 +268,7 @@
           "label": [
             {
               "kind": "text",
-              "text": "Ask the guide for advice first "
+              "text": "Ask the guide for advice first"
             },
             {
               "kind": "tag",
@@ -340,7 +340,7 @@
       "speech": [
         {
           "kind": "text",
-          "text": "Ask the guide for advice first "
+          "text": "Ask the guide for advice first"
         },
         {
           "kind": "tag",
@@ -536,7 +536,7 @@
       "speech": [
         {
           "kind": "text",
-          "text": "The trees close in overhead, and something rustles in the shadows. "
+          "text": "The trees close in overhead, and something rustles in the shadows."
         },
         {
           "kind": "tag",

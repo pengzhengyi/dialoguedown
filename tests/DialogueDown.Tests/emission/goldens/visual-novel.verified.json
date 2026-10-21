@@ -114,7 +114,7 @@
         },
         {
           "kind": "text",
-          "text": " Yuki @yuki "
+          "text": "Yuki @yuki "
         },
         {
           "kind": "tag",
@@ -251,14 +251,11 @@
             },
             {
               "kind": "text",
-              "text": " Yuki: "
+              "text": "Yuki: "
             },
             {
               "kind": "default-command",
               "action": "Yuki hides a smile behind her sleeve"
-            },
-            {
-              "kind": "break"
             },
             {
               "kind": "text",
@@ -293,14 +290,11 @@
         },
         {
           "kind": "text",
-          "text": " Yuki: "
+          "text": "Yuki: "
         },
         {
           "kind": "default-command",
           "action": "Yuki hides a smile behind her sleeve"
-        },
-        {
-          "kind": "break"
         },
         {
           "kind": "text",
@@ -366,7 +360,7 @@
             },
             {
               "kind": "text",
-              "text": " Yuki: That is very like you. Careful, and kind"
+              "text": "Yuki: That is very like you. Careful, and kind"
             },
             {
               "kind": "break"
@@ -404,7 +398,7 @@
         },
         {
           "kind": "text",
-          "text": " Yuki: That is very like you. Careful, and kind"
+          "text": "Yuki: That is very like you. Careful, and kind"
         },
         {
           "kind": "break"
@@ -688,7 +682,7 @@
             },
             {
               "kind": "text",
-              "text": " Yuki: You\u2014 you cannot just "
+              "text": "Yuki: You\u2014 you cannot just "
             },
             {
               "kind": "styled",
@@ -740,7 +734,7 @@
         },
         {
           "kind": "text",
-          "text": " Yuki: You\u2014 you cannot just "
+          "text": "Yuki: You\u2014 you cannot just "
         },
         {
           "kind": "styled",
@@ -823,7 +817,7 @@
             },
             {
               "kind": "text",
-              "text": " Yuki: Mm. Eventually."
+              "text": "Yuki: Mm. Eventually."
             }
           ]
         },
@@ -854,7 +848,7 @@
         },
         {
           "kind": "text",
-          "text": " Yuki: Mm. Eventually."
+          "text": "Yuki: Mm. Eventually."
         }
       ],
       "out": [
@@ -1044,7 +1038,7 @@
         },
         {
           "kind": "text",
-          "text": " Yuki: Before it gets here \u2014 "
+          "text": "Yuki: Before it gets here \u2014 "
         },
         {
           "kind": "query",
@@ -1305,16 +1299,12 @@
           "alt": [
             {
               "kind": "text",
-              "text": "the rain over your one umbrella "
+              "text": "the rain over your one umbrella"
             },
             {
               "kind": "tag",
               "name": "size",
               "value": "large"
-            },
-            {
-              "kind": "text",
-              "text": " "
             },
             {
               "kind": "tag",

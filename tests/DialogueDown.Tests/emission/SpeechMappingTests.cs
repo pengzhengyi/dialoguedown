@@ -115,6 +115,52 @@ public sealed class SpeechMappingTests
     }
 
     [Fact]
+    public void Write_ALineOfSpeech_HasItsExtraSpacesCollapsed()
+    {
+        AssertSays(SpeechMapping.Write([Text("Hello,    Bob.  ")]), "Hello, Bob.");
+    }
+
+    [Fact]
+    public void Write_StyledText_IsSpacedWithTheLineAroundIt()
+    {
+        // On its own, the bold text would lose its last space and run "Wait" into "here."
+        var speech = SpeechMapping.Write(
+            [StyledText(Ast.SpeechStyle.Bold, Text("Wait ")), Text("here.")]);
+
+        Assert.Collection(
+            speech,
+            bold => AssertSays(AssertStyled(bold, SpeechStyle.Bold), "Wait "),
+            rest => AssertSays(rest, "here."));
+    }
+
+    [Fact]
+    public void Write_ALinksLabel_IsSpacedWithTheLineAroundIt()
+    {
+        var speech = SpeechMapping.Write(
+            [Text("Take "), Link("#road", Text(" the road ")), Text("home.")]);
+
+        Assert.Collection(
+            speech,
+            before => AssertSays(before, "Take "),
+            link => AssertSays(AssertLinksTo(link, "#road"), "the road "),
+            after => AssertSays(after, "home."));
+    }
+
+    [Fact]
+    public void Write_AnImagesAltText_IsSpacedOnItsOwn()
+    {
+        // With the line around it, the alt text would keep its last space, as a link's label does.
+        var speech = SpeechMapping.Write(
+            [Text("Take "), Image("key.png", Text(" the key ")), Text("home.")]);
+
+        Assert.Collection(
+            speech,
+            before => AssertSays(before, "Take "),
+            image => AssertSays(AssertShows(image, "key.png"), "the key"),
+            after => AssertSays(after, "home."));
+    }
+
+    [Fact]
     public void Write_NoFragmentAtAll_IsRejected()
     {
         Assert.Throws<ArgumentNullException>(() => SpeechMapping.Write((Ast.InlineFragment)null!));

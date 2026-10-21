@@ -371,6 +371,32 @@ Alice: We should go.
 
 <mark class="dd-mark-fix">Alice: The road was long.</mark></code></pre>
 
+### DLG1116
+
+<span class="dd-sev dd-sev--info">Info</span> · Spaces typed together collapse
+
+Spaces typed together collapse, in a Markdown preview and in the game alike, so the extra width here does not show. That is usually what you want, and one space reads the same. To keep the width, write a non-breaking space for each extra space: `a&nbsp;&nbsp; b`.
+
+A Markdown preview shows spaces typed together as one, and so does the game: where two or more spaces, tabs, or encoded line breaks stand together in text the player reads, the player sees one space. That is usually what you want, so this is a note, not a fault, and it exists so the collapse is never a surprise. Two spaces after a sentence get no exemption; one space reads the same. If you meant the width, name the space: a non-breaking space (`&nbsp;`) never collapses.
+
+<span class="dd-eg-bad">Triggering example</span>
+
+<pre class="dd-example"><code class="nohighlight"># The Tavern
+
+Alice: <mark class="dd-mark-bad">Welcome.  Sit</mark> anywhere.</code></pre>
+
+<span class="dd-eg-fix">Fix — if the extra width was a habit</span>
+
+<pre class="dd-example"><code class="nohighlight"># The Tavern
+
+Alice: <mark class="dd-mark-fix">Welcome. Sit</mark> anywhere.</code></pre>
+
+<span class="dd-eg-fix">Fix — if the width was meant</span>
+
+<pre class="dd-example"><code class="nohighlight"># The Tavern
+
+Alice: <mark class="dd-mark-fix">Welcome.&amp;nbsp; Sit</mark> anywhere.</code></pre>
+
 ## Semantic (`DLG2xxx`)
 
 A meaning-level problem found during analysis — a reference that does not resolve, or a conflict.

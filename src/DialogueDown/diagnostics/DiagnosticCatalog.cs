@@ -148,6 +148,17 @@ internal static class DiagnosticCatalog
         DiagnosticCategory.Syntax,
         DiagnosticSeverity.Info);
 
+    /// <summary>DLG1116 — spaces typed together in speech collapse to one.</summary>
+    public static readonly DiagnosticDescriptor ExtraSpaces = new(
+        "DLG1116",
+        "Spaces typed together collapse",
+        "Spaces typed together collapse, in a Markdown preview and in the game alike, so the extra "
+            + "width here does not show. That is usually what you want, and one space reads the "
+            + "same. To keep the width, write a non-breaking space for each extra space: "
+            + "`a&nbsp;&nbsp; b`.",
+        DiagnosticCategory.Syntax,
+        DiagnosticSeverity.Info);
+
     // Semantic — DLG2xxx: a problem in what the script means, such as a reference that does not
     // resolve.
 

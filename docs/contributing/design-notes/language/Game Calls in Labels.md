@@ -243,7 +243,7 @@ internal sealed class CommandInLabelRule : DiagnosticRule
         {
             if (nodes.AncestorsOf(command).Any(IsLabel))
             {
-                report(command.Span, command.Canonical());   // GiveQuest("EmberCrown"), ("wave")
+                report(command.Span, [command.Canonical()]); // GiveQuest("EmberCrown"), ("wave")
             }
         }
     }

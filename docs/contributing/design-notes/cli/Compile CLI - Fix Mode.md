@@ -131,8 +131,11 @@ CLI, next to the command that uses it.
 5. **Skip an edit that falls outside the text.** Defensive: a stale offset is
    dropped with its fix and reported, and the remaining fixes still apply.
 
-The only producer, `DLG1113`, carries one single-edit fix (insert `\` before
-the arrow), so overlap cannot occur and step 3 is a no-op. The policy exists so
+Two producers carry fixes, each one single-edit fix: `DLG1113` inserts `\`
+before the arrow, and `DLG1116` writes one space in place of spaces typed
+together. `DLG1116`'s spans are separate runs, and an insertion before an arrow
+meets a run of spaces only at its end, which is not an overlap, so `x  => y`
+takes both fixes. Overlap cannot occur, and step 3 is a no-op. The policy exists so
 that a producer offering alternatives, or a multi-edit fix, cannot interleave
 silently. The CLI's ordering policy is normative for batch repair; the editor
 applies one chosen fix at a time, so it needs no ordering.

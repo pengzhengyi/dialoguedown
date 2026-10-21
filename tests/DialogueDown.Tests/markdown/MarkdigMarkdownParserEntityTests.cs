@@ -35,6 +35,16 @@ public sealed class MarkdigMarkdownParserEntityTests : MarkdigMarkdownParserTest
     }
 
     [Fact]
+    public void Parse_EntityReference_IsMarkedAsAnEntity()
+    {
+        var document = Parse("a&nbsp;b");
+
+        var paragraph = AssertSingleBlock<Paragraph>(document);
+
+        Assert.Equal([false, true, false], paragraph.Inlines.OfType<TextInline>().Select(text => text.IsEntity));
+    }
+
+    [Fact]
     public void Parse_UnknownEntity_StaysLiteralText()
     {
         // Markdig hands an unknown name through as text, so there is nothing to decode and

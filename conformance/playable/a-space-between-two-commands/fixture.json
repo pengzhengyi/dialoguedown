@@ -1,0 +1,15 @@
+{
+  "$schema": "https://pengzhengyi.github.io/dialoguedown/schema/fixture-0.schema.json",
+  "name": "a space typed alone between two commands goes on with the words after them",
+  "playbook": "playbook.json",
+  "because": "the only space between the two sentences sits between two commands, and a part holding only a space says nothing, so the compiler moves the space to the words after the commands -- a host joining the parts then shows the sentences apart, as the preview does, rather than running them together",
+  "session": [
+    { "expect": { "said": { "speaker": "Alice", "speech": "Hi." } } },
+    { "expect": { "perform": { "kind": "custom-command", "name": "Bow", "args": [] } } },
+    { "expect": { "perform": { "kind": "custom-command", "name": "Wave", "args": [] } } },
+    { "expect": { "continued": { "speech": " Bye." } } },
+    { "send": "done" },
+    { "send": "next" },
+    { "expect": { "ended": {} } }
+  ]
+}

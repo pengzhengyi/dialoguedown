@@ -13,6 +13,7 @@ public sealed class SpeechSegmentTests
             { "a space", [Text(" ")] },
             { "a line break", [LineBreak()] },
             { "spaces around a line break", [Text("  "), LineBreak(), Text("\t")] },
+            { "encoded line breaks", [Text("\r\n")] },
             { "emphasis around a space", [Bold(" ")] },
             { "a command", [DefaultCommand("waves")] },
         };
@@ -23,6 +24,8 @@ public sealed class SpeechSegmentTests
         {
             { "a word", [Text("Hello.")] },
             { "a word after a space", [Text(" "), Text("Hi")] },
+            { "a named space", [Text("\u00A0")] },
+            { "an em space among spaces", [Text(" \u2003 ")] },
             { "a lone query", [Query("playerName")] },
             { "emphasis around a word", [Bold("there")] },
             { "a tag", [Tag("mood", "happy")] },
