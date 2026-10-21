@@ -115,6 +115,7 @@ rather than a script.
 | `a-next-at-a-random-choice` | Is `next` refused at a random choice, which still takes a draw afterwards? | yes |
 | `an-auto-weight-beside-an-excluded-random-option` | Does an auto weight beside a random option the world withholds take what the numbers in play leave of 100? | yes |
 | `a-random-choice-with-nothing-drawable` | Is a random choice whose every random option the world withholds walked past by its fall-through? | yes |
+| `a-zero-beside-an-excluded-random-option` | Is a random choice the world leaves only a `0%` random option in play walked past by its fall-through? | yes |
 | `a-key-weight` | Is a key weight asked on arrival, and its random option drawn as the number the world answered? | yes |
 | `an-excluded-key-weight-left-unchecked` | Is an excluded random option's key weight asked, but its number neither checked nor counted? | yes |
 | `key-weights-answered-zero` | Is a random choice whose key weights the world answers with 0 walked past by its fall-through? | yes |
