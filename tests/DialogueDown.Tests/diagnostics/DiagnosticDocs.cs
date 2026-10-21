@@ -684,8 +684,8 @@ internal static class DiagnosticDocs
             DiagnosticCatalog.SingleOptionRandomChoice,
             "A random choice with only one option always selects it — the weight has no effect and "
             + "the list is not really random. This usually means a plain line was given a weight, "
-            + "or the other options are missing. A lone `0%` option is never selected, so it is "
-            + "reported as a zero total (DLG2010) instead.",
+            + "or the other options are missing. A lone option with a `0%` chance is never "
+            + "selected, so it is reported as a zero total (DLG2010) instead.",
             new(
                 """
                 # Coin
