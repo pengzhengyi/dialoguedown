@@ -213,9 +213,10 @@ option runs when its arm plays, which is where the compiler also wrote it. The
 label is the label's segments' words, joined, so emphasis around a removed
 command stays on both sides of it.
 
-A label keeps its whitespace as written, so a label whose command came first
-starts with a space, as a `Continued` after a command does. How whitespace in
-speech is normalized is the language's to settle.
+A label is spaced as the compiler spaces all speech
+([Speech Whitespace](../language/Speech%20Whitespace.md)): a command takes no
+room, so a label whose command came first begins with its first word. The runner
+offers a label as the playbook carries it and normalizes nothing itself.
 
 A label's query is asked on arrival at the menu, and the same query in the arm's
 first line is asked again when that line plays. The two answers may differ, which
@@ -313,7 +314,7 @@ it the writer never wrote, and to answer an `Offer` with something other than
 | A bulleted menu | Offered in the order written; the host may show it in another order, and `Choose` still names a position in the offer |
 | Two options with the same label | Both offered; `Choose` tells them apart by position |
 | An option whose label is only a command | Offered with an empty label; taking it performs the command |
-| A label whose command comes first | Offered starting with a space, as written |
+| A label whose command comes first | Offered as the playbook carries it; the compiler writes no space before its first word |
 | An option whose arm is a jump | Taking it walks past the jump to where it leads |
 | An option leading straight past the menu | Taking it arrives at what follows the menu |
 | A menu inside an option's arm | Offered once that arm reaches it |
