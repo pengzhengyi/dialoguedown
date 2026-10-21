@@ -95,8 +95,8 @@ holds — `false` for a guard, `"Robin"` for a query.
 - [x] A key asked and left unanswered is refused, and so is a key answered that
       nobody asked about.
 - [x] An answer of the wrong kind for the question is refused.
-- [x] A key one node needs as a truth and as words both is refused, because a
-      single answer can only be one of those.
+- [x] A key one node needs as two kinds of answer is refused, because a single
+      answer can only be one kind.
 - [x] `UnansweredCondition` is gone, and nothing produces it.
 
 ## Interfaces and abstractions
@@ -111,7 +111,7 @@ holds — `false` for a guard, `"Robin"` for a query.
 | `Moment` | Whether the run asked before the node plays (`ToPlay`) or before the run leaves it (`ToLeave`) | `AwaitingSupply`, `Runner` |
 | `NodeQuestionExtensions` | Reads a node's keys, one reader per moment and per kind of answer | `NodeQuestions` |
 | `Questions` | Turns a moment's two sets of keys into what goes out and what comes back is held to | `NodeQuestions` |
-| `NodeQuestions` | One moment's keys, read together so the two kinds cannot drift apart | `Arrival`, `Departure` |
+| `NodeQuestions` | One moment's keys, read together so the kinds cannot drift apart | `Arrival`, `Departure` |
 | `AnswerCheck` | Holds what came back to what was asked, and names every way they disagree | `Arrival`, `Departure` |
 | `SupplyExtensions` | Reads a key from a supply as a truth or as words | `ConditionEvaluationExtensions`, `Arrival` |
 | `ConditionEvaluationExtensions` | Answers whether a condition holds, and whether a guarded node or way out is allowed | `Arrival`, `NodeTraversalExtensions` |
@@ -134,10 +134,13 @@ node's own condition, answered with a truth, and the queries standing in its
 speech up to its first stop, answered with words. **Leaving** asks what decides which way out is
 taken: the conditions on its jump or on a block condition's branches. A menu asks its
 options' conditions and its labels' queries on arriving, and nothing on leaving,
-because its options are taken by choosing.
+because its options are taken by choosing. A random choice asks its random options'
+conditions and key weights on arriving, a key weight answered with a number, and
+nothing on leaving
+([R3](./Drawing%20a%20Random%20Option.md#r3--what-decides-the-draw-is-read-once-on-arrival)).
 
-A request names its truths before its words, each in the order the node writes
-them, and each key once. For a line, that is also the order a reader meets them,
+A request names its truths, then its words, then its numbers, each in the order the
+node writes them, and each key once. For a line, that is also the order a reader meets them,
 since a guard is written before the line it guards; a menu follows the same rule,
 every condition before any label's query, so every runtime sends the same request.
 
@@ -177,33 +180,35 @@ bought by `Perform` being answered before the run goes on.
 
 The world seam the architecture note designs, `IGameWorld`, splits the world's
 three questions by the type of their answers: a guard needs a truth, a weight a
-number, and interpolation text. The wire agrees — `supply` carries `false` for one and `"Robin"` for another.
+number, and interpolation text. The wire agrees — `supply` carries `false` for
+one, `"Robin"` for another, and `20` for a third.
 
 So `Answer` is a closed union in the manner of every other union in the format,
 and its members take the same `<Qualifier><Base>` shape as `TextFragment` and
-`KeyCondition` do. This pass needs two:
+`KeyCondition` do:
 
 | Member | Wire | Used by |
 | --- | --- | --- |
-| `BooleanAnswer(bool Holds)` | `true` / `false` | A condition on a node or on a way out |
+| `BooleanAnswer(bool Holds)` | `true` / `false` | A condition on a node, on a way out, or on a random option |
 | `TextAnswer(string Text)` | a JSON string | A query in speech |
+| `NumberAnswer(double Value)` | a JSON number | A key weight on a random option |
 
-A third member, for numbers, joins them when dynamic weights arrive. Adding a
-member to a closed union is additive here, and a member nothing produces would be
-dead code today.
+Each member answers one kind of question a node asks. Adding a member to a closed
+union is additive here, and a member nothing asks for would be dead code.
 
 Unlike the format's unions, this one needs no class of wire tags. A supplied
 answer carries no discriminator, because the JSON value already is one:
 
 ```json
-{ "Alice.HasKey": false, "playerName": "Robin" }
+{ "Alice.HasKey": false, "playerName": "Robin", "Guard.Mood": 20 }
 ```
 
 `AnswerJsonConverter` is where that rule lives — a boolean is a truth, a string is
-words, and anything else is refused rather than guessed at, since a number could
-be a weight or a count and nothing on the wire says which. Keeping it in the
-package rather than in each reader is what stops a fixture, a recorded session,
-and a driver on the far side of a socket from each inventing their own.
+words, a number is a number, and anything else is refused rather than guessed at. A
+number too large for a double, such as `1e400`, reads as infinity, so the run can
+refuse it as an invalid weight. Keeping the rule in the package rather than in each
+reader is what stops a fixture, a recorded session, and a driver on the far side of
+a socket from each inventing their own.
 
 ### A4 — The runner checks the answers against its own questions
 
@@ -319,9 +324,9 @@ third by the kind each key was asked under. Each leaves the run waiting where it
 asked, so a driver that misread the request can answer it again rather than lose
 the conversation.
 
-A key a node needs as a truth and as words both is a fourth reason, and not a
-driver mistake at all: the playbook asks one key two ways, and a single answer
-can only be one of those. It is refused on the way in, before a request goes out
+A key a node needs as two kinds of answer, such as a guard and a query, is a fourth
+reason, and not a driver mistake at all: the playbook asks one key two ways, and a
+single answer can only be one kind. It is refused on the way in, before a request goes out
 that nothing could read back.
 
 `UnansweredCondition` is removed rather than left unused. It is a published
@@ -355,7 +360,7 @@ reminder a pass is owed.
 | --- | --- |
 | Unit — questions | Every source of a key: a node's own condition, its ways out, and its speech; one node needing all three |
 | Unit — answers | The set matching; a key missing; a key nobody asked about; a key read as the wrong kind |
-| Unit — reading a supply | Each kind read and written back; a number, a null, and a structure all refused |
+| Unit — reading a supply | Each kind read and written back; a number past what a double holds read as infinity, and refused when written back; anything else refused |
 | Unit — evaluation | A condition that holds, and one that fails |
 | Unit — arrival and departure | A withheld node stepped over by its succession, not its jump; an allowed node with nothing to hand the host walked past; a loop asked about again; a withheld jump not taken; a block asking about every branch at once |
 | Unit — ways out | The first jump or branch taken, then the `else`, then the succession, read with answers and without |
@@ -377,5 +382,6 @@ nothing guards, and a guarded node stops the walk before the bound is reached.
   the runner asks the driver. So the world interface waits for C2g, where a driver
   answers `Resolve` from a world.
 - **A key used both ways is caught only at play time.** The compiler does not yet
-  reject a script that uses one key as a guard and as a query on the same node, so
+  reject a script that uses one key as two kinds on the same node — a guard and a
+  query on a line, or a guard and a key weight on a random choice — so
   `KeyNeededBothWays` is what catches it.

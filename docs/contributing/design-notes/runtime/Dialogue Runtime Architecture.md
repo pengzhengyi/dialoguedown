@@ -5,10 +5,9 @@
 > [Dialogue Graph](../core/Dialogue%20Graph.md): the portable **playbook**, the
 > **runner** that plays one, the **protocol** between a runner and its driver, and
 > the **conformance corpus** that keeps runtimes honest. The playbook, the corpus,
-> and a runner that plays lines, jumps, effects, branches, menus, random choices of
-> number and auto weights, and the end, and asks the world what they need, are
-> built; random choices weighted by a key, saves, drivers, and every other host are
-> not (see [components](#components-and-sequencing)).
+> and a runner that plays every kind of node and asks the world what each needs
+> are built; saves, drivers, and every other host are not (see
+> [components](#components-and-sequencing)).
 
 ## Table of contents
 
@@ -569,7 +568,7 @@ flowchart LR
 | # | Component | Delivers | Note | Status |
 | --- | --- | --- | --- | --- |
 | C1 | **Playbook format and writer** | The schema, the header, the reader and its checks, and `ddown compile --output` | [Playbook Format](./Playbook%20Format.md), [Playbook Reader Rules](./Playbook%20Reader%20Rules.md) | Implemented |
-| C2 | **C# runner** | `Step`, `PlayState`, the protocol, drivers, the world seam, saves | [Runner](./Runner.md) | Partially implemented: lines and the commands in them, jumps, effects, conditions and queries, block conditions, menus, random choices of number and auto weights, guarded or not, the end |
+| C2 | **C# runner** | `Step`, `PlayState`, the protocol, drivers, the world seam, saves | [Runner](./Runner.md) | Partially implemented: lines and the commands in them, jumps, effects, conditions and queries, block conditions, menus, random choices, the end |
 | C3 | **Conformance corpus** | Fixtures plus a harness, owned as data | [Conformance Corpus](./Conformance%20Corpus.md) | Implemented |
 | C4 | **`ddown play` and the REPL** | A terminal player, plus a raw stdio mode another language can drive | [Interactive Playthrough](../other/Interactive%20Playthrough.md) | Proposed |
 | C5a | **Web proxy Play tab** | The served report plays through the C# runner (level 1) | [Interactive Playthrough](../other/Interactive%20Playthrough.md) | Proposed |

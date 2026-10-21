@@ -131,7 +131,7 @@ flowchart LR
 | 7 | [Asking the World](./runtime/Asking%20the%20World.md) | How the runner asks the world: `Resolve` answered by `Supply`, for conditions, block conditions, and queries in speech | Implemented |
 | 8 | [Speaking a Line](./runtime/Speaking%20a%20Line.md) | How the runner plays a line's words and commands in written order, stopping inside the line only before a query written after a command | Implemented |
 | 9 | [Offering a Choice](./runtime/Offering%20a%20Choice.md) | How the runner offers a menu with `Offer`, and follows the option the player takes with `Choose` | Implemented |
-| 10 | [Drawing a Random Option](./runtime/Drawing%20a%20Random%20Option.md) | How the runner plays a random choice: the host supplies a draw with `Drawn`, and the runner turns it into the random option the weights give | Partially implemented |
+| 10 | [Drawing a Random Option](./runtime/Drawing%20a%20Random%20Option.md) | How the runner plays a random choice: the host supplies a draw with `Drawn`, and the runner turns it into the random option the weights give | Implemented |
 
 ### Language constructs
 
