@@ -198,7 +198,7 @@ internal static class PlayContextFactory
             ],
             ["Guard"]);
 
-    /// <summary>A random choice the runner cannot play yet, because one random option has a key weight.</summary>
+    /// <summary>A playbook that begins at a random choice whose first random option has a key weight.</summary>
     /// <remarks>
     /// <code>
     /// - `Guard.Mood%` Guard: Halt!
@@ -207,7 +207,7 @@ internal static class PlayContextFactory
     /// Both random options lead to the end, so the random choice is all the playbook holds to play.
     /// </remarks>
     /// <returns>A context that begins at the random choice.</returns>
-    public static PlayContext NotYetPlayable() =>
+    public static PlayContext ARandomChoiceWithAKeyWeightStanding() =>
         Of([ARandomChoiceWithAKeyWeight(), End(id: 1)], ["Guard"]);
 
     /// <summary>A loop of jumps, each leading to the next and the last back to the first.</summary>
@@ -369,7 +369,7 @@ internal static class PlayContextFactory
     public static RandomChoiceNode ARandomChoiceWithAGuardedRandomOption() =>
         RandomChoice(EvenChance(condition: "Guard.IsAngry", target: 1), EvenChance(target: 1));
 
-    /// <summary>A random choice whose first random option the world weighs.</summary>
+    /// <summary>A random choice whose first random option has a key weight.</summary>
     /// <remarks>
     /// <code>
     /// - `Guard.Mood%` Guard: Halt!

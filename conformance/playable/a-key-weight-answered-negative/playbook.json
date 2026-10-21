@@ -12,57 +12,74 @@
   "anchors": {},
   "speakers": [
     {
+      "default": true,
+      "tags": []
+    },
+    {
       "name": "Guard",
       "tags": []
     }
   ],
   "nodes": [
     {
-      "kind": "random-choice",
-      "id": 0,
-      "out": [
-        {
-          "kind": "random-option",
-          "target": 1,
-          "weight": {
-            "kind": "auto"
-          },
-          "condition": {
-            "kind": "key",
-            "key": "Guard.IsAngry"
-          }
-        },
-        {
-          "kind": "random-option",
-          "target": 2,
-          "weight": {
-            "kind": "number",
-            "percentage": 0
-          }
-        }
-      ]
-    },
-    {
       "kind": "line",
-      "id": 1,
+      "id": 0,
       "speaker": 0,
       "speech": [
         {
           "kind": "text",
-          "text": "Halt!"
+          "text": "The guard looks up."
         }
       ],
       "out": [
         {
           "kind": "succession",
-          "target": 3
+          "target": 1
+        }
+      ]
+    },
+    {
+      "kind": "random-choice",
+      "id": 1,
+      "out": [
+        {
+          "kind": "random-option",
+          "target": 2,
+          "weight": {
+            "kind": "query",
+            "key": "Guard.Mood"
+          }
+        },
+        {
+          "kind": "random-option",
+          "target": 3,
+          "weight": {
+            "kind": "auto"
+          }
         }
       ]
     },
     {
       "kind": "line",
       "id": 2,
-      "speaker": 0,
+      "speaker": 1,
+      "speech": [
+        {
+          "kind": "text",
+          "text": "Lovely day."
+        }
+      ],
+      "out": [
+        {
+          "kind": "succession",
+          "target": 4
+        }
+      ]
+    },
+    {
+      "kind": "line",
+      "id": 3,
+      "speaker": 1,
       "speech": [
         {
           "kind": "text",
@@ -72,13 +89,30 @@
       "out": [
         {
           "kind": "succession",
-          "target": 3
+          "target": 4
+        }
+      ]
+    },
+    {
+      "kind": "line",
+      "id": 4,
+      "speaker": 0,
+      "speech": [
+        {
+          "kind": "text",
+          "text": "The guard looks away."
+        }
+      ],
+      "out": [
+        {
+          "kind": "succession",
+          "target": 5
         }
       ]
     },
     {
       "kind": "end",
-      "id": 3,
+      "id": 5,
       "out": []
     }
   ]

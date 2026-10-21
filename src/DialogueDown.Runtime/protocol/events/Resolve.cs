@@ -8,10 +8,12 @@ namespace DialogueDown.Runtime.Protocol;
 /// <remarks>
 /// Each request names every key one moment at a node needs. Before a node plays, it names the key
 /// guarding the node and the keys in its first words: a line reading
-/// <c>`Alice.HasKey?` Alice: Hello, `"playerName"`.</c> produces one request naming both. Before a
-/// line continues after a command, it names the keys in the words that follow. Before a run leaves
-/// a node, it names the keys guarding its ways out: every branch of a block condition, though
-/// only the first branch that holds is taken.
+/// <c>`Alice.HasKey?` Alice: Hello, `"playerName"`.</c> produces one request naming both. A random
+/// choice names the keys guarding its random options and the keys their key weights read, so
+/// <c>- `Guard.IsAngry?` `Guard.Mood%` Guard: Halt!</c> asks about both of those too. Before a line
+/// continues after a command, it names the keys in the words that follow. Before a run leaves a
+/// node, it names the keys guarding its ways out: every branch of a block condition, though only
+/// the first branch that holds is taken.
 /// <para>
 /// So a request can name a key whose answer ends up deciding nothing. Answering a key must not
 /// change the world. The keys may be answered in any order, one at a time or all at once; the run

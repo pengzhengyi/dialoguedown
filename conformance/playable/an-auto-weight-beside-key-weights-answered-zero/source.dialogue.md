@@ -1,0 +1,3 @@
+- `Guard.Mood%` Guard: Lovely day.
+- `Guard.Temper%` Guard: Halt!
+- `%` Guard: Move along.

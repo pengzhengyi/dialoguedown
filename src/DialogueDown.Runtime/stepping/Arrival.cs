@@ -78,8 +78,9 @@ internal static class Arrival
             return RefuseBothWays(waiting.Node, bothWays);
         }
 
-        if (AnswerCheck.Disagrees(
-            NodeQuestions.RequiredToPlayFrom(arrived, 0).Asked(), supply.Answers, out var refusal))
+        var asked = NodeQuestions.RequiredToPlayFrom(arrived, 0).Asked();
+        if (AnswerCheck.Disagrees(asked, supply.Answers, out var refusal)
+            || KeyWeightCheck.Refuses(arrived, supply, out refusal))
         {
             // The run stays where it asked, so the driver can send a corrected supply.
             return new StepResult(new PlayState(waiting), [refusal]);
@@ -111,7 +112,7 @@ internal static class Arrival
     /// Each check either brings the run to stand at this node or leaves the next check to decide:
     /// <code>
     /// arrive at the node
-    ///  1 ├─ it needs one key as a truth and as words both ─► refuse
+    ///  1 ├─ it needs one key as more than one kind ────────► refuse
     ///  2 ├─ it needs answers before it can play ───────────► ask what playing needs
     ///    └─ otherwise, enter it
     ///  3    ├─ it hands the host something ────────────────► play it
@@ -124,8 +125,8 @@ internal static class Arrival
     {
         var arrived = context.NodeAt(position);
 
-        // A key needed both as a truth and as words is refused wherever in the node it is used, so
-        // that check reads the whole node. Arrival asks only what the node needs up to its first stop.
+        // A key needed as more than one kind is refused wherever in the node it is used, so that
+        // check reads the whole node. Arrival asks only what the node needs up to its first stop.
         return RefuseIfAKeyIsNeededBothWays(position, NodeQuestions.RequiredToPlay(arrived))
             ?? AskIfPlayingNeedsAnswers(position, NodeQuestions.RequiredToPlayFrom(arrived, 0))
             ?? Enter(context, position, arrived);
@@ -200,8 +201,8 @@ internal static class Arrival
         StepResults.Refuse(
             position,
             RefusalReason.KeyNeededBothWays,
-            $"Node {position} needs {string.Join(", ", bothWays)} as a truth and as words both, "
-                + "and a single answer can only be one of those.");
+            $"Node {position} needs {string.Join(", ", bothWays)} as more than one kind of answer, "
+                + "and a single answer can only be one kind.");
 
     /// <summary>What one node means to a walk: the run stands there, or the walk goes on.</summary>
     private abstract record Visited

@@ -28,7 +28,7 @@ public sealed class NumberWeightCheckerTests
     [Theory]
     [InlineData(-10, "-10%")]
     [InlineData(double.PositiveInfinity, "Infinity%")]
-    public void Check_ANumberNoShareCanBe_IsRefusedNamingTheNodeAndTheNumber(double percentage, string written)
+    public void Check_AnInvalidNumber_IsRefusedNamingTheNodeAndTheNumber(double percentage, string written)
     {
         var playbook = PlaybookFactory.Document(
             nodes: [RandomChoice(Chance(50, target: 1), Chance(percentage, target: 1)), End(id: 1)]);

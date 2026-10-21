@@ -144,15 +144,16 @@ public sealed class PlayingTests
         AssertAskedForADraw(PlayTheFirstNode(ARandomChoiceOfOneRandomOption()), 0, 100);
 
     [Fact]
-    public void At_ANodeThisBuildCannotPlay_SaysSoRatherThanStalling()
-    {
-        // Silence here would leave a run standing at a node forever, which reads as a hang rather
-        // than as a node the runner cannot play.
-        AssertRefused(
-            PlayTheFirstNode(PlayContextFactory.NotYetPlayable()),
-            RefusalReason.UnplayableNode,
-            "This build cannot play node 0, of kind RandomChoiceNode, yet.");
-    }
+    public void At_ARandomChoiceThatNeedsTheWorldsAnswers_WhenNoneWereGiven_IsAFaultInTheRun() =>
+        // Not a refusal: arrival asks the world before it plays such a random choice, so reaching
+        // it without answers means that step was skipped.
+        Assert.Throws<InvalidOperationException>(
+            () => PlayTheFirstNode(PlayContextFactory.ARandomChoiceWithAKeyWeightStanding()));
+
+    [Fact]
+    public void At_ABlockCondition_IsNotPlayed() =>
+        // A block condition only chooses the branch the run goes on by, so arrival walks past it.
+        Assert.Throws<NotSupportedException>(() => PlayTheFirstNode(PlayContextFactory.AConditionalBlock()));
 
     [Fact]
     public void Performed_AtALine_StandsThereForThePlayer()

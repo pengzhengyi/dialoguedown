@@ -17,18 +17,23 @@ public sealed class SupplyReaderTests
         AssertReadAnswers("""{ "playerName": "Robin" }""", ("playerName", new TextAnswer("Robin")));
 
     [Fact]
-    public void Read_AnswersOfBothKindsTogether_KeepsEachToItsOwn() =>
+    public void Read_ANumber_IsANumberAnswer() =>
+        AssertReadAnswers("""{ "Guard.Mood": 20 }""", ("Guard.Mood", new NumberAnswer(20)));
+
+    [Fact]
+    public void Read_AnswersOfEveryKindTogether_KeepsEachToItsOwn() =>
         AssertReadAnswers(
-            """{ "Alice.HasKey": true, "playerName": "Robin" }""",
+            """{ "Alice.HasKey": true, "playerName": "Robin", "Guard.Mood": 20 }""",
             ("Alice.HasKey", new BooleanAnswer(true)),
-            ("playerName", new TextAnswer("Robin")));
+            ("playerName", new TextAnswer("Robin")),
+            ("Guard.Mood", new NumberAnswer(20)));
 
     [Fact]
     public void Read_AnEmptyObject_IsASupplyWithNoAnswers() => AssertReadAnswers("{ }");
 
     [Fact]
-    public void Read_AnAnswerOfNeitherKind_IsAFixtureBug() =>
-        AssertRejected(_reader, """{ "Alice.HasKey": 3 }""");
+    public void Read_AnAnswerOfNoKind_IsAFixtureBug() =>
+        AssertRejected(_reader, """{ "Alice.HasKey": [] }""");
 
     [Fact]
     public void Read_AKeyAnsweredWithNothing_IsAFixtureBug() =>

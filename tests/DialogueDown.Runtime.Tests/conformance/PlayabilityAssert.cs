@@ -28,12 +28,6 @@ internal static class PlayabilityAssert
         Assert.Equal(reasons, Playability.WhyNotPlayable(entry));
     }
 
-    /// <summary>Asserts the playbook is not playable yet, saying exactly these things.</summary>
-    /// <param name="context">The playbook to ask about.</param>
-    /// <param name="reasons">The reasons it should give, in order.</param>
-    public static void AssertNotPlayable(PlayContext context, params string[] reasons) =>
-        Assert.Equal(reasons, Playability.WhyNotPlayable(context));
-
     /// <summary>Asserts the session is not playable yet, saying exactly these things.</summary>
     /// <param name="session">The session to ask about.</param>
     /// <param name="reasons">The reasons it should give, in order.</param>

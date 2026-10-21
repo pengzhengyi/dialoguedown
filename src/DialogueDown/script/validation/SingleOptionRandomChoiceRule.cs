@@ -11,8 +11,8 @@ namespace DialogueDown.Script.Validation;
 /// such as a plain line accidentally given a weight, or options that were meant to follow. The
 /// script still compiles, so this is a style warning.
 /// <para>
-/// A lone, unguarded <c>`0%`</c> option is the exception: it is never selected, and
-/// <see cref="WeightTotalRule"/> reports its zero total instead.
+/// A lone, unguarded option with a <c>`0%`</c> chance is the exception: it is never selected,
+/// and <see cref="WeightTotalRule"/> reports its zero total instead.
 /// </para>
 /// </summary>
 internal sealed class SingleOptionRandomChoiceRule : DiagnosticRule

@@ -14,8 +14,8 @@ namespace DialogueDown.Script.Validation;
 /// option can be selected; otherwise a warning
 /// (<see cref="DiagnosticCatalog.ChoiceWeightsNotOneHundred"/>) when they do not total
 /// approximately 100%. A single-option group is spared the warning, because its lone option is
-/// always selected while its weight is above zero, but a lone <c>`0%`</c> option is never
-/// selected, so its zero total is still an error. A group containing a <see cref="QueryWeight"/>
+/// always selected while its weight is above zero, but a lone option with a <c>`0%`</c> chance is
+/// never selected, so its zero total is still an error. A group containing a <see cref="QueryWeight"/>
 /// or a conditional option is skipped: the achievable total is only known at runtime.
 /// </summary>
 internal sealed class WeightTotalRule(IWeightNormalization normalization) : IDiagnosticRule

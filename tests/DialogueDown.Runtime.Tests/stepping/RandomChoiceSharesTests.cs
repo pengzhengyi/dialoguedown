@@ -11,8 +11,8 @@ namespace DialogueDown.Runtime.Tests.Stepping;
 public sealed class RandomChoiceSharesTests
 {
     [Fact]
-    public void HasNothingDrawable_WhenEveryRandomOptionWeighsZero_IsTrue() =>
-        Assert.True(RandomChoiceShares.HasNothingDrawable(ARandomChoiceWhoseRandomOptionsAllWeighZero()));
+    public void HasNothingDrawable_WhenEveryWeightIsZero_IsTrue() =>
+        Assert.True(RandomChoiceShares.HasNothingDrawable(ARandomChoiceWhoseWeightsAreAllZero()));
 
     [Fact]
     public void HasNothingDrawable_WhenAnAutoWeightTakesWhatAZeroLeaves_IsFalse() =>
@@ -41,8 +41,21 @@ public sealed class RandomChoiceSharesTests
                 ARandomChoiceWhoseOnlyShareIsGuarded(), Answering(("Guard.IsAngry", true))));
 
     [Fact]
-    public void HasNothingDrawable_WhenARandomOptionIsWeightedByAKey_IsFalseBecauseOnlyTheWorldCanSay() =>
+    public void HasNothingDrawable_WhenARandomOptionHasAKeyWeight_AndTheWorldWasAskedNothing_IsFalse() =>
+        // The other number is zero, but the key weight must be asked before the shares are known.
         Assert.False(RandomChoiceShares.HasNothingDrawable(ARandomChoiceWithAKeyWeightBesideAZero()));
+
+    [Fact]
+    public void HasNothingDrawable_WhenTheWorldAnswersZeroForTheKeyWeightBesideAZero_IsTrue() =>
+        Assert.True(
+            RandomChoiceShares.HasNothingDrawable(
+                ARandomChoiceWithAKeyWeightBesideAZero(), Answering(("Guard.Mood", 0.0))));
+
+    [Fact]
+    public void HasNothingDrawable_WhenTheWorldAnswersAboveZeroForTheKeyWeightBesideAZero_IsFalse() =>
+        Assert.False(
+            RandomChoiceShares.HasNothingDrawable(
+                ARandomChoiceWithAKeyWeightBesideAZero(), Answering(("Guard.Mood", 20.0))));
 
     [Fact]
     public void HasNothingDrawable_OfNoRandomChoice_IsRejected() =>
@@ -97,17 +110,54 @@ public sealed class RandomChoiceSharesTests
         Assert.False(RandomChoiceShares.TryWorkOut(ARandomChoiceWithAGuardedZero(), supply: null, out _));
 
     [Fact]
-    public void TryWorkOut_WhenARandomOptionIsWeightedByAKey_FailsBecauseOnlyTheWorldCanSay() =>
+    public void TryWorkOut_WhenARandomOptionHasAKeyWeight_AndTheWorldWasAskedNothing_Fails() =>
         Assert.False(RandomChoiceShares.TryWorkOut(ARandomChoiceWithAKeyWeightBesideAZero(), supply: null, out _));
 
     [Fact]
-    public void TryWorkOut_WhenARandomOptionIsWeightedByAKey_FailsEvenOnceTheWorldHasAnswered() =>
-        // The world is asked about guards, and nothing it says gives a key weight its number.
-        Assert.False(RandomChoiceShares.TryWorkOut(ARandomChoiceWithAKeyWeightBesideAZero(), Answering(), out _));
+    public void TryWorkOut_AKeyWeight_ComesToTheNumberTheWorldAnswered()
+    {
+        var workedOut = RandomChoiceShares.TryWorkOut(
+            PlayContextFactory.ARandomChoiceWithAKeyWeight(), Answering(("Guard.Mood", 20.0)), out var shares);
+
+        // Answered 20, the key weight counts as `20%` would, and the auto weight takes what it leaves.
+        Assert.True(workedOut);
+        Assert.Equal([20.0, 80.0], shares);
+    }
 
     [Fact]
     public void TryWorkOut_OfNoRandomChoice_IsRejected() =>
         Assert.Throws<ArgumentNullException>(() => RandomChoiceShares.TryWorkOut(null!, supply: null, out _));
+
+    [Fact]
+    public void WithoutExcluded_LeavesOutARandomOptionWhoseGuardTheWorldWithholds() =>
+        // "Halt!" is left out; "Move along." and "Lovely day." stay.
+        Assert.Equal(
+            [2, 3],
+            RandomChoiceShares.WithoutExcluded(ARandomChoiceWithAGuardedNumber(), Answering(("Guard.IsAngry", false)))
+                .Select(option => option.Target));
+
+    [Fact]
+    public void WithoutExcluded_KeepsARandomOptionWhoseGuardTheWorldAllows() =>
+        Assert.Equal(
+            [1, 2, 3],
+            RandomChoiceShares.WithoutExcluded(ARandomChoiceWithAGuardedNumber(), Answering(("Guard.IsAngry", true)))
+                .Select(option => option.Target));
+
+    [Fact]
+    public void WithoutExcluded_KeepsEveryRandomOptionNobodyGuarded() =>
+        Assert.Equal(
+            [1, 2, 3],
+            RandomChoiceShares.WithoutExcluded(ARandomChoiceOfTwoNumbersAndAnAutoWeight(), Answering())
+                .Select(option => option.Target));
+
+    [Fact]
+    public void WithoutExcluded_OfNoRandomChoice_IsRejected() =>
+        Assert.Throws<ArgumentNullException>(() => RandomChoiceShares.WithoutExcluded(null!, Answering()));
+
+    [Fact]
+    public void WithoutExcluded_WithoutWhatTheWorldSaid_IsRejected() =>
+        Assert.Throws<ArgumentNullException>(
+            () => RandomChoiceShares.WithoutExcluded(ARandomChoiceWithAGuardedNumber(), null!));
 
     /// <summary>A random choice of two numbers and an auto weight.</summary>
     /// <remarks>
@@ -144,7 +194,7 @@ public sealed class RandomChoiceSharesTests
     private static RandomChoiceNode ARandomChoiceWhoseOnlyShareIsGuarded() =>
         RandomChoice(Chance(50, condition: "Guard.IsAngry", target: 1), Chance(0, target: 2));
 
-    /// <summary>A random choice whose random options all weigh nothing.</summary>
+    /// <summary>A random choice whose weights are all <c>`0%`</c>.</summary>
     /// <remarks>
     /// <code>
     /// - `0%` Guard: Halt!
@@ -153,7 +203,7 @@ public sealed class RandomChoiceSharesTests
     /// The compiler reports this as a zero total, so only a playbook built by hand carries it.
     /// </remarks>
     /// <returns>The random choice.</returns>
-    private static RandomChoiceNode ARandomChoiceWhoseRandomOptionsAllWeighZero() =>
+    private static RandomChoiceNode ARandomChoiceWhoseWeightsAreAllZero() =>
         RandomChoice(Chance(0, target: 1), Chance(0, target: 2));
 
     /// <summary>A random choice whose auto weight takes everything a zero leaves.</summary>
@@ -189,7 +239,7 @@ public sealed class RandomChoiceSharesTests
     private static RandomChoiceNode ARandomChoiceWithAGuardedZero() =>
         RandomChoice(Chance(0, condition: "Guard.IsAngry", target: 1), Chance(0, target: 2));
 
-    /// <summary>A random choice whose first random option the world weighs, beside a zero.</summary>
+    /// <summary>A random choice whose first random option has a key weight, beside a zero.</summary>
     /// <remarks>
     /// <code>
     /// - `Guard.Mood%` Guard: Halt!

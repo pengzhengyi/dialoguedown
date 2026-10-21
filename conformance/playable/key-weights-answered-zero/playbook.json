@@ -1,0 +1,124 @@
+{
+  "$schema": "https://pengzhengyi.github.io/dialoguedown/schema/playbook-0.schema.json",
+  "format": {
+    "version": 0,
+    "requires": [
+      "core"
+    ],
+    "uses": []
+  },
+  "script": "source.dialogue.md",
+  "entry": 0,
+  "anchors": {},
+  "speakers": [
+    {
+      "default": true,
+      "tags": []
+    },
+    {
+      "name": "Guard",
+      "tags": []
+    }
+  ],
+  "nodes": [
+    {
+      "kind": "line",
+      "id": 0,
+      "speaker": 0,
+      "speech": [
+        {
+          "kind": "text",
+          "text": "The guard looks up."
+        }
+      ],
+      "out": [
+        {
+          "kind": "succession",
+          "target": 1
+        }
+      ]
+    },
+    {
+      "kind": "random-choice",
+      "id": 1,
+      "out": [
+        {
+          "kind": "random-option",
+          "target": 2,
+          "weight": {
+            "kind": "query",
+            "key": "Guard.Mood"
+          }
+        },
+        {
+          "kind": "random-option",
+          "target": 3,
+          "weight": {
+            "kind": "query",
+            "key": "Guard.Temper"
+          }
+        },
+        {
+          "kind": "succession",
+          "target": 4
+        }
+      ]
+    },
+    {
+      "kind": "line",
+      "id": 2,
+      "speaker": 1,
+      "speech": [
+        {
+          "kind": "text",
+          "text": "Lovely day."
+        }
+      ],
+      "out": [
+        {
+          "kind": "succession",
+          "target": 4
+        }
+      ]
+    },
+    {
+      "kind": "line",
+      "id": 3,
+      "speaker": 1,
+      "speech": [
+        {
+          "kind": "text",
+          "text": "Halt!"
+        }
+      ],
+      "out": [
+        {
+          "kind": "succession",
+          "target": 4
+        }
+      ]
+    },
+    {
+      "kind": "line",
+      "id": 4,
+      "speaker": 0,
+      "speech": [
+        {
+          "kind": "text",
+          "text": "The guard looks away."
+        }
+      ],
+      "out": [
+        {
+          "kind": "succession",
+          "target": 5
+        }
+      ]
+    },
+    {
+      "kind": "end",
+      "id": 5,
+      "out": []
+    }
+  ]
+}

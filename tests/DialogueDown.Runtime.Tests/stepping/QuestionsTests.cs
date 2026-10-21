@@ -1,3 +1,4 @@
+using System.Collections.Immutable;
 using DialogueDown.Runtime.Protocol;
 using DialogueDown.Runtime.Stepping;
 
@@ -7,20 +8,24 @@ public sealed class QuestionsTests
 {
     [Fact]
     public void Asked_WhenTheMomentAsksNothing_AreNone() =>
-        Assert.Empty(Questions.Asked([], []));
+        Assert.Empty(Questions.Asked([], [], []));
 
     [Fact]
     public void Asked_OfAGuard_NeedsATruth() =>
-        Assert.Equal(AnswerKind.Boolean, Questions.Asked(["Hero.HasSword"], [])["Hero.HasSword"]);
+        Assert.Equal(AnswerKind.Boolean, Questions.Asked(["Hero.HasSword"], [], [])["Hero.HasSword"]);
 
     [Fact]
     public void Asked_OfAQuery_NeedsWords() =>
-        Assert.Equal(AnswerKind.Text, Questions.Asked([], ["HeroName"])["HeroName"]);
+        Assert.Equal(AnswerKind.Text, Questions.Asked([], ["HeroName"], [])["HeroName"]);
+
+    [Fact]
+    public void Asked_OfAKeyWeight_NeedsANumber() =>
+        Assert.Equal(AnswerKind.Number, Questions.Asked([], [], ["Guard.Mood"])["Guard.Mood"]);
 
     [Fact]
     public void Asked_OfAGuardAndAQuery_AreOneSetOfQuestions()
     {
-        var asked = Questions.Asked(["Hero.HasSword"], ["HeroName"]);
+        var asked = Questions.Asked(["Hero.HasSword"], ["HeroName"], []);
 
         Assert.Equal(2, asked.Count);
         Assert.Equal(AnswerKind.Boolean, asked["Hero.HasSword"]);
@@ -31,31 +36,37 @@ public sealed class QuestionsTests
     public void Asked_NameAKeyOnceHoweverOftenItIsWritten() =>
         Assert.Equal(
             AnswerKind.Boolean,
-            Assert.Single(Questions.Asked(["Hero.HasSword", "Hero.HasSword"], [])).Value);
+            Assert.Single(Questions.Asked(["Hero.HasSword", "Hero.HasSword"], [], [])).Value);
 
     [Fact]
     public void Keys_WhenTheMomentAsksNothing_AreNone() =>
-        Assert.Empty(Questions.Keys([], []));
+        Assert.Empty(Questions.Keys([], [], []));
 
     [Fact]
     public void Keys_NameTheTruthsFirst_BecauseAGuardIsWrittenFirst() =>
         Assert.Equal(
-            ["Hero.HasSword", "HeroName"], Questions.Keys(["Hero.HasSword"], ["HeroName"]));
+            ["Hero.HasSword", "HeroName"], Questions.Keys(["Hero.HasSword"], ["HeroName"], []));
+
+    [Fact]
+    public void Keys_NameTheTruthsThenTheWordsThenTheNumbers() =>
+        Assert.Equal(
+            ["Hero.HasSword", "HeroName", "Guard.Mood"],
+            Questions.Keys(["Hero.HasSword"], ["HeroName"], ["Guard.Mood"]));
 
     [Fact]
     public void Keys_NameARepeatedKeyOnce() =>
         Assert.Equal(
             ["Hero.HasSword", "Hero.HasShield"],
-            Questions.Keys(["Hero.HasSword", "Hero.HasShield", "Hero.HasSword"], []));
+            Questions.Keys(["Hero.HasSword", "Hero.HasShield", "Hero.HasSword"], [], []));
 
     [Fact]
     public void NeededBothWays_WhenNoKeyIsNamedTwiceOver_AreNone() =>
-        Assert.Empty(Questions.NeededBothWays(["Hero.HasSword"], ["HeroName"]));
+        Assert.Empty(Questions.NeededBothWays(["Hero.HasSword"], ["HeroName"], []));
 
     [Fact]
     public void NeededBothWays_NameTheKeyThatGuardsAndAlsoStandsInTheLine() =>
         Assert.Equal(
-            ["Alice.HasKey"], Questions.NeededBothWays(["Alice.HasKey"], ["Alice.HasKey"]));
+            ["Alice.HasKey"], Questions.NeededBothWays(["Alice.HasKey"], ["Alice.HasKey"], []));
 
     [Fact]
     public void NeededBothWays_NameEveryKeyInBothInOneOrder() =>
@@ -63,11 +74,30 @@ public sealed class QuestionsTests
             ["Alice.HasKey", "Hero.HasSword"],
             Questions.NeededBothWays(
                 ["Hero.HasSword", "Alice.HasKey", "Bob.HasRope"],
-                ["Alice.HasKey", "Hero.HasSword"]));
+                ["Alice.HasKey", "Hero.HasSword"],
+                []));
 
     [Fact]
     public void NeededBothWays_NameAKeyOnceHoweverOftenItIsWritten() =>
         Assert.Equal(
             ["Alice.HasKey"],
-            Questions.NeededBothWays(["Alice.HasKey", "Alice.HasKey"], ["Alice.HasKey"]));
+            Questions.NeededBothWays(["Alice.HasKey", "Alice.HasKey"], ["Alice.HasKey"], []));
+
+    [Theory]
+    [InlineData(true, false, true)]
+    [InlineData(false, true, true)]
+    [InlineData(true, true, true)]
+    public void NeededBothWays_NameAKeyNeededAsANumberAndAsAnyOtherKind(bool asTruth, bool asWords, bool asNumber)
+    {
+        static ImmutableArray<string> NamedWhen(bool named) => named ? ["Guard.Mood"] : [];
+
+        var bothWays = Questions.NeededBothWays(NamedWhen(asTruth), NamedWhen(asWords), NamedWhen(asNumber));
+
+        Assert.Equal(["Guard.Mood"], bothWays);
+    }
+
+    [Fact]
+    public void NeededBothWays_OfAKeyRepeatedInOneKind_AreNone() =>
+        // Written twice, the key still needs one kind of answer, which one answer can give.
+        Assert.Empty(Questions.NeededBothWays([], [], ["Guard.Mood", "Guard.Mood"]));
 }

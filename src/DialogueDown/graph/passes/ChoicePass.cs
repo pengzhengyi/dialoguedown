@@ -9,8 +9,9 @@ namespace DialogueDown.Graph.Passes;
 /// that option's body and carrying the condition that decides whether the option is offered. A
 /// player choice adds option edges carrying the words its menu shows; a random choice adds
 /// weighted edges the engine picks from, which are never shown. Runs after node creation and
-/// before succession, which then gives the choice a fall-through only when every option is
-/// conditional, since then none may be available.
+/// before succession, which gives a player choice a fall-through only when every option is
+/// conditional, since then none may be available, and a random choice a fall-through only when it
+/// may have nothing to draw.
 /// </summary>
 internal sealed class ChoicePass : GraphBuildPass
 {

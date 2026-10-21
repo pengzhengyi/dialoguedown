@@ -162,6 +162,109 @@ public sealed class ArrivalTests
             "Node 0 leads nowhere.");
 
     [Fact]
+    public void At_ARandomChoiceWithAKeyWeight_AsksTheWorldForItsNumberBeforeAskingForADraw() =>
+        AssertAsked(
+            Arrival.At(PlayContextFactory.ARandomChoiceWithAKeyWeightStanding(), 0),
+            node: 0,
+            Moment.BeforePlaying,
+            "Guard.Mood");
+
+    [Fact]
+    public void At_ARandomChoiceWithAGuardedKeyWeight_AsksForTheGuardThenTheNumber() =>
+        // The number is asked for though the guard may leave its random option out, because both go
+        // out in one request.
+        AssertAsked(
+            Arrival.At(ARandomChoiceWithAGuardedKeyWeightStanding(), 0),
+            node: 0,
+            Moment.BeforePlaying,
+            "Guard.IsAngry",
+            "Guard.Mood");
+
+    [Fact]
+    public void At_ARandomOptionWhoseGuardAndKeyWeightReadOneKey_RefusesBeforeAskingAnything() =>
+        // One answer comes back for the key, so either the guard or the key weight cannot read it.
+        AssertRefused(
+            Arrival.At(ARandomOptionWhoseGuardAndKeyWeightReadOneKey(), 0),
+            RefusalReason.KeyNeededBothWays,
+            "Node 0 needs Guard.Mood as more than one kind of answer, and a single answer can only be one kind.");
+
+    [Fact]
+    public void Supplied_AKeyWeight_AsksForADrawByTheNumberTheWorldAnswered() =>
+        // Answered 20, the key weight counts as `20%` would, and the auto weight takes what it leaves.
+        AssertAskedForADraw(
+            Arrival.Supplied(
+                PlayContextFactory.ARandomChoiceWithAKeyWeightStanding(),
+                Waiting(0, "Guard.Mood"),
+                Answering(("Guard.Mood", 20.0))),
+            0,
+            20,
+            80);
+
+    [Fact]
+    public void Supplied_WhenTheWorldWithholdsAGuard_TheKeyWeightItGuardsCountsForNothing() =>
+        // The number was answered, but its random option is out of play.
+        AssertAskedForADraw(
+            Arrival.Supplied(
+                ARandomChoiceWithAGuardedKeyWeightStanding(),
+                Waiting(0, "Guard.IsAngry", "Guard.Mood"),
+                Answering(("Guard.IsAngry", new BooleanAnswer(false)), ("Guard.Mood", new NumberAnswer(20)))),
+            0,
+            0,
+            100);
+
+    [Fact]
+    public void Supplied_WhenTheWorldAnswersZeroForAKeyWeightBesideAZero_RefusesAsLeadingNowhere() =>
+        // Nothing is drawable, and the random choice has no fall-through.
+        AssertRefused(
+            Arrival.Supplied(
+                ARandomChoiceWithAKeyWeightBesideAZero(), Waiting(0, "Guard.Mood"), Answering(("Guard.Mood", 0.0))),
+            RefusalReason.LeadsNowhere,
+            "Node 0 leads nowhere.");
+
+    [Fact]
+    public void Supplied_AKeyWeightAnsweredWithATruth_RefusesAndStaysWhereItAsked()
+    {
+        var result = Arrival.Supplied(
+            PlayContextFactory.ARandomChoiceWithAKeyWeightStanding(),
+            Waiting(0, "Guard.Mood"),
+            Answering(("Guard.Mood", true)));
+
+        AssertRefused(
+            result,
+            RefusalReason.WrongAnswerKind,
+            "Guard.Mood needs a number and was answered with a truth.");
+        AssertAwaitingSupply(result.State, node: 0, Moment.BeforePlaying, "Guard.Mood");
+    }
+
+    [Fact]
+    public void Supplied_AKeyWeightAnsweredWithAnInvalidNumber_RefusesAndStaysWhereItAsked()
+    {
+        var result = Arrival.Supplied(
+            PlayContextFactory.ARandomChoiceWithAKeyWeightStanding(),
+            Waiting(0, "Guard.Mood"),
+            Answering(("Guard.Mood", -10.0)));
+
+        AssertRefused(
+            result,
+            RefusalReason.InvalidWeight,
+            "The world answered Guard.Mood with -10, but the number for a key weight must be finite and not "
+                + "negative.");
+        AssertAwaitingSupply(result.State, node: 0, Moment.BeforePlaying, "Guard.Mood");
+    }
+
+    [Fact]
+    public void Supplied_WhenTheWorldWithholdsAGuard_TheKeyWeightItGuardsIsNotChecked() =>
+        // The number is never read, so a negative one there changes nothing about the draw.
+        AssertAskedForADraw(
+            Arrival.Supplied(
+                ARandomChoiceWithAGuardedKeyWeightStanding(),
+                Waiting(0, "Guard.IsAngry", "Guard.Mood"),
+                Answering(("Guard.IsAngry", new BooleanAnswer(false)), ("Guard.Mood", new NumberAnswer(-10)))),
+            0,
+            0,
+            100);
+
+    [Fact]
     public void Supplied_WhenTheWorldAllowsTheLine_SpeaksIt()
     {
         var context = AConditionalLine();
@@ -298,7 +401,7 @@ public sealed class ArrivalTests
         AssertRefused(
             Arrival.At(ALineNeedingOneKeyBothWays(), 0),
             RefusalReason.KeyNeededBothWays,
-            "Node 0 needs Alice.HasKey as a truth and as words both, and a single answer can only be one of those.");
+            "Node 0 needs Alice.HasKey as more than one kind of answer, and a single answer can only be one kind.");
 
     [Fact]
     public void At_AMenuNeedingOneKeyBothWays_RefusesBeforeAskingAnything() =>
@@ -307,7 +410,7 @@ public sealed class ArrivalTests
         AssertRefused(
             Arrival.At(AMenuNeedingOneKeyBothWays(), 0),
             RefusalReason.KeyNeededBothWays,
-            "Node 0 needs Alice.HasKey as a truth and as words both, and a single answer can only be one of those.");
+            "Node 0 needs Alice.HasKey as more than one kind of answer, and a single answer can only be one kind.");
 
     [Fact]
     public void Supplied_ToALineNeedingOneKeyBothWays_RefusesRatherThanReadingTheWrongKind() =>
@@ -319,7 +422,7 @@ public sealed class ArrivalTests
                 Waiting(0, "Alice.HasKey"),
                 Answering(("Alice.HasKey", "yes"))),
             RefusalReason.KeyNeededBothWays,
-            "Node 0 needs Alice.HasKey as a truth and as words both, and a single answer can only be one of those.");
+            "Node 0 needs Alice.HasKey as more than one kind of answer, and a single answer can only be one kind.");
 
     [Fact]
     public void Supplied_WithAnAnswerNobodyAskedFor_RefusesAndStaysWhereItAsked()
@@ -708,8 +811,9 @@ public sealed class ArrivalTests
     /// - `Guard.IsAngry?` `%` Guard: Halt!
     /// - `0%` Guard: Move along.
     /// </code>
-    /// The compiler writes no fall-through, because one random option has no condition. Once the
-    /// world withholds the guard, the zero is all that is left in play.
+    /// Built by hand without the fall-through the compiler would give it, since "Move along." has a
+    /// <c>`0%`</c> chance and is never drawn. Once the world withholds the guard, it is all that is
+    /// left in play.
     /// </remarks>
     /// <returns>A context whose random choice leads nowhere once the world withholds the guard.</returns>
     private static PlayContext ARandomChoiceWithAGuardedAutoWeightBesideAZero() =>
@@ -722,15 +826,15 @@ public sealed class ArrivalTests
             ],
             ["Guard"]);
 
-    /// <summary>A random choice whose only random option weighs nothing, then a line.</summary>
+    /// <summary>A random choice whose only random option has a <c>`0%`</c> chance, then a line.</summary>
     /// <remarks>
     /// <code>
     /// - `0%` Guard: Halt!
     ///
     /// The guard says nothing.
     /// </code>
-    /// Built by hand rather than written: the compiler reports this random choice as a zero total,
-    /// and writes a fall-through only beside random options that are all guarded.
+    /// Built by hand rather than written, because the compiler reports this random choice as a
+    /// zero total.
     /// </remarks>
     /// <returns>A context whose entry has nothing to draw.</returns>
     private static PlayContext ARandomChoiceWithNothingDrawableThenALine() =>
@@ -743,7 +847,7 @@ public sealed class ArrivalTests
             ],
             ["Guard"]);
 
-    /// <summary>A random choice whose only random option weighs nothing, with no fall-through.</summary>
+    /// <summary>A random choice whose only random option has a <c>`0%`</c> chance, with no fall-through.</summary>
     /// <remarks>
     /// <code>
     /// - `0%` Guard: Halt!
@@ -754,6 +858,55 @@ public sealed class ArrivalTests
     /// <returns>A context whose entry has nothing to draw and nowhere to go.</returns>
     private static PlayContext ARandomChoiceWithNothingDrawable() =>
         PlayContextFactory.Of([RandomChoice(Chance(0, target: 1)), Line("Halt!", id: 1, next: 2), End(id: 2)], ["Guard"]);
+
+    /// <summary>A random choice whose first random option has both a guard and a key weight.</summary>
+    /// <remarks>
+    /// <code>
+    /// - `Guard.IsAngry?` `Guard.Mood%` Guard: Halt!
+    /// - `%` Guard: Move along.
+    /// </code>
+    /// </remarks>
+    /// <returns>A context ready to step.</returns>
+    private static PlayContext ARandomChoiceWithAGuardedKeyWeightStanding() =>
+        PlayContextFactory.Of(
+            [
+                RandomChoice(Chance("Guard.Mood", condition: "Guard.IsAngry", target: 1), EvenChance(target: 1)),
+                End(id: 1),
+            ],
+            ["Guard"]);
+
+    /// <summary>A random choice whose first random option has a guard and a key weight that read one key.</summary>
+    /// <remarks>
+    /// <code>
+    /// - `Guard.Mood?` `Guard.Mood%` Guard: Halt!
+    /// - `%` Guard: Move along.
+    /// </code>
+    /// </remarks>
+    /// <returns>A context whose entry needs one key as a truth and as a number.</returns>
+    private static PlayContext ARandomOptionWhoseGuardAndKeyWeightReadOneKey() =>
+        PlayContextFactory.Of(
+            [RandomChoice(Chance("Guard.Mood", condition: "Guard.Mood", target: 1), EvenChance(target: 1)), End(id: 1)],
+            ["Guard"]);
+
+    /// <summary>A random choice whose only random option that can have a share has a key weight.</summary>
+    /// <remarks>
+    /// <code>
+    /// - `Guard.Mood%` Guard: Halt!
+    /// - `0%` Guard: Move along.
+    /// </code>
+    /// Built by hand without the fall-through the compiler would give it, since the world can answer
+    /// <c>0</c> for the key weight. Once it does, nothing is drawable.
+    /// </remarks>
+    /// <returns>A context whose random choice leads nowhere once the world answers zero.</returns>
+    private static PlayContext ARandomChoiceWithAKeyWeightBesideAZero() =>
+        PlayContextFactory.Of(
+            [
+                RandomChoice(Chance("Guard.Mood", target: 1), Chance(0, target: 2)),
+                Line("Halt!", id: 1, next: 3),
+                Line("Move along.", id: 2, next: 3),
+                End(id: 3),
+            ],
+            ["Guard"]);
 
     /// <summary>A menu with no options whose fall-through leads back to itself.</summary>
     /// <remarks>Built by hand rather than written, because no script writes a menu without options.</remarks>

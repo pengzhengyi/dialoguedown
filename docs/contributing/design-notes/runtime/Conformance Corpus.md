@@ -107,15 +107,22 @@ rather than a script.
 | `a-menu-with-nothing-available` | Is a menu whose every option the world withholds walked past by its fall-through? | yes |
 | `a-random-choice` | Is a draw asked for with each random option's share, and does it lead into the random option it lands on? | yes |
 | `a-draw-at-the-end-of-a-span` | Does a draw at the exact end of one span land on the next random option? | yes |
-| `a-draw-of-zero` | Does a draw of 0 pass a `0%` random option by and land on the first with a share? | yes |
-| `a-draw-of-one` | Does a draw of 1 land on the last random option with a share, not on a `0%` one after it? | yes |
+| `a-draw-of-zero` | Does a draw of 0 pass by a random option with a `0%` chance and land on the first with a share? | yes |
+| `a-draw-of-one` | Does a draw of 1 land on the last random option with a share, not on one with a `0%` chance after it? | yes |
 | `an-auto-weight-left-nothing` | Does an auto weight beside numbers past 100 have no share, with the numbers drawn as written? | yes |
 | `a-random-choice-of-one` | Does a random choice of one random option still ask for a draw? | yes |
 | `an-invalid-draw` | Is a draw outside 0 to 1 refused, with the random choice still waiting for one? | yes |
 | `a-next-at-a-random-choice` | Is `next` refused at a random choice, which still takes a draw afterwards? | yes |
 | `an-auto-weight-beside-an-excluded-random-option` | Does an auto weight beside a random option the world withholds take what the numbers in play leave of 100? | yes |
 | `a-random-choice-with-nothing-drawable` | Is a random choice whose every random option the world withholds walked past by its fall-through? | yes |
-| `a-random-choice-leading-nowhere` | Is a random choice the world leaves nothing drawable, with no fall-through, refused as leading nowhere? | yes |
+| `a-zero-beside-an-excluded-random-option` | Is a random choice walked past by its fall-through when the only random option the world leaves in play has a `0%` chance? | yes |
+| `a-key-weight` | Is a key weight asked on arrival, and its random option drawn as the number the world answered? | yes |
+| `an-excluded-key-weight-left-unchecked` | Is an excluded random option's key weight asked, but its number neither checked nor counted? | yes |
+| `key-weights-answered-zero` | Is a random choice whose key weights the world answers with 0 walked past by its fall-through? | yes |
+| `an-auto-weight-beside-key-weights-answered-zero` | Does an auto weight beside key weights the world answers with 0 take all of 100, so the run still draws? | yes |
+| `a-key-weight-answered-negative` | Is a key weight answered with a negative number refused, with the random choice still waiting for the answers? | yes |
+| `a-number-for-a-truth` | Is a number answered for a guard refused, with the random choice still waiting for the answers? | yes |
+| `a-key-needed-as-a-truth-and-a-number` | Is a key one random choice needs as both a truth and a number refused before it is asked? | yes |
 
 The `readable/` half covers every refusal the reader makes — version, capability,
 node position, the four dangling references, and the

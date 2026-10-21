@@ -1,12 +1,12 @@
 # Random Choice
 
 > [!NOTE]
-> Status: **implemented** at compile time, and **partially implemented** at
-> runtime. A list whose options lead with a weight (`` `50%` ``, `` `%` ``,
-> `` `key%` ``) is a random choice the engine resolves to one option. The runner
-> draws at a random choice of number and auto weights, guarded or not, and refuses
-> one with a key weight (`unplayable-node`) until
-> [Drawing a Random Option](../runtime/Drawing%20a%20Random%20Option.md) is complete.
+> Status: **implemented**, except the runtime warning for a total far from 100. A
+> list whose options lead with a weight (`` `50%` ``, `` `%` ``, `` `key%` ``) is a
+> random choice the engine resolves to one option. The runner draws at every random
+> choice, asking the world about its options' conditions and key weights (see
+> [Drawing a Random Option](../runtime/Drawing%20a%20Random%20Option.md)); it has no
+> channel for the drift warning yet.
 
 ## Table of contents
 
@@ -155,18 +155,22 @@ policy to runtime: a compile-time partial total would be misleading.
 At runtime:
 
 1. **Resolve explicit values.** A `NumberWeight` contributes its number. A
-   `QueryWeight` reads game state and must produce a finite, non-negative number.
-   A missing, non-numeric, negative, NaN, or infinite result is a runtime error;
-   the runtime selects no option.
+   `QueryWeight` of an option in play reads game state and must produce a finite,
+   non-negative number. A missing, non-numeric, negative, NaN, or infinite result
+   is an error: the runtime selects no option, and waits for a valid answer. An
+   excluded option's `QueryWeight` is not checked, since it counts toward nothing.
 2. **Distribute the leftover to autos:** `leftover = max(0, 100 − explicit)`,
    where `explicit` includes the numeric and resolved query weights of the options
    in play; an excluded option counts as zero. Each auto receives
    `leftover ÷ autoCount`.
 3. **Total** all resolved weights.
 4. **Select nothing from a zero total.** No option can be selected, so the run
-   walks past the random choice by its fall-through, or is refused as
-   `leads-nowhere` without one. This mirrors [`DLG2010`](#diagnostics) for static
-   weights.
+   walks past the random choice by its fall-through. The compiler gives a random
+   choice one unless an unguarded option has a number above zero or an auto weight,
+   since either makes sure the total is above zero
+   ([R6](../runtime/Drawing%20a%20Random%20Option.md#r6--a-random-choice-with-nothing-drawable-is-walked-past)).
+   A static zero total is always zero, so [`DLG2010`](#diagnostics) reports it as an
+   error; a dynamic one depends on the game, so it is passed by instead.
 5. **Warn on drift.** If the total is more than 0.5 from 100, report the actual
    total, then continue. This mirrors [`DLG3003`](#diagnostics); the tolerance
    keeps deliberate rounding such as three `` `33.3%` `` weights quiet.
@@ -261,7 +265,7 @@ with the same `DrawingWeight` arithmetic the compiler uses.
 | `SemanticTokenProjection` | A weight is a Markdown code span the editor already colors, so no dedicated weight token is projected. Query-key completion stays deferred until a game-state symbol source exists. |
 | `DiagnosticCatalog` | Own `DLG1104`, `DLG1105`, `DLG2010`, `DLG3003`, and `DLG3004`. |
 | `WeightTotalRule` | Validates only fully static, unconditional groups. A group containing a `QueryWeight` or a conditional option defers zero/drift checks to runtime. |
-| `SingleOptionRandomChoiceRule` | A structural rule that warns (`DLG3004`) when a random choice offers only one option, since it is always selected and the weight has no effect. A lone, unguarded `` `0%` `` option is left to `DLG2010`. |
+| `SingleOptionRandomChoiceRule` | A structural rule that warns (`DLG3004`) when a random choice offers only one option, since it is always selected and the weight has no effect. A lone, unguarded option with a `` `0%` `` chance is left to `DLG2010`. |
 
 ## Key design decisions
 
@@ -377,9 +381,11 @@ and fails fast on a violation, so its output probabilities are always valid.
 
 For a dynamic group, the runtime first resolves each `QueryWeight` to a numeric
 explicit value and validates that it is finite and non-negative. Only then does
-it invoke the shared normalization policy. An invalid query value is an error;
-the runtime selects no option rather than guessing zero or falling back to a
-uniform distribution.
+it work out the shares with `DrawingWeight`, and it draws against their total
+without normalizing
+([R9](../runtime/Drawing%20a%20Random%20Option.md#r9--the-compiler-and-the-runner-share-one-definition-of-a-share)).
+An invalid query value is an error; the runtime selects no option rather than
+guessing zero or falling back to a uniform distribution.
 
 ## Markdown interaction
 
@@ -405,7 +411,7 @@ it so the code span is no longer the option's weight prefix.
 | `DLG1105` | Invalid choice weight | Syntax | Error | A weight value is a negative number (`` `-10%` ``), or an infinite one (`` `Infinity%` ``, or more digits than a double holds). Any non-numeric text is a key. |
 | `DLG2010` | Random choice weights sum to zero | Semantic | Error | A fully static, unconditional random choice's weights all resolve to 0, so no option can be selected. |
 | `DLG3003` | Choice weights do not total 100% | Style | Warning | A fully static, unconditional random choice's weights do not total ≈100% (within 0.5, and not all zero); the odds are normalized anyway. |
-| `DLG3004` | Single-option random choice | Style | Warning | A random choice offers only one option, so it is always selected and the weight has no effect. A lone, unguarded `` `0%` `` option is `DLG2010` instead. |
+| `DLG3004` | Single-option random choice | Style | Warning | A random choice offers only one option, so it is always selected and the weight has no effect. A lone, unguarded option with a `` `0%` `` chance is `DLG2010` instead. |
 
 `DLG1104`/`DLG1105` sit in the `DLG11xx` line/inline-surface band alongside the
 game-call diagnostics. A zero total is a meaning-level fault, not a token-level
@@ -419,7 +425,7 @@ one, so it takes a semantic (`DLG2xxx`) code. `DLG3003` and `DLG3004` are style
 | No option weighted | Ordinary player choice; unchanged. |
 | Some options weighted, one bare | `DLG1104` on the bare option; recover it as an auto. |
 | Single weighted option | Valid, but always selected while its weight is above zero, so `DLG3004` warns that the weight has no effect. |
-| Single `` `0%` `` option, unguarded | `DLG2010`: it is never selected. |
+| Single option with a `` `0%` `` chance, unguarded | `DLG2010`: it is never selected. |
 | All auto (`` `%` `` everywhere) | Uniform random. |
 | Explicit total < 100, no autos | `DLG3003`; normalize by the sum. |
 | Explicit total within 0.5 of 100 (e.g. three `` `33.3%` `` → 99.9) | No warning. |
@@ -430,9 +436,9 @@ one, so it takes a semantic (`DLG2xxx`) code. `DLG3003` and `DLG3004` are style
 | Non-numeric value (`` `abc%` ``) | A `QueryWeight` on the key `abc`. |
 | Non-integer (`` `33.3%` ``) | Allowed; normalized. |
 | Key weight (`` `q%` `` or `` `"q"%` ``) | Accepted as `QueryWeight`; compile-time total checks are deferred. |
-| Query returns a missing, non-numeric, negative, NaN, or infinite value | Runtime error; select no option. |
+| Query returns a missing, non-numeric, negative, NaN, or infinite value | Runtime error; select no option, and wait for a valid answer. An excluded option's query is not checked. |
 | Static + query + auto | Resolve the query, subtract all explicit values from 100, split the non-negative remainder across autos, then normalize. |
-| Resolved dynamic total is zero | Runtime error equivalent to `DLG2010`; select no option. |
+| Resolved dynamic total is zero | Select no option: walk past by the fall-through, which the compiler writes for any random choice whose total can be zero. |
 | Resolved dynamic total differs from 100 by more than 0.5 | Runtime warning equivalent to `DLG3003`; normalize and continue. |
 | Nested random choice | Composes recursively; the choice-nesting rule (`DLG3002`) still applies. |
 | Ordered vs unordered list | Both may be random; a random choice shows no menu, so list ordering is not observed. |
@@ -448,9 +454,10 @@ one, so it takes a semantic (`DLG2xxx`) code. `DLG3003` and `DLG3004` are style
   `IWeightNormalization` and assert the probabilities, raw total, auto
   distribution, over-100 totals, the zero-total uniform recovery, and a
   fail-fast on a negative weight — no parsing involved.
-- **Dynamic runtime contract:** resolve query values through a fake game-state
-  source and cover valid decimals, missing/non-numeric values, negative and
-  non-finite values, mixed autos, zero total, and drift warnings.
+- **Dynamic runtime contract:** the runner's unit tests and the conformance corpus
+  answer key weights as the world would, and cover a valid number, an answer that
+  is not a number, negative and non-finite numbers, autos beside them, and a zero
+  total. The drift warning waits for a warning channel in the runner.
 - **Diagnostics:** `DLG1104`, `DLG1105`, `DLG2010`, and `DLG3003` fire on the
   right inputs with located spans, and a well-formed random choice produces none.
 - **Boundaries:** every row in the table above, especially auto distribution,
@@ -482,11 +489,11 @@ indentation are visible.
 
 ## Open questions and deferred work
 
-- **Runtime execution** — the runner draws at a random choice of number and auto
-  weights, the host supplying each draw, so a replay of the commands replays every
-  draw. Asking the world about a guarded option, and resolving and validating a
-  `QueryWeight`, come with the rest of
-  [Drawing a Random Option](../runtime/Drawing%20a%20Random%20Option.md).
+- **Runtime drift warning** — the runner draws at every random choice, the host
+  supplying each draw, so a replay of the commands replays every draw (see
+  [Drawing a Random Option](../runtime/Drawing%20a%20Random%20Option.md)). It does
+  not yet warn about a resolved total far from 100, because it has no channel for
+  warnings.
 - **Weighted player menu** — weights that bias a *shown* menu (for previews or
   autoplay) are explicitly out of scope; this construct always resolves to one
   option with no menu.
