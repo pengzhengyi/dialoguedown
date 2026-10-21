@@ -1,12 +1,11 @@
 # Speech Whitespace
 
 > [!NOTE]
-> Status: **proposed**. The playbook keeps spaces and tabs exactly as typed, so a
-> host that draws every space shows spacing no Markdown preview shows. This note
-> makes the playbook carry a line the way a preview shows it, with commands and
-> tags taken out: spaces typed together become one, a command or a tag takes no
-> room, and no space stands before a line's first word or after its last.
-> `DLG1116`, an `Info` note, tells the writer where extra spaces collapse.
+> Status: **implemented**. The playbook carries a line the way a Markdown preview
+> shows it, with commands and tags taken out: spaces typed together become one, a
+> command or a tag takes no room, and no space stands before a line's first word
+> or after its last. `DLG1116`, an `Info` note with a fix to use one space, tells
+> the writer where extra spaces collapse.
 
 ## Table of contents
 
@@ -33,9 +32,9 @@
 ## Goal and scope
 
 Every place a writer previews a script draws HTML: the VS Code preview, GitHub,
-and the report. HTML shows spaces typed together as one. The compiler keeps them
-all, and a host that draws its own text, such as a game engine's label or the
-terminal player, shows every one:
+and the report. HTML shows spaces typed together as one. Before this note, the
+compiler kept them all, and a host that draws its own text, such as a game
+engine's label or the terminal player, showed every one:
 
 ```text
 Alice: a    b      preview "a b"      playbook "a    b"      terminal "a    b"
@@ -48,16 +47,16 @@ principle for all of speech: DialogueDown syntax may be visible but unrendered i
 a Markdown preview, but it must never be invisible and significant. Spaces typed
 together are invisible in the preview and significant in the game.
 
-The compiler also doubles spaces the writer never typed. A command or a tag is
-never shown to the player, but the spaces on both sides of it stay:
+The compiler also doubled spaces the writer never typed. A command or a tag is
+never shown to the player, but the spaces on both sides of it stayed:
 
 ```text
 - Say goodbye `Wave()` and leave      the menu shows "Say goodbye  and leave"
 ```
 
 A preview draws the command as code, so it shows both spaces with a word between
-them. The game draws no word there, so the two spaces meet. The playbook should
-read as the preview would with the command taken out.
+them. The game draws no word there, so the two spaces met. The playbook now reads
+as the preview would with the command taken out.
 
 **In scope:** what the playbook carries for spaces, tabs, and line breaks in what
 the player reads (D1–D5), and the note that tells the writer about it (D6–D7).
@@ -396,8 +395,9 @@ The code changed with the implementation:
 - **Catalog.** `DLG1116`, titled "Spaces typed together collapse", `Syntax`,
   `Info`, with the message in [Writer-facing behavior](#writer-facing-behavior).
 - **Runtime.** `SpeechSegment.SaysSomething` counts a named space as something
-  said. It now treats any white space as nothing, so a part holding only `&nbsp;`
-  would never be spoken; it narrows to collapsible spaces and line breaks.
+  said. It treated any white space as saying nothing, so a part holding only
+  `&nbsp;` was never spoken; now only collapsible spaces and line breaks say
+  nothing.
 - **Fixes.** Fix mode and the editor need no change: both apply a diagnostic's
   preferred fix whatever its severity. `DLG1116` is the first `Info` note with a
   fix, so the plain compile's `N fixable with --fix` hint counts notes too.
@@ -441,23 +441,23 @@ The documentation changed with the implementation:
 
 ## Functionality checklist
 
-- [ ] Spaces, tabs, and encoded line breaks typed together in a line's speech, an
+- [x] Spaces, tabs, and encoded line breaks typed together in a line's speech, an
       option's label, a jump's label, and alt text reach the playbook as one space.
-- [ ] Extra spaces split across texts by entities collapse the same way.
-- [ ] Named spaces reach the playbook unchanged, and the runner speaks a part that
+- [x] Extra spaces split across texts by entities collapse the same way.
+- [x] Named spaces reach the playbook unchanged, and the runner speaks a part that
       holds only one.
-- [ ] A command or a tag takes no room, and no collapsible space stands before the
+- [x] A command or a tag takes no room, and no collapsible space stands before the
       first visible piece or after the last.
-- [ ] A text or a styled text emptied by the rule, and a removed soft line break,
+- [x] A text or a styled text emptied by the rule, and a removed soft line break,
       are omitted.
-- [ ] `DLG1116` reports each place with extra spaces once, at its span, as
+- [x] `DLG1116` reports each place with extra spaces once, at its span, as
       `Info`, with the fix to use one space.
-- [ ] Merges beside commands, tags, and boundaries, the ends of a list, a single
+- [x] Merges beside commands, tags, and boundaries, the ends of a list, a single
       tab, a control line's effects, and headings report nothing.
-- [ ] The six changed corpus cases, the new ones, and the four goldens pass.
-- [ ] The properties in [Property tests](#property-tests) hold.
-- [ ] `DLG1116` has a compiled example in the error-code reference.
-- [ ] The writer's guide explains spacing and the named spaces.
+- [x] The six changed corpus cases, the new ones, and the four goldens pass.
+- [x] The properties in [Property tests](#property-tests) hold.
+- [x] `DLG1116` has a compiled example in the error-code reference.
+- [x] The writer's guide explains spacing and the named spaces.
 
 ## Testing and demonstration
 
@@ -469,14 +469,17 @@ The documentation changed with the implementation:
 | `SpeechMapping` and `EdgeMapping` | A line's speech, an option's label, a jump's label, and alt text each arrive normalized; a styled text is normalized with its line, not alone. |
 | `SpeechSegment` | A part holding only a named space says something; a part holding only collapsible spaces and line breaks does not. |
 | `ExtraSpacesRule` | It reports extra spaces in speech, emphasis, a link's label, alt text, and a jump's label, at the right span, including spacing split across entity texts, and reports an option's label once. Its fix leaves one space in place of all the spacing. It stays silent for single spaces, a single tab, named spaces, a control line's effects, and a heading. |
-| Compilation | A script with extra spaces compiles, reports `DLG1116`, and emits one space. |
+| Compilation | The `spaces-typed-together` corpus case compiles spaces typed together to one space, and the error-code docs tests and the CLI tests see the compile report `DLG1116`. |
 | CLI fix | `--fix` on a script with extra spaces rewrites it, and the recompile reports no `DLG1116`. On `x  => y` it applies both the `DLG1116` and the `DLG1113` fix. |
 
 ### Property tests
 
-These use CsCheck, like `CompilerPropertyTests`, over generated speech lists that mix
-texts with spaces, tabs, encoded line breaks, and named spaces, styled text, links,
-images, queries, commands, tags, and soft line breaks.
+These use CsCheck, like `CompilerPropertyTests`. The laws about `SpeechSpacing` run
+over speech lists from `SpeechGen`, which mix texts with spaces, tabs, encoded line
+breaks, and named spaces, styled text, links, images, queries, commands, tags, and
+soft line breaks. The laws about the fix run over scripts from `SpacedScriptGen`,
+which spaces a line and a menu's options every way, entities included. Each
+generator has a test that checks it reaches every kind it should.
 
 | Property | The law |
 | --- | --- |
