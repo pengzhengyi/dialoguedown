@@ -482,6 +482,7 @@ images, queries, commands, tags, and soft line breaks.
 | --- | --- |
 | **Normalizing twice changes nothing** | `SpeechSpacing` applied to its own output returns it unchanged. |
 | **The three rules hold** | In the output, passing over unseen fragments, no collapsible space follows another, and none stands before the first visible piece or after the last. |
+| **No skipped part holds a space** | Split at its commands, no part of the output that a runner skips because it says nothing holds a collapsible space. |
 | **Only collapsible spaces change** | Removing every collapsible space from the input and the output leaves the same characters and the same other fragments, in the same order. |
 | **The fix keeps what the player reads** | A generated script, and the same script after every `DLG1116` fix, compile to playbooks whose speech lists read the same through `SpeechText.Of` and hold the same commands, tags, images, and queries in the same order. |
 
