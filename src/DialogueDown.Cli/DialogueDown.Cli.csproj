@@ -39,6 +39,11 @@
   <ItemGroup>
     <None Include="..\..\README.md" Pack="true" PackagePath="\" />
     <None Include="..\..\assets\icon.png" Pack="true" PackagePath="\" />
+    <!-- The tool bundles third-party assemblies whose licenses require their notices to
+         accompany every binary copy. The web report's own list is embedded in
+         DialogueDown.Visualization.dll, so it ships beside the main file. -->
+    <None Include="..\..\THIRD-PARTY-NOTICES.md" Pack="true" PackagePath="\" />
+    <None Include="..\DialogueDown.Visualization\web\NOTICE.md" Pack="true" PackagePath="\THIRD-PARTY-NOTICES-WEB-REPORT.md" />
   </ItemGroup>
 
   <ItemGroup>
