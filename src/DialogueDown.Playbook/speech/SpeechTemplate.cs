@@ -44,8 +44,9 @@ public static class SpeechTemplate
     /// <param name="speech">The speech to read.</param>
     /// <returns>Every segment's words, joined in written order.</returns>
     /// <remarks>
-    /// These are the words <see cref="Segments"/> puts on each side of each command, so
-    /// <c>Say goodbye `Wave()` and go</c> reads <c>Say goodbye  and go</c>, with both spaces kept.
+    /// These are the words <see cref="Segments"/> puts on each side of each command, joined as they
+    /// are. Compiled speech keeps one space beside a command, so <c>Say goodbye `Wave()` and go</c>
+    /// reads <c>Say goodbye and go</c>.
     /// Emphasis around a command stays on both sides of it, and a command inside a link's label or
     /// an image's alt text stays among the words there, as it does in a segment.
     /// </remarks>
