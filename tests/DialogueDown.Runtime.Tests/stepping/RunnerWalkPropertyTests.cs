@@ -6,6 +6,7 @@ using DialogueDown.Playbook.Weights;
 using DialogueDown.Runtime.Protocol;
 using DialogueDown.Runtime.Situations;
 using DialogueDown.Runtime.Stepping;
+using DialogueDown.TestSupport;
 
 namespace DialogueDown.Runtime.Tests.Stepping;
 
@@ -324,7 +325,7 @@ public sealed class RunnerWalkPropertyTests
     // The drawn world answers every query with the same words, so finding them in a label shows the
     // world filled it in.
     private static bool SaysTheWorldsWords(OfferedOption option) =>
-        option.Label.Contains(new TextFragment(DrawnWorld.Words));
+        option.Label.Contains(SpeechFactory.Text(DrawnWorld.Words));
 
     // A random option's share is zero for one of four reasons: the world excluded it, its weight
     // is `0%`, it is a key weight the world answered 0, or it is an auto weight the numbers in play

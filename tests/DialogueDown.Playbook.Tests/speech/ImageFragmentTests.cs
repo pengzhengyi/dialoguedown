@@ -1,5 +1,7 @@
 using DialogueDown.Playbook.Speech;
 using DialogueDown.Playbook.Tests.Support;
+using static DialogueDown.TestSupport.SpeechFactory;
+
 namespace DialogueDown.Playbook.Tests.Speech;
 
 public sealed class ImageFragmentTests
@@ -50,8 +52,8 @@ public sealed class ImageFragmentTests
     [Fact]
     public void Equality_EqualAlternativeText_AreEqual()
     {
-        var left = new ImageFragment("portrait.png", [new TextFragment("Alice smiling")]);
-        var right = new ImageFragment("portrait.png", [new TextFragment("Alice smiling")]);
+        var left = new ImageFragment("portrait.png", [Text("Alice smiling")]);
+        var right = new ImageFragment("portrait.png", [Text("Alice smiling")]);
 
         EqualityAssert.AssertValueEqual(left, right);
     }
@@ -59,8 +61,8 @@ public sealed class ImageFragmentTests
     [Fact]
     public void Equality_DifferentAlternativeText_AreNotEqual()
     {
-        var left = new ImageFragment("portrait.png", [new TextFragment("Alice smiling")]);
-        var right = new ImageFragment("portrait.png", [new TextFragment("Alice frowning")]);
+        var left = new ImageFragment("portrait.png", [Text("Alice smiling")]);
+        var right = new ImageFragment("portrait.png", [Text("Alice frowning")]);
 
         EqualityAssert.AssertValueUnequal(left, right);
     }
