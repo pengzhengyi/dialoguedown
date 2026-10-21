@@ -205,6 +205,13 @@ element belongs to its line in CSS. An image is a visible piece, and its alt tex
 is a speech list of its own, as an attribute is not part of the line in HTML. A
 query is a visible piece; what it is answered with is not normalized.
 
+Alt text normalized on its own loses the spaces at its ends, so a host that reads
+an image as its alt text within the line, as the plain-text reading does, has only
+the spaces written outside the image: `Here,![ the key ](k.png).` reads
+`Here,the key.`. The preview draws the picture with no space on either side
+there either, so the spaces that separate an image from its words belong outside
+it: `Here, ![the key](k.png)`.
+
 ### D4 — Normalized at emission, not in desugar
 
 The Dialogue AST holds the writer's exact text, and every span in it addresses
@@ -254,8 +261,8 @@ The rule visits each text once. It reads a line's speech, with the styled text,
 link labels, and alt text inside it, and a jump's label. An option's label needs no
 visit of its own: it is the same fragments as its line's speech, or its jump's
 label. The rule skips the text between a control line's effects, which is never
-emitted. Adjacent texts are read together, so extra spaces split across entities
-are found.
+emitted. Spaces are read by where they sit in the source, so extra spaces split
+across entities are found as one place.
 
 It reports extra spaces only. Every other change D3 makes comes from one space
 the writer typed, or none, and is not reported:
@@ -320,15 +327,19 @@ passes:
 3. **Placing.** Move a space kept right after an unseen fragment past any more
    unseen fragments, to just before the next visible piece.
 
-A text left empty is omitted, and so is a soft line break that is removed. Every
-other fragment, and every character that is not a collapsible space, stays where
-it was. A link or an image whose label or alt text is left empty stays, with an
-empty label.
+A text left empty is omitted, and so is a soft line break that is removed and a
+styled text left with nothing inside it. Every other fragment, and every
+character that is not a collapsible space, stays where it was. A link or an image
+whose label or alt text is left empty stays, with an empty label, because it
+still leads somewhere or draws something.
 
 `ExtraSpacesRule` is a structural-validator rule beside `CommandInLabelRule`. It
-visits each text once as D6 describes, reads each sequence of adjacent texts as
-one string, and reports each place where two or more collapsible spaces stand
-together.
+visits each text once as D6 describes, through `ScriptNodeExtensions.Shown` for
+the words a node shows and `Texts` for every text within them. It takes each
+collapsible space at the span it is written over, an entity as one space, and
+reports each run of two or more in which every space starts where the one before
+it ends in the source. Anything written between two spaces, such as a command or
+the edge of a link, sets them apart.
 
 ## Error and boundary cases
 
@@ -340,12 +351,13 @@ together.
 | A list holding only unseen fragments and spaces | Every space removed; the commands and tags stay. |
 | An option whose label is only spaces, as `- &#32;` | Offered with an empty label, as an option holding only a command is already. |
 | A link or an image whose label is only spaces, as `[ ](#s)` | The link or image stays, with an empty label. |
-| A text emptied by the rule | Omitted. |
+| A text, or a styled text, emptied by the rule | Omitted. |
 | A query or an image between spaces | Kept: each is a visible piece. A query's answer is not normalized. |
 | A space written only after a command, as ``Hi`Wave()` there`` | Kept; the part after the command begins with it. |
 | A space alone between two commands, as ``Hi.`Bow()` `Wave()`Bye.`` | Moved past the commands to the words after them, so no part of the line holds only a space. |
 | Extra spaces inside emphasis or a link's label | Collapsed with the list around it; reported. |
 | Extra spaces in alt text | Collapsed within the alt text; reported. |
+| Spaces at the ends of alt text, as `Here,![ the key ](k.png).` | Removed: the alt text is a list of its own, so the plain-text reading is `Here,the key.` (D3). |
 | A soft line break after a command, as ``a `Wave()` `` and `b` on the next line | The break follows a kept space and is removed: `"a "`, the command, `"b"`. |
 | Extra spaces before a trailing command, as ``Hello  `Wave()` `` | Removed after the last word; reported. |
 | An option `- a  b` | One `DLG1116`: the label and the line's speech are the same fragments. |
@@ -364,8 +376,19 @@ The code changed with the implementation:
 
 - **Emission.** `SpeechSpacing` is new; `SpeechMapping` calls it as
   [How it works](#how-it-works) describes. Its callers do not change.
+- **Markdown and transpiler.** `TextInline.IsEntity` marks a text decoded from an
+  entity, and `InlineBuilder` makes it one text over the whole entity rather than
+  tokenizing it, so its span covers the entity the writer typed.
+- **AST.** `ScriptNodeExtensions.Shown` gives the words a node shows the player,
+  and `Texts` every text within fragments. `Children` now throws for an inline
+  fragment of an unknown kind, as it does for a block, so a new kind is not
+  skipped by accident.
 - **Validation.** `ExtraSpacesRule` joins `StructuralValidatorFactory`'s default
-  set.
+  set. `DiagnosticRule`'s reporter carries fixes, so a rule attaches them as it
+  reports.
+- **Common.** `CharExtensions.IsCollapsibleSpace` names the collapsible set. The
+  playbook keeps its own copy for `SpeechSegment.SaysSomething`, because it
+  references no other project.
 - **Catalog.** `DLG1116`, titled "Spaces typed together collapse", `Syntax`,
   `Info`, with the message in [Writer-facing behavior](#writer-facing-behavior).
 - **Runtime.** `SpeechSegment.SaysSomething` counts a named space as something
@@ -421,7 +444,8 @@ The documentation changed with the implementation:
       holds only one.
 - [ ] A command or a tag takes no room, and no collapsible space stands before the
       first visible piece or after the last.
-- [ ] A text emptied by the rule, and a removed soft line break, are omitted.
+- [ ] A text or a styled text emptied by the rule, and a removed soft line break,
+      are omitted.
 - [ ] `DLG1116` reports each place with extra spaces once, at its span, as
       `Info`, with the fix to use one space.
 - [ ] Merges beside commands, tags, and boundaries, the ends of a list, a single
