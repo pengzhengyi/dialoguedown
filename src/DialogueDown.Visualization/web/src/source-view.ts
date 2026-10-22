@@ -97,6 +97,7 @@ import { debugEditor, toggleBreakpointAt } from "./debug-editor";
 import { createDebugToolbar, type DebugToolbar } from "./debug-toolbar";
 import { reservedTargetsPanel, setEditorReservedTargets } from "./reserved-targets-panel";
 import { sourceLanguage } from "./source-language";
+import { whitespaceVisibility } from "./show-whitespace";
 
 /**
  * Markdown syntax highlighting driven by CSS variables (`--md-*`), so the editor
@@ -434,8 +435,9 @@ export interface SourceViewHandle {
     applyDiagnosticFix(diagnostic: LspDiagnostic, fix: LspFix): void;
     /**
      * Apply every fixable diagnostic's preferred fix in a single edit, returning how many were
-     * applied and how many were skipped (see the Fix All Diagnostics note). A read-only editor
-     * applies nothing.
+     * applied and how many were skipped: a fix is skipped when it overlaps one already applied,
+     * edits nothing, or cannot be placed in the current buffer. A read-only editor applies
+     * nothing.
      */
     applyAllFixes(diagnostics: readonly LspDiagnostic[]): FixAllOutcome;
     /**
@@ -654,6 +656,7 @@ export function createSourceView(
             doc: source,
             extensions: [
                 ...(debug ? [debugEditor(debug)] : []),
+                whitespaceVisibility(),
                 lineNumbers(),
                 highlightActiveLineGutter(),
                 foldGutter({ markerDOM: foldGutterMarker }),

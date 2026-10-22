@@ -15,11 +15,11 @@ Part of the [script language specification](script-language.md).
 - [Quoting a key](#quoting-a-key)
 
 Your game answers what a script asks of it and performs what the script
-commands. The interface a game implements — the runtime's world read and effect
-handling — lands with the runtime, so this page describes what a script asks of
-your game rather than the C# shape of the answer. See the
+commands. The interface a game implements to do so — the runtime's world read and
+effect handling — is still being designed, so this page describes what a script
+asks of your game rather than the C# shape of the answer. See the
 [runtime architecture](../contributing/design-notes/runtime/Dialogue%20Runtime%20Architecture.md)
-for the model it is settling on.
+for the proposed model.
 
 ## Queries
 
@@ -51,7 +51,7 @@ Alice: My favorite color is red.
 
 > [!TIP]
 > A query can also drive a random choice's odds — see
-> [Dynamic weights](structure-and-flow.md#dynamic-weights).
+> [Key weights](structure-and-flow.md#key-weights).
 
 ### A query in a label
 
@@ -173,7 +173,7 @@ key begins and ends, so it can hold any characters — including spaces.
 
 Two constructs put a **sigil** right after the key: a
 [condition](structure-and-flow.md#conditional-jumps) ends it with `?`, and a
-[dynamic weight](structure-and-flow.md#dynamic-weights) ends it with `%`. There the sigil already marks
+[key weight](structure-and-flow.md#key-weights) ends it with `%`. There the sigil already marks
 where the key ends, so you may **drop the quotes** and write the key plainly:
 
 ```markdown

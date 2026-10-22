@@ -2,7 +2,7 @@ using DialogueDown.Common;
 namespace DialogueDown.Markdown;
 
 /// <summary>
-/// Plain text exactly as the author wrote it, with no styling applied. It always
+/// Plain text with no styling applied, its escapes removed and its entities decoded. It always
 /// has at least one character.
 /// </summary>
 /// <remarks>
@@ -17,13 +17,14 @@ internal sealed record TextInline : MarkdownInline
 {
     public TextInline(
         string text, SourceSpan span, SourceSpan? contentSpan = null,
-        bool isFirstCharacterEscaped = false)
+        bool isFirstCharacterEscaped = false, bool isEntity = false)
         : base(span)
     {
         ArgumentException.ThrowIfNullOrEmpty(text);
         Text = text;
         ContentSpan = contentSpan ?? span;
         IsFirstCharacterEscaped = isFirstCharacterEscaped;
+        IsEntity = isEntity;
     }
 
     public string Text { get; }
@@ -40,4 +41,11 @@ internal sealed record TextInline : MarkdownInline
     /// uses this flag to read an escaped sigil as plain text.
     /// </summary>
     public bool IsFirstCharacterEscaped { get; }
+
+    /// <summary>
+    /// Whether the text was decoded from an entity, such as <c>&amp;#32;</c> for a space. Its
+    /// <see cref="Text"/> then does not stand one for one in <see cref="MarkdownInline.Span"/>,
+    /// which covers the whole entity.
+    /// </summary>
+    public bool IsEntity { get; }
 }

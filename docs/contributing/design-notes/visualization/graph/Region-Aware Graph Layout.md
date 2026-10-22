@@ -107,7 +107,7 @@ only final positions, draws two boxes that cross.
 Two properties of the real layout shape the design, and both are easy to get
 wrong from intuition:
 
-- **Many nodes share one row.** A straight run of dialogue is a single-child
+- **Many nodes share one row.** A straight sequence of dialogue is a single-child
   chain, and `d3.tree` gives every node in it the *same* `x`. A scene of thirty
   lines is one horizontal row marching rightwards across thirty columns, not
   thirty rows.
@@ -310,7 +310,7 @@ and against one rendered in a browser, each checked to fail without the pass.
 | Case | Behavior |
 | --- | --- |
 | Stage has no regions (every AST tab) | The pass is not applied; the tree layout stands. |
-| A scene whose nodes all share one row (a straight run of lines) | A one-row tier — the run stays horizontal. |
+| A scene whose nodes all share one row (a straight sequence of lines) | A one-row tier — the sequence stays horizontal. |
 | A region named by the stage with no drawn node | Skipped; it consumes no vertical space. |
 | No loose nodes at all | The prologue tier is empty and skipped; the first scene starts at the origin. |
 | Every node loose (no scenes) | One prologue tier; no bands; ordering is the tree's own. |

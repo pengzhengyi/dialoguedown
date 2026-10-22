@@ -10,16 +10,12 @@ internal static class ValidationAssert
     public static void AssertAccepted(ValidationResult result) =>
         Assert.True(result.Successful, $"Expected the argument to be accepted, but: {result.Message}");
 
-    /// <summary>Asserts that validation failed, with a message mentioning each fragment.</summary>
+    /// <summary>Asserts that validation failed, and says why in exactly these words.</summary>
     /// <param name="result">What the validator returned.</param>
-    /// <param name="mentioning">Text the message must contain.</param>
-    public static void AssertRejected(ValidationResult result, params string[] mentioning)
+    /// <param name="because">The whole message the person reads.</param>
+    public static void AssertRejected(ValidationResult result, string because)
     {
         Assert.False(result.Successful, "Expected the argument to be rejected.");
-        Assert.NotNull(result.Message);
-        foreach (var fragment in mentioning)
-        {
-            Assert.Contains(fragment, result.Message, StringComparison.Ordinal);
-        }
+        Assert.Equal(because, result.Message);
     }
 }

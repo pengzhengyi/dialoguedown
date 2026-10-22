@@ -22,9 +22,10 @@
 ## Goal and scope
 
 The compiler diagnoses a problem and, for some diagnostics, knows the exact
-repair. The dangling jump arrow is the first: `DLG1113` tells the writer that an
+repair. The dangling jump arrow is one: `DLG1113` tells the writer that an
 arrow with no link is read literally and to escape it (`\=>`); a fix turns that
-advice into one click, at the moment the warning appears.
+advice into one click, at the moment the warning appears. `DLG1116`, spaces typed
+together, carries a fix the same way.
 
 This note adds a **fix channel** to the diagnostic model, projects it to the
 editor, and offers each fix in the diagnostic tooltip and the Problems panel.
@@ -164,7 +165,7 @@ recompile.
 | A read-only report or View mode                          | Diagnostics render; the tooltip offers no actions and the panel no lightbulbs (D6).  |
 | The mode flips while diagnostics are listed              | Both surfaces recompute from the same list, so an Edit-mode action cannot linger.    |
 | A fixable row beside a fix-less row                      | Both reserve the leading fix slot, so the messages align.                            |
-| An arrow in a choice body or control branch              | The diagnostic is reported there too; its fix rides along unchanged.                 |
+| An arrow in a choice body or control branch              | The diagnostic is reported there too; its fix comes with it unchanged.               |
 | A fix with several edits                                 | Applied in order within one transaction (D4).                                        |
 
 ## Integration

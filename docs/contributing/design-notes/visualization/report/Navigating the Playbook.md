@@ -44,7 +44,7 @@ Most cells are facts. The ones that name a place carry a `PlaybookTarget` and be
 | --- | --- | --- |
 | Playbook | **Entry node** | The node a playthrough starts on |
 | Speakers | **Name** | That speaker's object |
-| Anchors | **Node** | The node the anchor lands on |
+| Anchors | **Node** | The node the anchor names |
 | Nodes | **#**, each number in **Leads to**, and each summary piece that names a node | That node |
 
 An anchor's own `#the-market` cell copies instead: it is what a writer pastes into a script, not

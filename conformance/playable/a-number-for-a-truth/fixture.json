@@ -1,0 +1,17 @@
+{
+  "$schema": "https://pengzhengyi.github.io/dialoguedown/schema/fixture-0.schema.json",
+  "name": "a number answered for a guard is refused, and the random choice still takes the answers",
+  "playbook": "playbook.json",
+  "because": "a guard needs a truth, so 1 for Guard.IsAngry is refused rather than read as true, and the run keeps waiting for the answers it asked for; once the world says false instead, Halt! is out of play and Move along takes all of 100",
+  "session": [
+    { "expect": { "resolve": ["Guard.IsAngry"] } },
+    { "send": { "supply": { "Guard.IsAngry": 1 } } },
+    { "expect": { "refused": { "reason": "wrong-answer-kind" } } },
+    { "send": { "supply": { "Guard.IsAngry": false } } },
+    { "expect": { "draw": [0, 100] } },
+    { "send": { "drawn": 0.5 } },
+    { "expect": { "said": { "speaker": "Guard", "speech": "Move along." } } },
+    { "send": "next" },
+    { "expect": { "ended": {} } }
+  ]
+}

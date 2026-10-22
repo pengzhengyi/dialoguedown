@@ -168,7 +168,8 @@ internal sealed class GraphProjection
     // An edge the walk followed to first reach its target is that node's parent in the layout;
     // every other edge — an option rejoining the flow, a jump to an earlier scene — is drawn as a
     // reference so the tree stays a tree while the flow stays complete. Its category says what
-    // kind of route it is, so a reader tells a fall-through from a jump or a chosen option by color.
+    // kind of route it is, so a reader tells a fall-through from a jump or a chosen option by
+    // color.
     private static DisplayEdge Describe(DialogueNode from, Edge edge, SpanningTree layout) =>
         new(
             DisplayId(from.Id),
@@ -187,9 +188,9 @@ internal sealed class GraphProjection
         };
 
     // A route carries the words the writer gave it, which the details panel shows when the route is
-    // selected. Only a jump and a choice option have any: a jump is named by its link text, an option by
-    // what the player is offered. A fall-through was never written down, and a random option is picked
-    // by the engine rather than read, so neither has words to report.
+    // selected. Only a jump and a choice option have any: a jump is named by its link text, an
+    // option by what the player is offered. A fall-through was never written down, and a random
+    // option is picked by the engine rather than read, so neither has words to report.
     private static string? LabelOf(Edge edge) => Written(edge) switch
     {
         { Count: > 0 } written => InlineText.Of(written).Trim() is { Length: > 0 } label ? label : null,
@@ -227,7 +228,7 @@ internal sealed class GraphProjection
             .ToArray();
 
     // A scene is declared by its heading, and the heading's own fragments carry the only spans
-    // that name it. Their reach is the title text — where a reader expects to land.
+    // that name it. Their reach is the title text — where a reader expects to be taken.
     private static DisplaySpan? HeadingSpan(SceneRegion scene)
     {
         if (scene.Label.Count == 0)
@@ -245,8 +246,8 @@ internal sealed class GraphProjection
     /// </summary>
     /// <remarks>
     /// A scene owns the blocks written directly beneath its heading, so a line nested inside a
-    /// choice option is not among its <c>OwnNodes</c> — yet a reader plainly considers it part of the
-    /// scene it was written under. Document order settles it: a heading opens a scene and
+    /// choice option is not among its <c>OwnNodes</c> — yet a reader plainly considers it part of
+    /// the scene it was written under. Document order settles it: a heading opens a scene and
     /// everything after it belongs there until the next heading, so an unowned node inherits the
     /// scene of the text above it. Nodes written before any heading belong to no scene, and say so
     /// by having none.

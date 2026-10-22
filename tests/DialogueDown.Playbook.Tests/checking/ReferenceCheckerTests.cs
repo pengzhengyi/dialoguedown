@@ -9,7 +9,7 @@ public sealed class ReferenceCheckerTests
     private readonly ReferenceChecker _checker = new();
 
     [Fact]
-    public void Check_APlaybookWhereEveryReferenceLands_IsAccepted()
+    public void Check_APlaybookWhereEveryReferenceIsInRange_IsAccepted()
     {
         var playbook = PlaybookFactory.Document(
             entry: 0,

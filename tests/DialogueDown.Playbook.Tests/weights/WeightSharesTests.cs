@@ -19,14 +19,16 @@ public sealed class WeightSharesTests
         foreach (var option in samples)
         {
             Assert.IsNotType<NotSupportedException>(
-                Record.Exception(() => WeightShares.Of([option], new EveryOptionInPlay())));
+                Record.Exception(
+                    () => WeightShares.Of([option], new EveryOptionInPlay(), new KeyWeightAnswered("Guard.Mood", 20))));
         }
     }
 
     [Fact]
     public void Of_RandomOptions_ComeToTheSharesTheirDrawingWeightsDo()
     {
-        var shares = WeightShares.Of([Chance(30), EvenChance(), Chance(20), EvenChance()], new EveryOptionInPlay());
+        var shares = WeightShares.Of(
+            [Chance(30), EvenChance(), Chance(20), EvenChance()], new EveryOptionInPlay(), new NoKeyWeightAnswered());
 
         Assert.Equal(
             DrawingWeight.Shares(
@@ -35,19 +37,29 @@ public sealed class WeightSharesTests
     }
 
     [Fact]
-    public void Of_AKeyWeight_IsRefusedNamingTheKey_BecauseOnlyTheWorldKnowsItsNumber()
+    public void Of_AKeyWeight_ComesToTheNumberTheWorldAnswered()
     {
-        static void UnansweredKey() =>
-            _ = WeightShares.Of([Chance("Guard.Mood"), EvenChance()], new EveryOptionInPlay());
+        // - `Guard.Mood%` Guard: Lovely day.
+        // - `%` Guard: Move along.
+        var shares = WeightShares.Of(
+            [Chance("Guard.Mood"), EvenChance()], new EveryOptionInPlay(), new KeyWeightAnswered("Guard.Mood", 20));
 
-        var error = Assert.Throws<ArgumentException>(UnansweredKey);
-        Assert.Contains("Guard.Mood", error.Message, StringComparison.Ordinal);
+        // Answered 20, the key weight counts as `20%` would, and the auto weight takes what it leaves.
+        Assert.Equal([20.0, 80.0], shares);
     }
 
     [Fact]
-    public void Of_ANumberNoShareCanBe_IsRefused() =>
+    public void Of_AKeyWeightAnsweredWithAnInvalidNumber_IsRefused() =>
         Assert.Throws<ArgumentOutOfRangeException>(
-            () => WeightShares.Of([Chance(-10), EvenChance()], new EveryOptionInPlay()));
+            () => WeightShares.Of(
+                [Chance("Guard.Mood"), EvenChance()],
+                new EveryOptionInPlay(),
+                new KeyWeightAnswered("Guard.Mood", -10)));
+
+    [Fact]
+    public void Of_AnInvalidNumber_IsRefused() =>
+        Assert.Throws<ArgumentOutOfRangeException>(
+            () => WeightShares.Of([Chance(-10), EvenChance()], new EveryOptionInPlay(), new NoKeyWeightAnswered()));
 
     [Fact]
     public void Of_AnExcludedRandomOption_HasNoShare_AndTheAutoWeightTakesWhatTheNumbersInPlayLeave()
@@ -56,7 +68,9 @@ public sealed class WeightSharesTests
         // - `30%` Guard: Move along.
         // - `%` Guard: Lovely day.
         var shares = WeightShares.Of(
-            [Chance(50, condition: "Guard.IsAngry"), Chance(30), EvenChance()], new GuardsWithheld());
+            [Chance(50, condition: "Guard.IsAngry"), Chance(30), EvenChance()],
+            new GuardsWithheld(),
+            new NoKeyWeightAnswered());
 
         // The random options in play share the draw as if the angry guard's were not written.
         Assert.Equal([0.0, 30.0, 70.0], shares);
@@ -69,7 +83,9 @@ public sealed class WeightSharesTests
         // - `30%` Guard: Move along.
         // - `20%` Guard: Lovely day.
         var shares = WeightShares.Of(
-            [Chance(50, condition: "Guard.IsAngry"), Chance(30), Chance(20)], new GuardsWithheld());
+            [Chance(50, condition: "Guard.IsAngry"), Chance(30), Chance(20)],
+            new GuardsWithheld(),
+            new NoKeyWeightAnswered());
 
         // A draw is made against the total, so 30 and 20 are drawn as 60% and 40%.
         Assert.Equal([0.0, 30.0, 20.0], shares);
@@ -81,26 +97,37 @@ public sealed class WeightSharesTests
         // - `Guard.IsAngry?` `Guard.Mood%` Guard: Halt!
         // - `%` Guard: Move along.
         var shares = WeightShares.Of(
-            [Chance("Guard.Mood", condition: "Guard.IsAngry"), EvenChance()], new GuardsWithheld());
+            [Chance("Guard.Mood", condition: "Guard.IsAngry"), EvenChance()],
+            new GuardsWithheld(),
+            new NoKeyWeightAnswered());
 
-        // A key weight in play is refused for want of a number, so reaching the shares at all shows
+        // Asked for any key weight's number, the answers throw, so reaching the shares at all shows
         // the excluded one was never read.
         Assert.Equal([0.0, 100.0], shares);
     }
 
     [Fact]
     public void Of_NoRandomOptions_HaveNoShares() =>
-        Assert.Empty(WeightShares.Of([], new EveryOptionInPlay()));
+        Assert.Empty(WeightShares.Of([], new EveryOptionInPlay(), new NoKeyWeightAnswered()));
 
     // The arbiter reads each random option it is asked about, so a missing one must be refused
     // before the arbiter is asked.
     [Fact]
     public void Of_RejectsAMissingRandomOption() =>
-        Assert.Throws<ArgumentNullException>(() => WeightShares.Of([Chance(50), null!], new GuardsWithheld()));
+        Assert.Throws<ArgumentNullException>(
+            () => WeightShares.Of([Chance(50), null!], new GuardsWithheld(), new NoKeyWeightAnswered()));
 
     [Fact]
     public void Of_RejectsAMissingArbiter() =>
-        Assert.Throws<ArgumentNullException>(() => WeightShares.Of([Chance(50)], arbiter: null!));
+        Assert.Throws<ArgumentNullException>(
+            () => WeightShares.Of([Chance(50)], arbiter: null!, new NoKeyWeightAnswered()));
+
+    // Rejected even when no random option has a key weight, so a caller cannot leave the answers
+    // out and have it go unnoticed until a key weight is written.
+    [Fact]
+    public void Of_RejectsMissingKeyWeightAnswers() =>
+        Assert.Throws<ArgumentNullException>(
+            () => WeightShares.Of([Chance(50)], new EveryOptionInPlay(), keyWeights: null!));
 
     [Fact]
     public void Total_IsTheDrawingWeightsTotal() =>
@@ -115,5 +142,18 @@ public sealed class WeightSharesTests
     private sealed class GuardsWithheld : IRandomOptionArbiter
     {
         public bool Excludes(RandomOptionEdge option) => option.Condition is not null;
+    }
+
+    // As though the world was asked about no key weight.
+    private sealed class NoKeyWeightAnswered : IKeyWeightAnswers
+    {
+        public double NumberFor(string key) => throw new KeyNotFoundException($"The world was not asked about {key}.");
+    }
+
+    // As though the world answered one key weight, and was asked about no other.
+    private sealed class KeyWeightAnswered(string answeredKey, double number) : IKeyWeightAnswers
+    {
+        public double NumberFor(string key) =>
+            key == answeredKey ? number : throw new KeyNotFoundException($"The world was not asked about {key}.");
     }
 }

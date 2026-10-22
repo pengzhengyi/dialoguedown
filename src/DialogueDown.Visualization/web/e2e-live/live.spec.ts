@@ -11,8 +11,8 @@ const PNG_1x1 = Buffer.from(
     "base64",
 );
 
-// Writes the document and waits for the recompile it triggers to *land* before the test drives the
-// page. The write starts a debounced rebuild (150 ms) that broadcasts to every open page; navigating
+// Writes the document and waits for the recompile it triggers to *arrive* before the test drives
+// the page. The write starts a debounced rebuild (150 ms) that broadcasts to every open page; navigating
 // straight away wins the race for content but not for that broadcast, which then arrives mid-test,
 // re-renders the report, and drops whatever was chosen — emptying the detail panel that a retrying
 // assertion is waiting on. `beforeEach` leaves a page open showing the previous document, so the
@@ -206,7 +206,7 @@ test("toggles to Edit and back to View, reconfiguring the one editor in place", 
     await expect(page.locator(".save-button")).toBeVisible();
     await page.locator(".source-pane .cm-content").click();
     await page.keyboard.type("YY");
-    await expect(page.locator(".source-pane .cm-content")).toContainText("YY"); // edits land now
+    await expect(page.locator(".source-pane .cm-content")).toContainText("YY"); // edits apply now
 
     // Switch back to View (accepting the discard prompt) — read-only again.
     page.once("dialog", (dialog) => void dialog.accept());
@@ -257,7 +257,8 @@ test("keeps the View/Edit toggle enabled on graph tabs so editing can begin ther
     // Source tab is active first: the toggle is interactive.
     await expect(view).toBeEnabled();
 
-    // A graph tab keeps the toggle interactive too: a node can be edited there.
+    // A graph tab keeps the toggle interactive too: the mode is the session's, so a reader can
+    // switch to Edit there before going to the editor.
     await page.locator(".tab", { hasText: "Markdown AST" }).click();
     await expect(page.locator("section.stage.active g.node").first()).toBeVisible();
     await expect(view).toBeEnabled();
@@ -268,6 +269,35 @@ test("keeps the View/Edit toggle enabled on graph tabs so editing can begin ther
     await expect(view).toBeEnabled();
 });
 
+test("disables the View/Edit toggle on the read-only Playbook tab, keeping the mode", async ({
+    page,
+}) => {
+    const toggle = page.locator(".mode-toggle");
+    const edit = page.locator('.mode-toggle-option[data-mode="edit"]');
+    await edit.click();
+    await expect(edit).toHaveAttribute("aria-pressed", "true");
+
+    await page.locator(".tab", { hasText: "Playbook" }).click();
+
+    await expect(toggle).toHaveAttribute("aria-disabled", "true");
+    await expect(toggle).toHaveAttribute("title", /compiled output/);
+    await expect(edit).toBeDisabled();
+    await expect(edit).toHaveAttribute("aria-pressed", "true");
+
+    await page.locator(".tab", { hasText: "Source" }).click();
+
+    await expect(toggle).toHaveAttribute("aria-disabled", "false");
+    await expect(edit).toBeEnabled();
+    await expect(edit).toHaveAttribute("aria-pressed", "true");
+
+    // The report reopens on the tab the reader left, and the toggle is disabled there from the
+    // first paint, not only after a tab change.
+    await page.locator(".tab", { hasText: "Playbook" }).click();
+    await page.reload();
+    await expect(page.locator(".tab.active")).toHaveText("Playbook");
+    await expect(toggle).toHaveAttribute("aria-disabled", "true");
+});
+
 test("Zen mode hides the Explorer sidebar on a served report", async ({ page }) => {
     await expect(page.locator("#app")).toHaveClass(/has-explorer/);
     await page.locator(".tabbar-explorer").click();
@@ -275,8 +305,8 @@ test("Zen mode hides the Explorer sidebar on a served report", async ({ page }) 
 
     await page.keyboard.press("z");
 
-    // The Explorer's reveal rule is id-heavy, so Zen must outrank it rather than merely
-    // follow it in source order.
+    // The Explorer's reveal rule is id-heavy, so Zen must take precedence over it rather than
+    // merely follow it in source order.
     await expect(page.locator("#explorer")).toBeHidden();
     await expect(page.locator("#explorer-resizer")).toBeHidden();
     // Its control goes too: left in the row it would be a button whose panel Zen suppresses.
@@ -417,7 +447,7 @@ test("marks the open Files control with an outline on every side", async ({ page
     expect(mark!.spread).toBeGreaterThan(0);
 });
 
-test("opens with the Explorer shut, and summons it from the tab bar", async ({ page }) => {
+test("opens with the Explorer shut, and opens it from the tab bar", async ({ page }) => {
     // The reader asked for this script, so the tree starts out of the way. One obvious click
     // brings it back, and the control says which state it is in.
     const toggle = page.locator(".tabbar-explorer");
@@ -448,7 +478,7 @@ test("remembers that the Explorer was opened, across a reload", async ({ page })
 
     await page.reload();
 
-    // A deliberate "show it" is remembered, and outranks the shut default.
+    // A deliberate "show it" is remembered, and overrides the shut default.
     await expect(page.locator("#explorer")).toBeVisible();
     await expect(page.locator(".tabbar-explorer")).toHaveAttribute("aria-expanded", "true");
 });
@@ -456,7 +486,7 @@ test("remembers that the Explorer was opened, across a reload", async ({ page })
 test.describe("on a phone-sized window", () => {
     test.use({ viewport: { width: 390, height: 780 } });
 
-    test("turns the Explorer seam with the stacked layout", async ({ page }) => {
+    test("turns the Explorer divider with the stacked layout", async ({ page }) => {
         await expect(page.locator("#app")).toHaveClass(/has-explorer/);
         await page.locator(".tabbar-explorer").click();
         await expect(page.locator("#explorer")).toBeVisible();
@@ -477,7 +507,7 @@ test.describe("on a phone-sized window", () => {
         });
 
         expect(stacked.app).toBe("column");
-        // In a column the seam turns: it spans the width and has a height to drag by.
+        // In a column the divider turns: it spans the width and has a height to drag by.
         expect(stacked.seamHeight).toBeGreaterThan(0);
         expect(stacked.seamSpansWidth).toBe(true);
         // Content-sized rather than a rigid 15rem: this project holds a handful of files.
@@ -949,8 +979,9 @@ test("holds one chosen thing at a time — a node, a route, or a region", async 
 });
 
 test("keeps a placement link out of the flow it is not part of", async ({ page }) => {
-    // The line after an unconditional divert is unreachable. It gets a line so it is not adrift,
-    // but control never travels it — so it is neither a destination nor a route to open.
+    // The line after an unconditional divert is unreachable. It gets a line so it is not
+    // unattached, but control never travels it — so it is neither a destination nor a route to
+    // open.
     await openDocument(
         page,
         [
@@ -1043,7 +1074,7 @@ test("reads a jump as a jump in every stage that has interpreted one", async ({ 
 });
 
 test("gives routes ending at one node a corridor each, and picks the nearest", async ({ page }) => {
-    // Every jump into a scene lands on its entry. Climbing in that node's own column would stack
+    // Every jump into a scene ends at its entry. Climbing in that node's own column would stack
     // them into one line to the eye and a coin toss to the pointer.
     await openDocument(
         page,
@@ -1170,8 +1201,8 @@ test("opens a stage showing the whole of it, clear of the legend", async ({ page
     });
 
     // A graph too wide to show legibly falls back to anchoring on its root, and then its far end
-    // lands wherever it lands — including under the legend. Assert the fit was really taken, so
-    // this can never pass merely because the drawing happened to stop short of the panel.
+    // ends up wherever it ends up — including under the legend. Assert the fit was really taken,
+    // so this can never pass merely because the drawing happened to stop short of the panel.
     expect(framing.scale).toBeGreaterThan(0.15);
     expect(framing.framed).toBe(framing.total);
     expect(framing.behindLegend).toBe(0);
@@ -1319,7 +1350,7 @@ test("keeps a cross-link's verticals out of every other node's words", async ({ 
     expect(trespasses).toEqual([]);
 });
 
-test("lands a route's arrowhead on its target's edge, with no line showing past it", async ({
+test("ends a route's arrowhead at its target's edge, with no line showing past it", async ({
     page,
 }) => {
     // The line stops where the head *begins*, and the head draws the rest up to the dot's edge: a
@@ -1621,8 +1652,8 @@ test("recompiles the Playbook tab on save, so it always matches the saved script
     await expect(speakers).not.toContainText("Bruno");
 
     // Rename the speaker in Source and save; the playbook is regenerated from the saved script.
-    await page.locator('.mode-toggle-option[data-mode="edit"]').click();
     await page.locator("#tabs .tab", { hasText: "Source" }).click();
+    await page.locator('.mode-toggle-option[data-mode="edit"]').click();
     await page.locator(".source-stage .cm-content").click();
     await page.keyboard.press("ControlOrMeta+a");
     await page.keyboard.type("# Original Scene\n\nBruno: The original line.\n");

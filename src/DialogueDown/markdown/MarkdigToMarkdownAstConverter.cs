@@ -147,7 +147,7 @@ internal sealed class MarkdigToMarkdownAstConverter
         // Decoded text, raw span: &amp; becomes the text "&" with a span over all five source
         // characters.
         MarkdigHtmlEntityInline entity => new TextInline(
-            entity.Transcoded.ToString(), ConvertSpan(entity.Span)),
+            entity.Transcoded.ToString(), ConvertSpan(entity.Span), isEntity: true),
         MarkdigEmphasisInline emphasis => ConvertEmphasis(emphasis),
         MarkdigLinkInline link when !link.IsImage => ConvertLink(link),
         MarkdigLinkInline image => ConvertImage(image),

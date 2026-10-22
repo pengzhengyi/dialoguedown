@@ -10,8 +10,8 @@ namespace DialogueDown.ConfigurationLoader;
 /// </summary>
 /// <remarks>
 /// Every TOML spelling of a setting reads the same: <c>[[speakers]]</c> headers and an inline
-/// <c>speakers = [{ name = "Alice" }]</c> both declare speakers. A key the schema does not define is
-/// an error, at the root as anywhere else.
+/// <c>speakers = [{ name = "Alice" }]</c> both declare speakers. A key the schema does not define
+/// is an error, at the root as anywhere else.
 /// </remarks>
 public static class TomlConfigurationLoader
 {

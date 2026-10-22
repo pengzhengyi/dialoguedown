@@ -1,4 +1,6 @@
 using System.Collections.Immutable;
+using System.Globalization;
+using System.Text;
 using System.Text.Json;
 using System.Text.Json.Nodes;
 using DialogueDown.Conformance;
@@ -35,12 +37,38 @@ internal static class SpeechClaim
 
         return words == claimed
             ? SessionOutcome.Conformed()
-            : SessionOutcome.Diverged($"expected \"{claimed}\", but heard \"{words}\"");
+            : SessionOutcome.Diverged($"expected {Quoted(claimed)}, but heard {Quoted(words)}");
     }
+
+    // The words in quotes, with each character that shows as a space or as nothing written as its
+    // code, such as \u00A0 for a no-break space, so two claims that differ only there read apart.
+    private static string Quoted(string words)
+    {
+        var quoted = new StringBuilder("\"");
+        foreach (var character in words)
+        {
+            if (IsUnseen(character))
+            {
+                quoted.Append(CultureInfo.InvariantCulture, $"\\u{(int)character:X4}");
+            }
+            else
+            {
+                quoted.Append(character);
+            }
+        }
+
+        return quoted.Append('"').ToString();
+    }
+
+    private static bool IsUnseen(char character) =>
+        character != ' '
+        && (char.IsWhiteSpace(character)
+            || char.IsControl(character)
+            || char.GetUnicodeCategory(character) == UnicodeCategory.Format);
 
     // Read through the playbook's own reader so the comparison is between speech and speech,
     // not between two spellings of it: a fixture may order a fragment's properties as it likes,
-    // and may spell out what the writer leaves off.
+    // and may spell out what the serializer leaves off.
     private static SessionOutcome MatchAsFragments(ImmutableArray<SpeechFragment> spoken, JsonNode claimed)
     {
         var fragments = ReadFragments(claimed);
@@ -55,8 +83,9 @@ internal static class SpeechClaim
             spoken.Select((fragment, at) => MatchFragment(fragment, fragments[at], at)));
     }
 
-    // Compared as each writes out. The writer is what the corpus quotes, so it decides what two
-    // fragments saying the same thing look like, and it stays right as new kinds are added.
+    // Compared as each serializes. The corpus quotes the serializer's output, so the serializer
+    // decides what two fragments saying the same thing look like, and it stays right as new kinds
+    // are added.
     private static SessionOutcome MatchFragment(SpeechFragment spoken, SpeechFragment claimed, int at)
     {
         var heard = JsonSerializer.Serialize(spoken, FixtureJson.Compact);

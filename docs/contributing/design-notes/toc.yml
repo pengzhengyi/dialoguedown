@@ -52,6 +52,8 @@
     href: language/Unquoted Keys.md
   - name: Symbol Escape
     href: language/Symbol Escape.md
+  - name: Speech Whitespace
+    href: language/Speech Whitespace.md
   - name: Block Controls
     href: language/Block Controls.md
   - name: Control Line

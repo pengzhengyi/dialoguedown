@@ -15,7 +15,9 @@ internal sealed record ConfigurationTable(
     IReadOnlyList<ConfigurationEntry> Entries, ConfigurationSourceLocation Location)
     : ConfigurationValue(Location)
 {
-    /// <summary>The entry named <paramref name="key"/>, or null when the table does not set it.</summary>
+    /// <summary>
+    /// The entry named <paramref name="key"/>, or null when the table does not set it.
+    /// </summary>
     public ConfigurationEntry? Find(string key) => Entries.FirstOrDefault(entry => entry.Key == key);
 
     /// <summary>Rejects the first entry whose key is not one of <paramref name="known"/>.</summary>

@@ -1,5 +1,7 @@
 using DialogueDown.Playbook.Speech;
 using DialogueDown.Playbook.Tests.Support;
+using static DialogueDown.TestSupport.SpeechFactory;
+
 namespace DialogueDown.Playbook.Tests.Speech;
 
 public sealed class LinkFragmentTests
@@ -33,8 +35,8 @@ public sealed class LinkFragmentTests
     [Fact]
     public void Equality_EqualLabels_AreEqual()
     {
-        var left = new LinkFragment("https://example.com", [new TextFragment("the notice")]);
-        var right = new LinkFragment("https://example.com", [new TextFragment("the notice")]);
+        var left = new LinkFragment("https://example.com", [Text("the notice")]);
+        var right = new LinkFragment("https://example.com", [Text("the notice")]);
 
         EqualityAssert.AssertValueEqual(left, right);
     }
@@ -42,8 +44,8 @@ public sealed class LinkFragmentTests
     [Fact]
     public void Equality_DifferentLabels_AreNotEqual()
     {
-        var left = new LinkFragment("https://example.com", [new TextFragment("one")]);
-        var right = new LinkFragment("https://example.com", [new TextFragment("another")]);
+        var left = new LinkFragment("https://example.com", [Text("one")]);
+        var right = new LinkFragment("https://example.com", [Text("another")]);
 
         EqualityAssert.AssertValueUnequal(left, right);
     }

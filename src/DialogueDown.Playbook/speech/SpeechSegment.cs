@@ -36,12 +36,20 @@ public sealed partial record SpeechSegment(
     public SpeechFragment? Command { get; } = Command;
 
     /// <summary>
-    /// Gets whether these words say something: anything more than whitespace and line breaks.
+    /// Gets whether these words say something: anything more than collapsible spaces and line
+    /// breaks.
     /// </summary>
     /// <remarks>
+    /// <para>
+    /// A collapsible space is a space, a tab, a line feed, or a carriage return, the characters a
+    /// Markdown preview collapses. A named space such as U+00A0 is one the writer chose, so words
+    /// holding only one still say something.
+    /// </para>
+    /// <para>
     /// The words are judged as written, before any query is filled, so a query always says
     /// something and an empty answer never changes whether the segment does. A tag says something
     /// too, because a host recognizes or acts on it where it stands.
+    /// </para>
     /// </remarks>
     public bool SaysSomething => Words.Any(Says);
 
@@ -50,7 +58,7 @@ public sealed partial record SpeechSegment(
     private static bool Says(SpeechFragment fragment) =>
         fragment switch
         {
-            TextFragment text => !string.IsNullOrWhiteSpace(text.Text),
+            TextFragment text => !text.Text.All(IsCollapsible),
             StyledTextFragment styled => styled.Children.Any(Says),
             LineBreakFragment => false,
 
@@ -60,4 +68,6 @@ public sealed partial record SpeechSegment(
             _ => throw new NotSupportedException(
                 $"No reading is defined for {fragment.GetType().Name}."),
         };
+
+    private static bool IsCollapsible(char character) => character is ' ' or '\t' or '\n' or '\r';
 }

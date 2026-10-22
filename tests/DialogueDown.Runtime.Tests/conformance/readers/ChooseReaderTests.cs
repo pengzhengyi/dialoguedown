@@ -13,8 +13,8 @@ public sealed class ChooseReaderTests
 
     [Fact]
     public void Read_APositionPastAnyMenu_IsTakenAsWritten() =>
-        // Whether the menu has that option is the runner's to say, so a fixture can hold it to
-        // refusing one it never offered.
+        // Whether the menu has that option is the runner's to say, so a fixture can expect it to
+        // refuse one it never offered.
         AssertReadAs(_reader, "7", new Choose(7));
 
     [Fact]

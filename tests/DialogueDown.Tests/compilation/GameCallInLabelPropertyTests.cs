@@ -29,7 +29,8 @@ public sealed class GameCallInLabelPropertyTests
     /// <remarks>
     /// A failed compile reports <c>DLG1103</c> at each command and <c>DLG1106</c> at each
     /// condition, in the order they are written, and no other error. A successful one emits a
-    /// label that asks for the model's keys in order and holds no command at any depth.
+    /// label that asks for the model's keys in order, each once, and holds no command at any
+    /// depth.
     /// </remarks>
     [Fact]
     public void ALabelsCodeSpansDecideTheCompilesOutcome() =>
@@ -114,7 +115,7 @@ public sealed class GameCallInLabelPropertyTests
         var reported = failure.Diagnostics
             .Where(diagnostic => diagnostic.IsError)
             .OrderBy(diagnostic => diagnostic.Span.Start)
-            .Select(diagnostic => (diagnostic.Descriptor.Code, SourceAt(script.Source, diagnostic)));
+            .Select(diagnostic => (diagnostic.Descriptor.Code, SourceText.At(script.Source, diagnostic.Span)));
 
         Assert.Equal(rejected.Select(call => (CodeFor(call.Kind), call.Written)), reported);
     }
@@ -163,7 +164,4 @@ public sealed class GameCallInLabelPropertyTests
             ImageFragment image => Descendants(image.Alt).Prepend(fragment),
             _ => [fragment],
         });
-
-    private static string SourceAt(string source, Diagnostic diagnostic) =>
-        source.Substring(diagnostic.Span.Start, diagnostic.Span.Length);
 }

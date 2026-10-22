@@ -18,8 +18,8 @@ public sealed class DrawnReaderTests
 
     [Fact]
     public void Read_ADrawOutsideZeroToOne_IsTakenAsWritten() =>
-        // Whether the run can take the draw is the runner's to say, so a fixture can hold it to
-        // refusing one.
+        // Whether the run can take the draw is the runner's to say, so a fixture can expect it to
+        // refuse one.
         AssertReadAs(_reader, "1.5", new Drawn(1.5));
 
     [Fact]

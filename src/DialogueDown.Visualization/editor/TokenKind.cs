@@ -38,10 +38,10 @@ internal enum TokenKind
     Condition,
 
     /// <summary>A fixed or automatic random-choice weight, such as <c>`60%`</c> or <c>`%`</c>.</summary>
-    StaticWeight,
+    NumberWeight,
 
     /// <summary>A game-state-backed random-choice weight, such as <c>`Luck%`</c>.</summary>
-    DynamicWeight,
+    KeyWeight,
 
     /// <summary>A default or named command code span, such as <c>`playSound("wind")`</c>.</summary>
     Command,

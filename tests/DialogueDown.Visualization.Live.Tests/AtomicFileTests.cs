@@ -128,8 +128,8 @@ public sealed class AtomicFileTests
     public void Transact_ValidatedWrite_ExternalEditInTheReplaceWindow_ThrowsConflictAndKeepsTheExternalContent()
     {
         // An external editor writes the target after the snapshot is read but before the staged
-        // replacement lands. Writing inside the body hits that window, because the commit runs
-        // after the body returns.
+        // replacement is moved into place. Writing inside the body hits that window, because the
+        // commit runs after the body returns.
         using var tree = new TempTree();
         var path = tree.File("doc.txt", "original");
 
@@ -148,7 +148,7 @@ public sealed class AtomicFileTests
     public void Transact_ValidatedCreate_ExternalCreateInTheWindow_ThrowsConflictAndKeepsTheExternalFile()
     {
         // A create (the snapshot reports the file absent) must use a no-overwrite move, so an
-        // external process that creates the file first wins the race and is never clobbered.
+        // external process that creates the file first wins the race and is never overwritten.
         using var tree = new TempTree();
         var path = Path.Combine(tree.Root, "new.txt");
 
@@ -218,7 +218,7 @@ public sealed class AtomicFileTests
     [Fact]
     public void Transact_ValidatedWrite_ExternalDeleteInTheReplaceWindow_ThrowsConflict()
     {
-        // The target is deleted before the replace lands; the save reports a conflict instead of
+        // The target is deleted before the replace happens; the save reports a conflict instead of
         // recreating the file.
         using var tree = new TempTree();
         var path = tree.File("doc.txt", "original");
@@ -237,8 +237,8 @@ public sealed class AtomicFileTests
     [Fact]
     public void Transact_ValidatedWrite_TargetChangedAgainBetweenReplaceAndRollback_PreservesNewerDataAndReportsUncertain()
     {
-        // An external edit lands before the replace, so the backup differs from the snapshot. A
-        // second, newer external write then lands before the rollback. Restoring the backup would
+        // An external edit arrives before the replace, so the backup differs from the snapshot. A
+        // second, newer external write then arrives before the rollback. Restoring the backup would
         // overwrite that newer data, so the save keeps both files and reports uncertain.
         using var tree = new TempTree();
         var path = tree.File("doc.txt", "original");
@@ -346,8 +346,8 @@ public sealed class AtomicFileTests
         var link = Path.Combine(tree.Root, "link.dialogue.md");
         Support.Symlinks.Create(link, real);
 
-        // The live session resolves the link before writing, so the atomic replace lands on the
-        // real file instead of clobbering the link entry with a regular file.
+        // The live session resolves the link before writing, so the atomic replace writes the
+        // real file instead of overwriting the link entry with a regular file.
         var resolved = SymlinkResolver.Resolve(link);
         AtomicFile.Transact(resolved, transaction =>
         {

@@ -1,11 +1,12 @@
 # Play CLI — Terminal Player
 
 > [!NOTE]
-> Status: **implemented**. This is part 1 of C4
-> ([`ddown play` and the REPL](https://github.com/pengzhengyi/dialoguedown/issues/299)):
-> the terminal player's presentation. The driver that feeds it from the runner, the
-> `ddown play` command, and the raw stdio REPL remain part 2, waiting on this and the
-> [runner](../runtime/Runner.md).
+> Status: **implemented** for the presentation: speech rendering, the choice menu, and the
+> player's turns, in `DialogueDown.Play`. The `ddown play` command is **not built**, and
+> neither is the driver that feeds the player from the [runner](../runtime/Runner.md) or the
+> raw stdio REPL; the runtime note's
+> [components and sequencing](../runtime/Dialogue%20Runtime%20Architecture.md#components-and-sequencing)
+> table plans them.
 
 ## Table of contents
 
@@ -26,9 +27,8 @@
 `ddown play` will let a reader play a compiled [playbook](../runtime/Playbook%20Format.md)
 at the terminal: read a line, take a choice, follow the jump, reach an ending. This note
 designs the half that decides how that **looks and reads** — the presentation — and
-leaves the half that decides what happens next (the driver) to part 2. It is direction A
-of the [Interactive Playthrough](../other/Interactive%20Playthrough.md) spike, adopted by
-issue #299.
+leaves the half that decides what happens next, the driver, unbuilt. It follows direction A
+of the [Interactive Playthrough](../other/Interactive%20Playthrough.md) spike.
 
 In scope:
 
@@ -39,7 +39,7 @@ In scope:
 - the transcript those turns build, and its ending;
 - all of it testable without a terminal.
 
-Out of scope (part 2): loading a playbook, stepping the runner, mapping
+Out of scope (the driver, not built): loading a playbook, stepping the runner, mapping
 `Said`/`Continued`/`Offer`/`Refused`/`Ended` to the player and `Done`/`Choose` back;
 the `ddown play` command; the raw stdio REPL; saves, history, and world answers.
 
@@ -54,7 +54,7 @@ the `ddown play` command; the raw stdio REPL; saves, history, and world answers.
 - [x] A link renders its label; an image renders its alt text; commands and tags render
       nothing.
 - [x] A menu shows every option; an unavailable one is dimmed and says so; the cursor
-      never lands on it; the option under the cursor is inverted, so the choice reads
+      never rests on it; the option under the cursor is inverted, so the choice reads
       without color.
 - [x] A refusal renders as a red cross, apart from speech.
 - [x] Long labels wrap under their own words, and a move redraws the menu in place.
@@ -85,11 +85,12 @@ the `ddown play` command; the raw stdio REPL; saves, history, and world answers.
 The menu words are the runtime's — *offer*, *option*, *available*, *take* — and the
 architecture note fixes the rule this player must keep: a menu reports an unavailable
 option rather than hiding it
-([D8](../runtime/Dialogue%20Runtime%20Architecture.md#d8--a-menu-shows-unavailable-options)).
-The menu protocol itself is being built with the runner. The player's own words are new:
-*transcript*, *line*, *continuation*, *notice*, *turn*, *ending*. The transcript is the
-player's record of what the terminal showed — not the driver's history, which part 2
-keeps as the runtime's fold.
+([D8](../runtime/Dialogue%20Runtime%20Architecture.md#d8--a-menu-shows-unavailable-options)),
+and [Offering a Choice](../runtime/Offering%20a%20Choice.md) holds the runner's menu protocol.
+The player's own words are new: *transcript*, *line*, *continuation*, *notice*, *turn*,
+*ending*. The transcript is the player's record of what the terminal showed — not the run's
+history, which is a
+[shell-side fold](../runtime/Dialogue%20Runtime%20Architecture.md#history-is-a-shell-side-fold).
 
 ## The look
 
@@ -146,7 +147,7 @@ is shown unavailable; the cursor starts on the first option that can be taken:
 
 | Type | Responsibility | Collaborators |
 | --- | --- | --- |
-| `PlayerConsole` | The driver's seam: starts the transcript, appends lines, continuations, menus, and notices, ends it, and asks for the player's turn. Requires an interactive console. | `IAnsiConsole`, `SpeechMarkup`, `ChoicePrompt`, `TranscriptEntry` |
+| `PlayerConsole` | What a driver calls: starts the transcript, appends lines, continuations, menus, and notices, ends it, and asks for the player's turn. Requires an interactive console. | `IAnsiConsole`, `SpeechMarkup`, `ChoicePrompt`, `TranscriptEntry` |
 | `SpeechMarkup` | Renders speech fragments as Spectre markup: emphasis, escaping, queries, and what a link, an image, a command, and a tag contribute. | the playbook's fragment records |
 | `ChoicePrompt` | Shows a menu, moves the cursor over available options only, and reports the taken index, or `null` when the player quits. | `IAnsiConsole`, `MenuOption` |
 | `MenuOption` | One option as shown: its label words and whether it is available. | — |
@@ -155,7 +156,7 @@ is shown unavailable; the cursor starts on the first option that can be taken:
 
 ```mermaid
 flowchart LR
-    D(["driver (part 2)"]) -->|"calls, then a turn"| PC[PlayerConsole]
+    D(["driver (not built)"]) -->|"calls, then a turn"| PC[PlayerConsole]
     PC --- SM[SpeechMarkup]
     PC --- CP[ChoicePrompt]
     PC --- TR[Transcript]
@@ -210,12 +211,12 @@ public abstract record TranscriptEntry
 
 ### D1 — The presentation is its own assembly, out of the runner's way
 
-`DialogueDown.Play` holds the terminal player; this pass fills `DialogueDown.Play.Tui`.
-It references `DialogueDown.Playbook` — whose `SpeechFragment` is the host-rendering
-seam — and `Spectre.Console`, and **not** the compiler, the CLI, or the runner. An
-architecture rule pins that, the way `Runtime_DependsOnlyOn_ThePlaybook` does: the
-parallel runner work cannot leak into the presentation, and part 2 adds only the runtime
-reference its driver needs.
+`DialogueDown.Play` holds the terminal player, and its presentation lives in
+`DialogueDown.Play.Tui`. It references `DialogueDown.Playbook` — whose `SpeechFragment` is
+what a host renders — and `Spectre.Console`, and **not** the compiler, the CLI, or the
+runner. The architecture rule `Play_DependsOnlyOn_ThePlaybookAndSpectre` pins that, the way
+`Runtime_DependsOnlyOn_ThePlaybook` does: a change in the runner cannot leak into the
+presentation, and the driver adds only the runtime reference it needs.
 
 ### D2 — An inline transcript, not an alternate screen
 
@@ -241,13 +242,13 @@ throws the scrollback away and needs a screen emulator to test.
 `SpeechText.Of` stays what a log or an assertion reads; `SpeechMarkup.Of` is what the
 player sees.
 
-### D4 — The menu is a custom prompt over Spectre's seam
+### D4 — The menu is a custom prompt on Spectre's extension point
 
 `SelectionPrompt<T>` styles disabled items, but only choice-group headers are
 unselectable — an ordinary choice cannot be made unavailable. `IPrompt<T>` is Spectre's
 documented extension point, and a custom prompt keeps the menu's rules in one type: every
 option shows in the offered order, an unavailable option is dimmed and suffixed
-`(unavailable)`, the cursor skips it in both directions, Enter takes, Ctrl+C is the quiet.
+`(unavailable)`, the cursor skips it in both directions, Enter takes, Ctrl+C quits.
 The cursor is a bold `❯` in the terminal's default color, so it never competes with a
 speaker's, and the option under it is inverted — a highlight hugging its words — so the
 current choice reads even where a terminal shows no color.
@@ -255,11 +256,11 @@ Options lay out in two columns — a marker and the label — so a long label wr
 own words, and a dim footer under them names the keys until the menu closes. The prompt
 returns a position among the options as offered — the position a take names.
 
-### D5 — The seam takes speech, not runtime events
+### D5 — The player takes speech, not runtime events
 
 The calls take `ImmutableArray<SpeechFragment>` and `MenuOption`s rather than
 `Said`/`Offer`. The payloads are the same fragment records, and the runner's
-[`OfferedOption`](../runtime/Offering%20a%20Choice.md) has `MenuOption`'s shape, so part 2's
+[`OfferedOption`](../runtime/Offering%20a%20Choice.md) has `MenuOption`'s shape, so the driver's
 mapping is nearly the identity — a `Take` is a `Choose` — but the dependency is not, and the
 presentation can be designed, built, and tested while the runner is still moving.
 
@@ -273,8 +274,8 @@ shows the offered order, so a taken position names the same option either way.
 `Advance`, `Take(index)`, `Quit`. The presentation never sends anything and never decides
 what a turn means; the driver turns an `Advance` into `Done` and a `Take` into `Choose`.
 
-Quit is Ctrl+C at either wait; Escape is retired — one key, the one a command-line reader
-already reaches for to stop something, and not one a hand brushes by accident. Going on
+Quit is Ctrl+C at either wait, and Escape does nothing — one key, the one a command-line
+reader already reaches for to stop something, and not one a hand brushes by accident. Going on
 takes any key, so a key pressed a moment before a menu appears moves the story on rather
 than vanishing; only Escape is inert, and only Ctrl+C stops the run. The player
 reads Ctrl+C as a key; the driver owns the terminal's mode, keeping Ctrl+C as input for the
@@ -282,13 +283,14 @@ run so the terminal's default kill cannot fire mid-transcript.
 
 A cancelled token is not Ctrl+C: cancellation stops a prompt with
 `OperationCanceledException`, as any .NET async call, while Ctrl+C is the player's own
-quiet.
+quit.
 
 ### D7 — Interactive or nothing
 
 A console whose `Profile.Capabilities.Interactive` is false is refused when the player is
-constructed, with a message that names the alternative (the part-2 REPL). A prompt that
-throws halfway through a playthrough is worse than a refusal before it starts.
+constructed, with a message that names the alternative: the raw stdio mode, which is not
+built. A prompt that throws halfway through a playthrough is worse than a refusal before it
+starts.
 
 ### D8 — A menu stays in the transcript
 
@@ -338,26 +340,24 @@ frame. The header keeps only the title.
 
 ## Integration
 
-- **Part 2 (deferred)** — `ddown play <script>` loads a playbook, steps the runner, and
-  drives the player: `Said`→`Say`, `Continued`→`Continue`, the menu request→`TakeAsync`,
+- **The driver (not built)** — `ddown play <script>` is to load a playbook, step the
+  runner, and drive the player: `Said`→`Say`, `Continued`→`Continue`, `Offer`→`TakeAsync`,
   `Refused`→`Notice`, `Ended`→`End`; the player's `Advance` becomes the runner's `Done`
-  and a `Take` becomes its take command, and it keeps Ctrl+C as input for the run so a quit
+  and a `Take` becomes its `Choose`, and the driver keeps Ctrl+C as input for the run so a quit
   reaches the player. A menu is a turn of its own: the player goes on from the line that asks
   the question, and only then is the menu offered and drawn. The raw stdio REPL speaks the
   same protocol without a player.
 - **Assembly boundary** — `DialogueDown.Play` may depend on `System`,
-  `DialogueDown.Playbook`, and `Spectre.Console`; part 2 adds `DialogueDown.Runtime`. The
-  architecture suite gains the rule, and the assembly joins `AllAssemblies`.
-- **The CLI is untouched** — `ddown play` arrives with part 2. No changelog entry yet:
-  nothing is user-visible until the command exists.
-- **Issue #299** records the split; part 2 stays open there.
+  `DialogueDown.Playbook`, and `Spectre.Console`; the driver adds `DialogueDown.Runtime`.
+  The architecture suite pins the rule, and the assembly is in `AllAssemblies`.
+- **The CLI** has no `play` command, so nothing here is user-visible until the driver
+  adds one.
 
 ## Dependency survey
 
 The [Interactive Playthrough](../other/Interactive%20Playthrough.md) spike found that
-Spectre covers the terminal. This pass owed the survey one more check — whether a menu
-with unavailable options is still Spectre's to render — and evidence for the
-alternatives.
+Spectre covers the terminal. This note adds one more check — whether a menu with
+unavailable options is still Spectre's to render — and evidence for the alternatives.
 
 | | Spectre.Console 0.57.2 (existing) | Terminal.Gui 2.5.0 | Consolonia 12.0.3 |
 | --- | --- | --- | --- |
@@ -365,15 +365,15 @@ alternatives.
 | Last release | 2026-07-02 | 2026-09-11 | 2026-10-01 |
 | Downloads | 60.0M | 2.1M | 47K |
 | Model | Inline widgets, prompts, and markup; the app writes and prompts. | Full-screen views and an app loop in an alternate buffer. | Avalonia rendered into a terminal. |
-| Fit for this pass | Text, emphasis, keys, prompts, and testing; the one gap — unavailable options — is a documented extension point. | Replaces the inline model; scrollback and captured-output testing go away. | A UI stack around a terminal; adoption an order of magnitude smaller. |
+| Fit for the presentation | Text, emphasis, keys, prompts, and testing; the one gap — unavailable options — is a documented extension point. | Replaces the inline model; scrollback and captured-output testing go away. | A UI stack around a terminal; adoption an order of magnitude smaller. |
 | Verdict | **Base.** | Rejected. | Rejected. |
 
 **Spike.** A scratch project (`$TMPDIR`, Spectre.Console 0.57.2 + Spectre.Console.Testing)
 implemented the menu as an `IPrompt<int?>`: unavailable options dimmed with a
 `(unavailable)` suffix, cursor skipping, labels escaped. `TestConsole` queued `DownArrow`
-and `Enter` keys and asserted the outcome: **6/6 tests pass**, no TTY. A later pass added
-Ctrl+C quitting, Escape ignored, and the key footer: **3/3 tests pass**.
-The real prompt and renderer are the same shape, so no new dependency is adopted.
+and `Enter` keys and asserted the outcome with no TTY, including Ctrl+C quitting, Escape
+ignored, and the key footer. The real prompt and renderer are the same shape, so no new
+dependency is adopted.
 
 ## Testability
 
@@ -396,11 +396,9 @@ The real prompt and renderer are the same shape, so no new dependency is adopted
 
 ## What this does not do
 
-- The driver, the command, the REPL, saves, history, and world answers — part 2.
-- A preview command. While this branch is open, a throwaway driver — an untracked console
-  entry that replays a canned scene — lets the maintainer feel the player in a real
-  terminal; it is deleted before the merge.
-- Paging a menu taller than the terminal; every option draws today.
+- The driver, the command, the REPL, saves, history, and world answers — none is built.
+- A preview command of its own: the player runs only under a driver.
+- Paging a menu taller than the terminal; every option draws.
 - Number-key quick takes. A menu the writer numbered is drawn like any other — the runner's
-  `Ordered` flag leaves numbering to the host — so drawn numbers are part 2's call.
+  `Ordered` flag leaves numbering to the host — so drawn numbers are the driver's call.
 - Re-rendering the screen on resize.

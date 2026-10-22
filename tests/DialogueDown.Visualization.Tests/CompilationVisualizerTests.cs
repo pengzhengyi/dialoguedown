@@ -303,7 +303,8 @@ public sealed class CompilationVisualizerTests
         Assert.StartsWith("<!doctype html", html, StringComparison.OrdinalIgnoreCase);
         var report = FromPage(html);
         Assert.Equal("edit", report.Mode);
-        // The project it serves, and no active document: no active path, no source, no stages to show.
+        // The project it serves, and no active document: no active path, no source, no stages to
+        // show.
         AssertJson("""{ "root": "/project" }""", report.Json["project"]);
         AssertOmits(report.Json, "source");
         Assert.Empty(Assert.IsType<JsonArray>(report.Stages));

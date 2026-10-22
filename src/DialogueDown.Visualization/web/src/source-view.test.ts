@@ -14,6 +14,7 @@ import {
     mapPreviewSpans,
     type SourceViewHandle,
 } from "./source-view";
+import { setWhitespaceVisible } from "./show-whitespace";
 
 const SOURCE = "Entry\nEnd\n";
 const PROGRAM: FakeDebugProgram = {
@@ -542,5 +543,20 @@ describe("createSourceView quick-fix actions", () => {
 
         expect(source.getContent()).toBe("x => y");
         expect(outcome).toEqual({ applied: 0, skipped: 0 });
+    });
+});
+
+describe("createSourceView whitespace", () => {
+    afterEach(() => {
+        setWhitespaceVisible(false);
+        localStorage.removeItem("dd-show-whitespace");
+    });
+
+    it("draws the document's spaces once whitespace is shown", () => {
+        const source = mountSource("Alice: hi");
+
+        setWhitespaceVisible(true);
+
+        expect(source.element.querySelectorAll(".cm-content .cm-highlightSpace")).toHaveLength(1);
     });
 });

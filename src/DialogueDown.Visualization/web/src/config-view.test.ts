@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, afterEach } from "vitest";
 import { createConfigView, type ConfigViewOptions } from "./config-view";
 import type { ConfigReport } from "./model";
+import { setWhitespaceVisible } from "./show-whitespace";
 
 /** The Config tab element (its handle's element), for DOM assertions. */
 function mount(config: ConfigReport, options: ConfigViewOptions = {}): HTMLElement {
@@ -285,5 +286,22 @@ describe("createConfigView", () => {
             const view = mount(withFile());
             expect(view.querySelector(".config-source .cm-foldGutter")).not.toBeNull();
         });
+    });
+});
+
+describe("createConfigView whitespace", () => {
+    afterEach(() => {
+        setWhitespaceVisible(false);
+        localStorage.removeItem("dd-show-whitespace");
+    });
+
+    it("draws the configuration's spaces once whitespace is shown", () => {
+        const view = mount(withFile());
+
+        setWhitespaceVisible(true);
+
+        expect(
+            view.querySelectorAll(".config-source .cm-content .cm-highlightSpace").length,
+        ).toBeGreaterThan(0);
     });
 });

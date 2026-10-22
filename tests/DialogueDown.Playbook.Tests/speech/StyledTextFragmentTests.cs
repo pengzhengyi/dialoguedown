@@ -1,6 +1,8 @@
 using System.Collections.Immutable;
 using DialogueDown.Playbook.Speech;
 using DialogueDown.Playbook.Tests.Support;
+using static DialogueDown.TestSupport.SpeechFactory;
+
 namespace DialogueDown.Playbook.Tests.Speech;
 
 public sealed class StyledTextFragmentTests
@@ -58,10 +60,10 @@ public sealed class StyledTextFragmentTests
         // way down.
         var left = new StyledTextFragment(
             SpeechStyle.Bold,
-            [new StyledTextFragment(SpeechStyle.Bold, [new TextFragment("very")])]);
+            [new StyledTextFragment(SpeechStyle.Bold, [Text("very")])]);
         var right = new StyledTextFragment(
             SpeechStyle.Bold,
-            [new StyledTextFragment(SpeechStyle.Bold, [new TextFragment("very")])]);
+            [new StyledTextFragment(SpeechStyle.Bold, [Text("very")])]);
 
         EqualityAssert.AssertValueEqual(left, right);
     }
@@ -69,8 +71,8 @@ public sealed class StyledTextFragmentTests
     [Fact]
     public void Equality_DifferentChildText_AreNotEqual()
     {
-        var left = new StyledTextFragment(SpeechStyle.Bold, [new TextFragment("very")]);
-        var right = new StyledTextFragment(SpeechStyle.Bold, [new TextFragment("quite")]);
+        var left = new StyledTextFragment(SpeechStyle.Bold, [Text("very")]);
+        var right = new StyledTextFragment(SpeechStyle.Bold, [Text("quite")]);
 
         EqualityAssert.AssertValueUnequal(left, right);
     }

@@ -155,7 +155,7 @@
           "label": [
             {
               "kind": "text",
-              "text": "Show the keeper your blade and set out at once. "
+              "text": "Show the keeper your blade and set out at once."
             },
             {
               "kind": "tag",
@@ -291,7 +291,7 @@
       "speech": [
         {
           "kind": "text",
-          "text": "Show the keeper your blade and set out at once. "
+          "text": "Show the keeper your blade and set out at once."
         },
         {
           "kind": "tag",
@@ -329,7 +329,7 @@
             },
             {
               "kind": "text",
-              "text": " come back. "
+              "text": " come back."
             },
             {
               "kind": "custom-command",
@@ -373,7 +373,7 @@
         },
         {
           "kind": "text",
-          "text": " come back. "
+          "text": " come back."
         },
         {
           "kind": "custom-command",
@@ -439,7 +439,7 @@
             },
             {
               "kind": "text",
-              "text": " The keeper hands a battered round shield across the bar."
+              "text": "The keeper hands a battered round shield across the bar."
             }
           ]
         },
@@ -467,7 +467,7 @@
         },
         {
           "kind": "text",
-          "text": " The keeper hands a battered round shield across the bar."
+          "text": "The keeper hands a battered round shield across the bar."
         }
       ],
       "out": [
@@ -618,7 +618,7 @@
         },
         {
           "kind": "text",
-          "text": "then one step. "
+          "text": "then one step."
         },
         {
           "kind": "default-command",
@@ -776,7 +776,7 @@
           "label": [
             {
               "kind": "text",
-              "text": "Snatch the crown and run for the cave mouth. "
+              "text": "Snatch the crown and run for the cave mouth."
             },
             {
               "kind": "tag",
@@ -822,6 +822,10 @@
             "kind": "query",
             "key": "Dragon.Fury"
           }
+        },
+        {
+          "kind": "succession",
+          "target": 39
         }
       ]
     },
@@ -849,7 +853,7 @@
         },
         {
           "kind": "text",
-          "text": ". "
+          "text": "."
         }
       ],
       "out": [
@@ -873,9 +877,6 @@
         {
           "kind": "text",
           "text": "A wing sweeps you off your feet before you land the blow."
-        },
-        {
-          "kind": "break"
         }
       ],
       "out": [
@@ -927,6 +928,10 @@
             "kind": "query",
             "key": "Dragon.Fury"
           }
+        },
+        {
+          "kind": "succession",
+          "target": 39
         }
       ]
     },
@@ -944,7 +949,7 @@
         },
         {
           "kind": "text",
-          "text": "the dragon\u0027s reach. "
+          "text": "the dragon\u0027s reach."
         }
       ],
       "out": [
@@ -967,7 +972,7 @@
       "speech": [
         {
           "kind": "text",
-          "text": "The heat curls the shield like paper. "
+          "text": "The heat curls the shield like paper."
         }
       ],
       "out": [
@@ -990,7 +995,7 @@
       "speech": [
         {
           "kind": "text",
-          "text": "Snatch the crown and run for the cave mouth. "
+          "text": "Snatch the crown and run for the cave mouth."
         },
         {
           "kind": "tag",
@@ -1040,16 +1045,12 @@
         },
         {
           "kind": "text",
-          "text": "hand. "
+          "text": "hand."
         },
         {
           "kind": "custom-command",
           "name": "SpareDragon",
           "args": []
-        },
-        {
-          "kind": "text",
-          "text": " "
         }
       ],
       "out": [
@@ -1072,7 +1073,7 @@
       "speech": [
         {
           "kind": "text",
-          "text": "The jaws close where you were a heartbeat too slow. "
+          "text": "The jaws close where you were a heartbeat too slow."
         }
       ],
       "out": [

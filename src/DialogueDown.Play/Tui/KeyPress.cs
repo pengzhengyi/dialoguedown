@@ -11,9 +11,11 @@ internal static class KeyPress
     /// </summary>
     /// <param name="console">The console to read from.</param>
     /// <param name="cancellationToken">Stops the wait.</param>
-    /// <returns>The key read; never <see langword="null"/> on the way that returns.</returns>
+    /// <returns>
+    /// The key read, or <see langword="null"/> when the console has no key to give.
+    /// </returns>
     /// <remarks>
-    /// The console is asked to stop too. But a console only sees the token if it honours it, and a
+    /// The console is asked to stop too. But a console only sees the token if it honors it, and a
     /// test console need not, so the wait also races the token itself: the contract belongs to this
     /// player, not to whichever console it was handed.
     /// </remarks>

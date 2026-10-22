@@ -18,8 +18,9 @@ public sealed record DisplayEdge(string FromId, string ToId, DisplayEdgeKind Kin
     public string? Category { get; init; }
 
     /// <summary>
-    /// The words the writer gave this route: a jump's link text, or the words a choice option offers.
-    /// Null for a route with no words of its own, such as a fall-through or a random option.
+    /// The words the writer gave this route: a jump's link text, or the words a choice option
+    /// offers. Null for a route with no words of its own, such as a fall-through or a random
+    /// option.
     /// </summary>
     public string? Label { get; init; }
 }

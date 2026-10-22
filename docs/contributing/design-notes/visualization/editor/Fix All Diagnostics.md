@@ -3,8 +3,8 @@
 > [!NOTE]
 > Status: **implemented**. The Problems panel applies every fixable problem's
 > preferred fix in one edit, so a script with many repairs is corrected in a click.
-> The fix producers and the per-row lightbulbs are unchanged; this note owns planning
-> the batch and resolving what happens when two fixes collide.
+> The fix producers and the per-row lightbulbs belong to their own notes; this note owns
+> planning the batch and resolving what happens when two fixes collide.
 
 ## Table of contents
 
@@ -23,8 +23,8 @@
 
 A diagnostic may carry a fix — a titled set of text edits — and the editor offers each one
 individually ([Diagnostic Quick Fixes](./Diagnostic%20Quick%20Fixes.md)). When a script carries
-many of them, repairing one at a time is the only way through. `ddown compile --fix` already
-applies a compile's preferred fixes in one pass; this note brings that batch to the editor.
+many of them, repairing one at a time is slow. `ddown compile --fix` applies a compile's
+preferred fixes in one pass, and **Fix all** is the same batch in the editor.
 
 From the Problems panel, **Fix all** applies every fixable problem's preferred fix in a single
 edit that one undo reverts, and reports what it applied and what it had to skip.
@@ -50,8 +50,8 @@ all owned by their notes.
 
 In Edit mode the Problems panel leads with a toolbar whose control is **Fix all (N)**, where
 `N` counts the fixable problems. Activating it applies each preferred fix at once. With
-`DLG1113`, the only fix producer today — its fix escapes the arrow — a line carrying two dangling
-arrows is repaired in one edit and one undo:
+`DLG1113`, whose fix escapes the arrow, a line carrying two dangling arrows is repaired in one
+edit and one undo:
 
 ```markdown
 # The gate
@@ -66,8 +66,8 @@ Alice: Press \=> or \=> to continue.
 ```
 
 A toast states the outcome — `Fixed 2 problems.`, or `Fixed 2 problems; 1 skipped.` when a
-candidate could not be applied — so a squiggle that survives the batch is explained. View mode and
-the exported report show no button.
+candidate could not be applied, or `No fix could be applied.` when nothing was — so a squiggle
+that survives the batch is explained. View mode and the exported report show no button.
 
 ## Architecture
 
@@ -84,13 +84,13 @@ flowchart LR
     O --> T["toast"]
 ```
 
-| Type                | Responsibility                                                    | Change                                             |
+| Module              | Responsibility                                                    | Names                                              |
 | ------------------- | ----------------------------------------------------------------- | -------------------------------------------------- |
-| `fix-all.ts`        | Turn fixable problems and a position resolver into a fix plan.    | New: the planner, a pure function.                 |
-| `source-view.ts`    | Resolve each range, dispatch the plan in one transaction.         | `SourceViewHandle` gains `applyAllFixes`.          |
-| `problems-panel.ts` | Offer the batch and pass the problems on.                         | A toolbar with the count, an `applyAll` option.    |
+| `fix-all.ts`        | Turn fixable problems and a position resolver into a fix plan.    | `planFixAll` and `fixAllMessage`.                  |
+| `source-view.ts`    | Resolve each range, dispatch the plan in one transaction.         | `SourceViewHandle.applyAllFixes`.                  |
+| `problems-panel.ts` | Offer the batch and pass the problems on.                         | A toolbar with the count, the `applyAll` option.   |
 | `app.ts`            | Route the click to the handle and show the outcome.               | Wires `applyAll` and the toast.                    |
-| `styles.css`        | Draw the panel toolbar and its button.                            | New `.problem-toolbar`, `.problem-fix-all`.        |
+| `styles.css`        | Draw the panel toolbar and its button.                            | `.problem-toolbar`, `.problem-fix-all`.            |
 
 ## Key design decisions
 
@@ -158,17 +158,17 @@ so the action is always where the writer looks for it rather than materializing 
 | A fix edits nothing (no edits)                              | Skipped.                                                                                                                                                                        |
 | Several candidates at one position                          | Ordered by code, then fix title; the first is applied and its overlaps are skipped.                                                                                             |
 | A multi-edit fix                                            | Applied whole and treated as one candidate for overlap.                                                                                                                         |
-| The report lags the buffer (mid-debounce typing)            | Edits resolve against the current buffer; the resolver clamps, so a stale position lands on nearby text rather than being detected — the same exposure the row's lightbulb has. |
+| The report lags the buffer (mid-debounce typing)            | Edits resolve against the current buffer; the resolver clamps, so a stale position falls on nearby text rather than being detected — the same exposure the row's lightbulb has. |
 | Read-only editor or View mode                               | No button, and the handle refuses a batch (as a single fix is refused).                                                                                                         |
 | Undo after a batch                                          | One step restores the buffer before the batch.                                                                                                                                  |
 
 ## Integration
 
-- **Payload:** unchanged. The plan reads the `fixes` already projected onto each diagnostic
+- **Payload:** the plan reads the `fixes` already projected onto each diagnostic
   ([Diagnostic Quick Fixes](./Diagnostic%20Quick%20Fixes.md#architecture)).
-- **Problems panel:** `ProblemsPanelOptions` gains `applyAll(diagnostics)`; the panel computes the
+- **Problems panel:** `ProblemsPanelOptions` has `applyAll(diagnostics)`; the panel computes the
   fixable count for its label and hands the list on, as it does for a single fix.
-- **Source view:** `SourceViewHandle` gains `applyAllFixes(diagnostics): FixAllOutcome`, reusing
+- **Source view:** `SourceViewHandle` has `applyAllFixes(diagnostics): FixAllOutcome`, reusing
   `resolveRange` and the one-transaction apply. The batch resolves exactly like the row's lightbulb
   (the raw LSP range against the current buffer), not like the tooltip action (the lint range
   CodeMirror remaps as the writer types); the two differ only while the buffer has drifted from the

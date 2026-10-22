@@ -39,6 +39,17 @@ public sealed class LineEventsBuilderTests
             "perform Wave()");
 
     [Fact]
+    public void Of_ALaterSegmentOfOnlyANamedSpace_ContinuesTheLine() =>
+        // The writer named the space between the two commands, so the host is sent it.
+        AssertEvents(
+            Gathered("Alice", Segment("Hi.", command: "Bow"), Segment("\u00A0", command: "Wave"), Segment("Bye.")),
+            "said Alice 'Hi.'",
+            "perform Bow()",
+            "continued '\u00A0'",
+            "perform Wave()",
+            "continued 'Bye.'");
+
+    [Fact]
     public void Of_WithTheWorldsAnswers_SaysThemInPlaceOfTheQueries() =>
         AssertEvents(
             Gathered(

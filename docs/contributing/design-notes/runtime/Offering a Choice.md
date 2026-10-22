@@ -1,7 +1,7 @@
 # Offering a choice
 
 > [!NOTE]
-> Status: **implemented**. The pass that lets the runner play a menu: it asks the
+> Status: **implemented**. How the runner plays a menu: it asks the
 > world what decides the menu, offers the player a choice node's options with an
 > `Offer` request, waits, and follows the option the player takes with `Choose`.
 > It builds on
@@ -34,16 +34,9 @@ Alice: Ready?
 2. Wait here
 ```
 
-This pass lets the runner play a menu: it asks the world what decides the menu,
-offers every option with its label and whether it can be taken, waits for the
-player, and goes where the chosen option leads.
-
-The pass has two milestones:
-
-| Milestone | What it delivers |
-| --- | --- |
-| **M1 — a menu is offered and taken** | `Offer`, `Choose`, and the wait between them, for a menu that needs nothing from the world; labels with their commands removed; a choice the menu cannot take is refused |
-| **M2 — the world decides the menu** | Option conditions and labels' queries asked in one request; an unavailable option offered but refused when chosen; a menu with nothing available walked past |
+The runner plays a menu: it asks the world what decides the menu, offers every
+option with its label and whether it can be taken, waits for the player, and goes
+where the chosen option leads.
 
 In scope:
 
@@ -77,7 +70,7 @@ menu from the `Offer` it received and the `Choose` it sent.
 
 ## Functionality checklist
 
-M1:
+Offering a menu and taking an option:
 
 - [x] A choice node, once arrived at, offers its options in one `Offer` and waits
       for `Choose`.
@@ -96,7 +89,7 @@ M1:
 - [x] `Choose` anywhere else, and `Next`, `Done`, `Failed`, or `Supply` while a
       menu is open, is refused as misplaced.
 
-M2:
+What the world decides:
 
 - [x] A menu's options' conditions and its labels' queries are asked on arrival in
       one request, every condition before any query.
@@ -107,7 +100,7 @@ M2:
 - [x] A menu with no available option is walked past by its fall-through, and one
       with no fall-through leads nowhere.
 - [x] One key used as a condition and as a label's query in one menu is refused, as
-      it is for any node.
+      it is for any node; the compiler reports such a script as `DLG2018`.
 
 ## How a menu is played
 
@@ -213,9 +206,10 @@ option runs when its body plays, which is where the compiler also wrote it. The
 label is the label's segments' words, joined, so emphasis around a removed
 command stays on both sides of it.
 
-A label keeps its whitespace as written, so a label whose command came first
-starts with a space, as a `Continued` after a command does. How whitespace in
-speech is normalized is the language's to settle.
+A label is spaced as the compiler spaces all speech
+([Speech Whitespace](../language/Speech%20Whitespace.md)): a command takes no
+room, so a label whose command came first begins with its first word. The runner
+offers a label as the playbook carries it and normalizes nothing itself.
 
 A label's query is asked on arrival at the menu, and the same query in the body's
 first line is asked again when that line plays. The two answers may differ, which
@@ -261,7 +255,7 @@ the host does at a node that asked the host nothing.
 
 The wait carries no labels, so a run restored at a menu offers it again by
 arriving at the choice node afresh, reading the world as it is then. Saves own
-the restore; this is the seam they meet.
+the restore and build on this.
 
 ### O7 — A menu's offer and its choice live together
 
@@ -313,7 +307,7 @@ it the writer never wrote, and to answer an `Offer` with something other than
 | A bulleted menu | Offered in the order written; the host may show it in another order, and `Choose` still names a position in the offer |
 | Two options with the same label | Both offered; `Choose` tells them apart by position |
 | An option whose label is only a command | Offered with an empty label; taking it performs the command |
-| A label whose command comes first | Offered starting with a space, as written |
+| A label whose command comes first | Offered as the playbook carries it; the compiler writes no space before its first word |
 | An option whose body is a jump | Taking it walks past the jump to where it leads |
 | An option leading straight past the menu | Taking it arrives at what follows the menu |
 | A menu inside an option's body | Offered once that body reaches it |
@@ -325,27 +319,27 @@ it the writer never wrote, and to answer an `Offer` with something other than
 | A wait at a menu restored against a node that is not a menu | `Choose` refused as misplaced |
 | Every option unavailable | The menu is walked past by its fall-through |
 | Every option unavailable and no fall-through | Refused as `leads-nowhere` |
-| A menu with no options, built by hand | Walked past, as one with nothing available |
-| One key as one option's condition and in another's label | Refused as `key-needed-both-ways` before anything is asked; the compiler does not yet reject the script |
+| A menu with no options | Refused by the reader; handed to the runner directly, walked past, as one with nothing available |
+| One key as one option's condition and in another's label | Refused as `key-needed-both-ways` before anything is asked; the compiler rejects the script as [`DLG2018`](../../../guide/error-codes.md#dlg2018) |
 | An answer that does not fit the menu's request | Refused; the run keeps waiting where it asked |
 
 ## Integration
 
-| Seam | Change |
+| Part | What it holds |
 | --- | --- |
-| `protocol` | `Offer` joins the requests, with `OfferedOption`; `Choose` joins the commands; `RefusalReason` gains `NoSuchOption` and `UnavailableOption` |
+| `protocol` | `Offer`, a request, with `OfferedOption`; `Choose`, a command; `RefusalReason`'s `NoSuchOption` and `UnavailableOption` |
 | `situations` | `AwaitingChoice`, with its wording in a refusal |
 | `stepping` | `Choosing` offers a menu and takes `Choose`, and `Playing` hands it a choice node; `Arrival` walks past a menu with nothing available; a choice node's questions are its options' conditions, then its labels' queries, asked on arrival and never on leaving |
 | `Runner.Step` | `(AwaitingChoice, Choose)` goes to `Choosing`; `Choose` anywhere else is misplaced |
-| Fixture schema | `asked` becomes `offer`, shaped `{ ordered, options }`, its options claimed in the order offered; the two new refusal reasons |
+| Fixture schema | An `offer` expectation, shaped `{ ordered, options }`, its options claimed in the order offered; a `choose` send; the refusal reasons `no-such-option` and `unavailable-option` |
 | Harness | A `choose` reader; an `OfferMatcher` that matches a claim's options in the order offered; the screen plays a choice node |
-| Corpus | `a-player-choice`, `a-divert-option`, and `an-unavailable-option` conform; new cases for each refusal, a label with a query, a label with a command, a numbered menu, two options with the same label, a menu asking conditions and queries, a menu with nothing available, and a `Choose` onto the fall-through of a menu |
+| Corpus | `a-player-choice`, `a-divert-option`, and `an-unavailable-option`; cases for each refusal, a label with a query, a label with a command, a numbered menu, two options with the same label, a menu asking conditions and queries, a menu with nothing available, and a `Choose` onto the fall-through of a menu |
 | `PlaybookGen` | Draws menus, with conditions, labels with a query, and a fall-through when every option has a condition; the walk takes an available option |
-| Runner | D3 names `Offer` among the requests; the protocol matrix gains a `Choose` column and an `AwaitingChoice` row; the arriving table offers a menu; its deferred list loses choices |
-| Speaking a line | S4 names `Offer` among the requests; S9's open half is settled: a label reaches the host with its commands removed |
-| Asking the world, conditions | An option's condition is no longer deferred; A1 notes that a menu reads its options' conditions on arrival |
-| Runtime architecture | `Offer` takes the place of the designed `Asked` — in the protocol table, the sequence diagram, and D8 — and is built, as is `Choose`; the history records a menu as `Offered` |
-| Conformance corpus | The open question on menu ordering is settled |
+| Runner | D3 names `Offer` among the requests; the protocol matrix has a `Choose` column and an `AwaitingChoice` row; the arriving table offers a menu |
+| Speaking a line | S4 names `Offer` among the requests; S9 says a label reaches the host with its commands removed |
+| Asking the world | A1 notes that a menu reads its options' conditions on arrival |
+| Runtime architecture | `Offer` and `Choose` in the protocol table and the sequence diagram, beside D8; the transcript records a menu as `Offered` |
+| Conformance corpus | An `offer` lists the options in the order written |
 | Guide | "Conditional choices" says a menu with no available option is passed by; "A query in a label" says an option's query is asked again when the option is taken |
 
 ## Testability
@@ -355,7 +349,7 @@ it the writer never wrote, and to answer an `Offer` with something other than
 | Unit — `Choosing` | The offer: labels in the order written, queries filled, commands removed, availability, and the ordered flag; taking an option; each refusal, with the menu left open |
 | Unit — `Arrival` | Walking past a menu with nothing available; leading nowhere without a fall-through |
 | Unit — questions | A choice node's keys, conditions before queries, the same whole or from its start, and nothing asked on leaving it |
-| Unit — the protocol | Each new matrix cell |
+| Unit — the protocol | The `Choose` column and the `AwaitingChoice` row of the matrix |
 | Unit — situations | `AwaitingChoice`'s wording in a refusal |
 | Property | The walk offers and takes menus, every `Choose` it sends is accepted, and every label it is offered is filled |
-| Conformance | The three waiting cases, and the new ones above |
+| Conformance | The corpus cases above |

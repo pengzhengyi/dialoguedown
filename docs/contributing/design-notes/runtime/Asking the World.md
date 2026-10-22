@@ -1,11 +1,13 @@
 # Asking the World
 
 > [!NOTE]
-> Status: **implemented**. The pass that lets a run ask the world a question and
-> use the answer, so a condition is evaluated instead of refused. A node's own
-> condition, the queries standing in its speech, a jump's condition, and a block
-> condition's branches are asked and answered, and so are a menu's options' conditions
-> and its labels' queries (see [Offering a Choice](./Offering%20a%20Choice.md)).
+> Status: **implemented**. How a run asks the world a question and uses the
+> answer, so a condition decides where the run goes. A node's own condition, the
+> queries standing in its speech, a jump's condition, and a block condition's
+> branches are asked and answered, and so are a menu's options' conditions and its
+> labels' queries (see [Offering a Choice](./Offering%20a%20Choice.md)) and a random
+> choice's conditions and key weights (see
+> [Drawing a Random Option](./Drawing%20a%20Random%20Option.md)).
 >
 > It extends the [Runner](./Runner.md)'s protocol and harness, and follows the
 > shape of its wait on the host. It applies the
@@ -29,14 +31,13 @@
 Six of the eleven node and edge kinds the format defines can carry a condition,
 so a runner that cannot read one cannot play most of what a writer can write.
 
-This pass lets a run ask the driver what the world says, wait for the answer, and
-use it. Three constructs follow from that one exchange, and they are one feature
+A run asks the driver what the world says, waits for the answer, and uses it. Three constructs follow from that one exchange, and they are one feature
 rather than three — each asks the driver about state and reads back an answer.
 
 | Construct | The question | What the answer decides |
 | --- | --- | --- |
 | A guarded line or control block | Does this key hold? | Whether the node plays at all |
-| A guarded jump or branch, and an option once choices play | Does this key hold? | Whether that way out is taken |
+| A guarded jump, branch, or option | Does this key hold? | Whether that way out is taken |
 | A query in speech | What is this key's value? | What the line says |
 
 In scope:
@@ -48,13 +49,12 @@ In scope:
 - evaluating a `key` condition on a node, on a jump, and on a block condition's
   branch;
 - `BranchNode`, whose branches are tried in order until one holds;
-- substituting a `QueryFragment` in speech with what the world said;
-- retiring `UnansweredCondition`.
+- substituting a `QueryFragment` in speech with what the world said.
 
-Out of scope, each with the pass that owns it: choices, and an option's
-condition with them (C2b); `Describe` (C2e); saves (C2f); and `PlaySession` with
-its drivers, and the world a driver answers from (C2g). Dynamic weights need a
-number from the world and a draw to spend it on, and belong to
+Out of scope: a menu, and an option's condition with it, which
+[Offering a Choice](./Offering%20a%20Choice.md) owns; `Describe`; saves; and
+`PlaySession` with its drivers, and the world a driver answers from. Key weights
+need a number from the world and a draw to spend it on, and belong to
 [Drawing a Random Option](./Drawing%20a%20Random%20Option.md).
 
 ## What the corpus fixes
@@ -95,9 +95,8 @@ holds — `false` for a guard, `"Robin"` for a query.
 - [x] A key asked and left unanswered is refused, and so is a key answered that
       nobody asked about.
 - [x] An answer of the wrong kind for the question is refused.
-- [x] A key one node needs as a truth and as words both is refused, because a
-      single answer can only be one of those.
-- [x] `UnansweredCondition` is gone, and nothing produces it.
+- [x] A key one node needs as two kinds of answer is refused, because a single
+      answer can only be one kind.
 
 ## Interfaces and abstractions
 
@@ -110,10 +109,10 @@ holds — `false` for a guard, `"Robin"` for a query.
 | `AwaitingSupply(node, keys, moment)` | Where a run is between the ask and its answer | `Situation`, alongside `AwaitingDone` |
 | `Moment` | Whether the run asked before the node plays (`ToPlay`) or before the run leaves it (`ToLeave`) | `AwaitingSupply`, `Runner` |
 | `NodeQuestionExtensions` | Reads a node's keys, one reader per moment and per kind of answer | `NodeQuestions` |
-| `Questions` | Turns a moment's two sets of keys into what goes out and what comes back is held to | `NodeQuestions` |
-| `NodeQuestions` | One moment's keys, read together so the two kinds cannot drift apart | `Arrival`, `Departure` |
+| `Questions` | Turns a moment's three sets of keys, truths, words, and numbers, into what goes out and what comes back is held to | `NodeQuestions` |
+| `NodeQuestions` | One moment's keys, read together so the kinds cannot drift apart | `Arrival`, `Departure` |
 | `AnswerCheck` | Holds what came back to what was asked, and names every way they disagree | `Arrival`, `Departure` |
-| `SupplyExtensions` | Reads a key from a supply as a truth or as words | `ConditionEvaluationExtensions`, `Arrival` |
+| `SupplyExtensions` | Reads a key from a supply as a truth, as words, or as a number | `ConditionEvaluationExtensions`, `Arrival`, `AnsweredKeyWeights` |
 | `ConditionEvaluationExtensions` | Answers whether a condition holds, and whether a guarded node or way out is allowed | `Arrival`, `NodeTraversalExtensions` |
 | `Arrival` | Arriving at a node: asks what playing it needs, then plays it or walks past it | `Runner`, `Departure` |
 | `Departure` | Leaving a node: asks which way out when its ways out are guarded, then arrives where it leads | `Runner`, `Arrival` |
@@ -134,10 +133,13 @@ node's own condition, answered with a truth, and the queries standing in its
 speech up to its first stop, answered with words. **Leaving** asks what decides which way out is
 taken: the conditions on its jump or on a block condition's branches. A menu asks its
 options' conditions and its labels' queries on arriving, and nothing on leaving,
-because its options are taken by choosing.
+because its options are taken by choosing. A random choice asks its random options'
+conditions and key weights on arriving, a key weight answered with a number, and
+nothing on leaving
+([R3](./Drawing%20a%20Random%20Option.md#r3--what-decides-the-draw-is-read-once-on-arrival)).
 
-A request names its truths before its words, each in the order the node writes
-them, and each key once. For a line, that is also the order a reader meets them,
+A request names its truths, then its words, then its numbers, each in the order the
+node writes them, and each key once. For a line, that is also the order a reader meets them,
 since a guard is written before the line it guards; a menu follows the same rule,
 every condition before any label's query, so every runtime sends the same request.
 
@@ -175,35 +177,37 @@ bought by `Perform` being answered before the run goes on.
 
 ### A3 — An answer is a closed union
 
-The world seam the architecture note designs, `IGameWorld`, splits the world's
+The world interface the architecture note proposes splits the world's
 three questions by the type of their answers: a guard needs a truth, a weight a
-number, and interpolation text. The wire agrees — `supply` carries `false` for one and `"Robin"` for another.
+number, and interpolation text. The wire agrees — `supply` carries `false` for
+one, `"Robin"` for another, and `20` for a third.
 
 So `Answer` is a closed union in the manner of every other union in the format,
 and its members take the same `<Qualifier><Base>` shape as `TextFragment` and
-`KeyCondition` do. This pass needs two:
+`KeyCondition` do:
 
 | Member | Wire | Used by |
 | --- | --- | --- |
-| `BooleanAnswer(bool Holds)` | `true` / `false` | A condition on a node or on a way out |
+| `BooleanAnswer(bool Holds)` | `true` / `false` | A condition on a node, on a way out, or on a random option |
 | `TextAnswer(string Text)` | a JSON string | A query in speech |
+| `NumberAnswer(double Value)` | a JSON number | A key weight on a random option |
 
-A third member, for numbers, joins them when dynamic weights arrive. Adding a
-member to a closed union is additive here, and a member nothing produces would be
-dead code today.
+Each member answers one kind of question a node asks. Adding a member to a closed
+union is additive here, and a member nothing asks for would be dead code.
 
 Unlike the format's unions, this one needs no class of wire tags. A supplied
 answer carries no discriminator, because the JSON value already is one:
 
 ```json
-{ "Alice.HasKey": false, "playerName": "Robin" }
+{ "Alice.HasKey": false, "playerName": "Robin", "Guard.Mood": 20 }
 ```
 
 `AnswerJsonConverter` is where that rule lives — a boolean is a truth, a string is
-words, and anything else is refused rather than guessed at, since a number could
-be a weight or a count and nothing on the wire says which. Keeping it in the
-package rather than in each reader is what stops a fixture, a recorded session,
-and a driver on the far side of a socket from each inventing their own.
+words, a number is a number, and anything else is refused rather than guessed at. A
+number too large for a double, such as `1e400`, reads as infinity, so the run can
+refuse it as an invalid weight. Keeping the rule in the package rather than in each
+reader is what stops a fixture, a recorded session, and a driver on the far side of
+a socket from each inventing their own.
 
 ### A4 — The runner checks the answers against its own questions
 
@@ -270,7 +274,7 @@ So it belongs to the same family as the empty control node: the walk resolves it
 branches, takes the first that holds, and carries on to the target without the player
 ever being asked to advance past it.
 
-The branches' order is not this pass's to decide. A branch node's branches are
+The branches' order is not the runner's to decide. A branch node's branches are
 tried in the order they appear in `out`, and the reader already guarantees that at
 least one is gated and that a conditionless `else` comes last, so the runner tries
 them as it finds them.
@@ -319,35 +323,33 @@ third by the kind each key was asked under. Each leaves the run waiting where it
 asked, so a driver that misread the request can answer it again rather than lose
 the conversation.
 
-A key a node needs as a truth and as words both is a fourth reason, and not a
-driver mistake at all: the playbook asks one key two ways, and a single answer
-can only be one of those. It is refused on the way in, before a request goes out
-that nothing could read back.
-
-`UnansweredCondition` is removed rather than left unused. It is a published
-refusal reason, and a reason nothing can produce is a promise the corpus would
-keep testing for no one.
+A key a node needs as two kinds of answer, such as a guard and a query, is a fourth
+reason, and not a driver mistake at all: the playbook asks one key two ways, and a
+single answer can only be one kind. It is refused on the way in, before a request goes out
+that nothing could read back. The compiler rejects a script that does this as
+[`DLG2018`](../../../guide/error-codes.md#dlg2018), so only a playbook written or edited by
+hand reaches the refusal.
 
 ## Integration
 
-| Seam | Change |
+| Part | What it holds |
 | --- | --- |
-| `protocol` | `Resolve` joins `Perform` as a request; `Supply` joins the commands; `Answer` and its JSON converter are new |
-| `situations` | `AwaitingSupply` joins `AwaitingDone`, carrying the `Moment` it asked at |
+| `protocol` | `Resolve`, a request beside `Perform`; `Supply`, a command; `Answer` and its JSON converter |
+| `situations` | `AwaitingSupply`, beside `AwaitingDone`, carrying the `Moment` it asked at |
 | `Arrival` | Asks what playing a node needs; steps over a node the world withholds; walks past a branch and a jump on its own line, asking about their ways out inside the walk |
-| `Departure`, `StepResults` | New: leaving a node, asking first when its ways out are guarded; and the ask and the refusal it shares with `Arrival` |
-| `NodeQuestions`, `Questions`, `AnswerCheck`, `ConditionEvaluationExtensions` | New, and each testable without a playbook |
+| `Departure`, `StepResults` | Leaving a node, asking first when its ways out are guarded; and the ask and the refusal it shares with `Arrival` |
+| `NodeQuestions`, `Questions`, `AnswerCheck`, `ConditionEvaluationExtensions` | Each testable without a playbook |
 | `NodeTraversalExtensions` | One rule for where a node leads: the first jump or branch taken, then the succession |
 | `Runner.Step` | `Next` and `Done` leave through `Departure`; `Supply` goes to `Arrival` or `Departure` by the moment the run asked at |
 | Harness | A `ResolveMatcher`, and a `SupplyReader` so `supply` is among the commands a session can send |
-| `PlayableConformanceTests` | `a-conditional-line`, `a-conditional-jump`, `a-conditional-block`, and `a-query-in-speech` join the conforming list |
-| `PlayableRun.IsPlayable` | Learns `BranchNode`, and its agreement test holds it to the runner |
-| `PlaybookGen` | Draws guards, jumps the world must allow, block conditions, and queries, and its coverage test **fails until it does**; a world drawn beside each playbook answers every question a walk meets |
+| `PlayableConformanceTests` | Holds `a-conditional-line`, `a-conditional-jump`, `a-conditional-block`, and `a-query-in-speech` to their whole conversations, as it holds every case |
+| `Playability.CanPlay` | Counts `BranchNode` as playable, and its agreement test holds it to the runner |
+| `PlaybookGen` | Draws guards, jumps the world must allow, block conditions, and queries, and its coverage test fails while it draws none of a kind; a world drawn beside each playbook answers every question a walk meets |
 | Runtime core note | Its state diagram shows `AwaitingSupply` as a stage a run reaches and leaves |
 
-The `PlayableRun.IsPlayable` and `PlaybookGen` rows are the ratchet working as
-designed. Teaching the runner a kind makes two lists fail by name, which is the
-reminder a pass is owed.
+The `Playability.CanPlay` and `PlaybookGen` rows keep the harness in step with the
+runner. A node kind the runner plays that either one leaves out makes a test fail
+by name.
 
 ## Testability
 
@@ -355,13 +357,13 @@ reminder a pass is owed.
 | --- | --- |
 | Unit — questions | Every source of a key: a node's own condition, its ways out, and its speech; one node needing all three |
 | Unit — answers | The set matching; a key missing; a key nobody asked about; a key read as the wrong kind |
-| Unit — reading a supply | Each kind read and written back; a number, a null, and a structure all refused |
+| Unit — reading a supply | Each kind read and written back; a number past what a double holds read as infinity, and refused when written back; anything else refused |
 | Unit — evaluation | A condition that holds, and one that fails |
 | Unit — arrival and departure | A withheld node stepped over by its succession, not its jump; an allowed node with nothing to hand the host walked past; a loop asked about again; a withheld jump not taken; a block asking about every branch at once |
 | Unit — ways out | The first jump or branch taken, then the `else`, then the succession, read with answers and without |
 | Unit — speech | A query substituted; a line with text and a query together; a query whose answer is empty |
 | Unit — the protocol | `Supply` where nothing was asked; `Next` while awaiting a supply |
-| Property | The walk property, widened: the generator draws guards, jumps the world must allow, block conditions, and queries, and a world drawn beside each playbook answers every wait. A run still only ever stands where the playbook has a node, and never turns an answer away |
+| Property | The walk property: the generator draws guards, jumps the world must allow, block conditions, and queries, and a world drawn beside each playbook answers every wait. A run still only ever stands where the playbook has a node, and never turns an answer away |
 | Conformance | `a-conditional-line`, `a-conditional-jump`, `a-conditional-block`, and `a-query-in-speech` conform |
 
 Three are worth naming because they are easy to leave out. A node with a condition
@@ -373,9 +375,6 @@ nothing guards, and a guarded node stops the walk before the bound is reached.
 
 ## Open questions and deferred work
 
-- **No world interface exists yet.** Nothing in this pass reads a world directly:
-  the runner asks the driver. So the world interface waits for C2g, where a driver
-  answers `Resolve` from a world.
-- **A key used both ways is caught only at play time.** The compiler does not yet
-  reject a script that uses one key as a guard and as a query on the same node, so
-  `KeyNeededBothWays` is what catches it.
+- **No world interface exists yet.** Nothing in the runner reads a world directly:
+  it asks the driver. So the world interface waits for the drivers that answer
+  `Resolve` from a world.

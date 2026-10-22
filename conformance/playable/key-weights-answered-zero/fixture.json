@@ -1,0 +1,15 @@
+{
+  "$schema": "https://pengzhengyi.github.io/dialoguedown/schema/fixture-0.schema.json",
+  "name": "a random choice whose key weights the world answers with 0 is walked past by its fall-through",
+  "playbook": "playbook.json",
+  "because": "the world can answer 0 for every key weight, so the compiler writes a fall-through though no random option is guarded; with both answered 0 nothing is drawable, no draw is asked for, and the run goes on to the line after the random choice, where a port that asked anyway would wait for a number that could pick nothing",
+  "session": [
+    { "expect": { "said": { "speech": "The guard looks up." } } },
+    { "send": "next" },
+    { "expect": { "resolve": ["Guard.Mood", "Guard.Temper"] } },
+    { "send": { "supply": { "Guard.Mood": 0, "Guard.Temper": 0 } } },
+    { "expect": { "said": { "speech": "The guard looks away." } } },
+    { "send": "next" },
+    { "expect": { "ended": {} } }
+  ]
+}

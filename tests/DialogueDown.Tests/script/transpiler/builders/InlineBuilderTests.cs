@@ -26,6 +26,17 @@ public sealed class InlineBuilderTests
     }
 
     [Fact]
+    public void Build_AnEntity_BecomesOneTextOverTheWholeEntity()
+    {
+        // Alice: a&#32;b, where the entity &#32; is five characters from offset 8.
+        var entity = Md.Span(8, 5);
+
+        var speech = Build([Md.Entity(" ", entity)]);
+
+        Assert.Equal(entity, AssertText(Assert.Single(speech), " ").Span);
+    }
+
+    [Fact]
     public void Build_Emphasis_BecomesStyledText_RecursingItsChildren()
     {
         var speech = Build([Md.Emphasis(MdEmphasisKind.Bold, Md.Text("very"))]);
@@ -100,7 +111,7 @@ public sealed class InlineBuilderTests
     [Fact]
     public void Build_LabelTagIsKept_ButJumpStaysText()
     {
-        // A label admits text and tags, but not jumps: '=>' stays literal there.
+        // A label admits text, styling, tags, and code spans, but not jumps: '=>' stays literal.
         var speech = Build([Md.Link("#x", Md.Text("go => #here"))]);
 
         var link = AssertLink(Assert.Single(speech), "#x");

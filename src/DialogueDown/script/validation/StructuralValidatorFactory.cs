@@ -17,7 +17,9 @@ internal static class StructuralValidatorFactory
             new WeightTotalRule(new DefaultWeightNormalization()),
             new SingleOptionRandomChoiceRule(),
             new OrphanConditionRule(),
+            new KeyNeededBothWaysRule(),
             new CommandInLabelRule(),
             new SceneHeadingPlacementRule(),
+            new ExtraSpacesRule(),
         ]);
 }

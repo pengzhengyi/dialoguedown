@@ -92,8 +92,8 @@ public sealed class PlaybookNodeSummaryChoiceTests
             Choice(Option("Ask the guide for advice first "), Option("Go left")));
     }
 
-    // A random choice's random options carry no words at all — the engine picks, so nobody is shown a menu.
-    // Their odds are the only thing they hold, so the odds are what the row reports.
+    // A random choice's random options carry no words at all — the engine picks, so nobody is shown
+    // a menu. The row reports each option's odds instead, and any condition it is drawn on.
     [Fact]
     public void Of_ARandomChoice_SaysHowManyRandomOptionsItDrawsFromAndTheirOdds()
     {

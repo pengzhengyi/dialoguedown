@@ -7,11 +7,14 @@ namespace DialogueDown.Runtime.Tests;
 /// A world drawn beside a playbook, answering every key the playbook can ask about.
 /// </summary>
 /// <remarks>
-/// A key a guard reads is answered with the truth drawn for it. Any other key is one a query reads,
-/// and is answered with the same words every time.
+/// A key a guard reads is answered with the truth drawn for it, and a key a key weight reads with
+/// the number drawn for it. Any other key is one a query reads, and is answered with the same
+/// words every time.
 /// </remarks>
 /// <param name="truths">Whether each key a guard reads holds.</param>
-internal sealed class DrawnWorld(ImmutableDictionary<string, bool> truths)
+/// <param name="numbers">The number answered for each key a key weight reads.</param>
+internal sealed class DrawnWorld(
+    ImmutableDictionary<string, bool> truths, ImmutableDictionary<string, double> numbers)
 {
     /// <summary>The words this world answers every query with.</summary>
     public const string Words = "Robin";
@@ -23,5 +26,7 @@ internal sealed class DrawnWorld(ImmutableDictionary<string, bool> truths)
         World.Answering([.. keys.Select(key => (key, AnswerTo(key)))]);
 
     private Answer AnswerTo(string key) =>
-        truths.TryGetValue(key, out var holds) ? new BooleanAnswer(holds) : new TextAnswer(Words);
+        truths.TryGetValue(key, out var holds) ? new BooleanAnswer(holds)
+        : numbers.TryGetValue(key, out var number) ? new NumberAnswer(number)
+        : new TextAnswer(Words);
 }

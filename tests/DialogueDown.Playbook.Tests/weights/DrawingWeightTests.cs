@@ -15,12 +15,18 @@ public sealed class DrawingWeightTests
     [InlineData(-10)]
     [InlineData(double.NaN)]
     [InlineData(double.PositiveInfinity)]
-    public void Number_NoShareCanBe_IsRefusedNamingTheNumber(double percentage)
+    public void Number_Invalid_IsRefusedNamingTheNumber(double percentage)
     {
         void Unusable() => _ = new Number(percentage);
 
         var error = Assert.Throws<ArgumentOutOfRangeException>(Unusable);
-        Assert.Contains(percentage.ToString(CultureInfo.InvariantCulture), error.Message, StringComparison.Ordinal);
+        Assert.Equal("percentage", error.ParamName);
+        Assert.Equal(percentage, error.ActualValue);
+        Assert.StartsWith(
+            $"A number weight of {percentage.ToString(CultureInfo.InvariantCulture)} has no share: "
+                + "a weight must be finite and not negative.",
+            error.Message,
+            StringComparison.Ordinal);
     }
 
     [Fact]
@@ -124,4 +130,19 @@ public sealed class DrawingWeightTests
     [Fact]
     public void Total_OfNoShares_IsZero() =>
         Assert.Equal(0, DrawingWeight.Total([]));
+
+    [Theory]
+    [InlineData(0.0)]
+    [InlineData(20.0)]
+    [InlineData(double.MaxValue)]
+    public void IsNonNegativeAndFinite_AFiniteNumberNotBelowZero_IsTrue(double percentage) =>
+        Assert.True(IsNonNegativeAndFinite(percentage));
+
+    [Theory]
+    [InlineData(-10.0)]
+    [InlineData(double.NaN)]
+    [InlineData(double.PositiveInfinity)]
+    [InlineData(double.NegativeInfinity)]
+    public void IsNonNegativeAndFinite_ANegativeOrNonFiniteNumber_IsFalse(double percentage) =>
+        Assert.False(IsNonNegativeAndFinite(percentage));
 }

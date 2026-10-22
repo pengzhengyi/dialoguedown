@@ -138,6 +138,35 @@ public sealed class SuccessionPassTests
     }
 
     [Fact]
+    public void Apply_ARandomChoiceOfKeyWeights_AlsoFallsThrough()
+    {
+        var graph = Build("""
+            - `Bob.Affection%` Bob: Good to see you.
+
+            - `Christina.Affection%` Christina: Oh, hello.
+
+            Guide: After.
+            """);
+
+        // The game can answer 0 for both, so the fall-through is the path left when nothing can be drawn.
+        AssertFallsThroughTo(graph.Nodes[0], graph.Nodes[3].Id);
+    }
+
+    [Fact]
+    public void Apply_ARandomChoiceWithAnUnguardedAutoWeight_DoesNotFallThrough()
+    {
+        var graph = Build("""
+            - `Bob.Affection%` Bob: Good to see you.
+
+            - `%` Guide: Nobody looks up.
+
+            Guide: After.
+            """);
+
+        AssertNoFallThrough(graph.Nodes[0]);
+    }
+
+    [Fact]
     public void Apply_AConditionalBlockWithoutAnElse_AlsoFallsThrough()
     {
         var graph = Build("""
@@ -218,7 +247,7 @@ public sealed class SuccessionPassTests
             Alice: there
             """);
 
-        // Either condition failing lands on the same fall-through, so one is enough.
+        // Either condition failing leads to the same fall-through, so one is enough.
         AssertFallsThroughTo(graph.Nodes[0], graph.Nodes[1].Id);
     }
 

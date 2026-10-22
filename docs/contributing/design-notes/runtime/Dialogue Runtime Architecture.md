@@ -5,10 +5,9 @@
 > [Dialogue Graph](../core/Dialogue%20Graph.md): the portable **playbook**, the
 > **runner** that plays one, the **protocol** between a runner and its driver, and
 > the **conformance corpus** that keeps runtimes honest. The playbook, the corpus,
-> and a runner that plays lines, jumps, effects, branches, menus, random choices of
-> number and auto weights, and the end, and asks the world what they need, are
-> built; random choices weighted by a key, saves, drivers, and every other host are
-> not (see [components](#components-and-sequencing)).
+> and a runner that plays every kind of node and asks the world what each needs
+> are built; saves, drivers, and every other host are not (see
+> [components](#components-and-sequencing)).
 
 ## Table of contents
 
@@ -35,7 +34,7 @@ The compiler ends at an `internal` `DialogueGraph`. This note designs how a
 compiled script is **shipped** and **played**:
 
 1. **Serialize** the graph into a portable, versioned artifact — the *playbook*.
-2. **Play** a playbook through a small runner with clean seams into a host.
+2. **Play** a playbook through a small runner with clean interfaces to a host.
 3. **Keep runtimes honest** with a shared, data-driven conformance corpus.
 
 One compiler serves a **CLI**, the **web report**, and **Godot**, while each host
@@ -84,7 +83,7 @@ project needs neither.
 
 The most useful lesson is a negative one. **Neither ink nor Yarn Spinner has a
 cross-language conformance suite.** inkjs tracks the C# runtime by hand, and drift
-surfaces as user bug reports. A project that plans more than one runtime closes
+shows up as user bug reports. A project that plans more than one runtime closes
 that gap while there is still only one runtime to make conformant.
 
 ## The model: compile once, play anywhere
@@ -238,9 +237,9 @@ role *behind* the driver; LSP and DAP solve this by naming the message
 
 | Direction | Kind | Built | Designed, not built |
 | --- | --- | --- | --- |
-| driver → runner | **command** | `Start`, `Next`, `Done`, `Failed(explanation)`, `Supply(answers)`, `Choose(i)` | `Restore(state)` |
+| driver → runner | **command** | `Start`, `Next`, `Done`, `Failed(explanation)`, `Supply(answers)`, `Choose(i)`, `Drawn(value)` | `Restore(state)` |
 | runner → driver | **event** | `Said`, `Continued`, `Ended`, `Refused` | `Invalidated` |
-| runner → driver | **request** | `Perform(effect)`, answered by `Done` or `Failed(explanation)`; `Resolve(keys)`, answered by `Supply(answers)`; `Offer(ordered, options)`, answered by `Choose(i)` | — |
+| runner → driver | **request** | `Perform(effect)`, answered by `Done` or `Failed(explanation)`; `Resolve(keys)`, answered by `Supply(answers)`; `Offer(ordered, options)`, answered by `Choose(i)`; `Draw(shares)`, answered by `Drawn(value)` | — |
 | driver → runner | **query** | — | `Describe()`, answered with the current location |
 
 `Resolve` is LSP's `workspace/configuration`: *the server knows what it needs; the
@@ -288,12 +287,12 @@ Godot host never sees the protocol.
 > [!NOTE]
 > The protocol half is built: the runner asks with `Resolve` and reads the
 > driver's `Supply`, as [Asking the World](./Asking%20the%20World.md) describes.
-> The host-side seam below, with typed reads and a registration layer, is proposed
+> The host-side interface below, with typed reads and a registration layer, is proposed
 > and not built.
 
-### The world seam
+### The world interface
 
-Effects travel the protocol, so the world seam only **reads**. Three questions with
+Effects travel the protocol, so the world interface only **reads**. Three questions with
 three answer types — a condition needs a boolean, a weight a number, interpolation
 text — want three reads rather than one stringly method. Above that sits a
 registration layer, as ink and Yarn Spinner both settled on, so a host binds keys
@@ -474,7 +473,7 @@ schema standard and a weaker parser ecosystem in both languages. **proto3** buys
 compactness at the price of a `protoc` dependency and the "any language can just
 parse it" property. Graph interchange formats (DOT, GraphML, GEXF) are
 topology-first and payload-minimal, the opposite of a playbook. A binary encoding
-stays available behind a CLI flag, because the writer is a seam.
+stays available behind a CLI flag, because the playbook writer can be swapped.
 
 ### D3 — Capabilities carry compatibility
 
@@ -503,10 +502,10 @@ and query a remote world, or sit with the server and stream events to a thin cli
 | Ordering | order-independent, batchable | strictly ordered |
 | On restore | re-ask freely | must not re-run |
 | On transport failure | retry is safe | the effect ordinal makes retry idempotent |
-| Before the next read | nothing to wait for | must have landed, which `Done` acknowledges |
+| Before the next read | nothing to wait for | must have taken effect, which `Done` acknowledges |
 
 The ordinal stops a *retried* effect running twice; the acknowledgement stops a
-*pending* effect being read past. A world that cannot make an effect land answers
+*pending* effect being read past. A world that cannot apply an effect answers
 `Failed(explanation)`, and the run stands where it is. A world that implements a
 query by mutating breaks the runner's guarantees; that contract is documented and
 conformance-tested, not enforced.
@@ -549,7 +548,7 @@ Everything the notes promise, and the insurance each has in version 0.
 | Hide versus disable an option | [Conditions](../language/Conditions.md#d9--a-player-option-is-shown-unavailable-not-removed) | The host API | [D8](#d8--a-menu-shows-unavailable-options) |
 | Weight draws on replay | [Random Choice](../language/Random%20Choice.md) | Saves and conformance | The host supplies every draw with `Drawn`, so replaying the commands replays every draw; see [Drawing a Random Option](./Drawing%20a%20Random%20Option.md#r1--the-host-supplies-the-draw-the-runner-turns-it-into-a-random-option) |
 | Localization | — | Every script | Unknown properties are ignored, so a `lineId` is a field to populate, not a shape to change |
-| Binary encoding | — | Nothing | The writer is a seam |
+| Binary encoding | — | Nothing | The playbook writer can be swapped |
 
 Anything this table misses is still recoverable through
 [capabilities](#compatibility): an old runner refuses rather than misplays.
@@ -569,9 +568,9 @@ flowchart LR
 | # | Component | Delivers | Note | Status |
 | --- | --- | --- | --- | --- |
 | C1 | **Playbook format and writer** | The schema, the header, the reader and its checks, and `ddown compile --output` | [Playbook Format](./Playbook%20Format.md), [Playbook Reader Rules](./Playbook%20Reader%20Rules.md) | Implemented |
-| C2 | **C# runner** | `Step`, `PlayState`, the protocol, drivers, the world seam, saves | [Runner](./Runner.md) | Partially implemented: lines and the commands in them, jumps, effects, conditions and queries, block conditions, menus, random choices of number and auto weights, guarded or not, the end |
+| C2 | **C# runner** | `Step`, `PlayState`, the protocol, drivers, the world interface, saves | [Runner](./Runner.md) | Partially implemented: lines and the commands in them, jumps, effects, conditions and queries, block conditions, menus, random choices, the end |
 | C3 | **Conformance corpus** | Fixtures plus a harness, owned as data | [Conformance Corpus](./Conformance%20Corpus.md) | Implemented |
-| C4 | **`ddown play` and the REPL** | A terminal player, plus a raw stdio mode another language can drive | [Interactive Playthrough](../other/Interactive%20Playthrough.md) | Proposed |
+| C4 | **`ddown play` and the REPL** | A terminal player, plus a raw stdio mode another language can drive | [Interactive Playthrough](../other/Interactive%20Playthrough.md), [Play CLI — Terminal Player](../cli/Play%20CLI%20-%20Terminal%20Player.md) | Partially implemented: the terminal player's presentation; the `ddown play` command and the REPL are not built |
 | C5a | **Web proxy Play tab** | The served report plays through the C# runner (level 1) | [Interactive Playthrough](../other/Interactive%20Playthrough.md) | Proposed |
 | C5b | **TypeScript runner** | The exported report plays a playbook offline (level 3), held to C3 | — | Proposed |
 | C6 | **Godot adapter and sample** | BBCode presentation and a demo scene | [BBCode Rendering](../other/BBCode%20Rendering.md) | Proposed |

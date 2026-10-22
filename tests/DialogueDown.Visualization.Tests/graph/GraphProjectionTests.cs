@@ -176,8 +176,8 @@ public sealed class GraphProjectionTests
     [Fact]
     public void Project_ALineNestedInAChoiceOption_StillBelongsToTheSceneItWasWrittenUnder()
     {
-        // A scene owns only the blocks directly beneath its heading, so a line inside a choice option
-        // is not among them — but a reader plainly reads it as part of the scene.
+        // A scene owns only the blocks directly beneath its heading, so a line inside a choice
+        // option is not among them — but a reader plainly reads it as part of the scene.
         var graph = Project("""
             # The Market
 
@@ -229,8 +229,8 @@ public sealed class GraphProjectionTests
     [Fact]
     public void Project_ARandomChoice_IsLabeledByItsKindAloneRatherThanItsRandomOptionCount()
     {
-        // The graph already draws one edge per random option; counting them in the label only says twice
-        // what the picture says once.
+        // The graph already draws one edge per random option; counting them in the label only says
+        // twice what the picture says once.
         var graph = Project("""
             - `80%` Alice: Heads.
 
@@ -402,7 +402,7 @@ public sealed class GraphProjectionTests
     [Fact]
     public void Project_AScene_PointsAtItsHeadingRatherThanTheLinesBeneathIt()
     {
-        // A reader taken to a scene expects to land on the words that name it.
+        // A reader taken to a scene expects to arrive at the words that name it.
         const string Source = """
             # The Market
 

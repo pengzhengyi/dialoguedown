@@ -8,7 +8,8 @@ namespace DialogueDown.Playbook.Edges;
 /// </summary>
 /// <remarks>
 /// Every edge has a target, so the base carries it; what differs between kinds is why the edge
-/// is taken — a player picked it, a condition allowed it, or reading order simply continued.
+/// is taken — a player picked it, a draw picked it, a condition allowed it, or reading order
+/// simply continued.
 /// </remarks>
 [JsonPolymorphic(TypeDiscriminatorPropertyName = PlaybookJson.Discriminator)]
 [JsonDerivedType(typeof(SuccessionEdge), EdgeKinds.Succession)]

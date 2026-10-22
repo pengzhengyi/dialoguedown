@@ -4,7 +4,7 @@ author: DialogueDown examples
 ---
 
 <!--
-  This script is DELIBERATELY broken. It exists to show how the report surfaces
+  This script is DELIBERATELY broken. It exists to show how the report presents
   diagnostics — errors and warnings — in the Diagnostics panel and inline on the
   source. Each mistake is labeled with the DLG code it triggers; the other
   examples show the same constructs used correctly.
@@ -20,7 +20,7 @@ author: DialogueDown examples
 
 A door groans somewhere above you. Two ways lead deeper into the dark.
 
-<!-- DLG3003 (warning): these static weights total 60%, not 100%. -->
+<!-- DLG3003 (warning): these number weights total 60%, not 100%. -->
 - `30%` A cold draft tugs you toward the west wing.
 - `30%` Candlelight gutters somewhere to the east.
 

@@ -111,15 +111,20 @@ changes easy to categorize.
   [Branch order](docs/contributing/design-notes/runtime/Playbook%20Reader%20Rules.md).
 
 - **A run draws at a random choice** — `Draw(shares)` joins the requests a run stops for: a random
-  choice of number and auto weights names every random option's share, in the order written, and
-  the run waits for the host's `Drawn(value)`, a number from 0 to 1, then follows the random option
-  whose span holds it. The host owns randomness and seeding, so replaying the commands replays
-  every draw. A draw outside 0 to 1 is refused as `invalid-draw` and the run keeps waiting. A
-  random choice's conditions are asked on arrival in one `Resolve`, and a random option the world
-  withholds is left out: its share is 0, and an auto weight takes what the random options in play
-  leave of 100. A random choice with nothing to draw is walked past by its fall-through, or
-  refused as `leads-nowhere` without one. A random choice with a key weight is still refused as
-  `unplayable-node`. See
+  choice names every random option's share, in the order written, and the run waits for the host's
+  `Drawn(value)`, a number from 0 to 1, then follows the random option whose span holds it. The host
+  owns randomness and seeding, so replaying the commands replays every draw. A draw outside 0 to 1
+  is refused as `invalid-draw` and the run keeps waiting. A random choice's conditions are asked on
+  arrival in one `Resolve`, and a random option the world withholds is left out: its share is 0, and
+  an auto weight takes what the random options in play leave of 100. A key weight is asked with the
+  conditions and answered with a number, a JSON number in `supply`, and counts as that number
+  written as a percentage. A key weight in play answered with a number that is negative or not
+  finite, or answers whose shares are too large to add up, are refused as `invalid-weight` and the
+  run keeps waiting; an excluded random option's key weight is asked but neither checked nor
+  counted. A key a random choice needs as a condition and as a key weight is refused as
+  `key-needed-both-ways` before anything is asked. A random choice with nothing to draw is walked
+  past by its fall-through, which the compiler gives a random choice unless an unguarded random
+  option has a number above zero or an auto weight. See
   [Drawing a random option](docs/contributing/design-notes/runtime/Drawing%20a%20Random%20Option.md).
 
 - **A random choice's number weights are checked when a playbook loads** — the reader refuses a
@@ -137,6 +142,15 @@ changes easy to categorize.
   named jump compiles to a blank line in the menu, which the compiler now points at instead of
   leaving for a playtest to find. See
   [the error catalog](docs/guide/error-codes.md#dlg2017).
+
+- **`DLG2018` rejects a key one place needs two ways** — a line, a menu, or a random choice asks
+  the game everything it needs at once, and the game gives one answer per key, so one key cannot
+  be both the condition and a query of a line (`` `Hero.Title?` Guard: Welcome, `"Hero.Title"`. ``)
+  or both a condition and a dynamic weight in a random choice. Such a script used to compile and
+  was refused as `key-needed-both-ways` only once play reached it; the compiler now rejects it.
+  One key used two ways in two places is still fine. The playable case that tests the refusal
+  now holds a hand-edited playbook, since no compiler emits it. See
+  [the error catalog](docs/guide/error-codes.md#dlg2018).
 
 - **A query in a label** — a link's text, an image's alt text, or a menu option written as a jump
   can now hold a query (`` - => [Ask `"CompanionName"` to join](#join) ``), filled like one in
@@ -158,10 +172,10 @@ changes easy to categorize.
   array, such as a tag that is neither a string nor a table, points at that element, also when
   the array spans several lines.
 
-- **A random choice whose only option weighs `0%` is an error** — it compiled with a warning
-  that the option is always selected, but an option with no weight is never selected. It is now
-  reported as a zero total (`DLG2010`), as two `0%` options already were, and the warning stays
-  quiet for it.
+- **A random choice whose only option has a `0%` chance of being picked is an error** — it
+  compiled with a warning that the option is always selected, but an option with no weight is
+  never selected. It is now reported as a zero total (`DLG2010`), as two options with `0%` each
+  already were, and the warning stays quiet for it.
 
 - **The conformance harness reports every divergence a case has** — an outcome carries a list of
   reasons rather than only the first, so a contributor meets every fault a fixture found in one run
@@ -263,6 +277,11 @@ changes easy to categorize.
 
 ### Fixed
 
+- **The `ddown` tool package carries its third-party license notices** — the tool bundles
+  libraries whose licenses require their text or copyright notice to accompany every binary
+  copy, and the package shipped none. It now includes
+  [THIRD-PARTY-NOTICES.md](THIRD-PARTY-NOTICES.md), and a test fails when a bundled assembly
+  has no entry.
 - **Every TOML spelling of a `dialogue.toml` setting is read** — a setting written as an inline
   table, an inline array of tables, or a dotted key (`speakers = [{ name = "Alice" }]`,
   `markdown.unmodeled.table = "keep"`) was ignored without an error, so the compile ran on the

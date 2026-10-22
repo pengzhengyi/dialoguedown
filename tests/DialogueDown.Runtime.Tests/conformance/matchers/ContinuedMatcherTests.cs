@@ -2,6 +2,7 @@ using DialogueDown.Conformance;
 using DialogueDown.Runtime.Protocol;
 using static DialogueDown.Runtime.Tests.Conformance.SessionEntries;
 using static DialogueDown.Runtime.Tests.Conformance.SessionOutcomeAssert;
+using static DialogueDown.Runtime.Tests.EventFactory;
 using static DialogueDown.TestSupport.SpeechFactory;
 
 namespace DialogueDown.Runtime.Tests.Conformance.Matchers;
@@ -31,7 +32,7 @@ public sealed class ContinuedMatcherTests
         // A port that sent a second Said where the line went on would show the speaker's name
         // twice for one sentence.
         AssertDiverged(
-            Match(new Said("Alice", [Text(" Bye.")]), """{ "speech": " Bye." }"""),
+            Match(Said("Alice", " Bye."), """{ "speech": " Bye." }"""),
             "expected the line to go on, but the run heard Alice speak");
 
     [Fact]

@@ -150,6 +150,10 @@ to react to a push. That makes the toggle instant and the backend one type.
   conflict instead.
 - The toggle is a native segmented control (`[ View | Edit ]`, `role="group"`, `aria-pressed`) in
   the status bar. A static export shows a read-only badge instead.
+- The mode is the session's, so the toggle stays live on every tab but one. On the Playbook tab,
+  whose editor is compiled output that no mode makes writable, it is disabled and dimmed, with a
+  tooltip pointing to the Source tab. The pressed mode stays visible, the session keeps it, and Save
+  still writes the script.
 - The toggle reconfigures one CodeMirror `Compartment` (read-only state, `aria-readonly`, and the
   authoring aids), so the buffer, cursor, scroll, and undo history survive the switch.
 - Leaving Edit with unsaved work goes through the same save guard as navigation.
@@ -235,7 +239,7 @@ script's reloads.
 | --- | --- |
 | Missing file, wrong extension, invalid `--root` | The command exits with a message before serving. |
 | Editor save burst (temp write + rename) | Debounced into one recompile of the final content. |
-| Compile errors after a change | Still a `reload`; diagnostics ride the payload to the overlay and Problems panel. |
+| Compile errors after a change | Still a `reload`; the payload carries the diagnostics to the overlay and Problems panel. |
 | Script deleted or unreadable | `problem { target }`, routed to that document's save controller; a later save recovers. |
 | Several open tabs | All receive each push. |
 | `--port` already in use | Binding fails and the process reports the error. |

@@ -46,7 +46,7 @@ public sealed class RunnerTests
     [Fact]
     public void Step_NextWhileTheHostHasSomethingToCarryOut_IsRefused()
     {
-        // Reading on here would pass an effect the host has not performed, and the next node
+        // Going on here would pass an effect the host has not performed, and the next node
         // might depend on it.
         var context = PlayContextFactory.AnEffectThenALine();
 
@@ -291,7 +291,7 @@ public sealed class RunnerTests
     [Fact]
     public void Step_FailedWhileTheHostHasSomethingToCarryOut_StandsStill()
     {
-        // The world did not change, so the run cannot read on -- and it says nothing, because the
+        // The world did not change, so the run cannot go on -- and it says nothing, because the
         // driver's own message is the record of why.
         var context = PlayContextFactory.AnEffectThenALine();
 

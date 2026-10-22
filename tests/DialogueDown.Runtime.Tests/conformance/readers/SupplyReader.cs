@@ -8,8 +8,8 @@ namespace DialogueDown.Runtime.Tests.Conformance.Readers;
 
 /// <summary>Reads <c>supply</c>, which carries what the world answered, by the key it was asked about.</summary>
 /// <remarks>
-/// A truth is written as <c>true</c> or <c>false</c> and words are written as a string, so the
-/// kind of answer a fixture gives is the kind JSON already wrote it as.
+/// A truth is written as <c>true</c> or <c>false</c>, words as a string, and a number as a number,
+/// so the kind of answer a fixture gives is the kind JSON already wrote it as.
 /// </remarks>
 internal sealed class SupplyReader : ICommandReader
 {
@@ -30,8 +30,9 @@ internal sealed class SupplyReader : ICommandReader
         {
             JsonValueKind.True or JsonValueKind.False => new BooleanAnswer(written.GetValue<bool>()),
             JsonValueKind.String => new TextAnswer(written.GetValue<string>()),
+            JsonValueKind.Number => new NumberAnswer(written.GetValue<double>()),
             _ => throw new InvalidFixtureException(
-                $"The world answers {key} with a truth or with words, "
+                $"The world answers {key} with a truth, with words, or with a number, "
                     + $"not {written?.ToJsonString() ?? "nothing"}."),
         };
 }

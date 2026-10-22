@@ -53,6 +53,7 @@ import { createDiagnosticSummary } from "./diagnostic-summary";
 import { orderDiagnostics } from "./diagnostic-order";
 import { createFooterDrawer } from "./footer-drawer";
 import type { DebugController } from "./debug-controller";
+import { createWhitespaceToggle, installWhitespaceShortcut } from "./whitespace-toggle";
 
 /**
  * Whether a stage renders `=>` as the jump ligature the writer meant rather than two characters
@@ -147,6 +148,8 @@ export interface AppController {
     markConfigDirty(dirty: boolean): void;
     /** Whether the Config tab is the active tab (so a save/⌘S targets the config). */
     isConfigTabActive(): boolean;
+    /** Whether the Playbook tab is the active tab, whose editor no mode makes writable. */
+    isPlaybookTabActive(): boolean;
     /** Activate the Config tab — the Explorer's "open dialogue.toml"; a no-op without a config. */
     showConfigTab(): void;
     /** Show a status message (e.g. a live compile error), or clear it with `null`. */
@@ -303,6 +306,12 @@ export function runApp(
           })
         : null;
     if (drawer) helpToggle?.addEventListener("click", () => drawer.open("help", helpToggle));
+    // Showing whitespace is an editor setting, so a report with no editor offers neither the
+    // status-line toggle nor its shortcut.
+    if (report.source != null || report.configuration != null || report.playbook != null) {
+        helpToggle?.before(createWhitespaceToggle().element);
+        installWhitespaceShortcut();
+    }
     if (summary) document.querySelector(".status-bar")?.appendChild(summary.element);
 
     /**
@@ -471,6 +480,8 @@ export function runApp(
         markSourceDirty: (dirty) => sourceTab?.classList.toggle("dirty", dirty),
         markConfigDirty: (dirty) => configTab?.classList.toggle("dirty", dirty),
         isConfigTabActive: () => configPresent && activeIndex === 0,
+        isPlaybookTabActive: () =>
+            stagesEl.children[activeIndex]?.classList.contains("playbook-stage") ?? false,
         showConfigTab: () => {
             // Mirror a Config-tab click: route through the save-safe navigation guard so an Auto
             // save flushes (or a Manual prompt resolves) before the tab changes.

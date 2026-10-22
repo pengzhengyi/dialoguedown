@@ -46,7 +46,7 @@ export interface ScriptSwitch {
     open(path: string): Promise<void>;
     /**
      * Apply the script a Back or Forward landed on. It adds no history entry — the browser has
-     * already moved — and lands in View, because Back is a navigation rather than an intent to edit.
+     * already moved — and opens in View, because Back is a navigation rather than an intent to edit.
      */
     restore(path: string): Promise<void>;
 }

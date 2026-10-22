@@ -49,7 +49,7 @@ Out of scope (see [Deferred work](#deferred-work)):
 - A CI check or dry-run mode, and a patch-output mode.
 - Writing the corrected script anywhere but the script itself.
 - Fix-safety tiers and multi-pass fixing.
-- The editor and report surfaces, already shipped.
+- The editor's quick fixes and Fix all, which have their own notes.
 
 ## Prior art
 
@@ -70,7 +70,7 @@ diagnostics and attached fix notes); the file-level `Fixed <file> (N fix)`
 notice (cargo fix) with the remaining count rolled in; silence when there is
 nothing to do (ESLint and this CLI already); and the fixable-count hint on
 non-fix runs (ESLint and Ruff). Skipped: per-code selection (always a separate filter
-option, never a `--fix` value), safety tiers (the only fix is mechanically
+option, never a `--fix` value), safety tiers (every fix is mechanically
 derived), a dry-run or patch mode, and the CI postures.
 
 ## CLI surface
@@ -131,11 +131,15 @@ CLI, next to the command that uses it.
 5. **Skip an edit that falls outside the text.** Defensive: a stale offset is
    dropped with its fix and reported, and the remaining fixes still apply.
 
-The only producer, `DLG1113`, carries one single-edit fix (insert `\` before
-the arrow), so overlap cannot occur and step 3 is a no-op. The policy exists so
+Two producers carry fixes, each one single-edit fix: `DLG1113` inserts `\`
+before the arrow, and `DLG1116` writes one space in place of spaces typed
+together. No two `DLG1116` spans touch, and an insertion before an arrow
+meets such a span only at its end, which is not an overlap, so `x  => y`
+takes both fixes. Overlap cannot occur, and step 3 is a no-op. The policy exists so
 that a producer offering alternatives, or a multi-edit fix, cannot interleave
-silently. The CLI's ordering policy is normative for batch repair; the editor
-applies one chosen fix at a time, so it needs no ordering.
+silently. The CLI's ordering policy is normative for batch repair: the editor's
+[Fix all](../visualization/editor/Fix%20All%20Diagnostics.md) uses the same ordering
+key and overlap test, and a single quick fix needs no ordering.
 
 ## Report and exit codes
 
@@ -236,7 +240,7 @@ $ echo $?
 The diagnostics are exactly what `ddown compile workshop.dialogue.md` prints;
 the fix section then names the repair and shows the change as a hunk.
 
-### D — an error survives; the correction still lands
+### D — an error survives; the correction is still written
 
 ```console
 $ ddown compile broken.dialogue.md --fix
@@ -264,7 +268,7 @@ remains, while the duplicated scene still fails the compile.
 
 ### D1 — Fix mode lives on `compile`
 
-Fixing is compiling with a repair step, so it rides `compile`'s option
+Fixing is compiling with a repair step, so it uses `compile`'s option
 resolution (`--config`, `--mode`), its errata rendering, and its exit codes
 instead of becoming a second command that would duplicate all three.
 
@@ -340,13 +344,14 @@ that changed a file says so.
 
 `--mode stage-boundary` (the default) stops the pipeline at an error, so a
 script whose error precedes desugaring yields no fixes, while
-`--mode best-effort --fix` surfaces and repairs more. That is the same posture
+`--mode best-effort --fix` finds and repairs more. That is the same posture
 as clang-tidy, which refuses to apply fixes when compilation errors were found
 unless `--fix-errors` is given; `--fix` alone never overrides the mode.
 
 ### D10 — No selection and no CI mode
 
-With one fix producer there is no user choice to express; both are additive (see
+Each producer offers one mechanically derived fix, so `--fix` needs no choice
+among fixes; selecting by code and a CI mode are both additive (see
 [Deferred work](#deferred-work)). Keeping `--fix` a plain flag leaves room for a
 separate `--fix-code` filter.
 
@@ -373,7 +378,7 @@ stays local.
 | A fix that changes no line | its note still prints, with no hunk |
 | Overlapping fixes | the later candidate is skipped whole and reported |
 | Two insertions at the same offset | fixed by the ascending tie-break: code, then title |
-| Script read-only, or the write fails | I/O error surfaces, exit 1, and no write notice is printed |
+| Script read-only, or the write fails | the I/O error is reported, exit 1, and no write notice is printed |
 | Leading UTF-8 BOM | detected on read, written back per D4 |
 | CRLF line endings | preserved by splicing; a replacement containing a lone `\n` is a producer bug, not an applier behavior |
 | Non-UTF-8 script without a BOM | the compile already assumes UTF-8; fix mode inherits that assumption |
@@ -430,16 +435,16 @@ path is unit-tested because no shipped producer can trigger it.
 - **Per-code selection** (`--fix-code <ID>`, repeatable). Additive later:
   `--fix` keeps meaning "all". The flag shape, unknown-code handling (a usage
   error), and whether the filter also filters the displayed errata wait until a
-  second fix producer makes selection a real choice.
+  writer needs one producer's fixes without another's.
 - **A CI check mode** — `--fix-dry-run` (ESLint) or a fail-when-fixable flag in
   the spirit of `--verify-no-changes` and `--exit-non-zero-on-fix`. Until it
   exists, the guide warns that `--fix` exits 0 after mutating the file.
 - **A patch mode** — a unified diff on stdout, the mature analog of
   `clang-tidy --export-fixes` and the non-destructive alternative to a
   corrected copy.
-- **Fix-safety tiers.** The only fix is mechanically derived from a named
+- **Fix-safety tiers.** Every fix is mechanically derived from a named
   producer. A future fix that guesses must carry an applicability label (Ruff's
-  safe/unsafe) rather than riding `--fix` silently.
+  safe/unsafe) rather than applying under `--fix` silently.
 - **Multi-pass fixing.** One pass suffices while every fix removes the
   diagnostic that carries it; the recompile check is what would notice if that
   stops being true. If it does, revisit with a bounded loop rather than an
@@ -447,9 +452,9 @@ path is unit-tested because no shipped producer can trigger it.
 - **A dirty-VCS guard.** `cargo fix` refuses to rewrite a working tree with
   uncommitted changes; the CLI has no Git dependency, so this would be a
   deliberate addition, not an inheritance.
-- **An editor fix-all.** The editor applies one chosen fix at a time; if it
-  ever batches, it should reuse the CLI's ordering policy, pinned by a shared
-  conformance case.
+- **A shared fix-all conformance case.** The editor's
+  [Fix all](../visualization/editor/Fix%20All%20Diagnostics.md) restates the CLI's
+  ordering policy in TypeScript; no shared case yet pins the two to the same result.
 
 ## Alternatives not chosen
 

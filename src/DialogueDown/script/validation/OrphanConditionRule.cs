@@ -27,7 +27,7 @@ internal sealed class OrphanConditionRule : DiagnosticRule
         {
             if (!IsBound(condition, nodes.AncestorsOf(condition).FirstOrDefault()))
             {
-                report(condition.Span, condition.Key);
+                report(condition.Span, [condition.Key]);
             }
         }
     }

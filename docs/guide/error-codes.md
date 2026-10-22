@@ -373,6 +373,32 @@ Alice: We should go.
 
 <mark class="dd-mark-fix">Alice: The road was long.</mark></code></pre>
 
+### DLG1116
+
+<span class="dd-sev dd-sev--info">Info</span> · Spaces typed together collapse
+
+Spaces typed together collapse, in a Markdown preview and in the game alike, so the extra width here does not show. That is usually what you want, and one space reads the same. To keep the width, write a non-breaking space for each extra space: `a&nbsp;&nbsp; b`.
+
+A Markdown preview shows spaces typed together as one, and so does the game: where two or more spaces, tabs, or encoded line breaks stand together in text the player reads, the player sees one space. That is usually what you want, so this is a note, not a fault, and it exists so the collapse is never a surprise. Two spaces after a sentence get no exemption; one space reads the same. If you meant the width, name the space: a non-breaking space (`&nbsp;`) never collapses.
+
+<span class="dd-eg-bad">Triggering example</span>
+
+<pre class="dd-example"><code class="nohighlight"># The Tavern
+
+Alice: <mark class="dd-mark-bad">Welcome.  Sit</mark> anywhere.</code></pre>
+
+<span class="dd-eg-fix">Fix — if the extra width was a habit</span>
+
+<pre class="dd-example"><code class="nohighlight"># The Tavern
+
+Alice: <mark class="dd-mark-fix">Welcome. Sit</mark> anywhere.</code></pre>
+
+<span class="dd-eg-fix">Fix — if the width was meant</span>
+
+<pre class="dd-example"><code class="nohighlight"># The Tavern
+
+Alice: <mark class="dd-mark-fix">Welcome.&amp;nbsp; Sit</mark> anywhere.</code></pre>
+
 ## Semantic (`DLG2xxx`)
 
 A meaning-level problem found during analysis — a reference that does not resolve, or a conflict.
@@ -656,6 +682,22 @@ A menu shows each option by the words written in it — the line it speaks, or t
 <mark class="dd-mark-fix">- Slip away quietly `(&quot;fade out&quot;)`</mark>
 - Alice: Stay here.</code></pre>
 
+### DLG2018
+
+<span class="dd-sev dd-sev--error">Error</span> · Key needed both ways
+
+'{0}' is used here as {1}, and earlier in this {2} as {3}. The game gives one answer per key for the whole {2}, so it cannot answer both. Use a different key for one of them.
+
+A line, a menu, or a random choice asks the game everything it needs at once, and the game gives one answer per key. A condition needs true or false, a query words, and a key weight a number, so one key cannot serve two of them in one place. Use a separate key for one of the uses; a key may still be used another way in a different place.
+
+<span class="dd-eg-bad">Triggering example</span>
+
+<pre class="dd-example"><code class="nohighlight">`<mark class="dd-mark-bad">Hero.Title?</mark>` Guard: Welcome, `&quot;Hero.Title&quot;`.</code></pre>
+
+<span class="dd-eg-fix">Fix</span>
+
+<pre class="dd-example"><code class="nohighlight">`<mark class="dd-mark-fix">Hero.HasTitle?</mark>` Guard: Welcome, `&quot;Hero.Title&quot;`.</code></pre>
+
 ## Style (`DLG3xxx`)
 
 A valid script that reads correctly but could read better.
@@ -722,7 +764,7 @@ The coin spins.
 
 This random choice has a single option, so it is always selected and the weight has no effect. Remove the weight to make it a plain line, or add more options.
 
-A random choice with only one option always selects it — the weight has no effect and the list is not really random. This usually means a plain line was given a weight, or the other options are missing. A lone `0%` option is never selected, so it is reported as a zero total (DLG2010) instead.
+A random choice with only one option always selects it — the weight has no effect and the list is not really random. This usually means a plain line was given a weight, or the other options are missing. A lone option with a `0%` chance is never selected, so it is reported as a zero total (DLG2010) instead.
 
 <span class="dd-eg-bad">Triggering example</span>
 

@@ -13,9 +13,9 @@ namespace DialogueDown.Playbook.Weights;
 /// relative: a draw is made against their total, whatever it is.
 /// <para>
 /// A key weight has no number until the world answers it, so there is no drawing weight for a
-/// key: once answered, it is a number. A random option left out of the draw weighs nothing, which
-/// is a number of zero: it adds nothing to the numbers, and it is not an auto weight, so it takes
-/// no part of the rest.
+/// key: once answered, it is a number. A random option left out of the draw counts as a number of
+/// zero: it adds nothing to the numbers, and it is not an auto weight, so it takes no part of the
+/// rest.
 /// </para>
 /// </remarks>
 public abstract record DrawingWeight
@@ -72,10 +72,10 @@ public abstract record DrawingWeight
         return total;
     }
 
-    /// <summary>Whether a number can be a weight: finite and not negative.</summary>
+    /// <summary>Whether a number is valid as a weight: finite and not negative.</summary>
     /// <param name="percentage">The number.</param>
-    /// <returns><see langword="true"/> when the number can be a weight.</returns>
-    internal static bool IsNonNegativeAndFinite(double percentage) =>
+    /// <returns><see langword="true"/> when the number is valid as a weight.</returns>
+    public static bool IsNonNegativeAndFinite(double percentage) =>
         double.IsFinite(percentage) && percentage >= 0;
 
     // What the numbers leave of 100, added up in the order written.
@@ -96,7 +96,7 @@ public abstract record DrawingWeight
     /// <summary>A number, which is its own share.</summary>
     /// <param name="Percentage">The percentage, as written or as the world answered it.</param>
     /// <exception cref="ArgumentOutOfRangeException">
-    /// The percentage is negative or not finite, which no share can be.
+    /// The percentage is negative or not finite.
     /// </exception>
     public sealed record Number(double Percentage) : DrawingWeight
     {

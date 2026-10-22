@@ -332,6 +332,7 @@
           "properties": {
             "reason": {
               "type": "string",
+              "description": "Why the command was refused. unplayable-node is reserved: the C# runner plays every node kind and never sends it, and it stays for a runtime that cannot play a kind, or a kind added later.",
               "enum": [
                 "not-started",
                 "already-ended",
@@ -342,6 +343,7 @@
                 "unanswered-key",
                 "unasked-key",
                 "wrong-answer-kind",
+                "invalid-weight",
                 "key-needed-both-ways",
                 "unplayable-node",
                 "no-such-option",

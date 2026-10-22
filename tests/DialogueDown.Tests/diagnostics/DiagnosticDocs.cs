@@ -382,6 +382,36 @@ internal static class DiagnosticDocs
                     """,
                     ["Alice: The road was long."]))),
         new(
+            DiagnosticCatalog.ExtraSpaces,
+            "A Markdown preview shows spaces typed together as one, and so does the game: where two "
+            + "or more spaces, tabs, or encoded line breaks stand together in text the player reads, "
+            + "the player sees one space. That is usually what you want, so this is a note, not a "
+            + "fault, and it exists so the collapse is never a surprise. Two spaces after a sentence "
+            + "get no exemption; one space reads the same. If you meant the width, name the space: "
+            + "a non-breaking space (`&nbsp;`) never collapses.",
+            new(
+                """
+                # The Tavern
+
+                Alice: Welcome.  Sit anywhere.
+                """,
+                """
+                # The Tavern
+
+                Alice: Welcome. Sit anywhere.
+                """,
+                ["Welcome.  Sit"],
+                ["Welcome. Sit"],
+                "if the extra width was a habit",
+                new(
+                    "if the width was meant",
+                    """
+                    # The Tavern
+
+                    Alice: Welcome.&nbsp; Sit anywhere.
+                    """,
+                    ["Welcome.&nbsp; Sit"]))),
+        new(
             DiagnosticCatalog.DuplicateAnchor,
             "Each scene heading becomes a jump target — an anchor slugged from its text. Two headings "
             + "with the same text produce the same anchor, so a jump to it is ambiguous.",
@@ -629,6 +659,22 @@ internal static class DiagnosticDocs
                 ["> # Upstairs"],
                 ["# Upstairs"])),
         new(
+            DiagnosticCatalog.KeyNeededBothWays,
+            "A line, a menu, or a random choice asks the game everything it needs at once, and the "
+            + "game gives one answer per key. A condition needs true or false, a query words, and a "
+            + "key weight a number, so one key cannot serve two of them in one place. Use a "
+            + "separate key for one of the uses; a key may still be used another way in a different "
+            + "place.",
+            new(
+                """
+                `Hero.Title?` Guard: Welcome, `"Hero.Title"`.
+                """,
+                """
+                `Hero.HasTitle?` Guard: Welcome, `"Hero.Title"`.
+                """,
+                ["Hero.Title?"],
+                ["Hero.HasTitle?"])),
+        new(
             DiagnosticCatalog.DeeplyNestedChoiceBranch,
             "Nested choices remain valid, but a fourth level becomes difficult to scan and "
             + "maintain. Consider moving that branch into a new scene and jumping to it instead.",
@@ -684,8 +730,8 @@ internal static class DiagnosticDocs
             DiagnosticCatalog.SingleOptionRandomChoice,
             "A random choice with only one option always selects it — the weight has no effect and "
             + "the list is not really random. This usually means a plain line was given a weight, "
-            + "or the other options are missing. A lone `0%` option is never selected, so it is "
-            + "reported as a zero total (DLG2010) instead.",
+            + "or the other options are missing. A lone option with a `0%` chance is never "
+            + "selected, so it is reported as a zero total (DLG2010) instead.",
             new(
                 """
                 # Coin

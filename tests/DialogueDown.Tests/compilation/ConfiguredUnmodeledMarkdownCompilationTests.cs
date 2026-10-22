@@ -105,8 +105,8 @@ public sealed class ConfiguredUnmodeledMarkdownCompilationTests
     [Fact]
     public void CreateDefault_Unconfigured_IgnoresALinkReferenceDefinition()
     {
-        // A link reference definition is CommonMark plumbing, not a spoken line, so it leaves no
-        // text behind.
+        // A link reference definition only names a link's target for other links to use; it is
+        // not a spoken line, so it leaves no text behind.
         const string Script = """
             # A
 

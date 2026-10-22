@@ -3,6 +3,7 @@ using DialogueDown.Playbook.Conditions;
 using DialogueDown.Playbook.Edges;
 using DialogueDown.Playbook.Nodes;
 using DialogueDown.Playbook.Speech;
+using DialogueDown.Playbook.Weights;
 
 namespace DialogueDown.Runtime.Stepping;
 
@@ -12,12 +13,13 @@ namespace DialogueDown.Runtime.Stepping;
 /// <remarks>
 /// A run asks the world about a node on arrival, before a line continues after a command, and on
 /// leaving, because the node may change the world in between. Arriving asks what decides whether
-/// the node plays at all and what its first words say. Leaving asks what decides which way out is
-/// taken, by which time whatever the node performs has been performed.
+/// the node plays at all, what its first words say, and, at a random choice, how likely each random
+/// option is. Leaving asks what decides which way out is taken, by which time whatever the node
+/// performs has been performed.
 /// <para>
-/// Arriving asks two kinds of question at once. A guard is answered with a truth, and a query
-/// standing in what the node says is answered with words, so the two are read apart and put back
-/// together as one request.
+/// Arriving can ask several kinds of question at once. A guard is answered with a truth, a query
+/// standing in what the node says with words, and a key weight with a number, so each kind is read
+/// apart and all are put back together as one request.
 /// </para>
 /// <para>
 /// Within one moment a key is asked about once however many places name it, so a menu cannot offer
@@ -89,6 +91,30 @@ internal static class NodeQuestionExtensions
         };
     }
 
+    /// <summary>What the world must answer before a run can tell how likely each random option is.</summary>
+    /// <param name="node">The node being arrived at.</param>
+    /// <returns>
+    /// For a random choice, the keys its random options' key weights ask about, each needing a
+    /// number, in the order written and each named once. Empty for a random choice whose odds are
+    /// all written, and for every other kind.
+    /// </returns>
+    /// <remarks>
+    /// A guarded random option's key weight is asked about too. Its guard goes out in the same
+    /// request, so whether the random option is in play is not known until both are answered.
+    /// </remarks>
+    public static ImmutableArray<string> FindNumbersForPlaying(this Node node)
+    {
+        ArgumentNullException.ThrowIfNull(node);
+
+        return node switch
+        {
+            // A random choice reads every key weight before it asks for a draw, so each random
+            // option in play has its number when the shares are worked out.
+            RandomChoiceNode random => random.RandomOptions().WeightKeys(),
+            _ => [],
+        };
+    }
+
     /// <summary>What the world must answer before a run can tell which way out it takes.</summary>
     /// <param name="node">The node being left.</param>
     /// <returns>The keys its ways out ask about, each named once. Empty when none is guarded.</returns>
@@ -106,6 +132,28 @@ internal static class NodeQuestionExtensions
             .. node.Out
                 .Where(way => way is DivertEdge or BranchEdge)
                 .SelectMany(way => KeysOf(((IConditional)way).Condition))
+                .Distinct(StringComparer.Ordinal),
+        ];
+    }
+
+    /// <summary>The keys the key weights of some random options read.</summary>
+    /// <param name="randomOptions">The random options, in the order written.</param>
+    /// <returns>
+    /// The keys, in the order written and each named once. Empty when every weight is written.
+    /// </returns>
+    /// <remarks>
+    /// Read from whichever random options it is given, so a caller can leave some out first.
+    /// </remarks>
+    public static ImmutableArray<string> WeightKeys(this IEnumerable<RandomOptionEdge> randomOptions)
+    {
+        ArgumentNullException.ThrowIfNull(randomOptions);
+
+        return
+        [
+            .. randomOptions
+                .Select(option => option.Weight)
+                .OfType<QueryWeight>()
+                .Select(keyWeight => keyWeight.Key)
                 .Distinct(StringComparer.Ordinal),
         ];
     }

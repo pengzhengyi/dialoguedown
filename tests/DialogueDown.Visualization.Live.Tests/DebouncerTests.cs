@@ -84,7 +84,7 @@ public sealed class DebouncerTests
     [Fact]
     public void Trigger_DuringTheAction_CoalescesIntoExactlyOneSerializedFollowUpRun()
     {
-        // A change that lands while the debounced action is still running (a slow compile) must
+        // A change that arrives while the debounced action is still running (a slow compile) must
         // not run concurrently with it; it is coalesced into exactly one follow-up run after the
         // current one finishes, so an older run can never broadcast after a newer one.
         var time = new FakeTimeProvider();
@@ -167,7 +167,7 @@ public sealed class DebouncerTests
     [Fact]
     public void Fire_AfterDispose_DoesNotRunTheAction()
     {
-        // A timer callback already queued when Dispose lands must not run the action afterward.
+        // A timer callback already queued when Dispose is called must not run the action afterward.
         var provider = new ManualTimeProvider();
         var runs = 0;
         var debouncer = new Debouncer(TimeSpan.FromMilliseconds(10), () => runs++, provider);
@@ -182,8 +182,9 @@ public sealed class DebouncerTests
     [Fact]
     public void Dispose_DuringARun_SkipsTheCoalescedRestart()
     {
-        // A change arrives mid-run (coalesced into a follow-up), but Dispose lands before the run
-        // finishes: the follow-up restart must be skipped rather than call Change on a disposed timer.
+        // A change arrives mid-run (coalesced into a follow-up), but Dispose is called before the
+        // run finishes: the follow-up restart must be skipped rather than call Change on a
+        // disposed timer.
         var provider = new ManualTimeProvider();
         var runs = 0;
         Debouncer debouncer = null!; // assigned below, before its action can run
@@ -193,7 +194,7 @@ public sealed class DebouncerTests
             if (runs == 1)
             {
                 debouncer.Trigger(); // coalesced into a pending follow-up
-                debouncer.Dispose(); // ...but disposal lands before the run returns
+                debouncer.Dispose(); // ...but disposal comes before the run returns
             }
         }, provider);
         var timer = provider.Timer;
@@ -237,8 +238,9 @@ public sealed class DebouncerTests
     }
 
     // A time provider whose single timer fires only when the test calls Fire(), and that records
-    // how many times it was started or restarted — enough to drive the debounce deterministically, including
-    // a callback that throws, without depending on a fake clock's post-throw behavior.
+    // how many times it was started or restarted — enough to drive the debounce
+    // deterministically, including a callback that throws, without depending on a fake clock's
+    // post-throw behavior.
     private sealed class ManualTimeProvider : TimeProvider
     {
         private ManualTimer? _timer;

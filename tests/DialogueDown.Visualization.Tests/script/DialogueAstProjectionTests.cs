@@ -8,7 +8,8 @@ namespace DialogueDown.Visualization.Tests.Script;
 
 public sealed class DialogueAstProjectionTests
 {
-    // A random choice with one option of each weight: a number, auto, and a query.
+    // A random choice with one option of each weight: a number weight, an auto weight, and a key
+    // weight.
     private const string Weighted = """
         - `50%` Alice: Hi.
         - `%` Alice: Bye.
@@ -109,7 +110,8 @@ public sealed class DialogueAstProjectionTests
             [new("name", "Alice"), new("id", "alice"), new("span", "[0, 14)")],
             withId.Attributes);
 
-        // A tag is what makes a prefix with no id a declaration; its span runs to the tag's end.
+        // A tag is what makes a prefix with no id a declaration. As with an id, the span covers
+        // the whole prefix: "Alice #mood=happy: ", through the colon and the space after it.
         var withoutId = DescribeSingle<SpeakerDeclaration>("Alice #mood=happy: Hi.");
         Assert.Equal([new("name", "Alice"), new("span", "[0, 19)")], withoutId.Attributes);
     }

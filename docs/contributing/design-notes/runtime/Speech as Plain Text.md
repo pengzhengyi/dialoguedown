@@ -69,13 +69,17 @@ compiler's helper use.
 
 ## The readings that exist
 
-Every reading of speech as plain text gives the same answer.
+Every reading of speech as plain text gives the same answer for the same
+fragment. A whole list can differ between the stages: the compiler's own
+fragments keep the spaces the writer typed, and emission collapses them
+([Speech Whitespace](../language/Speech%20Whitespace.md#d4--normalized-at-emission-not-in-desugar)),
+so a line read before emission may hold extra spaces its playbook speech does not.
 
 | Where | What reads | Agreement |
 | --- | --- | --- |
 | The conformance corpus | A fixture's string form of `speech` or `label` is this flattening, for every port | The contract the others answer to |
-| `SpeechText.Of` | A playbook's speech; called by the runtime's `SaidMatcher` and `StepAssert`, and by the Nodes table for a divert's label | The public one; every kind covered, enforced by a test |
-| `InlineText.Of` | The compiler's own fragments, while a script compiles | Held to `SpeechText` fragment by fragment, through the real mapping |
+| `SpeechText.Of` | A playbook's speech; called by the runtime harness's `SpeechClaim`, which the `said`, `continued`, and `offer` matchers share, by `StepAssert`, and by the Nodes table for a divert's label | The public one; every kind covered, enforced by a test |
+| `InlineText.Of` | The compiler's own fragments, while a script compiles | Held to `SpeechText` fragment by fragment, through the real mapping; a whole list keeps the extra spaces emission collapses |
 | The Nodes table | Walks speech into styled segments with the same per-kind rules, and names a query through `SpeechText.PlaceholderFor` | Same rules; not held to `SpeechText` by a test |
 
 Eight label sites across the graph, the semantic model, and the desugared AST read
@@ -293,7 +297,7 @@ control node by its effects.
   overloads and `PlaceholderFor`, the library's whole addition to its public API.
 - **`script/ast/InlineText.cs`** — a `Query` case that calls `PlaceholderFor`, so the
   braces have one definition. Kept rather than merged away; see D3.
-- **The conformance harness** — `SaidMatcher` compares a fixture's string form
+- **The conformance harness** — `SpeechClaim` compares a fixture's string form
   against `SpeechText.Of`, so the normative flattening and the implementation are the
   same thing by construction.
 - **The writer's guide** — the game-state guide's
@@ -325,7 +329,7 @@ drawing, which only a real compile exercises.
   one speaker's speech to arrive as one line with a break inside it has no way to say
   so. That is the format's existing shape rather than anything this function decides,
   and changing it would be a format change — but the question belongs somewhere, and
-  flattening is where it surfaces.
+  flattening is where it shows.
 - **Should the report mark an unanswered query as a diagnostic rather than only
   drawing it?** A line whose words depend on the world is worth knowing about when
   auditing a script, and the report has a Problems panel that could say so. Against:

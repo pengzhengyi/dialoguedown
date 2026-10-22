@@ -1,8 +1,8 @@
 using System.Text.Json;
-using DialogueDown.Compilation;
 using DialogueDown.Emission;
 using DialogueDown.Playbook;
 using DialogueDown.Visualization.Playbook;
+using DialogueDown.Visualization.Tests.Support;
 
 namespace DialogueDown.Visualization.Tests.Playbook;
 
@@ -114,8 +114,5 @@ public sealed class PlaybookProjectionTests
 
     private static PlaybookReport Project(string source) =>
         PlaybookProjection.Project(
-            Compile(source), Script, PlaybookWriterFactory.CreateDefault());
-
-    private static CompilationResult Compile(string source) =>
-        ScriptCompilerFactory.CreateDefault().Compile(source);
+            Pipeline.Compilation(source), Script, PlaybookWriterFactory.CreateDefault());
 }

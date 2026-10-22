@@ -1,0 +1,9 @@
+{
+  "$schema": "https://pengzhengyi.github.io/dialoguedown/schema/fixture-0.schema.json",
+  "name": "a key one random choice needs as both a truth and a number is refused before it is asked",
+  "playbook": "playbook.json",
+  "because": "Guard.Mood guards a random option and is also its key weight, and a key is asked about once, so its one answer would have to be both a truth and a number; the run refuses on arrival rather than ask a question no answer could settle",
+  "session": [
+    { "expect": { "refused": { "reason": "key-needed-both-ways" } } }
+  ]
+}

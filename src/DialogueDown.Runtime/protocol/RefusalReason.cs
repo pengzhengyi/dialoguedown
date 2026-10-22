@@ -42,7 +42,18 @@ public enum RefusalReason
     /// <summary>The world answered a key with something other than the kind its use needs.</summary>
     WrongAnswerKind,
 
-    /// <summary>One key on a node is needed as a truth and as words both.</summary>
+    /// <summary>
+    /// The world answered a key weight with an invalid number, or key weights with numbers whose
+    /// shares are too large to add up.
+    /// </summary>
+    /// <remarks>
+    /// A number is valid as a weight when it is finite and not negative, so <c>-10</c> for
+    /// <c>`Guard.Mood%`</c> is refused. So is <c>1e308</c> for each of two key weights: each number
+    /// is valid, but their shares are too large to add up.
+    /// </remarks>
+    InvalidWeight,
+
+    /// <summary>One key on a node is needed as more than one kind of answer.</summary>
     /// <remarks>
     /// A key is asked about once, so in <c>`Alice.HasKey?` Alice: You have `"Alice.HasKey"`.</c>
     /// one answer would have to be both a truth and words.
@@ -50,6 +61,11 @@ public enum RefusalReason
     KeyNeededBothWays,
 
     /// <summary>The node is of a kind this build cannot play.</summary>
+    /// <remarks>
+    /// Reserved: the C# runner plays every kind of node and never sends it. It stays in the set
+    /// so a runtime that cannot play a kind, or a kind added later, refuses it by this reason
+    /// rather than misplaying it.
+    /// </remarks>
     UnplayableNode,
 
     /// <summary><c>Choose</c> named a position outside the options the menu offered.</summary>
