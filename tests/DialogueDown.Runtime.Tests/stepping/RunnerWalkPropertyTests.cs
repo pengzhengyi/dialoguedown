@@ -1,4 +1,5 @@
 using CsCheck;
+using DialogueDown.Playbook;
 using DialogueDown.Playbook.Checking;
 using DialogueDown.Playbook.Nodes;
 using DialogueDown.Playbook.Speech;
@@ -6,6 +7,7 @@ using DialogueDown.Playbook.Weights;
 using DialogueDown.Runtime.Protocol;
 using DialogueDown.Runtime.Situations;
 using DialogueDown.Runtime.Stepping;
+using DialogueDown.TestSupport;
 
 namespace DialogueDown.Runtime.Tests.Stepping;
 
@@ -18,10 +20,6 @@ namespace DialogueDown.Runtime.Tests.Stepping;
 public sealed class RunnerWalkPropertyTests
 {
     private const int Samples = 200;
-
-    // For a check that some walk meets a shape few drawn playbooks hold, so that a run of the suite
-    // all but never misses it by chance.
-    private const int ManySamples = 1000;
 
     // A drawn playbook may loop, so a walk is cut off rather than run to an end. Passing a node can
     // take five steps: answering what playing it needs, the host finishing a command inside a line,
@@ -53,7 +51,7 @@ public sealed class RunnerWalkPropertyTests
     /// </remarks>
     [Fact]
     public void AWalkOnlyEverStandsWhereThePlaybookHasANode() =>
-        ForEveryWalk((context, stepped) => AssertAddressable(context, stepped.State.Situation));
+        ForEveryStep((context, stepped) => AssertAddressable(context, stepped.State.Situation));
 
     /// <summary>
     /// A run that stops part-way through a line only ever continues from a segment that line has.
@@ -65,7 +63,7 @@ public sealed class RunnerWalkPropertyTests
     /// </remarks>
     [Fact]
     public void AWalkOnlyEverContinuesALineFromASegmentItHas() =>
-        ForEveryWalk((context, stepped) => AssertContinuesWithinALine(context, stepped.State.Situation));
+        ForEveryStep((context, stepped) => AssertContinuesWithinALine(context, stepped.State.Situation));
 
     /// <summary>
     /// Some walk stops part-way through a line.
@@ -75,21 +73,11 @@ public sealed class RunnerWalkPropertyTests
     /// above would pass without checking anything.
     /// </remarks>
     [Fact]
-    public void SomeWalk_StopsPartWayThroughALine()
-    {
-        var stops = 0;
-
-        ForEveryWalk(
-            (_, stepped) =>
-            {
-                if (stepped.State.Situation is AwaitingDone { Resume: Resume.From })
-                {
-                    Interlocked.Increment(ref stops);
-                }
-            });
-
-        Assert.True(stops > 0, "No walk stopped part-way through a line.");
-    }
+    public void SomeWalk_StopsPartWayThroughALine() =>
+        Assert.True(
+            SomeStep((_, stepped) =>
+                stepped.State.Situation is AwaitingDone { Resume: Resume.From }),
+            "No walk stopped part-way through a line.");
 
     /// <summary>
     /// A menu is only ever offered with every label's queries filled in.
@@ -100,7 +88,7 @@ public sealed class RunnerWalkPropertyTests
     /// </remarks>
     [Fact]
     public void AWalkIsOnlyEverOfferedLabelsWithTheirQueriesFilled() =>
-        ForEveryWalk(
+        ForEveryStep(
             (_, stepped) => Assert.All(
                 stepped.Events.OfType<Offer>().SelectMany(offer => offer.Options),
                 option => Assert.False(
@@ -114,21 +102,12 @@ public sealed class RunnerWalkPropertyTests
     /// above would pass without a query ever standing in a label.
     /// </remarks>
     [Fact]
-    public void SomeWalk_IsOfferedALabelTheWorldFilledIn()
-    {
-        var filled = 0;
-
-        ForEveryWalk(
-            (_, stepped) =>
-            {
-                if (stepped.Events.OfType<Offer>().SelectMany(offer => offer.Options).Any(SaysTheWorldsWords))
-                {
-                    Interlocked.Increment(ref filled);
-                }
-            });
-
-        Assert.True(filled > 0, "No walk was offered a label the world filled in.");
-    }
+    public void SomeWalk_IsOfferedALabelTheWorldFilledIn() =>
+        Assert.True(
+            SomeStep((_, stepped) => stepped.Events.OfType<Offer>()
+                .SelectMany(offer => offer.Options)
+                .Any(SaysTheWorldsWords)),
+            "No walk was offered a label the world filled in.");
 
     /// <summary>
     /// Some walk is offered an option it cannot take.
@@ -139,21 +118,11 @@ public sealed class RunnerWalkPropertyTests
     /// would pass without testing that.
     /// </remarks>
     [Fact]
-    public void SomeWalk_IsOfferedAnOptionItCannotTake()
-    {
-        var withheld = 0;
-
-        ForEveryWalk(
-            (_, stepped) =>
-            {
-                if (stepped.Events.OfType<Offer>().Any(offer => offer.Options.Any(option => !option.Available)))
-                {
-                    Interlocked.Increment(ref withheld);
-                }
-            });
-
-        Assert.True(withheld > 0, "No walk was offered an option it cannot take.");
-    }
+    public void SomeWalk_IsOfferedAnOptionItCannotTake() =>
+        Assert.True(
+            SomeStep((_, stepped) => stepped.Events.OfType<Offer>()
+                .Any(offer => offer.Options.Any(option => !option.Available))),
+            "No walk was offered an option it cannot take.");
 
     /// <summary>
     /// A run only ever asks for a draw that can land on a random option.
@@ -164,7 +133,7 @@ public sealed class RunnerWalkPropertyTests
     /// </remarks>
     [Fact]
     public void AWalkIsOnlyEverAskedForADrawThatCanLand() =>
-        ForEveryWalk(
+        ForEveryStep(
             (_, stepped) => Assert.All(
                 stepped.Events.OfType<Draw>(), draw => Assert.Contains(draw.Shares, share => share > 0)));
 
@@ -176,21 +145,10 @@ public sealed class RunnerWalkPropertyTests
     /// the walk above would pass without a draw ever being asked for.
     /// </remarks>
     [Fact]
-    public void SomeWalk_IsAskedForADraw()
-    {
-        var draws = 0;
-
-        ForEveryWalk(
-            (_, stepped) =>
-            {
-                if (stepped.Events.OfType<Draw>().Any())
-                {
-                    Interlocked.Increment(ref draws);
-                }
-            });
-
-        Assert.True(draws > 0, "No walk was asked for a draw.");
-    }
+    public void SomeWalk_IsAskedForADraw() =>
+        Assert.True(
+            SomeStep((_, stepped) => stepped.Events.OfType<Draw>().Any()),
+            "No walk was asked for a draw.");
 
     /// <summary>
     /// Some walk is asked for a draw with a random option the world excluded.
@@ -200,22 +158,11 @@ public sealed class RunnerWalkPropertyTests
     /// world withheld, the walks above would pass without a random option ever being excluded.
     /// </remarks>
     [Fact]
-    public void SomeWalk_IsAskedForADrawWithARandomOptionExcluded()
-    {
-        var excluded = 0;
-
-        ForEveryWalk(
-            (context, stepped) =>
-            {
-                if (stepped.State.Situation is AwaitingDraw waiting && LeavesARandomOptionOut(context, waiting))
-                {
-                    Interlocked.Increment(ref excluded);
-                }
-            },
-            walks: ManySamples);
-
-        Assert.True(excluded > 0, "No walk was asked for a draw with a random option excluded.");
-    }
+    public void SomeWalk_IsAskedForADrawWithARandomOptionExcluded() =>
+        Assert.True(
+            SomeStep((context, stepped) => stepped.State.Situation is AwaitingDraw waiting
+                && LeavesARandomOptionOut(context, waiting)),
+            "No walk was asked for a draw with a random option excluded.");
 
     /// <summary>
     /// Some walk is asked for a draw with a share the world answered.
@@ -225,22 +172,11 @@ public sealed class RunnerWalkPropertyTests
     /// walks above would pass without a number the world answered ever reaching a draw.
     /// </remarks>
     [Fact]
-    public void SomeWalk_IsAskedForADrawWithAShareTheWorldAnswered()
-    {
-        var answered = 0;
-
-        ForEveryWalk(
-            (context, stepped) =>
-            {
-                if (stepped.State.Situation is AwaitingDraw waiting && HasAShareTheWorldAnswered(context, waiting))
-                {
-                    Interlocked.Increment(ref answered);
-                }
-            },
-            walks: ManySamples);
-
-        Assert.True(answered > 0, "No walk was asked for a draw with a share the world answered.");
-    }
+    public void SomeWalk_IsAskedForADrawWithAShareTheWorldAnswered() =>
+        Assert.True(
+            SomeStep((context, stepped) => stepped.State.Situation is AwaitingDraw waiting
+                && HasAShareTheWorldAnswered(context, waiting)),
+            "No walk was asked for a draw with a share the world answered.");
 
     /// <summary>
     /// Every answer a walk gives is one the run accepts.
@@ -252,7 +188,7 @@ public sealed class RunnerWalkPropertyTests
     /// </remarks>
     [Fact]
     public void EveryAnswerAWalkGives_IsOneTheRunAccepts() =>
-        ForEveryWalk(
+        ForEveryStep(
             (_, stepped) =>
             {
                 var turnedAway = stepped.Events.OfType<Refused>()
@@ -275,44 +211,65 @@ public sealed class RunnerWalkPropertyTests
         PlaybookGen.Valid().Sample(
             playbook => PlaybookCheckerFactory.CreateDefault().Check(playbook), iter: Samples);
 
-    // Walks every drawn playbook from its start, answering its questions from a world drawn beside
-    // it, taking an option the player can take at every menu, picked by a number drawn for it, and
-    // drawing at every random choice with a draw made for it. Every step the walk takes is checked,
-    // not only the one it stops at.
-    private static void ForEveryWalk(Action<PlayContext, StepResult> everyStepHolds, int walks = Samples) =>
-        Gen.Select(PlaybookGen.Valid(), PlaybookGen.Worlds(), Gen.Int.NonNegative, Draws()).Sample(
-            (playbook, world, pick, draw) =>
+    // Checks every step of every drawn walk, not only the one it stops at.
+    private static void ForEveryStep(Action<PlayContext, StepResult> holds) =>
+        Walks().Sample(
+            walk =>
             {
-                var context = PlayContext.Of(playbook);
-                var state = PlayState.Initial;
-                Command? command = new Start();
-
-                for (var taken = 0; taken < MostSteps && command is not null; taken++)
+                foreach (var (context, stepped) in StepsOf(walk))
                 {
-                    var stepped = Runner.Step(context, state, command);
-
-                    everyStepHolds(context, stepped);
-
-                    state = stepped.State;
-                    command = MovesOnFrom(state.Situation, world, pick, draw);
+                    holds(context, stepped);
                 }
             },
-            iter: walks);
+            iter: Samples);
+
+    // Whether some step of the walks GenCoverage draws has what a coverage test looks for.
+    private static bool SomeStep(Func<PlayContext, StepResult, bool> has) =>
+        GenCoverage.Covers(
+            Walks(), walk => StepsOf(walk).Any(step => has(step.Context, step.Stepped)));
+
+    // A drawn playbook, a world drawn beside it, a number that picks an option at every menu, and a
+    // draw made at every random choice.
+    private static Gen<Walk> Walks() =>
+        Gen.Select(
+            PlaybookGen.Valid(),
+            PlaybookGen.Worlds(),
+            Gen.Int.NonNegative,
+            Draws(),
+            (playbook, world, pick, draw) => new Walk(playbook, world, pick, draw));
 
     // A draw from 0 to 1, with both ends drawn on their own, because a host may send either.
     private static Gen<double> Draws() => Gen.OneOf(Gen.Const(0.0), Gen.Const(1.0), Gen.Double[0.0, 1.0]);
 
+    // Every step a walk takes from the playbook's start, until the run ends or the walk is cut off.
+    private static IEnumerable<(PlayContext Context, StepResult Stepped)> StepsOf(Walk walk)
+    {
+        var context = PlayContext.Of(walk.Playbook);
+        var state = PlayState.Initial;
+        Command? command = new Start();
+
+        for (var taken = 0; taken < MostSteps && command is not null; taken++)
+        {
+            var stepped = Runner.Step(context, state, command);
+
+            yield return (context, stepped);
+
+            state = stepped.State;
+            command = MovesOnFrom(state.Situation, walk);
+        }
+    }
+
     // The walk sends whatever the stage it reached calls for, so a run that stopped to hand the
     // host work, to ask the world something, to offer a menu, or to ask for a draw carries on
     // rather than ending the walk there.
-    private static Command? MovesOnFrom(Situation situation, DrawnWorld world, int pick, double draw) =>
+    private static Command? MovesOnFrom(Situation situation, Walk walk) =>
         situation switch
         {
             AtNode => new Next(),
             AwaitingDone => new Done(),
-            AwaitingSupply waiting => world.Answering(waiting.Keys),
-            AwaitingChoice waiting => new Choose(OneThePlayerCanTake(waiting, pick)),
-            AwaitingDraw => new Drawn(draw),
+            AwaitingSupply waiting => walk.World.Answering(waiting.Keys),
+            AwaitingChoice waiting => new Choose(OneThePlayerCanTake(waiting, walk.Pick)),
+            AwaitingDraw => new Drawn(walk.Draw),
             _ => null,
         };
 
@@ -392,4 +349,6 @@ public sealed class RunnerWalkPropertyTests
 
         Assert.InRange(segmentIndex, 1, SpeechTemplate.Segments(line.Speech).Length - 1);
     }
+
+    private sealed record Walk(PlaybookDocument Playbook, DrawnWorld World, int Pick, double Draw);
 }
