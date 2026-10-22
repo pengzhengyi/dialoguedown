@@ -39,6 +39,41 @@ public sealed class QuestionsTests
             Assert.Single(Questions.Asked(["Hero.HasSword", "Hero.HasSword"], [], [])).Value);
 
     [Fact]
+    public void ToRequest_WhenTheMomentAsksNothing_NamesNoKeys() =>
+        Assert.Empty(Questions.ToRequest([], [], []).Keys);
+
+    [Fact]
+    public void ToRequest_NamesEachKeyUnderTheKindOfAnswerItsUseNeeds()
+    {
+        var request = Questions.ToRequest(["Hero.HasSword"], ["HeroName"], ["Guard.Mood"]);
+
+        Assert.Equal(["Hero.HasSword"], request.BooleanKeys);
+        Assert.Equal(["HeroName"], request.TextKeys);
+        Assert.Equal(["Guard.Mood"], request.NumberKeys);
+    }
+
+    [Fact]
+    public void ToRequest_LeavesAKindNothingNeedsEmpty()
+    {
+        var request = Questions.ToRequest(["Hero.HasSword"], [], []);
+
+        Assert.Empty(request.TextKeys);
+        Assert.Empty(request.NumberKeys);
+    }
+
+    [Fact]
+    public void ToRequest_KeepsEachKindsKeysInTheOrderWritten() =>
+        Assert.Equal(
+            ["Hero.HasSword", "Alice.HasKey"],
+            Questions.ToRequest(["Hero.HasSword", "Alice.HasKey"], [], []).BooleanKeys);
+
+    [Fact]
+    public void ToRequest_NamesAKeyWrittenTwiceInOneKindOnce() =>
+        Assert.Equal(
+            ["Hero.HasSword", "Hero.HasShield"],
+            Questions.ToRequest(["Hero.HasSword", "Hero.HasShield", "Hero.HasSword"], [], []).BooleanKeys);
+
+    [Fact]
     public void Keys_WhenTheMomentAsksNothing_AreNone() =>
         Assert.Empty(Questions.Keys([], [], []));
 

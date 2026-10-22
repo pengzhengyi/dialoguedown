@@ -19,9 +19,9 @@ internal static class StepResults
     /// </remarks>
     public static StepResult Ask(int position, NodeQuestions questions, Moment moment)
     {
-        var keys = questions.Keys();
+        var request = questions.ToRequest();
 
-        return new(new PlayState(new AwaitingSupply(position, keys, moment)), [new Resolve(keys)]);
+        return new(new PlayState(new AwaitingSupply(position, request.Keys, moment)), [request]);
     }
 
     /// <summary>Says why the run cannot go on, and stands it at the node it is refusing from.</summary>

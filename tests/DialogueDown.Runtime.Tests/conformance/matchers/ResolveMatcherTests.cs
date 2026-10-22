@@ -41,7 +41,8 @@ public sealed class ResolveMatcherTests
             new EndedMatcher().Match(Asked("Alice.HasKey"), Json("true")),
             "expected the run to end, but it asked the world about Alice.HasKey");
 
-    private static Resolve Asked(params string[] keys) => new([.. keys]);
+    private static Resolve Asked(string booleanKey, string? textKey = null) =>
+        new(BooleanKeys: [booleanKey], TextKeys: textKey is null ? [] : [textKey], NumberKeys: []);
 
     private SessionOutcome Match(Event happened, string expected) =>
         _matcher.Match(happened, Json(expected));

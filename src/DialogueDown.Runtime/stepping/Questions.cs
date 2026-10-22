@@ -65,6 +65,24 @@ internal static class Questions
         ImmutableArray<string> truths, ImmutableArray<string> words, ImmutableArray<string> numbers) =>
         [.. truths.Concat(words).Concat(numbers).Distinct(StringComparer.Ordinal)];
 
+    /// <summary>A moment's questions as a request, each key named under the kind of answer its use needs.</summary>
+    /// <param name="truths">The keys a guard reads, each needing a truth.</param>
+    /// <param name="words">The keys a query reads, each needing words.</param>
+    /// <param name="numbers">The keys a key weight reads, each needing a number.</param>
+    /// <returns>
+    /// The request, each kind's keys named once in the order written. A kind nothing needs is empty.
+    /// </returns>
+    /// <remarks>
+    /// A key needed as more than one kind would be named in two kinds, which
+    /// <see cref="NeededBothWays"/> answers before a request is sent.
+    /// </remarks>
+    public static Resolve ToRequest(
+        ImmutableArray<string> truths, ImmutableArray<string> words, ImmutableArray<string> numbers) =>
+        new(
+            BooleanKeys: [.. truths.Distinct(StringComparer.Ordinal)],
+            TextKeys: [.. words.Distinct(StringComparer.Ordinal)],
+            NumberKeys: [.. numbers.Distinct(StringComparer.Ordinal)]);
+
     /// <summary>The questions a moment puts, each key with the kind its use needs.</summary>
     /// <param name="truths">The keys a guard reads, each needing a truth.</param>
     /// <param name="words">The keys a query reads, each needing words.</param>

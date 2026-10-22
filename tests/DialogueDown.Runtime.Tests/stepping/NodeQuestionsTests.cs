@@ -36,6 +36,16 @@ public sealed class NodeQuestionsTests
             NodeQuestions.RequiredToPlay(AMenuWhoseOptionsAreGuardedAndNameWhatTheyHold()).Keys());
 
     [Fact]
+    public void ToRequest_OfAMenu_NamesItsGuardsAsBooleanKeysAndItsLabelsQueriesAsTextKeys()
+    {
+        var request = NodeQuestions.RequiredToPlay(AMenuWhoseOptionsAreGuardedAndNameWhatTheyHold()).ToRequest();
+
+        Assert.Equal(["Hero.HasSword", "Hero.HasShield"], request.BooleanKeys);
+        Assert.Equal(["WeaponName", "ShieldName"], request.TextKeys);
+        Assert.Empty(request.NumberKeys);
+    }
+
+    [Fact]
     public void Asked_HoldsEachKeyToTheKindItsUseNeeds()
     {
         var asked = NodeQuestions.RequiredToPlay(AGuardedLineSaying("Hero.HasSword", "HeroName")).Asked();
