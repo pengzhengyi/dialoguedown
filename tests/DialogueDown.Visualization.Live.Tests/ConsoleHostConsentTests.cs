@@ -75,6 +75,7 @@ public sealed class ConsoleHostConsentTests
         Assert.Throws<ArgumentNullException>(
             () => new ConsoleHostConsent(interactive: true, new StringReader(string.Empty), null!));
 
+    /// <summary>A document with one image outside its folder, and the root that would cover it.</summary>
     private static HostConsentRequest Request() =>
         new("/proj/scene.dialogue.md", "/proj-root", ["/shared/a.png"]);
 }
