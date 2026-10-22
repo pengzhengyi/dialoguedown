@@ -23,8 +23,9 @@ internal static class Departure
         ArgumentNullException.ThrowIfNull(context);
 
         var leaving = context.NodeAt(position);
+        var neededForLeaving = NodeQuestions.RequiredToLeave(leaving);
 
-        return NodeQuestions.RequiredToLeave(leaving).Keys() is { IsEmpty: false } neededForLeaving
+        return neededForLeaving.Keys() is { IsEmpty: false }
             ? StepResults.Ask(position, neededForLeaving, Moment.BeforeLeaving)
             : Onward(context, position, leaving.OnwardTarget());
     }
