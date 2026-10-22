@@ -125,7 +125,7 @@ public sealed class GameCallInLabelPropertyTests
 
         Assert.Equal(script.Calls.Select(call => call.Key).Distinct(), SpeechTemplate.Keys(label));
         Assert.DoesNotContain(
-            Descendants(label),
+            SpeechFragments.All(label),
             fragment => fragment is DefaultCommandFragment or CustomCommandFragment);
     }
 
@@ -154,15 +154,6 @@ public sealed class GameCallInLabelPropertyTests
 
     private static IEnumerable<Edge> EdgesOf(PlaybookDocument playbook) =>
         playbook.Nodes.SelectMany(node => node.Out);
-
-    private static IEnumerable<SpeechFragment> Descendants(IEnumerable<SpeechFragment> fragments) =>
-        fragments.SelectMany(fragment => fragment switch
-        {
-            StyledTextFragment styled => Descendants(styled.Children).Prepend(fragment),
-            LinkFragment link => Descendants(link.Label).Prepend(fragment),
-            ImageFragment image => Descendants(image.Alt).Prepend(fragment),
-            _ => [fragment],
-        });
 
     private static string SourceAt(string source, Diagnostic diagnostic) =>
         source.Substring(diagnostic.Span.Start, diagnostic.Span.Length);

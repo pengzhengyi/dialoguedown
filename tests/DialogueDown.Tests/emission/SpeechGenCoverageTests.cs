@@ -23,40 +23,29 @@ public sealed class SpeechGenCoverageTests
         [" ", "\t", "\n", "\r", ((char)0x00A0).ToString(), ((char)0x2003).ToString()];
 
     [Fact]
-    public void TheGeneratorDrawsEveryKindOfFragment() =>
+    public void TheGeneratorProducesEveryKindOfFragment() =>
         GenCoverageAssert.AssertCoversEvery(
             SpeechGen.Speech(),
             _fragmentKinds,
-            (speech, kind) => Descendants(speech).Any(fragment => fragment.GetType() == kind));
+            (speech, kind) => SpeechFragments.AllButAltText(speech)
+                .Any(fragment => fragment.GetType() == kind));
 
     [Fact]
     public void TheGeneratorNestsStyledTextAndLinks() =>
         GenCoverageAssert.AssertCoversEvery(
             SpeechGen.Speech(),
             [typeof(StyledTextFragment), typeof(LinkFragment)],
-            (speech, kind) => Descendants(speech)
-                .SelectMany(Children)
-                .Any(child => child.GetType() == kind));
+            // Some fragment of the kind stands below a fragment the list holds directly.
+            (speech, kind) => speech.Any(outer => SpeechFragments.AllButAltText([outer])
+                .Skip(1)
+                .Any(inner => inner.GetType() == kind)));
 
     [Fact]
     public void TheGeneratorWritesEveryKindOfSpace() =>
         GenCoverageAssert.AssertCoversEvery(
             SpeechGen.Speech(),
             _spaces,
-            (speech, space) => Descendants(speech)
+            (speech, space) => SpeechFragments.AllButAltText(speech)
                 .OfType<TextFragment>()
                 .Any(text => text.Text.Contains(space, StringComparison.Ordinal)));
-
-    // Every fragment in the list and, after each styled text or link, those it holds. Not the alt
-    // of an image, which the spacing properties leave alone.
-    private static IEnumerable<SpeechFragment> Descendants(IEnumerable<SpeechFragment> speech) =>
-        speech.SelectMany(fragment => Descendants(Children(fragment)).Prepend(fragment));
-
-    private static IEnumerable<SpeechFragment> Children(SpeechFragment fragment) =>
-        fragment switch
-        {
-            StyledTextFragment styled => styled.Children,
-            LinkFragment link => link.Label,
-            _ => [],
-        };
 }

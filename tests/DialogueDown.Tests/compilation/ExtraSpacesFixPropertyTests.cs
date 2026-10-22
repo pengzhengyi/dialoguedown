@@ -77,15 +77,19 @@ public sealed class ExtraSpacesFixPropertyTests
     // Everything in the speech that is not words, in order, inside styled text, links, and alt
     // text too.
     private static IEnumerable<string> Unseen(IEnumerable<SpeechFragment> speech) =>
-        speech.SelectMany(fragment => fragment switch
+        SpeechFragments.All(speech).SelectMany(Unseen);
+
+    // What one fragment is that is not words: where a link or image points, a command, a tag, or
+    // a query.
+    private static IEnumerable<string> Unseen(SpeechFragment fragment) =>
+        fragment switch
         {
-            StyledTextFragment styled => Unseen(styled.Children),
-            LinkFragment link => Unseen(link.Label).Prepend($"link {link.Target}"),
-            ImageFragment image => Unseen(image.Alt).Prepend($"image {image.Source}"),
+            LinkFragment link => [$"link {link.Target}"],
+            ImageFragment image => [$"image {image.Source}"],
             DefaultCommandFragment command => [$"`({command.Action})`"],
             CustomCommandFragment command => [$"`{command.Name}({string.Join(", ", command.Args)})`"],
             TagFragment tag => [$"#{tag.Name}={tag.Value}"],
             QueryFragment query => [$"`\"{query.Key}\"`"],
-            _ => Enumerable.Empty<string>(),
-        });
+            _ => [],
+        };
 }

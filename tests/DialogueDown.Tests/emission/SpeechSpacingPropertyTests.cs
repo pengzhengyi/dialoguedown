@@ -52,7 +52,9 @@ public sealed class SpeechSpacingPropertyTests
                 Assert.DoesNotContain("__", seen, StringComparison.Ordinal);
                 Assert.False(seen.StartsWith('_'), $"A space stands before the first visible piece: {seen}");
                 Assert.False(seen.EndsWith('_'), $"A space stands after the last visible piece: {seen}");
-                Assert.All(Texts(normalized), text => Assert.DoesNotMatch("[\t\n\r]", text));
+                Assert.All(
+                    SpeechFragments.AllButAltText(normalized).OfType<TextFragment>(),
+                    text => Assert.DoesNotMatch("[\t\n\r]", text.Text));
             },
             iter: Samples,
             print: Written);
@@ -105,16 +107,6 @@ public sealed class SpeechSpacingPropertyTests
             ImageFragment or QueryFragment => "v",
             _ => "u",
         }));
-
-    // The text of every text fragment in the list, inside styled text and links too.
-    private static IEnumerable<string> Texts(IEnumerable<SpeechFragment> speech) =>
-        speech.SelectMany(fragment => fragment switch
-        {
-            TextFragment text => [text.Text],
-            StyledTextFragment styled => Texts(styled.Children),
-            LinkFragment link => Texts(link.Label),
-            _ => [],
-        });
 
     private static ImmutableArray<SpeechFragment> WithoutSpaces(IEnumerable<SpeechFragment> speech) =>
         [.. speech.Select(WithoutSpaces).OfType<SpeechFragment>()];
