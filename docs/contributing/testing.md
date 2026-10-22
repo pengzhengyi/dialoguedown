@@ -73,17 +73,39 @@ a question this one cannot.
 
 ### Property tests
 
-**One rule, a thousand generated inputs.**
+**One rule, many generated inputs.**
 
 An example-based test can only cover the cases someone thought to write. A
-property test states a rule that must hold for *every* script and then generates
-scripts to try to break it — that every node's span addresses text that exists,
-that a child's span sits inside its parent's, that compiling never throws.
+property test states a rule that must hold for *every* input and then generates
+inputs to try to break it — that every node's span addresses text that exists,
+that normalizing speech twice changes nothing, that a run only ever stands at a
+node the playbook has.
 
-Written with [CsCheck](https://github.com/AnthonyLloyd/CsCheck) in
-`tests/DialogueDown.Tests/compilation/CompilerPropertyTests.cs`. The
+They are written with [CsCheck](https://github.com/AnthonyLloyd/CsCheck), in the
+classes named `*PropertyTests`. Each run checks fresh samples, so every CI run
+looks a little further. A failure is always a real counterexample, never bad
+luck: the rule must hold for every sample, and one broke it. The
 [contribution guide](https://github.com/pengzhengyi/dialoguedown/blob/main/CONTRIBUTING.md)
-explains when to add one and how to keep the generator honest.
+says when to add one, how many samples a run takes, and what to do when one
+fails.
+
+**Every generator has a coverage test.** A property says nothing about a kind of
+input its generator never produces: a rule about labels on links passes without
+checking anything if no sampled label is on a link. So each generator has a
+coverage test, which claims that every kind its properties rely on turns up in
+some sample, as the `*GenCoverageTests` classes and `WalkTests` do.
+
+The two kinds fail for different reasons, so they sample differently:
+
+| | Property | Coverage test |
+| --- | --- | --- |
+| Claims | Something of every sample | That some sample has each kind |
+| Samples | Fresh on every run; more in CI than locally | The same fixed samples on every run, from `GenCoverage` |
+| A failure means | The code breaks the rule for the input CsCheck prints | The generator stopped producing a kind |
+
+A coverage test could fail just because its samples missed a rare kind, so it
+never takes fresh ones. A property only gets stronger with more samples, so it
+takes as many as the run asks for.
 
 ### Golden tests
 
@@ -218,7 +240,7 @@ Start from what would go wrong, not from the list:
 | If you are… | Write |
 | --- | --- |
 | specifying a behavior | an example-based test |
-| stating a rule that holds for *all* inputs | a property test |
+| stating a rule that holds for *all* inputs | a property test, and a coverage test for any new generator |
 | changing a large structured output | let the golden diff show it |
 | adding a language construct | an example that uses it, plus the usual unit tests |
 | changing what the playbook carries | check the round-trip property still holds |
