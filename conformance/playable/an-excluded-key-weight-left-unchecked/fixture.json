@@ -4,7 +4,7 @@
   "playbook": "playbook.json",
   "because": "the guard and the key weight are asked in one request, since whether the random option is in play is not known until both are answered; a game may work out a number no weight can have for a random option its guard rules out, so once the world withholds Guard.IsAngry the -10 is never read, and the run draws with the auto weight taking all of 100 where a port that checked it would refuse it as an invalid weight",
   "session": [
-    { "expect": { "resolve": ["Guard.IsAngry", "Guard.Mood"] } },
+    { "expect": { "resolve": { "boolean": ["Guard.IsAngry"], "number": ["Guard.Mood"] } } },
     { "send": { "supply": { "Guard.IsAngry": false, "Guard.Mood": -10 } } },
     { "expect": { "draw": [0, 100] } },
     { "send": { "drawn": 0.5 } },

@@ -9,8 +9,8 @@ namespace DialogueDown.Runtime.Stepping;
 /// </summary>
 /// <remarks>
 /// A condition is answered with a truth, a query in what the node says with words, and a key weight
-/// with a number. They are asked at the same moment, so the request's keys (<see cref="Keys"/>),
-/// the kind each answer must have (<see cref="Asked"/>), and the keys needed more than one way
+/// with a number. They are asked at the same moment, so the request (<see cref="ToRequest"/>), the
+/// kind each answer must have (<see cref="Asked"/>), and the keys needed more than one way
 /// (<see cref="NeededBothWays"/>) all come from these together.
 /// </remarks>
 /// <param name="Truths">The keys a guard reads, each needing a truth.</param>
@@ -68,9 +68,9 @@ internal readonly record struct NodeQuestions(
         return new NodeQuestions(node.FindTruthsForLeaving(), Words: [], Numbers: []);
     }
 
-    /// <summary>The keys to ask about: the truths, then the words, then the numbers.</summary>
-    /// <returns>The keys, each named once. Empty when the node asks nothing.</returns>
-    public ImmutableArray<string> Keys() => Questions.Keys(Truths, Words, Numbers);
+    /// <summary>These questions as a request, each key named under the kind of answer its use needs.</summary>
+    /// <returns>The request, each kind's keys named once in the order written.</returns>
+    public Resolve ToRequest() => Questions.ToRequest(Truths, Words, Numbers);
 
     /// <summary>Each key with the kind of answer its use needs.</summary>
     /// <returns>The questions, each key named once.</returns>

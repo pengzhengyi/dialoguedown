@@ -154,7 +154,7 @@ public sealed class PlaybookGenTests
     /// <param name="world">The world sampled beside its playbook.</param>
     /// <returns>Each key its guards and key weights ask about, answered.</returns>
     private static Supply ArrivingAt(RandomChoiceNode random, SampledWorld world) =>
-        world.Answering(NodeQuestions.RequiredToPlay(random).Keys());
+        world.Answering(NodeQuestions.RequiredToPlay(random).ToRequest().Keys);
 
     /// <summary>Where a line's speech holds its first command.</summary>
     /// <param name="speech">The line's speech.</param>

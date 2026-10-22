@@ -17,10 +17,12 @@
     },
     {
       "expect": {
-        "resolve": [
-          "Alice.HasKey",
-          "Alice.HasMap"
-        ]
+        "resolve": {
+          "boolean": [
+            "Alice.HasKey",
+            "Alice.HasMap"
+          ]
+        }
       }
     },
     {

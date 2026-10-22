@@ -9,9 +9,10 @@ namespace DialogueDown.Runtime.Situations;
 /// The run has reached the node and read what it needs, but cannot say what the node means until
 /// the world replies. A guarded line waits here before anyone learns whether it is spoken at all.
 /// <para>
-/// The runner keeps nothing between steps, so the keys asked about are stored here, and the
-/// <c>Supply</c> must answer exactly these keys. The moment says which point in the node the
-/// answers are for.
+/// The runner keeps nothing between steps, so the node and the moment are stored here. When the
+/// <c>Supply</c> arrives, the runner reads the node again at that moment to learn what it asked,
+/// and the supply must answer exactly that. The keys are kept as a record of which request is
+/// open; the runner does not read them back.
 /// </para>
 /// </remarks>
 /// <param name="Node">The node's position in the playbook.</param>

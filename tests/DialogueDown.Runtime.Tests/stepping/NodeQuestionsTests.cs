@@ -10,7 +10,7 @@ public sealed class NodeQuestionsTests
 {
     [Fact]
     public void RequiredToPlay_OfANodeThatAsksNothing_HasNoKeys() =>
-        Assert.Empty(NodeQuestions.RequiredToPlay(End()).Keys());
+        Assert.Empty(NodeQuestions.RequiredToPlay(End()).ToRequest().Keys);
 
     [Fact]
     public void RequiredToPlay_ReadsTheGuardAsATruthAndTheQueryAsWords()
@@ -22,18 +22,14 @@ public sealed class NodeQuestionsTests
     }
 
     [Fact]
-    public void Keys_NameTheGuardFirst_BecauseItIsWrittenFirst() =>
-        Assert.Equal(
-            ["Hero.HasSword", "HeroName"],
-            NodeQuestions.RequiredToPlay(AGuardedLineSaying("Hero.HasSword", "HeroName")).Keys());
+    public void ToRequest_OfAMenu_NamesItsGuardsAsBooleanKeysAndItsLabelsQueriesAsTextKeys()
+    {
+        var request = NodeQuestions.RequiredToPlay(AMenuWhoseOptionsAreGuardedAndNameWhatTheyHold()).ToRequest();
 
-    [Fact]
-    public void Keys_OfAMenu_NameEveryTruthBeforeAnyWords() =>
-        // Every node names its truths before its words, so a menu does too, whatever order its
-        // options write them in.
-        Assert.Equal(
-            ["Hero.HasSword", "Hero.HasShield", "WeaponName", "ShieldName"],
-            NodeQuestions.RequiredToPlay(AMenuWhoseOptionsAreGuardedAndNameWhatTheyHold()).Keys());
+        Assert.Equal(["Hero.HasSword", "Hero.HasShield"], request.BooleanKeys);
+        Assert.Equal(["WeaponName", "ShieldName"], request.TextKeys);
+        Assert.Empty(request.NumberKeys);
+    }
 
     [Fact]
     public void Asked_HoldsEachKeyToTheKindItsUseNeeds()
@@ -57,12 +53,6 @@ public sealed class NodeQuestionsTests
             NodeQuestions.RequiredToPlay(AGuardedLineSaying("Hero.HasSword", "HeroName")).NeededBothWays());
 
     [Fact]
-    public void Keys_NameTheNumbersAfterTheTruths() =>
-        Assert.Equal(
-            ["Guard.IsAngry", "Guard.Mood"],
-            new NodeQuestions(Truths: ["Guard.IsAngry"], Words: [], Numbers: ["Guard.Mood"]).Keys());
-
-    [Fact]
     public void Asked_HoldsAKeyWeightToANumber() =>
         Assert.Equal(
             AnswerKind.Number,
@@ -82,26 +72,27 @@ public sealed class NodeQuestionsTests
     public void RequiredToPlay_ReadsEveryQueryInTheLine_WhereverItStands() =>
         Assert.Equal(
             ["Rainy", "playerName", "mood"],
-            NodeQuestions.RequiredToPlay(AGuardedLineAskingEitherSideOfACommand()).Keys());
+            NodeQuestions.RequiredToPlay(AGuardedLineAskingEitherSideOfACommand()).ToRequest().Keys);
 
     [Fact]
     public void RequiredToPlayFrom_TheStart_ReadsTheGuardAndTheOpeningWordsAlone() =>
         // The query after the command is asked once the command is done, not on arrival.
         Assert.Equal(
             ["Rainy", "playerName"],
-            NodeQuestions.RequiredToPlayFrom(AGuardedLineAskingEitherSideOfACommand(), 0).Keys());
+            NodeQuestions.RequiredToPlayFrom(AGuardedLineAskingEitherSideOfACommand(), 0).ToRequest().Keys);
 
     [Fact]
     public void RequiredToPlayFrom_ALaterSegment_ReadsItsWordsWithoutTheGuard() =>
         // The guard was read on arrival, and the line is already playing.
-        Assert.Equal(["mood"], NodeQuestions.RequiredToPlayFrom(AGuardedLineAskingEitherSideOfACommand(), 1).Keys());
+        Assert.Equal(
+            ["mood"], NodeQuestions.RequiredToPlayFrom(AGuardedLineAskingEitherSideOfACommand(), 1).ToRequest().Keys);
 
     [Fact]
     public void RequiredToPlayFrom_TheStartOfAMenu_ReadsEverythingItNeeds() =>
         // A menu is offered whole, so nothing it asks is left for later.
         Assert.Equal(
-            NodeQuestions.RequiredToPlay(AMenuWhoseOptionsAreGuardedAndNameWhatTheyHold()).Keys(),
-            NodeQuestions.RequiredToPlayFrom(AMenuWhoseOptionsAreGuardedAndNameWhatTheyHold(), 0).Keys());
+            NodeQuestions.RequiredToPlay(AMenuWhoseOptionsAreGuardedAndNameWhatTheyHold()).ToRequest().Keys,
+            NodeQuestions.RequiredToPlayFrom(AMenuWhoseOptionsAreGuardedAndNameWhatTheyHold(), 0).ToRequest().Keys);
 
     [Fact]
     public void RequiredToPlayFrom_IsNotReadFromNothing() =>

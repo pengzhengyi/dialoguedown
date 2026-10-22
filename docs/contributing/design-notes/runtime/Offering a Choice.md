@@ -112,7 +112,7 @@ sequenceDiagram
     participant R as Runner
     R-->>D: Said Alice "Ready?"
     D->>R: Next
-    R-->>D: Resolve ["Alice.HasKey"]
+    R-->>D: Resolve boolean: ["Alice.HasKey"]
     D->>R: Supply {Alice.HasKey: false}
     R-->>D: Offer [Open the door (unavailable), Wait here]
     Note over R: AwaitingChoice
@@ -222,9 +222,9 @@ driver.
 
 A menu's options' conditions and its labels' queries are all asked before it is
 offered, in one `Resolve`, as the **before playing** moment of
-[A1](./Asking%20the%20World.md#a1--one-ask-per-moment). The request names its
-keys as every node's does, truths before words: every option's condition in the
-order written, then every label's query, each key once. One snapshot decides the
+[A1](./Asking%20the%20World.md#a1--one-ask-per-moment). The request names every
+option's condition under `boolean` and every label's query under `text`, each in
+the order written and each key once. One snapshot decides the
 whole menu, so two options guarded by one key are always both available or both
 unavailable.
 

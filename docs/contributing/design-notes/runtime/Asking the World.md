@@ -42,7 +42,8 @@ rather than three — each asks the driver about state and reads back an answer.
 
 In scope:
 
-- `Resolve` and `Supply`, the second pair of reverse request and answer, and
+- `Resolve` and `Supply`, the second pair of reverse request and answer, with
+  each key in a request named under the kind of answer it needs, and
   `AwaitingSupply`, the stage a run is at between the two;
 - gathering the keys a node needs into one ask per moment: one before the node
   plays, and one before the run leaves it;
@@ -59,9 +60,9 @@ need a number from the world and a draw to spend it on, and belong to
 
 ## What the corpus fixes
 
-The contract is not this note's to choose. The published fixture schema defines
-`resolve`, `supply`, and `offer`, and five corpus cases pin the exchanges, so this
-note is about how the runner meets that contract.
+The published fixture schema defines `resolve`, `supply`, and `offer`, and the
+corpus cases below pin the exchanges, so most of this note is about how the
+runner meets that contract.
 
 | Case | What it fixes |
 | --- | --- |
@@ -70,10 +71,21 @@ note is about how the runner meets that contract.
 | `a-conditional-block` | The branches are tried in the order written, and a satisfied first branch means the `else` is never reached |
 | `a-query-in-speech` | The supplied answer appears in the flattened speech: `Hello, Robin.` |
 | `an-unavailable-option` | A failing option is offered **unavailable** rather than hidden |
+| `a-menu-asking-truths-and-words` | One request asks for two kinds of answer: the options' conditions under `boolean` and the labels' queries under `text` |
 
-The schema also fixes the shapes: `resolve` is a non-empty array of key strings,
-and `supply` is an object keyed by those strings, whose values are whatever JSON
-holds — `false` for a guard, `"Robin"` for a query.
+The schema also fixes the shapes. `resolve` is an object that groups the keys by
+the kind of answer each needs — `boolean`, `text`, and `number`. Each group is a
+non-empty array of distinct key strings, left out when the moment needs none of
+that kind, and a request always has at least one.
+`supply` is an object keyed by those strings, whose values are whatever JSON holds:
+`true` for a key under `boolean`, `"Robin"` for one under `text`.
+
+```json
+[
+  { "expect": { "resolve": { "boolean": ["Alice.HasKey"], "text": ["playerName"] } } },
+  { "send": { "supply": { "Alice.HasKey": true, "playerName": "Robin" } } }
+]
+```
 
 ## Functionality checklist
 
@@ -91,6 +103,8 @@ holds — `false` for a guard, `"Robin"` for a query.
       succession either leads nowhere, and says so.
 - [x] Every key a moment needs is asked for in a single `Resolve`: one on the way
       in, one at each stop inside a line, and one on the way out.
+- [x] A request names each key under the kind of answer it needs — a truth,
+      words, or a number — so a driver knows what to answer with.
 - [x] A query in speech is replaced by what the world said before the line is said.
 - [x] A key asked and left unanswered is refused, and so is a key answered that
       nobody asked about.
@@ -102,7 +116,7 @@ holds — `false` for a guard, `"Robin"` for a query.
 
 | Type | Responsibility | Collaborators |
 | --- | --- | --- |
-| `Resolve(keys)` | A reverse request: the keys one moment at a node needs answered | `Request`, alongside `Perform` |
+| `Resolve(booleanKeys, textKeys, numberKeys)` | A reverse request: the keys one moment at a node needs answered, grouped by the kind of answer each needs | `Request`, alongside `Perform` |
 | `Supply(answers)` | The command answering it | `Command` |
 | `Answer` | What the world said about one key, as a closed union | `AnswerJsonConverter` |
 | `AnswerJsonConverter` | Reads and writes an answer as the bare JSON value it is | Every reader of a supply |
@@ -138,10 +152,10 @@ conditions and key weights on arriving, a key weight answered with a number, and
 nothing on leaving
 ([R3](./Drawing%20a%20Random%20Option.md#r3--what-decides-the-draw-is-read-once-on-arrival)).
 
-A request names its truths, then its words, then its numbers, each in the order the
-node writes them, and each key once. For a line, that is also the order a reader meets them,
-since a guard is written before the line it guards; a menu follows the same rule,
-every condition before any label's query, so every runtime sends the same request.
+A request names each key once, under the kind of answer it needs
+([A3](#a3--a-key-is-asked-and-answered-as-one-of-three-kinds)), and lists each
+kind's keys in the order the node writes them, so every runtime reading the same
+playbook sends the same request.
 
 The two are kept apart because the node changes the world between them. A node
 that performs an effect has the host perform it after it is played and before
@@ -175,12 +189,12 @@ belongs to the driver, which is free to hold an answer or serve from a snapshot 
 its host requires. What the protocol guarantees is read-your-own-writes, already
 bought by `Perform` being answered before the run goes on.
 
-### A3 — An answer is a closed union
+### A3 — A key is asked and answered as one of three kinds
 
-The world interface the architecture note proposes splits the world's
-three questions by the type of their answers: a guard needs a truth, a weight a
-number, and interpolation text. The wire agrees — `supply` carries `false` for
-one, `"Robin"` for another, and `20` for a third.
+A node asks the world three kinds of question: a guard needs a truth, a query in
+speech needs words, and a key weight needs a number. The request says which kind
+each key needs, and the answer is one of the three. The wire agrees — `supply`
+carries `false` for one, `"Robin"` for another, and `20` for a third.
 
 So `Answer` is a closed union in the manner of every other union in the format,
 and its members take the same `<Qualifier><Base>` shape as `TextFragment` and
@@ -209,12 +223,47 @@ refuse it as an invalid weight. Keeping the rule in the package rather than in e
 reader is what stops a fixture, a recorded session, and a driver on the far side of
 a socket from each inventing their own.
 
+A request groups its keys under the same three kinds, each group named for the
+member that answers it:
+
+```json
+{ "boolean": ["Guard.IsAngry"], "number": ["Guard.Mood"] }
+```
+
+`Resolve` holds the groups as `BooleanKeys`, `TextKeys`, and `NumberKeys`, and its
+`Keys` lists every key — the `boolean` group, then `text`, then `number` — for a
+driver that looks a key up without needing its kind. A key is in one group only, because a key one node needs as two
+kinds is refused before anything is asked (see
+[Error and boundary cases](#error-and-boundary-cases)); the runner keeps that rule,
+and the fixture schema cannot state it. The groups are members of
+a JSON object, so their order means nothing; the order within each group is the
+one A1 sets.
+
+The runner knows each key's kind when it asks, because it found the key by reading
+the node. Saying so in the request spares every driver from reading the node again:
+
+- A host that asks a person, such as a terminal prompt during a test play, offers
+  yes or no for a truth, a line of text for words, and a number field for a number.
+- A host that answers from its own store reads each value as the type the request
+  names.
+
+The kind belongs to the request, not to the key. One key can be words in one place
+and a truth in another, even at the two moments of one node: a line can say
+`` `"Hero.Title"` `` and leave by a jump guarded by `Hero.Title`. So a driver
+takes the kind from each request rather than remembering it by key.
+
+| Alternative | Why not |
+| --- | --- |
+| Each driver works out the kinds from the playbook | Every driver, in every language, would repeat the runner's reading of a node: its guard, the queries up to the next stop, a random choice's key weights. The corpus checks what a runner sends, not how a driver reads a playbook, so nothing would catch a driver that got it wrong |
+| The world answers untyped, and the runner converts | How to convert, such as whether `"yes"` is a truth or `"20"` a number, would become part of the protocol, and a mistyped answer would become a value instead of a refusal |
+
 ### A4 — The runner checks the answers against its own questions
 
 A driver may answer something nobody asked, or leave something asked unanswered.
-Both are refused, and the check needs no memory to make: the keys the run asked
-about are carried in the situation, so the comparison is set equality between what
-was asked and what came back.
+Both are refused, and the check needs no memory to make: the step that receives
+the answers reads the node again at the moment it asked, which gives back the keys
+and kinds the request named, so the comparison is between what was asked and what
+came back.
 
 That makes it a function of two collections and nothing else, which is why it
 lives in `AnswerCheck` rather than inside arrival or departure. `NodeQuestions` builds the set
@@ -259,13 +308,18 @@ about the rest.
 `AwaitingSupply(node, keys, moment)` holds the node the run is standing at, the
 keys it asked about, and the moment it asked at.
 
-Carrying the keys is what lets the runner check that the driver answered the
-question it asked. Carrying the node is what lets the step that receives `Supply`
-finish what it started — because nothing was remembered, that step re-reads the
-node and evaluates it with the answers in hand. Carrying the moment says what it
-started: `Runner` hands an answer given before the node plays to `Arrival`, and
-one given before the run leaves it to `Departure`. The keys alone cannot say which,
-because one key can be asked at both moments of one node.
+Carrying the node and the moment is what lets the step that receives `Supply`
+finish what it started. Because nothing was remembered, that step reads the node
+again at that moment: it learns what was asked, keys and kinds, holds the answers
+to it ([A4](#a4--the-runner-checks-the-answers-against-its-own-questions)), and
+evaluates the node with the answers in hand. The moment says which half to finish:
+`Runner` hands an answer given before the node plays to `Arrival`, and one given
+before the run leaves it to `Departure`. The keys alone cannot say which, because
+one key can be asked at both moments of one node.
+
+The keys record which request is open, for anyone reading the state; the runner
+does not read them back. Whether a wait keeps its whole request, kinds included, is
+left to saves (see [deferred work](#open-questions-and-deferred-work)).
 
 ### A8 — A branch node is walked past, not stood at
 
@@ -319,7 +373,7 @@ The three refusals divide one driver mistake three ways on purpose. A reason is
 what a fixture compares, so a port that answers the wrong question and a port that
 answers with the wrong type disagree with us for reasons a reader can tell apart.
 The first two are caught by `AnswerCheck` holding the set to what was asked; the
-third by the kind each key was asked under. Each leaves the run waiting where it
+third by the kind the request named for each key. Each leaves the run waiting where it
 asked, so a driver that misread the request can answer it again rather than lose
 the conversation.
 
@@ -334,14 +388,15 @@ hand reaches the refusal.
 
 | Part | What it holds |
 | --- | --- |
-| `protocol` | `Resolve`, a request beside `Perform`; `Supply`, a command; `Answer` and its JSON converter |
+| `protocol` | `Resolve`, a request beside `Perform`, naming each key under the kind of answer it needs; `Supply`, a command; `Answer` and its JSON converter |
+| Fixture schema | `resolve`, with its keys grouped under `boolean`, `text`, and `number` |
 | `situations` | `AwaitingSupply`, beside `AwaitingDone`, carrying the `Moment` it asked at |
 | `Arrival` | Asks what playing a node needs; steps over a node the world withholds; walks past a branch and a jump on its own line, asking about their ways out inside the walk |
 | `Departure`, `StepResults` | Leaving a node, asking first when its ways out are guarded; and the ask and the refusal it shares with `Arrival` |
 | `NodeQuestions`, `Questions`, `AnswerCheck`, `ConditionEvaluationExtensions` | Each testable without a playbook |
 | `NodeTraversalExtensions` | One rule for where a node leads: the first jump or branch taken, then the succession |
 | `Runner.Step` | `Next` and `Done` leave through `Departure`; `Supply` goes to `Arrival` or `Departure` by the moment the run asked at |
-| Harness | A `ResolveMatcher`, and a `SupplyReader` so `supply` is among the commands a session can send |
+| Harness | A `ResolveMatcher`, which holds each group's keys to the order written, and a `SupplyReader` so `supply` is among the commands a session can send |
 | `PlayableConformanceTests` | Holds `a-conditional-line`, `a-conditional-jump`, `a-conditional-block`, and `a-query-in-speech` to their whole conversations, as it holds every case |
 | `Playability.CanPlay` | Counts `BranchNode` as playable, and its agreement test holds it to the runner |
 | `PlaybookGen` | Draws guards, jumps the world must allow, block conditions, and queries, and its coverage test fails while it draws none of a kind; a world drawn beside each playbook answers every question a walk meets |
@@ -356,6 +411,7 @@ by name.
 | Level | What it covers |
 | --- | --- |
 | Unit — questions | Every source of a key: a node's own condition, its ways out, and its speech; one node needing all three |
+| Unit — the request | Each key under the kind its use needs, each group in the order written, a key written twice in one group named once, a kind nothing needs left empty, and `Keys` listing every key |
 | Unit — answers | The set matching; a key missing; a key nobody asked about; a key read as the wrong kind |
 | Unit — reading a supply | Each kind read and written back; a number past what a double holds read as infinity, and refused when written back; anything else refused |
 | Unit — evaluation | A condition that holds, and one that fails |
@@ -375,6 +431,11 @@ nothing guards, and a guarded node stops the walk before the bound is reached.
 
 ## Open questions and deferred work
 
+- **What a wait keeps.** `AwaitingSupply` keeps the keys it asked about but not
+  their kinds, and the runner reads the node again rather than the keys. A run
+  restored straight into the wait has to send its request again, kinds included,
+  so saves decide whether the wait keeps the whole request or the request is read
+  from the node and moment.
 - **No world interface exists yet.** Nothing in the runner reads a world directly:
   it asks the driver. So the world interface waits for the drivers that answer
   `Resolve` from a world.

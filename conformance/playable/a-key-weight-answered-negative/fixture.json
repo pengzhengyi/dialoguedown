@@ -6,7 +6,7 @@
   "session": [
     { "expect": { "said": { "speech": "The guard looks up." } } },
     { "send": "next" },
-    { "expect": { "resolve": ["Guard.Mood"] } },
+    { "expect": { "resolve": { "number": ["Guard.Mood"] } } },
     { "send": { "supply": { "Guard.Mood": -10 } } },
     { "expect": { "refused": { "reason": "invalid-weight" } } },
     { "send": { "supply": { "Guard.Mood": 20 } } },

@@ -47,7 +47,7 @@ public sealed class DrawMatcherTests
 
     [Fact]
     public void SharesWrappedInAnObjectAreAFixtureBug() =>
-        // A draw claims its shares as the list itself, as a resolve claims its keys.
+        // A draw claims its shares as the list itself.
         Assert.Throws<InvalidFixtureException>(() => Match(Drew(50, 50), """{ "shares": [ 50, 50 ] }"""));
 
     [Fact]

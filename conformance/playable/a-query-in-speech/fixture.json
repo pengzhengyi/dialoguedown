@@ -6,9 +6,11 @@
   "session": [
     {
       "expect": {
-        "resolve": [
-          "playerName"
-        ]
+        "resolve": {
+          "text": [
+            "playerName"
+          ]
+        }
       }
     },
     {

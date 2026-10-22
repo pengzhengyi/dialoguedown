@@ -1,8 +1,8 @@
 {
   "$schema": "https://pengzhengyi.github.io/dialoguedown/schema/fixture-0.schema.json",
-  "name": "a menu asks its conditions before its labels' queries, in one request",
+  "name": "a menu asks for its conditions as truths and its labels' queries as words, in one request",
   "playbook": "playbook.json",
-  "because": "every node names its truths before its words, which is what lets two ports send the same request; an unavailable option's label is filled too, because the host decides how to show it",
+  "because": "each key is named under the kind of answer it needs, so a driver knows what to answer with, and each kind keeps the order written, which is what lets two ports send the same request; an unavailable option's label is filled too, because the host decides how to show it",
   "session": [
     {
       "expect": {
@@ -17,12 +17,16 @@
     },
     {
       "expect": {
-        "resolve": [
-          "Hero.HasSword",
-          "Hero.HasShield",
-          "WeaponName",
-          "ShieldName"
-        ]
+        "resolve": {
+          "boolean": [
+            "Hero.HasSword",
+            "Hero.HasShield"
+          ],
+          "text": [
+            "WeaponName",
+            "ShieldName"
+          ]
+        }
       }
     },
     {
@@ -59,9 +63,11 @@
     },
     {
       "expect": {
-        "resolve": [
-          "WeaponName"
-        ]
+        "resolve": {
+          "text": [
+            "WeaponName"
+          ]
+        }
       }
     },
     {

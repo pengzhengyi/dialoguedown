@@ -6,7 +6,7 @@
   "session": [
     { "expect": { "said": { "speech": "The guard looks up." } } },
     { "send": "next" },
-    { "expect": { "resolve": ["Guard.IsAngry", "Guard.IsTired"] } },
+    { "expect": { "resolve": { "boolean": ["Guard.IsAngry", "Guard.IsTired"] } } },
     { "send": { "supply": { "Guard.IsAngry": false, "Guard.IsTired": false } } },
     { "expect": { "said": { "speech": "The guard looks away." } } },
     { "send": "next" },

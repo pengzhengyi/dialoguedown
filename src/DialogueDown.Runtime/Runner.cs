@@ -17,12 +17,12 @@ namespace DialogueDown.Runtime;
 /// <code>
 /// driver                runner
 ///   Start  ───────────▶
-///          ◀─────────── Resolve [weapon.Attack]
+///          ◀─────────── Resolve text: [weapon.Attack]
 ///   Supply ───────────▶ { "weapon.Attack": "10" }
 ///          ◀─────────── Said Smith "It was 10. "
 ///          ◀─────────── Perform Polish()
 ///   Done   ───────────▶
-///          ◀─────────── Resolve [weapon.Attack]
+///          ◀─────────── Resolve text: [weapon.Attack]
 ///   Supply ───────────▶ { "weapon.Attack": "15" }
 ///          ◀─────────── Continued "Now it is 15."
 ///   Next   ───────────▶

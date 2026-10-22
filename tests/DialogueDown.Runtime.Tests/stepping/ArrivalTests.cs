@@ -20,13 +20,16 @@ public sealed class ArrivalTests
     [Fact]
     public void At_AConditionalLine_AsksTheWorldBeforeSpeakingIt()
     {
-        AssertAsked(Arrival.At(AConditionalLine(), 0), node: 0, Moment.BeforePlaying, "Alice.HasKey");
+        AssertAsked(Arrival.At(AConditionalLine(), 0), node: 0, Moment.BeforePlaying, booleanKeys: ["Alice.HasKey"]);
     }
 
     [Fact]
     public void At_AMenuWithAConditionalOption_AsksTheWorldBeforeOfferingIt() =>
         AssertAsked(
-            Arrival.At(AMenuWithAConditionalOptionStanding(), 0), node: 0, Moment.BeforePlaying, "Alice.HasKey");
+            Arrival.At(AMenuWithAConditionalOptionStanding(), 0),
+            node: 0,
+            Moment.BeforePlaying,
+            booleanKeys: ["Alice.HasKey"]);
 
     [Fact]
     public void Supplied_AtAMenu_OffersItAsTheWorldAnswered()
@@ -40,7 +43,11 @@ public sealed class ArrivalTests
 
     [Fact]
     public void At_AMenuWithAQueryInALabel_AsksTheWorldBeforeOfferingIt() =>
-        AssertAsked(Arrival.At(AMenuWithAQueryInALabelStanding(), 0), node: 0, Moment.BeforePlaying, "playerName");
+        AssertAsked(
+            Arrival.At(AMenuWithAQueryInALabelStanding(), 0),
+            node: 0,
+            Moment.BeforePlaying,
+            textKeys: ["playerName"]);
 
     [Fact]
     public void Supplied_AtAMenuWithAQueryInALabel_OffersItWithTheWordsTheWorldGave() =>
@@ -96,7 +103,7 @@ public sealed class ArrivalTests
             Arrival.At(ARandomChoiceWithAGuardedRandomOptionStanding(), 0),
             node: 0,
             Moment.BeforePlaying,
-            "Guard.IsAngry");
+            booleanKeys: ["Guard.IsAngry"]);
 
     [Fact]
     public void Supplied_WhenTheWorldWithholdsAGuard_AsksForADrawWithTheRandomOptionItGuardsExcluded() =>
@@ -168,7 +175,7 @@ public sealed class ArrivalTests
             Arrival.At(PlayContextFactory.ARandomChoiceWithAKeyWeightStanding(), 0),
             node: 0,
             Moment.BeforePlaying,
-            "Guard.Mood");
+            numberKeys: ["Guard.Mood"]);
 
     [Fact]
     public void At_ARandomChoiceWithAGuardedKeyWeight_AsksForTheGuardThenTheNumber() =>
@@ -178,8 +185,8 @@ public sealed class ArrivalTests
             Arrival.At(ARandomChoiceWithAGuardedKeyWeightStanding(), 0),
             node: 0,
             Moment.BeforePlaying,
-            "Guard.IsAngry",
-            "Guard.Mood");
+            booleanKeys: ["Guard.IsAngry"],
+            numberKeys: ["Guard.Mood"]);
 
     [Fact]
     public void At_ARandomOptionWhoseGuardAndKeyWeightReadOneKey_RefusesBeforeAskingAnything() =>
@@ -316,7 +323,7 @@ public sealed class ArrivalTests
         // the loop bound is never reached. The world may answer differently the next time round.
         var result = Arrival.Supplied(ALoopOfOneGuardedLine(), Waiting(0, "Rainy"), Answering(("Rainy", false)));
 
-        AssertAsked(result, node: 0, Moment.BeforePlaying, "Rainy");
+        AssertAsked(result, node: 0, Moment.BeforePlaying, booleanKeys: ["Rainy"]);
     }
 
     [Fact]
@@ -340,12 +347,16 @@ public sealed class ArrivalTests
             Waiting(0, "Rainy"),
             Answering(("Rainy", true)));
 
-        AssertAsked(result, node: 0, Moment.BeforeLeaving, "Late");
+        AssertAsked(result, node: 0, Moment.BeforeLeaving, booleanKeys: ["Late"]);
     }
 
     [Fact]
     public void At_ALineWithAQueryInIt_AsksTheWorldWhatItStandsFor() =>
-        AssertAsked(Arrival.At(PlayContextFactory.ALineWithAQuery(), 0), node: 0, Moment.BeforePlaying, "playerName");
+        AssertAsked(
+            Arrival.At(PlayContextFactory.ALineWithAQuery(), 0),
+            node: 0,
+            Moment.BeforePlaying,
+            textKeys: ["playerName"]);
 
     [Fact]
     public void Supplied_WithWordsForAQuery_SaysTheLineWithThemInIt()
@@ -365,7 +376,7 @@ public sealed class ArrivalTests
             Arrival.At(PlayContextFactory.ALineWithAQueryAfterACommand(), 0),
             node: 0,
             Moment.BeforePlaying,
-            "playerName");
+            textKeys: ["playerName"]);
 
     [Fact]
     public void Supplied_ToALineWithAQueryAfterACommand_PlaysUpToTheStop()
@@ -383,7 +394,11 @@ public sealed class ArrivalTests
     public void At_ALineGuardedAndCarryingAQuery_AsksAboutBothInOneRequest() =>
         // The whole node is judged against a single reading of the world, so it stops once.
         AssertAsked(
-            Arrival.At(AGuardedLineWithAQuery(), 0), node: 0, Moment.BeforePlaying, "Alice.HasKey", "playerName");
+            Arrival.At(AGuardedLineWithAQuery(), 0),
+            node: 0,
+            Moment.BeforePlaying,
+            booleanKeys: ["Alice.HasKey"],
+            textKeys: ["playerName"]);
 
     [Fact]
     public void Supplied_WithATruthAndWordsTogether_SaysTheLineTheWorldAllowed()
@@ -459,7 +474,10 @@ public sealed class ArrivalTests
         // The walk passes a node that hands the host nothing, but it cannot pass one whose way out
         // only the world can choose.
         AssertAsked(
-            Arrival.At(PlayContextFactory.AGuardedJumpOnItsOwnLine(), 0), node: 0, Moment.BeforeLeaving, "Rainy");
+            Arrival.At(PlayContextFactory.AGuardedJumpOnItsOwnLine(), 0),
+            node: 0,
+            Moment.BeforeLeaving,
+            booleanKeys: ["Rainy"]);
 
     [Fact]
     public void At_AConditionalBlock_AsksTheWorldWhichBranchToTake() =>
@@ -469,8 +487,7 @@ public sealed class ArrivalTests
             Arrival.At(PlayContextFactory.AConditionalBlock(), 0),
             node: 0,
             Moment.BeforeLeaving,
-            "Alice.HasKey",
-            "Alice.HasPick");
+            booleanKeys: ["Alice.HasKey", "Alice.HasPick"]);
 
     [Fact]
     public void At_ALoopOfJumps_RefusesRatherThanWalkingForever()

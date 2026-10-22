@@ -6,9 +6,11 @@
   "session": [
     {
       "expect": {
-        "resolve": [
-          "Alice.HasKey"
-        ]
+        "resolve": {
+          "boolean": [
+            "Alice.HasKey"
+          ]
+        }
       }
     },
     {

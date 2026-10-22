@@ -6,9 +6,11 @@
   "session": [
     {
       "expect": {
-        "resolve": [
-          "weapon.Attack"
-        ]
+        "resolve": {
+          "text": [
+            "weapon.Attack"
+          ]
+        }
       }
     },
     {
@@ -40,9 +42,11 @@
     },
     {
       "expect": {
-        "resolve": [
-          "weapon.Attack"
-        ]
+        "resolve": {
+          "text": [
+            "weapon.Attack"
+          ]
+        }
       }
     },
     {

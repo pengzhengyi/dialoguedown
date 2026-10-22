@@ -299,12 +299,24 @@
           ]
         },
         "resolve": {
-          "type": "array",
-          "minItems": 1,
-          "description": "The keys the runtime asked the world about.",
-          "items": {
-            "type": "string"
-          }
+          "type": "object",
+          "minProperties": 1,
+          "description": "The keys the runtime asked the world about, each under the kind of answer it needs. A kind nothing asks for is left out, and the kinds may be written in any order. A runtime names a key under one kind only, which this schema cannot state.",
+          "properties": {
+            "boolean": {
+              "$ref": "#/$defs/askedKeys",
+              "description": "The keys to answer with a truth, such as a key guarding a line."
+            },
+            "text": {
+              "$ref": "#/$defs/askedKeys",
+              "description": "The keys to answer with words, such as a query in what a line says."
+            },
+            "number": {
+              "$ref": "#/$defs/askedKeys",
+              "description": "The keys to answer with a number, such as a random option's key weight."
+            }
+          },
+          "additionalProperties": false
         },
         "draw": {
           "type": "array",
@@ -386,6 +398,15 @@
           }
         }
       ]
+    },
+    "askedKeys": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "description": "Keys asked for one kind of answer, each named once, in the order the playbook writes them.",
+      "items": {
+        "type": "string"
+      }
     }
   }
 }

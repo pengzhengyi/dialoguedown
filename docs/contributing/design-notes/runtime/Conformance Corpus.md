@@ -53,7 +53,7 @@ what the runtime must reply, in order.
 | `continued` | the `speech` after a command, going on with the line a `said` opened; it names no speaker |
 | `offer` | the menu offered: whether it is `ordered`, and its `options` in the order offered, which is the order written, each a `label` and whether it is `available` |
 | `perform` | the effect the runtime asks the host to perform, as the playbook names it |
-| `resolve` | the keys the runtime asks the world about |
+| `resolve` | the keys the runtime asks the world about, grouped by the kind of answer each needs: `boolean`, `text`, or `number` |
 | `draw` | the shares the runtime asks the host to draw against: every random option's share, in the order written |
 | `invalidated` | an offered option that stopped being available |
 | `ended` | the run finished |
@@ -106,7 +106,7 @@ rather than a script.
 | `a-choice-of-an-unavailable-option` | Is a choice of an option offered as unavailable refused, with the menu still open? | yes |
 | `a-choice-onto-the-fall-through` | Is a choice one past the options refused, rather than taking the fall-through the menu never offered? | yes |
 | `a-query-in-a-label` | Is a label's query asked before the menu is offered, and the label shown with the answer? | yes |
-| `a-menu-asking-truths-and-words` | Are a menu's conditions asked before its labels' queries, in one request? | yes |
+| `a-menu-asking-truths-and-words` | Are a menu's conditions and its labels' queries asked in one request, each under its kind? | yes |
 | `a-menu-with-nothing-available` | Is a menu whose every option the world withholds walked past by its fall-through? | yes |
 | `a-random-choice` | Is a draw asked for with each random option's share, and does it lead into the random option it picks? | yes |
 | `a-draw-at-the-end-of-a-span` | Does a draw at the exact end of one span pick the next random option? | yes |

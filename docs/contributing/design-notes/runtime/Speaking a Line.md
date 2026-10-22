@@ -146,14 +146,14 @@ sequenceDiagram
     participant D as Driver
     participant R as Runner
     D->>R: Next
-    R-->>D: Resolve ["weapon.Attack"]
-    D->>R: Supply {weapon.Attack: 10}
+    R-->>D: Resolve text: ["weapon.Attack"]
+    D->>R: Supply {weapon.Attack: "10"}
     R-->>D: Said Smith "Your weapon's attack was 10, but after I polished it "
     R-->>D: Perform IncreaseWeaponAttack()
     Note over R: AwaitingDone, resume from segment 1
     D->>R: Done
-    R-->>D: Resolve ["weapon.Attack"]
-    D->>R: Supply {weapon.Attack: 15}
+    R-->>D: Resolve text: ["weapon.Attack"]
+    D->>R: Supply {weapon.Attack: "15"}
     R-->>D: Continued "its attack is 15."
     D->>R: Next
 ```

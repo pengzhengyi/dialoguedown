@@ -6,9 +6,11 @@
   "session": [
     {
       "expect": {
-        "resolve": [
-          "Rainy"
-        ]
+        "resolve": {
+          "boolean": [
+            "Rainy"
+          ]
+        }
       }
     },
     {

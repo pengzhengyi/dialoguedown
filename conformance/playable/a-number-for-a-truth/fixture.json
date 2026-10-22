@@ -4,7 +4,7 @@
   "playbook": "playbook.json",
   "because": "a guard needs a truth, so 1 for Guard.IsAngry is refused rather than read as true, and the run keeps waiting for the answers it asked for; once the world says false instead, Halt! is out of play and Move along takes all of 100",
   "session": [
-    { "expect": { "resolve": ["Guard.IsAngry"] } },
+    { "expect": { "resolve": { "boolean": ["Guard.IsAngry"] } } },
     { "send": { "supply": { "Guard.IsAngry": 1 } } },
     { "expect": { "refused": { "reason": "wrong-answer-kind" } } },
     { "send": { "supply": { "Guard.IsAngry": false } } },
