@@ -22,7 +22,7 @@ public sealed class DepartureTests
             Departure.From(PlayContextFactory.ALineWhoseJumpAsksTheWorld(), 0),
             node: 0,
             Moment.BeforeLeaving,
-            "Alice.HasKey");
+            booleanKeys: ["Alice.HasKey"]);
 
     [Fact]
     public void From_ANodeThatLeadsNowhere_Refuses() =>

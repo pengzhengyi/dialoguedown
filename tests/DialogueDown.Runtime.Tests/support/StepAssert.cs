@@ -25,8 +25,8 @@ internal static class StepAssert
     /// <param name="result">What the step produced.</param>
     /// <param name="expected">
     /// Each event written out: <c>said Alice 'Hello. '</c>, <c>continued ' Bye.'</c>,
-    /// <c>perform Wave()</c>, <c>perform ("fade in")</c>, <c>resolve playerName, Rainy</c>,
-    /// <c>offer 'Go east', 'Go west'</c>, <c>offer ordered 'Open the door' unavailable</c>,
+    /// <c>perform Wave()</c>, <c>perform ("fade in")</c>, <c>offer 'Go east', 'Go west'</c>,
+    /// <c>offer ordered 'Open the door' unavailable</c>,
     /// <c>ended</c>, or <c>refused Misplaced</c>. Words sit in quotes so a space shows, and the
     /// default speaker is written <c>nobody</c>.
     /// </param>
@@ -141,20 +141,39 @@ internal static class StepAssert
         Assert.Equal(shares, AssertAwaitingDraw(result, node).Shares);
     }
 
-    /// <summary>Asserts a step asked the world about keys, and waits at a node for the answers.</summary>
+    /// <summary>
+    /// Asserts a step asked the world about keys, each under the kind of answer it needs, and waits
+    /// at a node for the answers.
+    /// </summary>
     /// <param name="result">What the step produced.</param>
     /// <param name="node">Where it should be waiting.</param>
     /// <param name="moment">Which reading of the world it should be waiting on.</param>
-    /// <param name="keys">
-    /// What it should have asked about, in the order the request names them: truths, then words,
-    /// then numbers.
+    /// <param name="booleanKeys">
+    /// The keys it should have asked to be answered with a truth, in the order written. None when
+    /// left out.
     /// </param>
-    public static void AssertAsked(StepResult result, int node, Moment moment, params string[] keys)
+    /// <param name="textKeys">
+    /// The keys it should have asked to be answered with words, in the order written. None when left
+    /// out.
+    /// </param>
+    /// <param name="numberKeys">
+    /// The keys it should have asked to be answered with a number, in the order written. None when
+    /// left out.
+    /// </param>
+    public static void AssertAsked(
+        StepResult result,
+        int node,
+        Moment moment,
+        string[]? booleanKeys = null,
+        string[]? textKeys = null,
+        string[]? numberKeys = null)
     {
         var resolve = Assert.IsType<Resolve>(Assert.Single(result.Events));
 
-        Assert.Equal(keys, resolve.Keys);
-        AssertAwaitingSupply(result.State, node, moment, keys);
+        Assert.Equal(booleanKeys ?? [], resolve.BooleanKeys);
+        Assert.Equal(textKeys ?? [], resolve.TextKeys);
+        Assert.Equal(numberKeys ?? [], resolve.NumberKeys);
+        AssertAwaitingSupply(result.State, node, moment, [.. resolve.Keys]);
     }
 
     /// <summary>Asserts a run is waiting on the world at a node, over the keys it asked about.</summary>
@@ -172,8 +191,8 @@ internal static class StepAssert
         Assert.Equal(keys, waiting.Keys);
     }
 
-    // A kind with no written form here, such as a draw, fails rather than passing as its bare type
-    // name; AssertAskedForADraw checks a draw.
+    // A kind with no written form here, such as a draw or a request to the world, fails rather than
+    // passing as its bare type name; AssertAskedForADraw checks a draw, and AssertAsked a request.
     private static string WrittenOut(Event happened) =>
         happened switch
         {
@@ -182,7 +201,6 @@ internal static class StepAssert
             Perform { Effect: CustomCommandFragment command } =>
                 $"perform {command.Name}({string.Join(", ", command.Args)})",
             Perform { Effect: DefaultCommandFragment command } => $"perform (\"{command.Action}\")",
-            Resolve resolve => $"resolve {string.Join(", ", resolve.Keys)}",
             Offer offer => $"offer {(offer.Ordered ? "ordered " : string.Empty)}"
                 + string.Join(", ", offer.Options.Select(WrittenOut)),
             Ended => "ended",

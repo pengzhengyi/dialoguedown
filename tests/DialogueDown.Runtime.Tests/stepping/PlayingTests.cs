@@ -195,7 +195,7 @@ public sealed class PlayingTests
             Playing.Performed(PlayContextFactory.ALineWithAQueryAfterACommand(), WaitingOnTheHostToContinueFrom(1)),
             node: 0,
             Moment.BeforeContinuingFrom(1),
-            "mood");
+            textKeys: ["mood"]);
 
     [Fact]
     public void Performed_AtALineToContinueWithWordsThatAskNothing_ContinuesAtOnce()

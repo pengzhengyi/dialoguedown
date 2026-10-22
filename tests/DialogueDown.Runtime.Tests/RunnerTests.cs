@@ -210,13 +210,13 @@ public sealed class RunnerTests
         var context = PlayContextFactory.ALineReadingOneKeyEitherSideOfACommand();
 
         var asked = Runner.Step(context, PlayState.Initial, new Start());
-        AssertAsked(asked, node: 0, Moment.BeforePlaying, "weapon.Attack");
+        AssertAsked(asked, node: 0, Moment.BeforePlaying, textKeys: ["weapon.Attack"]);
 
         var said = Runner.Step(context, asked.State, Answering(("weapon.Attack", "10")));
         AssertEvents(said, "said Smith 'It was 10. '", "perform Polish()");
 
         var askedAgain = Runner.Step(context, said.State, new Done());
-        AssertAsked(askedAgain, node: 0, Moment.BeforeContinuingFrom(1), "weapon.Attack");
+        AssertAsked(askedAgain, node: 0, Moment.BeforeContinuingFrom(1), textKeys: ["weapon.Attack"]);
 
         var continued = Runner.Step(context, askedAgain.State, Answering(("weapon.Attack", "15")));
         AssertEvents(continued, "continued ' Now it is 15.'");
@@ -401,7 +401,7 @@ public sealed class RunnerTests
         var asked = Runner.Step(context, Started(context), new Next());
         var left = Runner.Step(context, asked.State, Answering(("Alice.HasKey", true)));
 
-        AssertAsked(asked, node: 0, Moment.BeforeLeaving, "Alice.HasKey");
+        AssertAsked(asked, node: 0, Moment.BeforeLeaving, booleanKeys: ["Alice.HasKey"]);
         AssertSaid(left, "Alice", "Inside.");
     }
 
@@ -415,7 +415,7 @@ public sealed class RunnerTests
         var asked = Runner.Step(context, PlayState.Initial, new Start());
         var left = Runner.Step(context, asked.State, Answering(("Rainy", false)));
 
-        AssertAsked(asked, node: 0, Moment.BeforeLeaving, "Rainy");
+        AssertAsked(asked, node: 0, Moment.BeforeLeaving, booleanKeys: ["Rainy"]);
         AssertSaid(left, "Alice", "Onward in the sun.");
     }
 
