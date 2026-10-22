@@ -115,6 +115,17 @@ public sealed class PlaybookGenTests
     }
 
     /// <summary>
+    /// Every sampled playbook is one the reader accepts.
+    /// </summary>
+    /// <remarks>
+    /// The runner walk properties are about playbooks the reader accepts, so this asks the reader
+    /// itself rather than trusting the generator to follow its rules.
+    /// </remarks>
+    [Fact]
+    public void EverySampledPlaybook_IsOneTheReaderAccepts() =>
+        PlaybookGen.Valid().Sample(PlaybookAssert.AssertValidPlaybook, iter: Samples);
+
+    /// <summary>
     /// The type name of every node and edge kind the fixed draws from the generator hold.
     /// </summary>
     /// <remarks>
