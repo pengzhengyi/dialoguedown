@@ -9,8 +9,8 @@ using DialogueDown.Tests.Support;
 namespace DialogueDown.Tests.Compilation;
 
 /// <summary>
-/// Laws over generated scripts about <c>DLG1116</c>'s fix, which writes one space in place of
-/// spaces typed together.
+/// Properties over generated scripts of <c>DLG1116</c>'s fix, which writes one space in place
+/// of spaces typed together.
 /// </summary>
 /// <remarks>
 /// <see cref="SpacedScriptGenCoverageTests"/> checks that every kind of spacing and every piece of

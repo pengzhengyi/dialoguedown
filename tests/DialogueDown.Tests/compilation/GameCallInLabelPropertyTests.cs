@@ -11,7 +11,7 @@ using static DialogueDown.Tests.Support.CompilationAssert;
 namespace DialogueDown.Tests.Compilation;
 
 /// <summary>
-/// Laws over generated labels that hold game calls, in every placement a label can take.
+/// Properties over generated labels that hold game calls, in every placement a label can take.
 /// </summary>
 /// <remarks>
 /// Each expectation comes from the model <see cref="LabelGen"/> returns with its script, never from

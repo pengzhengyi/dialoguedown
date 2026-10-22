@@ -10,16 +10,16 @@ using DialogueDown.Tests.Support;
 namespace DialogueDown.Tests.Emission;
 
 /// <summary>
-/// Laws over generated speech lists that hold for every list <see cref="SpeechSpacing"/>
-/// normalizes, not only the ones an example test names.
+/// Properties over generated speech lists that hold for every list
+/// <see cref="SpeechSpacing"/> normalizes, not only the ones an example test names.
 /// </summary>
 /// <remarks>
-/// Each law reads a list as a pattern of pieces, one character each: <c>_</c> for a collapsible
-/// space or a soft line break, <c>v</c> for anything else the player sees, and <c>u</c> for a
-/// command or a tag. Styled text and a link's label belong to the list around them, so their
-/// pieces are read in place; an image is one visible piece. <c>"a  ", Wave(), **"bc"**</c> reads
-/// as <c>v__uvv</c>. <see cref="SpeechGenCoverageTests"/> checks that every kind of fragment and
-/// space is generated.
+/// Each property reads a list as a pattern of pieces, one character each: <c>_</c> for a
+/// collapsible space or a soft line break, <c>v</c> for anything else the player sees, and
+/// <c>u</c> for a command or a tag. Styled text and a link's label belong to the list around them,
+/// so their pieces are read in place; an image is one visible piece.
+/// <c>"a  ", Wave(), **"bc"**</c> reads as <c>v__uvv</c>. <see cref="SpeechGenCoverageTests"/>
+/// checks that every kind of fragment and space is generated.
 /// </remarks>
 public sealed class SpeechSpacingPropertyTests
 {
