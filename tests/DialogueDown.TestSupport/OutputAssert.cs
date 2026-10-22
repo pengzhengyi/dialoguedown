@@ -1,11 +1,23 @@
-namespace DialogueDown.Cli.Tests.Support;
+namespace DialogueDown.TestSupport;
 
 /// <summary>
-/// Assertions about text a command printed, so a test can say what a person reads rather than
-/// search the output by hand.
+/// Assertions about text a command, a player, or a prompt printed, so a test can say what a person
+/// reads rather than search the output by hand.
 /// </summary>
-internal static class OutputAssert
+public static class OutputAssert
 {
+    /// <summary>Asserts that the output reads as exactly these lines, and nothing else.</summary>
+    /// <param name="output">What was printed.</param>
+    /// <param name="lines">Every line, in the order a reader meets it.</param>
+    public static void AssertReads(string output, params string[] lines) =>
+        Assert.Equal(lines, ReadLines(output));
+
+    /// <summary>The output's lines, with trailing spaces and final empty lines removed.</summary>
+    /// <param name="output">What was printed.</param>
+    /// <returns>The lines a reader meets, in order.</returns>
+    public static string[] ReadLines(string output) =>
+        [.. output.TrimEnd('\n').Split('\n').Select(line => line.TrimEnd())];
+
     /// <summary>Asserts that <paramref name="output"/> contains every fragment.</summary>
     /// <param name="output">What was printed.</param>
     /// <param name="fragments">Text that must appear, in any order.</param>

@@ -5,12 +5,12 @@ using Spectre.Console;
 namespace DialogueDown.Play.Tui;
 
 /// <summary>
-/// The transcript writer — the seam a driver talks to. It opens a transcript, appends what the
+/// Draws the transcript, and is what a driver talks to: it opens a transcript, appends what the
 /// player reads, closes it, and, at a wait, asks for the player's turn.
 /// </summary>
 /// <remarks>
 /// The console must be interactive: a wait is a keypress, and a console that cannot read keys has
-/// no way to answer one. A run without a terminal is what the raw stdio mode is for.
+/// no way to answer one.
 /// </remarks>
 public sealed class PlayerConsole
 {
@@ -114,7 +114,10 @@ public sealed class PlayerConsole
     /// arrives, so the transcript keeps no record of the wait.
     /// </summary>
     /// <param name="cancellationToken">Stops the wait.</param>
-    /// <returns><see cref="PlayerTurn.Advance"/>, or <see cref="PlayerTurn.Quit"/> at Ctrl+C.</returns>
+    /// <returns>
+    /// <see cref="PlayerTurn.Advance"/> at any key but Escape, or <see cref="PlayerTurn.Quit"/> at
+    /// Ctrl+C or when the console's input ends.
+    /// </returns>
     public async Task<PlayerTurn> AdvanceAsync(CancellationToken cancellationToken = default)
     {
         var hint = Hint(_console);
@@ -155,7 +158,10 @@ public sealed class PlayerConsole
     /// <summary>Offers a menu and asks the player to take one option.</summary>
     /// <param name="options">Every option, with whether it can be taken.</param>
     /// <param name="cancellationToken">Stops the wait.</param>
-    /// <returns>The option taken, or <see cref="PlayerTurn.Quit"/> at Ctrl+C.</returns>
+    /// <returns>
+    /// The option taken, or <see cref="PlayerTurn.Quit"/> at Ctrl+C or when the console's input
+    /// ends.
+    /// </returns>
     public async Task<PlayerTurn> TakeAsync(
         ImmutableArray<MenuOption> options, CancellationToken cancellationToken = default)
     {

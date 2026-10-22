@@ -57,14 +57,14 @@ public sealed class RunnerWalkPropertyTests
                     SpeechTemplate.HasQueries(option.Label), "A label was offered with a query in it.")));
 
     /// <summary>
-    /// A run only ever asks for a draw that can land on a random option.
+    /// A run only ever asks for a draw that can pick a random option.
     /// </summary>
     /// <remarks>
     /// A random choice with nothing drawable is walked past, so a draw asked for there would wait
     /// for a number that could pick nothing.
     /// </remarks>
     [Fact]
-    public void AWalkIsOnlyEverAskedForADrawThatCanLand() =>
+    public void AWalkIsOnlyEverAskedForADrawThatCanPickARandomOption() =>
         Walk.ForEveryStep(
             (_, stepped) => Assert.All(
                 stepped.Events.OfType<Draw>(), draw => Assert.Contains(draw.Shares, share => share > 0)));

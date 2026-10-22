@@ -10,7 +10,7 @@ Part of the [script language specification](script-language.md).
 - [Succession](#succession)
 - [Choices](#choices)
 - [Random choices](#random-choices)
-  - [Dynamic weights](#dynamic-weights)
+  - [Key weights](#key-weights)
 - [Jumps](#jumps)
   - [Naming a jump](#naming-a-jump)
 - [Conditional jumps](#conditional-jumps)
@@ -109,7 +109,7 @@ mean equal odds no matter the total. Write them as the percentages you intend;
 if they do not add up to 100, the compiler normalizes them and warns.
 
 A bare `` `%` `` is an **auto** weight: it takes an equal share of whatever
-percentage the explicit weights leave. Pin the odds that matter and let the rest
+percentage the number weights leave. Pin the odds that matter and let the rest
 divide evenly.
 
 ```markdown
@@ -139,7 +139,7 @@ A few rules keep random choices unambiguous:
 - **A Markdown preview** shows each weight as inline code (`50%`) at the start of
   the option — readable, and clearly not spoken text.
 
-### Dynamic weights
+### Key weights
 
 A weight can also be **computed from game state**. Wrap a [key](game-state.md#quoting-a-key) in
 a code span and end it with `%`; its runtime numeric result becomes the option's
@@ -154,7 +154,7 @@ The rival spots you across the courtyard.
 
 The engine reads each query from your game, treats the result as a percentage,
 and picks one line by weight — so the character most fond of the player is the
-most likely to greet them. Static, auto, and dynamic weights mix freely in one
+most likely to greet them. Number, auto, and key weights mix freely in one
 list:
 
 ```markdown
@@ -164,7 +164,7 @@ list:
 ```
 
 Because the numbers are unknown until the game runs, the compiler skips the
-usual "weights should total 100%" check for any list that contains a dynamic
+usual "weights should total 100%" check for any list that contains a key
 weight. At runtime:
 
 - Each query must give a **finite number of 0 or more**. An answer that is
@@ -172,8 +172,8 @@ weight. At runtime:
   no option.
 - An auto weight takes an equal share of what the other weights in play leave of
   100, the numbers from the game included: `max(0, 100 − others) / autos`.
-- The engine then normalizes the weights by their sum, as it does for static
-  weights. It does not yet warn when the total is far from 100.
+- The engine then normalizes the weights by their sum, as it does for number
+  weights. It does not warn when the total is far from 100.
 
 When every weight is 0, there is nothing to pick, so the random choice is passed
 by and the run carries on with whatever follows the list, as it does when every
@@ -397,6 +397,28 @@ often a second conditional line testing the opposite flag.
 A condition must lead the line it guards; a `` `key?` `` alone on a line, or one
 buried mid-line after the speaker, has nothing to guard and is an error.
 
+> [!NOTE]
+> **One key cannot be both a line's condition and one of its queries.** A line
+> asks your game for its condition and every query in what it says at once, and
+> the game gives one answer per key: the condition needs true or false, the query
+> words.
+>
+> ```markdown
+> `Hero.Title?` Guard: Welcome, `"Hero.Title"`.
+> ```
+>
+> The compiler rejects this as [`DLG2018`](error-codes.md#dlg2018). Give the
+> condition a key of its own:
+>
+> ```markdown
+> `Hero.HasTitle?` Guard: Welcome, `"Hero.Title"`.
+> ```
+>
+> The same goes for a menu's option conditions and the queries in its options'
+> words, and for a random choice's option conditions and
+> [key weights](#key-weights). One key may still be a condition on one
+> line and a query on another.
+
 ## Conditional choices
 
 Front a **choice option** with a condition to offer it only when the query reads
@@ -517,7 +539,7 @@ between utterances (which every line needs) is written with `>` inside a block, 
 the quote never breaks. That quoted blank line is also what **ends a nested block**:
 after a `> >` branch, a bare `>` line returns you to the outer branch. Omit it and
 Markdown pulls the next line — even an `elseif` or `else` — *into* the nested
-branch, so a marker that lands mid-paragraph is an error. Always write the bare `>`
+branch, so a marker that ends up mid-paragraph is an error. Always write the bare `>`
 line where a nested block ends.
 
 **Choosing a scene by condition.** A conditional block groups *content*, not

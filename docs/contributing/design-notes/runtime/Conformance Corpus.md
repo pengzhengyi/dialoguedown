@@ -75,6 +75,7 @@ rather than a script.
 | --- | --- | --- |
 | `linear-speech` | Does one line follow another, and does the run end? | yes |
 | `styled-speech` | Do fragment boundaries and styles survive intact? | yes |
+| `spaces-typed-together` | Are spaces typed together said as one? | yes |
 | `a-jump` | Does a jump transfer without returning? | yes |
 | `an-effect` | Is an effect asked for, and waited on before the run goes past it? | yes |
 | `a-failed-effect` | Does the run stand still, so a retry carries on and an advance cannot? | yes |
@@ -83,6 +84,8 @@ rather than a script.
 | `a-command-mid-line` | Is a command in the middle of a line performed between its words? | yes |
 | `a-command-ending-a-line` | Is a command ending a line performed after its words, before the player moves on? | yes |
 | `a-line-that-is-only-a-command` | Does a line whose only speech is a command still wait for the player? | yes |
+| `a-space-between-two-commands` | Does a space typed alone between two commands go on with the words after them? | yes |
+| `a-named-space-between-commands` | Is a named space alone between two commands sent as a `continued`? | yes |
 | `a-failed-command-in-a-line` | Does a failed command in a line hold the run, so the retry gives the player the turn? | yes |
 | `a-command-too-late` | Is a command after the end refused with the reason the session names? | yes |
 | `a-conditional-line` | Is a line skipped without ending the run? | yes |
@@ -105,10 +108,10 @@ rather than a script.
 | `a-query-in-a-label` | Is a label's query asked before the menu is offered, and the label shown with the answer? | yes |
 | `a-menu-asking-truths-and-words` | Are a menu's conditions asked before its labels' queries, in one request? | yes |
 | `a-menu-with-nothing-available` | Is a menu whose every option the world withholds walked past by its fall-through? | yes |
-| `a-random-choice` | Is a draw asked for with each random option's share, and does it lead into the random option it lands on? | yes |
-| `a-draw-at-the-end-of-a-span` | Does a draw at the exact end of one span land on the next random option? | yes |
-| `a-draw-of-zero` | Does a draw of 0 pass by a random option with a `0%` chance and land on the first with a share? | yes |
-| `a-draw-of-one` | Does a draw of 1 land on the last random option with a share, not on one with a `0%` chance after it? | yes |
+| `a-random-choice` | Is a draw asked for with each random option's share, and does it lead into the random option it picks? | yes |
+| `a-draw-at-the-end-of-a-span` | Does a draw at the exact end of one span pick the next random option? | yes |
+| `a-draw-of-zero` | Does a draw of 0 pass by a random option with a `0%` chance and pick the first with a share? | yes |
+| `a-draw-of-one` | Does a draw of 1 pick the last random option with a share, not one with a `0%` chance after it? | yes |
 | `an-auto-weight-left-nothing` | Does an auto weight beside numbers past 100 have no share, with the numbers drawn as written? | yes |
 | `a-random-choice-of-one` | Does a random choice of one random option still ask for a draw? | yes |
 | `an-invalid-draw` | Is a draw outside 0 to 1 refused, with the random choice still waiting for one? | yes |
@@ -144,7 +147,10 @@ A runtime has no compiler, so a fixture supplies the playbook it loads. The sour
 script is committed beside it, so a reviewer reads a dialogue rather than JSON, and a
 test recompiles every playable source and compares it to the committed playbook. A
 `readable/` refusal is an accepted document with one deliberate edit, and its source
-opens with a `broken:` block showing that edit.
+opens with a `broken:` block showing that edit. A playable case is written the same way
+when it plays a playbook no compiler emits, such as a key one node needs as two kinds of
+answer: the compiler rejects that script, so the case can only edit a playbook it does
+accept.
 
 ### F3 — A fixture is a session, not a transcript
 
@@ -169,6 +175,10 @@ supplied together. A fixture whose subject *is* styling or interpolation writes 
 array. Neither form carries a node reference: a position churns whenever the
 compiler renumbers.
 
+A `said` or `continued` claims the speech as the run says it: each query replaced by
+the words the world supplied, each command sent apart as a `perform`, and a tag kept
+where it stands.
+
 ### F5 — A refusal asserts the verdict, not the wording
 
 A runtime must refuse the same documents, not refuse them in English. To stop a
@@ -187,10 +197,10 @@ are pinned by the goldens.
 
 An outcome carries a **list** of reasons, so a contributor sees every divergence in
 an entry at once rather than fixing one and re-running. The gravest verdict wins, and
-reasons gather at that verdict in the order the checks ran; a reason a graver verdict
-outranks is dropped. The run still stops at the first entry that does not conform,
+reasons gather at that verdict in the order the checks ran; a reason for a less grave
+verdict is dropped. The run still stops at the first entry that does not conform,
 because a send advances the run and later entries would be judged against a state
-the fixture never described. What the build has **yet to learn** — node kinds, sends,
+the fixture never described. What the build **cannot play yet** — node kinds, sends,
 and claims nothing checks — is gathered before the run starts, so one run names
 everything a case needs. The verdict is **not yet playable**, matching
 `RefusalReason.UnplayableNode` and the `playable/` folder.
@@ -215,7 +225,7 @@ everything a case needs. The verdict is **not yet playable**, matching
 | Harness unit | The harness fails when it should — a wrong verdict, a missing playbook, a malformed fixture |
 | Readable corpus | Every refusal the reader makes has a case, and every acceptance does too |
 | Fixture integrity | Every fixture validates against `schema/fixture-0.schema.json` in CI; every case ships a fixture, a playbook, and a source |
-| Source integrity | Every playable source recompiles to its committed playbook; every readable refusal's `broken:` block is well formed, and the script below it compiles to an accepted document that differs from the committed one |
+| Source integrity | Every playable source without a `broken:` block recompiles to its committed playbook; every `broken:` block, readable or playable, is well formed, and the script below it compiles to an accepted document that differs from the committed one |
 | Schema agreement | Every accepted playbook validates against `schema/playbook-0.schema.json` |
 
 The source comparison lives in `DialogueDown.Tests`, which owns the compiler; the
@@ -227,8 +237,5 @@ files for all three.
 
 - **`describe` has a slot but no fixtures.** What a `describe` reply contains is the
   runner's to settle; the line debugger is the consumer that will force the shape.
-- **Which fragment kinds survive a run.** A `query` fragment must become something
-  else once `supply` answers it, and whether `tag` and `custom-command` pass through
-  or surface as their own events is a runner decision.
 - **A rendered view of a session** — printing a fixture as prose — would give
   readability with no parser in any port.

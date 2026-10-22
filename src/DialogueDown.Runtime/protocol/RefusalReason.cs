@@ -61,6 +61,11 @@ public enum RefusalReason
     KeyNeededBothWays,
 
     /// <summary>The node is of a kind this build cannot play.</summary>
+    /// <remarks>
+    /// Reserved: the C# runner plays every kind of node and never sends it. It stays in the set
+    /// so a runtime that cannot play a kind, or a kind added later, refuses it by this reason
+    /// rather than misplaying it.
+    /// </remarks>
     UnplayableNode,
 
     /// <summary><c>Choose</c> named a position outside the options the menu offered.</summary>

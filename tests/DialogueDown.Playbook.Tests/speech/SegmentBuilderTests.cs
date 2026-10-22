@@ -38,7 +38,7 @@ public sealed class SegmentBuilderTests
     }
 
     [Fact]
-    public void Take_RefusesAKindItWasNeverTaught() =>
+    public void Take_RefusesAKindItDoesNotHandle() =>
         Assert.Throws<NotSupportedException>(
             () => new SegmentBuilder().Take(new UnhandledFragment()));
 

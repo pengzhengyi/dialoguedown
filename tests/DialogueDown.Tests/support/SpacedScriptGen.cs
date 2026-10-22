@@ -16,14 +16,14 @@ namespace DialogueDown.Tests.Support;
 /// Alice: dawn&amp;#32;&amp;#32;*map  gate* `Wave()`  ![coin road](a.png) => [road&amp;nbsp; dawn](#the-square)
 ///
 /// - gate  #mood=sad map
-/// - coin&amp;#10;`"Gold"`
+/// - coin &amp;#10; `"Gold"`
 /// </code>
 /// <para>
 /// Spacing is generated between every two pieces of speech, after the last one, and inside
 /// emphasis, a link's label, alt text, and a jump's label: one, two, or three spaces, a tab, and
 /// the entities for a space, a tab, a line feed, and a no-break space, alone and beside a space.
-/// Speech and each label begin and end with a word, and a tag and an arrow have only literal spaces
-/// beside them, so the Markdown reads the same whichever spacing is generated.
+/// Speech begins with a word, each label begins and ends with one, and a tag and an arrow have only
+/// literal spaces beside them, so the Markdown reads the same whichever spacing is generated.
 /// </para>
 /// </remarks>
 internal static class SpacedScriptGen

@@ -58,8 +58,8 @@ internal static class NodeTraversalExtensions
     /// <summary>Where a node leads on to, when no way out needs the world's answer.</summary>
     /// <remarks>
     /// A jump and a block condition's branches are the ways out a writer chose, and they come
-    /// before the succession, which the run takes when none of them is. So a node
-    /// carrying a jump to 9 beside a succession to 4 leads to 9, and the 4 is unreachable.
+    /// before the succession, which the run takes when none of them is taken. So a node carrying a
+    /// jump to 9 beside a succession to 4 leads to 9, and the 4 is unreachable.
     /// <para>
     /// Without answers, only a way out that nothing guards is taken. A node with a guarded way out
     /// is asked about before it is left, and left once the answers arrive.
@@ -92,8 +92,8 @@ internal static class NodeTraversalExtensions
         return node.FirstWayOutTaken(supply.Allows) ?? node.SuccessionTarget();
     }
 
-    // A branch node's branches are tried in the order they appear, so the first one allowed is
-    // taken.
+    // A jump and a block condition's branches are tried in the order the node lists them, so the
+    // first one allowed is taken.
     private static int? FirstWayOutTaken(this Node node, Func<IConditional, bool> isTaken) =>
         node.Out
             .FirstOrDefault(way => way is DivertEdge or BranchEdge && isTaken((IConditional)way))

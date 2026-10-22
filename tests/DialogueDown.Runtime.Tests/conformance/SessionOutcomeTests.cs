@@ -39,7 +39,7 @@ public sealed class SessionOutcomeTests
     }
 
     [Fact]
-    public void Combine_ADivergenceOutranksAnUnplayableClaim()
+    public void Combine_ADivergenceTakesPrecedenceOverAnUnplayableClaim()
     {
         // Otherwise a real failure hides behind an unrelated check the harness cannot make yet.
         var combined = SessionOutcome.Combine(
@@ -74,7 +74,7 @@ public sealed class SessionOutcomeTests
     }
 
     [Fact]
-    public void Combine_DropsTheReasonsOfAVerdictItOutranks()
+    public void Combine_DropsTheReasonsOfAVerdictItOverrides()
     {
         var combined = SessionOutcome.Combine(
             SessionOutcome.NotYetPlayable("nothing checks describe yet"),
@@ -110,9 +110,9 @@ public sealed class SessionOutcomeTests
     }
 
     [Fact]
-    public void Combine_ReadsOnPastAClaimItCannotCheck()
+    public void Combine_ContinuesPastAClaimItCannotCheck()
     {
-        // A divergence outranks one, so reading carries on until it is known there is none.
+        // A divergence takes precedence over one, so reading goes on in case a divergence follows.
         var combined = SessionOutcome.Combine(
             SessionOutcome.NotYetPlayable("nothing checks describe yet"),
             SessionOutcome.Conformed(),

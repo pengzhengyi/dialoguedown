@@ -22,9 +22,9 @@ namespace DialogueDown.Emission;
 /// and no visible piece after it makes it trailing. Reading from the start tells the first, but
 /// the second is known only once the rest of the list has been read, since everything after a
 /// space may be commands and tags. So two passes do the work. Collapsing reads forward, keeps the
-/// first collapsible space of each run, and drops the rest along with any before the first visible
-/// piece. Trimming reads backward and drops each space with no visible piece after it. Both pass
-/// over a command or a tag, which is what lets the spaces on its two sides meet.
+/// first of consecutive collapsible spaces, and drops the rest along with any before the first
+/// visible piece. Trimming reads backward and drops each space with no visible piece after it.
+/// Both pass over a command or a tag, which is what lets the spaces on its two sides meet.
 /// </para>
 /// <para>
 /// Each pass carries one flag. Collapsing's <c>afterSpace</c> says the last thing kept was a
@@ -132,8 +132,9 @@ internal static class SpeechSpacing
             var placing = new Placing();
             var placed = placing.PlaceEach(fragments);
 
-            // Nothing visible followed it in this list, which only a link's label can end that way,
-            // so it goes at the end, the nearest it can come to the words after the link.
+            // A space is still held only at the end of a link's label, with nothing visible after
+            // it in the label, so it goes at the end, the nearest it can come to the words after
+            // the link.
             return placing._held is { } held ? placed.Add(held) : placed;
         }
 
@@ -199,9 +200,9 @@ internal static class SpeechSpacing
         }
     }
 
-    // Keeps the first collapsible space of each run, written as a space, and drops the rest along
-    // with every one before the first visible piece. A soft line break counts as a collapsible space
-    // and stays a break when kept.
+    // Keeps the first of consecutive collapsible spaces, written as a space, and drops the rest
+    // along with every one before the first visible piece. A soft line break counts as a
+    // collapsible space and stays a break when kept.
     private sealed class Collapsing
     {
         // Whether the last thing kept was a collapsible space. It starts true, so a space before

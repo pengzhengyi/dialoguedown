@@ -16,8 +16,8 @@ namespace DialogueDown.Runtime.Tests;
 /// <remarks>
 /// The nodes come from <see cref="PlaybookNodeFactory"/>; this builds the document around them and
 /// the context that steps it. A test that needs the document itself rather than a context over it —
-/// the writer's tests, say — asks for <see cref="Document"/>. A few scenarios are single nodes that
-/// several test classes share; they return the node rather than a context.
+/// the playbook generator, say — asks for <see cref="Document"/>. A few scenarios are single nodes
+/// that several test classes share; they return the node rather than a context.
 /// </remarks>
 internal static class PlayContextFactory
 {

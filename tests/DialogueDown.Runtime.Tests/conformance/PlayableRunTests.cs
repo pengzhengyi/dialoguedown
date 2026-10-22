@@ -20,7 +20,7 @@ public sealed class PlayableRunTests
             "nothing sends describe yet");
     }
 
-    /// <summary>A corpus playbook, held to a session that asks where the run stands.</summary>
+    /// <summary>A corpus playbook, paired with a session that asks where the run stands.</summary>
     /// <remarks>
     /// <code>
     /// Alice: Hello.

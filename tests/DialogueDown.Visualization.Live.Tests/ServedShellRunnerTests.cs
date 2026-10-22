@@ -3,6 +3,7 @@ using DialogueDown.TestSupport;
 using DialogueDown.Visualization.Configuration;
 using DialogueDown.Visualization.Live.Serving;
 using DialogueDown.Visualization.Live.Tests.Support;
+using static DialogueDown.TestSupport.OutputAssert;
 
 namespace DialogueDown.Visualization.Live.Tests;
 
@@ -15,12 +16,13 @@ public sealed class ServedShellRunnerTests
     [Fact]
     public async Task RunAsync_InvalidRoot_ReturnsOne()
     {
+        var missing = Path.Combine(Path.GetTempPath(), $"missing-{Guid.NewGuid():N}");
         var error = new StringWriter();
         var runner = new ServedShellRunner(new FakeBrowserLauncher());
 
         var code = await runner.RunAsync(
             script: null,
-            root: Path.Combine(Path.GetTempPath(), $"missing-{Guid.NewGuid():N}"),
+            root: missing,
             ReportMode.View,
             port: null,
             noOpen: true,
@@ -30,7 +32,7 @@ public sealed class ServedShellRunnerTests
             CancellationToken.None);
 
         Assert.Equal(1, code);
-        Assert.Contains("not a directory", error.ToString(), StringComparison.OrdinalIgnoreCase);
+        AssertReads(error.ToString(), $"Serve root is not a directory: {missing}");
     }
 
     [Fact]

@@ -68,8 +68,8 @@ public sealed class MarkdigUnmodeledNodeHandlerTests
     [Fact]
     public void Handle_APolicyWithAHandlingThisCodeDoesNotKnow_Throws()
     {
-        // Neither keep nor ignore: a new UnmodeledNodeHandling nothing here was taught to carry
-        // out. Failing loudly beats guessing, which would drop or keep the writer's content at
+        // Neither keep nor ignore: a new UnmodeledNodeHandling value this handler does not
+        // support. Failing loudly beats guessing, which would drop or keep the writer's content at
         // random.
         var handler = Handler("---", new UnknownHandlingPolicy());
 

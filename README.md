@@ -102,6 +102,7 @@ dotnet run --project src/DialogueDown.Cli -- compile scene.dialogue.md
 | `src/DialogueDown/` | the compiler library (net8.0 + net10.0, no engine references) |
 | `src/DialogueDown.Playbook/` | the playbook format: the compiled document and its reader |
 | `src/DialogueDown.Runtime/` | the runner that plays a playbook |
+| `src/DialogueDown.Play/` | the terminal player's presentation; the `ddown play` command that would drive it is not built |
 | `src/DialogueDown.ConfigurationLoader/` | reads `dialogue.toml` |
 | `src/DialogueDown.Visualization/` | the interactive report of each compiler stage |
 | `src/DialogueDown.Visualization.Live/` | the loopback server behind `ddown visualize` |
@@ -161,7 +162,7 @@ report toggles between read-only **View** and an in-browser **Edit** mode — wi
 document-aware autocomplete for jump targets, speakers, `@id`s, and `#tag`s —
 that saves back to the file. It bundles all its assets (D3, Mermaid, DOMPurify,
 CodeMirror, Pico.css, marked, and Tippy.js) so it works fully offline, and reads
-the compiler through the same seams the tests use, never touching the shipped
+the compiler through the same entry points the tests use, never touching the shipped
 core package.
 
 Render a script from the command line with the `ddown visualize` command
@@ -220,3 +221,9 @@ Please don't report vulnerabilities in public issues. See
 ## License
 
 DialogueDown is released under the [MIT License](LICENSE).
+
+The `ddown` tool package bundles third-party libraries, and their licenses ask that
+their notices travel with every binary copy. [THIRD-PARTY-NOTICES.md](THIRD-PARTY-NOTICES.md)
+lists them, and the package carries it at its root. A game that ships the DialogueDown
+runtime ships DialogueDown's MIT notice, plus the entries for any third-party code compiled
+into the assemblies it embeds.

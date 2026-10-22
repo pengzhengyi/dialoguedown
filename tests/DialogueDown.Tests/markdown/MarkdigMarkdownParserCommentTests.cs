@@ -13,7 +13,7 @@ public sealed class MarkdigMarkdownParserCommentTests : MarkdigMarkdownParserTes
         var document = Parse("Alice: Hello! <!-- warm -->");
 
         // The comment is dropped; the surrounding text stays raw (trailing space
-        // included), to be trimmed later by the dialogue layer.
+        // included), and writing the playbook trims that space later.
         var paragraph = AssertSingleBlock<Paragraph>(document);
         AssertSingleText(paragraph.Inlines, "Alice: Hello! ");
     }

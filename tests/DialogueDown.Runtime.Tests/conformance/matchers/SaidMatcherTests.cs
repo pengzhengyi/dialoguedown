@@ -2,6 +2,7 @@ using DialogueDown.Conformance;
 using DialogueDown.Runtime.Protocol;
 using static DialogueDown.Runtime.Tests.Conformance.SessionEntries;
 using static DialogueDown.Runtime.Tests.Conformance.SessionOutcomeAssert;
+using static DialogueDown.Runtime.Tests.EventFactory;
 using static DialogueDown.TestSupport.SpeechFactory;
 
 namespace DialogueDown.Runtime.Tests.Conformance.Matchers;
@@ -15,38 +16,34 @@ public sealed class SaidMatcherTests
     [Fact]
     public void ASpeakerAndFlattenedSpeechThatAgreeConform()
     {
-        AssertConformed(Match(Spoke("Alice", "Hi"), """{ "speaker": "Alice", "speech": "Hi" }"""));
+        AssertConformed(Match(Said("Alice", "Hi"), """{ "speaker": "Alice", "speech": "Hi" }"""));
     }
 
     [Fact]
     public void FlattenedSpeechReadsTheWordsInsideAStyledRun()
     {
         AssertConformed(Match(
-            new Said("Alice", [
-                Text("My key is "),
-                Bold("rusty"),
-                Text("."),
-            ]),
+            Said("Alice", Text("My key is "), Bold("rusty"), Text(".")),
             """{ "speaker": "Alice", "speech": "My key is rusty." }"""));
     }
 
     [Fact]
     public void SpeechClaimedAsFragmentsConformsWhenTheyAgree()
     {
-        AssertConformed(Match(Spoke("Alice", "Hi"), Fragments));
+        AssertConformed(Match(Said("Alice", "Hi"), Fragments));
     }
 
     [Fact]
     public void AnExpectationNamingNobodyMatchesTheUnnamedSpeaker()
     {
-        AssertConformed(Match(Spoke(null, "Hi"), """{ "speech": "Hi" }"""));
+        AssertConformed(Match(Said(null, "Hi"), """{ "speech": "Hi" }"""));
     }
 
     [Fact]
     public void ADifferentSpeakerDiverges()
     {
         AssertDiverged(
-            Match(Spoke("Alice", "Hi"), """{ "speaker": "Bob", "speech": "Hi" }"""),
+            Match(Said("Alice", "Hi"), """{ "speaker": "Bob", "speech": "Hi" }"""),
             "expected Bob to speak, but Alice did");
     }
 
@@ -54,7 +51,7 @@ public sealed class SaidMatcherTests
     public void TheUnnamedSpeakerIsNamedAsTheDefaultOne()
     {
         AssertDiverged(
-            Match(Spoke(null, "Hi"), """{ "speaker": "Alice", "speech": "Hi" }"""),
+            Match(Said(null, "Hi"), """{ "speaker": "Alice", "speech": "Hi" }"""),
             "expected Alice to speak, but <default> did");
     }
 
@@ -62,7 +59,7 @@ public sealed class SaidMatcherTests
     public void DifferentPlainTextSpeechDiverges()
     {
         AssertDiverged(
-            Match(Spoke("Alice", "Hello"), """{ "speaker": "Alice", "speech": "Hi" }"""),
+            Match(Said("Alice", "Hello"), """{ "speaker": "Alice", "speech": "Hi" }"""),
             """
             expected "Hi", but heard "Hello"
             """);
@@ -72,7 +69,7 @@ public sealed class SaidMatcherTests
     public void PlainTextSpeechDifferingInAnUnseenCharacter_DivergesNamingIt()
     {
         AssertDiverged(
-            Match(Spoke("Alice", "a\u00A0b\u200B"), """{ "speaker": "Alice", "speech": "a\tb" }"""),
+            Match(Said("Alice", "a\u00A0b\u200B"), """{ "speaker": "Alice", "speech": "a\tb" }"""),
             """
             expected "a\u0009b", but heard "a\u00A0b\u200B"
             """);
@@ -82,7 +79,7 @@ public sealed class SaidMatcherTests
     public void DifferentFragmentSpeechDiverges()
     {
         AssertDiverged(
-            Match(Spoke("Alice", "Hello"), Fragments),
+            Match(Said("Alice", "Hello"), Fragments),
             """fragment 0: expected {"kind":"text","text":"Hi"}, but heard {"kind":"text","text":"Hello"}""");
     }
 
@@ -90,7 +87,7 @@ public sealed class SaidMatcherTests
     public void WhenBothTheSpeakerAndTheSpeechDiffer_BothAreReported()
     {
         // Combining gathers reasons of the same graveness, so one run names both faults.
-        var outcome = Match(Spoke("Alice", "Hello"), """{ "speaker": "Bob", "speech": "Hi" }""");
+        var outcome = Match(Said("Alice", "Hello"), """{ "speaker": "Bob", "speech": "Hi" }""");
 
         AssertDiverged(
             outcome,
@@ -111,7 +108,7 @@ public sealed class SaidMatcherTests
     [Fact]
     public void ASaidClaimingNoSpeechIsAnInvalidFixture()
     {
-        Assert.Throws<InvalidFixtureException>(() => Match(Spoke("Alice", "Hi"), """{ "speaker": "Alice" }"""));
+        Assert.Throws<InvalidFixtureException>(() => Match(Said("Alice", "Hi"), """{ "speaker": "Alice" }"""));
     }
 
     [Fact]
@@ -119,7 +116,7 @@ public sealed class SaidMatcherTests
     {
         // A fixture may write a fragment's properties in any order; the speech is the same.
         AssertConformed(Match(
-            new Said("Alice", [Bold("Hi")]),
+            Said("Alice", Bold("Hi")),
             """{ "speaker": "Alice", "speech": [ { "kind": "styled", "children": [ { "kind": "text", "text": "Hi" } ], "style": "bold" } ] }"""));
     }
 
@@ -127,7 +124,7 @@ public sealed class SaidMatcherTests
     public void FewerFragmentsThanClaimedDiverges()
     {
         AssertDiverged(
-            Match(Spoke("Alice", "Hi"), """{ "speaker": "Alice", "speech": [ { "kind": "text", "text": "Hi" }, { "kind": "break" } ] }"""),
+            Match(Said("Alice", "Hi"), """{ "speaker": "Alice", "speech": [ { "kind": "text", "text": "Hi" }, { "kind": "break" } ] }"""),
             "expected 2 fragments, but heard 1");
     }
 
@@ -136,7 +133,7 @@ public sealed class SaidMatcherTests
     {
         AssertDiverged(
             Match(
-                new Said("Alice", [Text("Hi"), Text("there")]),
+                Said("Alice", Text("Hi"), Text("there")),
                 """{ "speaker": "Alice", "speech": [ { "kind": "text", "text": "Hi" }, { "kind": "text", "text": "friend" } ] }"""),
             """fragment 1: expected {"kind":"text","text":"friend"}, but heard {"kind":"text","text":"there"}""");
     }
@@ -146,7 +143,7 @@ public sealed class SaidMatcherTests
     {
         // The counts agree, so every fragment is compared and every mismatch is named.
         var outcome = Match(
-            new Said("Alice", [Text("Hi"), Text("there")]),
+            Said("Alice", Text("Hi"), Text("there")),
             """{ "speaker": "Alice", "speech": [ { "kind": "text", "text": "Hey" }, { "kind": "text", "text": "friend" } ] }""");
 
         AssertDiverged(
@@ -159,11 +156,8 @@ public sealed class SaidMatcherTests
     public void SpeechThatIsNotSpeechIsAnInvalidFixture()
     {
         Assert.Throws<InvalidFixtureException>(
-            () => Match(Spoke("Alice", "Hi"), """{ "speaker": "Alice", "speech": [ { "kind": "nonsense" } ] }"""));
+            () => Match(Said("Alice", "Hi"), """{ "speaker": "Alice", "speech": [ { "kind": "nonsense" } ] }"""));
     }
-
-    private static Said Spoke(string? speaker, string text) =>
-        new(speaker, [Text(text)]);
 
     private SessionOutcome Match(Event happened, string expectation) =>
         _matcher.Match(happened, Json(expectation));

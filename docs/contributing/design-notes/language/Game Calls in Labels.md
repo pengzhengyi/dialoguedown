@@ -28,7 +28,7 @@ and how the compiler says so when a writer puts the wrong one there.
 | **Label** | The inline text inside a link's brackets or an image's alt text. A link after `=>` becomes a jump; when the jump is a menu option, its label is what the menu shows. |
 | **Game call** | A code span that talks to the game: a **query** (`` `"key"` ``) reads a value into the words, a **command** (`` `Wave()` ``, `` `("wave")` ``) asks the host to do something. |
 | **Condition** | A code span ending in `?` (`` `"key"?` ``) that guards what follows it. Not a game call, but written in the same backticks. |
-| **Moment** | A point in a run where the host performs a command: at a node, or between the words of a line. A link, an image, and a menu option are each shown whole, so a label has no moment inside it. |
+| **Moment** | A point in a playthrough where the host performs a command: at a node, or between the words of a line. A link, an image, and a menu option are each shown whole, so a label has no moment inside it. |
 
 ## Goal and scope
 
@@ -41,9 +41,10 @@ In scope:
 
 - Admit a query in a label, so it reaches the playbook as a `QueryFragment`.
 - Report a command in a label with `DLG1103`.
-- Report a condition in a label with the existing `DLG1106`.
-- Report a code span in a label that is not a game call with `DLG1102`, as speech
-  already does.
+- Report a condition in a label with `DLG1106`, the code for a condition that
+  guards nothing.
+- Report a code span in a label that is not a game call with `DLG1102`, as in
+  speech.
 
 Out of scope, and each designed separately:
 
@@ -51,12 +52,12 @@ Out of scope, and each designed separately:
   needs its own rule rather than this one.
 - **A linked image** (`[![alt](a.png)](#x)`). The image inside a link is still
   restored to its Markdown text, along with any query in its alt text.
-- **Playing a choice.** The runner does not play a choice yet. A query in an
-  option's label reaches the playbook and waits for choice playback to fill it.
-  An option written without a jump (`` - Random Armor `AddToInventory("Armor")` ``)
-  takes its label from its own words, command included. Choice playback decides
-  what a menu does with that command; the option's line still performs it when
-  the option is chosen.
+- **Offering a menu.** [Offering a Choice](../runtime/Offering%20a%20Choice.md)
+  owns how the runner shows an option's label: it asks for the label's queries
+  when it reaches the menu, and offers the label with its commands left out. An
+  option written without a jump (`` - Random Armor `AddToInventory("Armor")` ``)
+  takes its label from its own words, command included. The menu leaves that
+  command out, and the option's line performs it when the option is chosen.
 
 ## Writer-facing behavior
 
@@ -150,7 +151,7 @@ flowchart LR
 
 | Option | For | Against |
 | --- | --- | --- |
-| **A structural rule** (chosen) | Follows `OrphanConditionRule`, which already rejects a condition standing where it cannot act. The policy keeps deciding only about Markdown. One rule covers link, image, and jump labels, since it runs after desugar. Every composition that builds a transpiler, `ScriptCompilerFactory` and the DI registration, also runs the validator. | The rule reports without recovering, so the command stays in the tree. No playbook ever carries it, because a compile with an error writes none in either mode. A failed compile's tree keeps it, as it keeps an orphan condition in speech today. |
+| **A structural rule** (chosen) | Follows `OrphanConditionRule`, which already rejects a condition standing where it cannot act. The policy keeps deciding only about Markdown. One rule covers link, image, and jump labels, since it runs after desugar. Every composition that builds a transpiler, `ScriptCompilerFactory` and the DI registration, also runs the validator. | The rule reports without recovering, so the command stays in the tree. No playbook ever carries it, because a compile with an error writes none in either mode. A failed compile's tree keeps it, as it keeps an orphan condition in speech. |
 | A second gate on `IInlinePolicy` | The policy remains the one place that says what a label holds, and the command is dropped at the earliest stage. | Adds a member for a decision that is not about parsing, and splits a code span's handling between the builder and the policy. `SupportsJumps` is not a precedent: it decides whether `=>` is tokenized at all. |
 
 The evidence survives desugar, which is what lets a rule see it. The
@@ -158,11 +159,10 @@ The evidence survives desugar, which is what lets a rule see it. The
 case: desugar turns a stray `=>` into ordinary text, so that one is reported where
 it is dropped.
 
-### D3 — `DLG1103` is reused and narrowed to a command in a label
+### D3 — `DLG1103` reports a command in a label
 
-`DLG1103` existed for "a functional element inside a label", but only a policy no
-default compile used could raise it, so no writer had seen it. Narrowing its
-meaning broke nothing, and a new code would have left a dead one behind.
+`DLG1103` covers commands only: a condition in a label has its own code (D4), and
+a code span that is not a game call reports `DLG1102` (D6).
 
 Its title is "Command in a label". Its message shows the command with its
 arguments, says why it cannot run, and gives the remedy from
@@ -181,14 +181,15 @@ own.
 
 Only the code span changes. A soft break in a label is still read as a space, since
 a label wrapped across two source lines is ordinary Markdown. A nested link or
-image is still restored to its text. Admitting a linked image is separate work.
+image is still restored to its text, and so `LabelInlinePolicy` keeps its way of
+writing a code span back out: a linked image's alt text can hold one. Admitting a
+linked image is separate work.
 
 ### D6 — A code span in a label means what it means in speech
 
 Once a label builds code spans, one that is not a game call reports `DLG1102`,
-exactly as in speech. A label, like speech, can no longer use backticks for
-code-styled text. No script shipped before this design wrote a code span inside
-a label, so none changed meaning.
+exactly as in speech. A label, like speech, cannot use backticks for code-styled
+text.
 
 ### D7 — A divert label may hold a query that no runner fills
 
@@ -214,20 +215,19 @@ runner shows the words.
 The cost is a query in the playbook that no runner fills. No player sees the
 difference, because no runner shows a divert label. A host that reads divert labels
 straight from the playbook is also the world the query asks; it can fill one with
-`SpeechTemplate.Fill` and its own answers. The design that first shows a label adds
-it to the format's list of derivable keys (see [Integration](#integration)).
+`SpeechTemplate.Fill` and its own answers. A design that shows a divert label also
+has the runner ask for its queries (see [Integration](#integration)).
 
 ## Interfaces and abstractions
 
-| Type | Change | Responsibility |
-| --- | --- | --- |
-| `LabelInlinePolicy` | Renamed from `LiteralInlinePolicy`, which stops being literal once it builds code spans; supports `CodeSpanInline` | Says which Markdown elements a label builds, and restores the rest to text. Named for its context, like `TitleInlinePolicy`. |
-| `InlineBuilder` | None | Builds a code span into a `Condition`, a `GameCall`, or recovered `Text`, in speech and labels alike. |
-| `CommandInLabelRule` | New | Reports `DLG1103` for a command with a link, image, or jump among its ancestors. |
-| `GameCallExtensions.Canonical` | New | Writes a game call in its standard form, as a script spells it, for a message to show. |
-| `StructuralValidatorFactory` | Registers the new rule | Composes the default rule set. |
-| `DiagnosticCatalog.CommandInLabel` | Renamed from `DisallowedLabelElement`; title and message reworded | `DLG1103`, now a command in a label. |
-| `RejectingInlinePolicy` | Removed | Its only use, raising `DLG1103` for any functional element, contradicts D1 and D3. |
+| Type | Responsibility |
+| --- | --- |
+| `LabelInlinePolicy` | Says which Markdown elements a label builds (text, emphasis, and code spans), and restores the rest to text. Named for its context, like `TitleInlinePolicy`. |
+| `InlineBuilder` | Builds a code span into a `Condition`, a `GameCall`, or recovered `Text`, in speech and labels alike. |
+| `CommandInLabelRule` | Reports `DLG1103` for a command with a link, image, or jump among its ancestors. |
+| `GameCallExtensions.Canonical` | Writes a game call in its standard form, as a script spells it, for a message to show. |
+| `StructuralValidatorFactory` | Composes the default rule set, `CommandInLabelRule` included. |
+| `DiagnosticCatalog.CommandInLabel` | `DLG1103`, a command in a label. |
 
 The rule, in outline:
 
@@ -276,11 +276,11 @@ the command is inside one.
 | A command in a link label, alt text, or jump label | `DLG1103` at the code span. |
 | A command inside emphasis inside a label | `DLG1103`; the rule looks through every ancestor. |
 | A speakerless line holding only a jump whose label has a command | Still a control line, because `ControlLineRecognitionRule` reads only top-level fragments; the rule still reports `DLG1103`. |
-| A command beside a link, outside the brackets | Unchanged; it is speech. |
-| A command before a jump (`` `SlamDoor()` => [Leave](#exit) ``) | Unchanged; the jump's line performs it, as the remedy relies on. |
-| A command in an option's own words (`` - Random Armor `AddToInventory("Armor")` ``) | Unchanged; it is speech, which the option's line performs when chosen. |
+| A command beside a link, outside the brackets | No diagnostic; it is speech. |
+| A command before a jump (`` `SlamDoor()` => [Leave](#exit) ``) | No diagnostic; the jump's line performs it, as the remedy relies on. |
+| A command in an option's own words (`` - Random Armor `AddToInventory("Armor")` ``) | No diagnostic; it is speech, which the option's line performs when chosen. |
 | A condition in a label | `DLG1106` at the code span. |
-| A condition before a jump | Unchanged; it guards the jump. |
+| A condition before a jump | No diagnostic; it guards the jump. |
 | A code span that is not a game call | `DLG1102` once, from `GameCallBuilder`; recovered as literal text. |
 | Two commands in one label | Two `DLG1103`. |
 | A soft break in a label | A space. |
@@ -296,38 +296,15 @@ Nothing past the transpiler needs a change to carry a query in a label:
   recursively, and `EdgeMapping` maps an option's label the same way, so a `Query`
   becomes a `QueryFragment` wherever it stands.
 - **Runtime.** `SpeechTemplate.Keys` and `Fill` walk into a link's label and an
-  image's alt text, and the runner asks for the words a line's speech needs. A
-  query in an inline link's label is therefore asked about and filled today.
-  Carrying is not filling for the other labels: the format's rule on derivable
-  keys ([P4](../runtime/Playbook%20Format.md#p4--what-a-runner-can-derive-is-not-stored))
-  lists a node's condition, speech, effects, and out-edge conditions and weights,
-  but not an out-edge's label. Whichever design first shows a label adds it to
-  that list: choice playback for an option's label, and any later event that
-  surfaces a divert for a divert label. Until then, neither is asked about.
+  image's alt text, and the runner asks for the words a line's speech needs, so a
+  query in an inline link's label or an image's alt text is asked about and
+  filled when the line is said. A menu asks for its options' labels' queries when
+  the runner reaches it, and offers each label filled
+  ([Offering a Choice](../runtime/Offering%20a%20Choice.md#o4--a-label-is-shown-never-performed)).
+  A divert label is never asked about, because no event shows it (D7).
 - **Report and editor.** `InlineText` and `SpeechText` read a query in a label as
   `{key}`, and the editor's semantic tokens walk label fragments, so a query there
   is highlighted like one in speech.
-
-The documentation updated with the implementation:
-
-- `DLG1103` in the error-code reference: new title, prose, and a compiled example.
-  It left the list of codes without an example, which is now empty.
-- The writer's guide to game state: a query may stand in any label and is filled
-  wherever the runner shows the words (a line's links and images today; a menu
-  option once choices play; a divert label never), and a command may not stand
-  in a label.
-- The writer's guide to speakers and lines, which names a query as the one part
-  of an image's alt text not kept as written.
-- The transpiler note's policy table (the label policy's row, and the rejecting
-  policy's row removed), its list of the codes the transpiler reports, and its
-  error table, which separates a game call in a label from a link or image there.
-- The diagnostics note's validator table (the new rule) and recovery table (the
-  rejecting policy's `DLG1103` row removed).
-
-Removing `RejectingInlinePolicy` also removed `RejectingInlinePolicyTests` and
-the `InlineBuilder` test that composed it. `LabelInlinePolicy` keeps its
-reconstruction of a code span: a linked image is still restored to text, alt text
-included, and that alt text can hold one.
 
 ## Testing and demonstration
 
@@ -386,11 +363,12 @@ Goldens pin whole outputs a person reviews as a diff.
   the `QueryFragment` inside a `LinkFragment` and an `OptionEdge` label.
 - **Conformance corpus.** The playable case `a-query-in-a-link`: a query in an
   inline link's label is resolved, and the supplied answer is spoken as part of the
-  line. Every runtime, in any language, must hold the same conversation; the C#
-  runner does.
+  line. The case `a-query-in-a-label` does the same for a menu option's label.
+  Every runtime, in any language, must hold the same conversation; the C# runner
+  does.
 
 `ExampleConstructCoverageTests` counts construct types, and a query is not a new
-one, so it does not ask for the example. The gallery change was made deliberately.
+one, so no test requires the gallery to show it.
 
 ### Shown to writers
 

@@ -44,8 +44,8 @@
     --tok-control-keyword: #af00db;
     --tok-query: #a31515;
     --tok-condition: #001080;
-    --tok-static-weight: #098658;
-    --tok-dynamic-weight: #267f99;
+    --tok-number-weight: #098658;
+    --tok-key-weight: #267f99;
     --tok-command: #795e26;
 
     /* Dormant line-debugger UI: red breakpoint requests and an amber paused-location marker.
@@ -128,8 +128,8 @@
         --tok-control-keyword: #c586c0;
         --tok-query: #ce9178;
         --tok-condition: #9cdcfe;
-        --tok-static-weight: #b5cea8;
-        --tok-dynamic-weight: #4ec9b0;
+        --tok-number-weight: #b5cea8;
+        --tok-key-weight: #4ec9b0;
         --tok-command: #dcdcaa;
         --debug-breakpoint: #ff7b72;
         --debug-current: #e3b341;
@@ -169,8 +169,8 @@
     --tok-control-keyword: #c586c0;
     --tok-query: #ce9178;
     --tok-condition: #9cdcfe;
-    --tok-static-weight: #b5cea8;
-    --tok-dynamic-weight: #4ec9b0;
+    --tok-number-weight: #b5cea8;
+    --tok-key-weight: #4ec9b0;
     --tok-command: #dcdcaa;
     --debug-breakpoint: #ff7b72;
     --debug-current: #e3b341;
@@ -1988,14 +1988,14 @@ g.node.entity-highlight text.label {
     color: var(--tok-condition);
 }
 
-:is(.source-pane .cm-content, .source-preview) .dd-tok-static-weight,
-:is(.source-pane .cm-content, .source-preview) .dd-tok-static-weight * {
-    color: var(--tok-static-weight);
+:is(.source-pane .cm-content, .source-preview) .dd-tok-number-weight,
+:is(.source-pane .cm-content, .source-preview) .dd-tok-number-weight * {
+    color: var(--tok-number-weight);
 }
 
-:is(.source-pane .cm-content, .source-preview) .dd-tok-dynamic-weight,
-:is(.source-pane .cm-content, .source-preview) .dd-tok-dynamic-weight * {
-    color: var(--tok-dynamic-weight);
+:is(.source-pane .cm-content, .source-preview) .dd-tok-key-weight,
+:is(.source-pane .cm-content, .source-preview) .dd-tok-key-weight * {
+    color: var(--tok-key-weight);
 }
 
 :is(.source-pane .cm-content, .source-preview) .dd-tok-command,
@@ -2022,8 +2022,8 @@ g.node.entity-highlight text.label {
 .source-preview .dd-tok-command,
 .source-preview .dd-tok-query,
 .source-preview .dd-tok-condition,
-.source-preview .dd-tok-static-weight,
-.source-preview .dd-tok-dynamic-weight,
+.source-preview .dd-tok-number-weight,
+.source-preview .dd-tok-key-weight,
 .source-preview .dd-tok-reserved-anchor,
 .source-preview .dd-tok-jump {
     cursor: help;

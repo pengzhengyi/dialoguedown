@@ -42,9 +42,9 @@ flowchart TB
 | Stage | Reports |
 | --- | --- |
 | Markdown front end | `DLG1114` |
-| Transpiler | `DLG1101`–`DLG1105`, `DLG1107`–`DLG1112` |
+| Transpiler | `DLG1101`, `DLG1102`, `DLG1104`, `DLG1105`, `DLG1107`–`DLG1112` |
 | Desugar | `DLG1113` |
-| Structural validator | `DLG1003`, `DLG1106`, `DLG1116`, `DLG2010`, `DLG2015`, `DLG3002`–`DLG3004` |
+| Structural validator | `DLG1003`, `DLG1103`, `DLG1106`, `DLG1116`, `DLG2010`, `DLG2015`, `DLG2018`, `DLG3002`–`DLG3004` |
 | Semantic analyzer | `DLG2001`–`DLG2009`, `DLG2016`, `DLG2017` |
 
 ## Ubiquitous language
@@ -54,7 +54,7 @@ flowchart TB
 | **Diagnostic** | One located report: a descriptor, a `SourceSpan`, message arguments, a severity, and any fixes. |
 | **Descriptor** | The stable definition of one diagnostic kind: `Code`, `Title`, `MessageFormat`, `Category`, `DefaultSeverity`. |
 | **Severity** | `Info`, `Warning`, or `Error`, ordered so `Error` is the worst. Only an `Error` fails a compile. |
-| **Diagnostic sink** | `IDiagnosticSink`, the write-only seam a producer reports into. |
+| **Diagnostic sink** | `IDiagnosticSink`, the write-only interface a producer reports into. |
 | **Diagnostic bag** | The collecting sink for one compilation; hands back an immutable snapshot in report order. |
 | **Diagnostics context** | The per-compilation bundle each stage receives: the `Source` and the `Diagnostics` sink. |
 | **Validation rule** | One `IDiagnosticRule` over the desugared tree, owning its descriptor. |
@@ -73,7 +73,7 @@ embed the internal `SourceSpan`; the public surface is the located projection.
 | `DiagnosticCatalog` | internal | Every descriptor in one place; a test enforces unique codes. |
 | `Diagnostic` | internal | Descriptor + span + arguments + severity (defaulting from the descriptor) + `Fixes`; value equality compares arguments element-wise. |
 | `DiagnosticFix` / `DiagnosticEdit` | internal | A titled set of span edits; the first fix is the preferred one (see [Diagnostic Quick Fixes](../visualization/editor/Diagnostic%20Quick%20Fixes.md)). |
-| `IDiagnosticSink`, `DiagnosticBag`, `FailFastDiagnosticSink` | internal | Report seam, collector, and the throwing sink for fail-fast. |
+| `IDiagnosticSink`, `DiagnosticBag`, `FailFastDiagnosticSink` | internal | Reporting interface, collector, and the throwing sink for fail-fast. |
 | `DiagnosticsContext` | internal | `Source` + `Diagnostics` for one compile. |
 | `LineMap` | internal | Offset → one-based line/column. |
 | `DiagnosticSeverity`, `DiagnosticCategory` | public | Enums the located projection exposes. |
@@ -113,6 +113,7 @@ for both composition roots.
 | `ExtraSpacesRule` — [spaces typed together in speech](../language/Speech%20Whitespace.md), which collapse | `DLG1116` | Info |
 | `WeightTotalRule` — random-choice weights sum to zero / not to 100% | `DLG2010` / `DLG3003` | Error / Warning |
 | `SceneHeadingPlacementRule` — a heading inside a branch or option | `DLG2015` | Error |
+| `KeyNeededBothWaysRule` — a key one line, menu, or random choice needs as two kinds of answer | `DLG2018` | Error |
 | `ChoiceNestingDepthRule` — [choice nesting past level 3](Choice%20Nesting%20Diagnostic.md) | `DLG3002` | Warning |
 | `SingleOptionRandomChoiceRule` — a random choice with one option | `DLG3004` | Warning |
 

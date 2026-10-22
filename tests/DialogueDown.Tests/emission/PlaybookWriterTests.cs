@@ -51,8 +51,9 @@ public sealed class PlaybookWriterTests
     [Fact]
     public void Write_TheFormatThisBuildWrites_IsOneThisBuildReads()
     {
-        // The writer states its own version instead of reading the reader's range, so that the
-        // two agree is proven here rather than assumed by sharing a constant.
+        // PlaybookWriter states its own format version instead of reading the range
+        // PlaybookReader accepts, so that the two agree is proven here rather than assumed by
+        // sharing a constant.
         var playbook = _writer.Write(OneEndNode(), Script);
 
         PlaybookCheckerFactory.CreateFormat().Check(playbook);
@@ -148,6 +149,7 @@ public sealed class PlaybookWriterTests
         Assert.Throws<ArgumentNullException>(() => _writer.Write(OneEndNode(), null!));
     }
 
+    /// <summary>The graph an empty script compiles to: one end node, which is also where it starts.</summary>
     private static DialogueGraph OneEndNode() => Graph([EndNode(0)], entry: 0);
 
     private static DialogueGraph Graph(GraphEndNode[] nodes, int entry) =>

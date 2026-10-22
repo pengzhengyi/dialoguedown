@@ -1,5 +1,4 @@
 using DialogueDown.Compilation;
-using DialogueDown.Markdown;
 using DialogueDown.Script.Ast;
 using DialogueDown.Script.Desugar;
 using DialogueDown.Script.Semantics;
@@ -12,8 +11,8 @@ public sealed class CompilationSuccessTests
     [Fact]
     public void CarriesEveryStageArtifact()
     {
-        var script = new ScriptDocument([]);
-        var desugared = new DesugaredScriptDocument(script);
+        var script = DialogueAstFactory.Document();
+        var desugared = DialogueAstFactory.DesugaredDocument();
         var semantics = SemanticModelFactory.Minimal(desugared);
 
         var success = Success(script, desugared, semantics);
@@ -33,12 +32,12 @@ public sealed class CompilationSuccessTests
     [InlineData(2)]
     public void NullArtifact_Throws(int nullIndex)
     {
-        var script = new ScriptDocument([]);
-        var desugared = new DesugaredScriptDocument(script);
+        var script = DialogueAstFactory.Document();
+        var desugared = DialogueAstFactory.DesugaredDocument();
 
         Assert.Throws<ArgumentNullException>(() => new CompilationSuccess(
             "source",
-            new MarkdownDocument([]),
+            MarkdownAstFactory.Document(),
             script,
             nullIndex == 0 ? null! : desugared,
             nullIndex == 1 ? null! : SemanticModelFactory.Minimal(desugared),
@@ -51,11 +50,11 @@ public sealed class CompilationSuccessTests
         DesugaredScriptDocument? desugared = null,
         SemanticModel? semantics = null)
     {
-        script ??= new ScriptDocument([]);
-        desugared ??= new DesugaredScriptDocument(script);
+        script ??= DialogueAstFactory.Document();
+        desugared ??= DialogueAstFactory.DesugaredDocument();
         return new CompilationSuccess(
             "source",
-            new MarkdownDocument([]),
+            MarkdownAstFactory.Document(),
             script,
             desugared,
             semantics ?? SemanticModelFactory.Minimal(desugared),

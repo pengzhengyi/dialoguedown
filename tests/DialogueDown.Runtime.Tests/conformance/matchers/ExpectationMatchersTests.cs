@@ -40,7 +40,7 @@ public sealed class ExpectationMatchersTests
     }
 
     [Fact]
-    public void AnUncheckedClaimBesideOneThatHoldsDoesNotRideAlong()
+    public void AnUncheckedClaimBesideOneThatHoldsIsStillNotYetPlayable()
     {
         // Stopping at the first claim recognized would report this as held, having read half of it.
         AssertNotYetPlayable(

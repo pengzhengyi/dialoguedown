@@ -83,7 +83,7 @@ public sealed class PlaybookDocumentTests
     public void Write_TablesInAnyOrder_AlwaysWritesThemSorted()
     {
         // Entries and anchors are lookup tables, so their order carries no meaning — but a golden
-        // file needs one. Sorting makes a playbook byte-identical however the writer built it.
+        // file needs one. Sorting makes a playbook byte-identical however the compiler built it.
         var document = PlaybookFactory.Document(anchors: [("the-inn", 1), ("a-market", 2)]);
 
         var json = PlaybookJsonAssert.Serialize(document);
@@ -107,7 +107,8 @@ public sealed class PlaybookDocumentTests
         void NegativeAnchor() => _ = PlaybookFactory.Document(anchors: [("the-inn", -1)]);
 
         var error = Assert.Throws<ArgumentOutOfRangeException>(NegativeAnchor);
-        Assert.Contains("the-inn", error.Message, StringComparison.Ordinal);
+        Assert.Equal("anchors[\"the-inn\"]", error.ParamName);
+        Assert.Equal(-1, error.ActualValue);
     }
 
     [Fact]

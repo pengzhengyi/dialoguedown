@@ -1,8 +1,8 @@
 namespace DialogueDown.Conformance.Authoring;
 
 /// <summary>
-/// A refused case's <c>broken:</c> block is malformed, which is a bug in the corpus rather than in a
-/// runtime.
+/// A hand-edited case's <c>broken:</c> block is malformed, which is a bug in the corpus rather than
+/// in a runtime.
 /// </summary>
 /// <remarks>
 /// Kept distinct from the exception a reader throws, so a failing run says whether the corpus is

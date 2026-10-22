@@ -29,7 +29,9 @@ public sealed class CorpusFolderTests
     {
         using var corpus = new TemporaryCorpus().With("here", ("playbook.json", Anything));
 
-        AssertInvalid(() => corpus.Folder.Read("elsewhere", "playbook.json"), "elsewhere");
+        var error = AssertInvalid(() => corpus.Folder.Read("elsewhere", "playbook.json"));
+
+        Assert.Equal("The corpus has no case named 'elsewhere'.", error.Message);
     }
 
     [Fact]
@@ -37,7 +39,9 @@ public sealed class CorpusFolderTests
     {
         using var corpus = new TemporaryCorpus().With("a-case", ("playbook.json", Anything));
 
-        AssertInvalid(() => corpus.Folder.Read("a-case", "fixture.json"), "a-case", "fixture.json");
+        var error = AssertInvalid(() => corpus.Folder.Read("a-case", "fixture.json"));
+
+        Assert.Equal("The case 'a-case' has no fixture.json.", error.Message);
     }
 
     [Fact]

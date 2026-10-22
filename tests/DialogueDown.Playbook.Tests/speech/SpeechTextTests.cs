@@ -105,8 +105,8 @@ public sealed class SpeechTextTests
     [Fact]
     public void Of_WithoutAnswers_NamesTheQueryInBraces()
     {
-        // Braces mark the one part of the line this reader cannot know. They are a drawing
-        // convention rather than anything a writer types.
+        // Braces mark the one part of the line this reader cannot know. They are a display
+        // convention, not script syntax.
         Assert.Equal(
             "You are {HeroName}.",
             SpeechText.Of([Text("You are "), Query("HeroName"), Text(".")]));

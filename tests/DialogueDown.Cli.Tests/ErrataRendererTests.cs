@@ -2,7 +2,7 @@ using DialogueDown.Cli.Fixing;
 using DialogueDown.Diagnostics;
 using Spectre.Console.Testing;
 using static DialogueDown.Cli.Tests.Support.LocatedDiagnosticFactory;
-using static DialogueDown.Cli.Tests.Support.OutputAssert;
+using static DialogueDown.TestSupport.OutputAssert;
 
 namespace DialogueDown.Cli.Tests;
 

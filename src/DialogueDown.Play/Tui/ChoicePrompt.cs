@@ -12,7 +12,8 @@ namespace DialogueDown.Play.Tui;
 /// <remarks>
 /// <para>
 /// A taken option is reported as its position among those offered — the position the runner's
-/// command names — or <see langword="null"/> when the player quit with Ctrl+C.
+/// command names — or <see langword="null"/> when the player quit with Ctrl+C or the console's
+/// input ended.
 /// </para>
 /// <para>
 /// The menu is drawn as a live frame, so a move redraws it in place, and the last frame stays on
@@ -102,8 +103,10 @@ public sealed class ChoicePrompt : IPrompt<int?>
         return taken;
     }
 
-    /// <summary>The menu's frame: every option in the offered order, the cursor on the one under it,
-    /// and the keys below.</summary>
+    /// <summary>
+    /// The menu's frame: every option in the offered order, the cursor on the one under it, and the
+    /// keys below.
+    /// </summary>
     /// <param name="console">The console whose glyphs the frame draws with.</param>
     internal IRenderable Frame(IAnsiConsole console)
     {

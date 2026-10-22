@@ -143,6 +143,15 @@ changes easy to categorize.
   leaving for a playtest to find. See
   [the error catalog](docs/guide/error-codes.md#dlg2017).
 
+- **`DLG2018` rejects a key one place needs two ways** — a line, a menu, or a random choice asks
+  the game everything it needs at once, and the game gives one answer per key, so one key cannot
+  be both the condition and a query of a line (`` `Hero.Title?` Guard: Welcome, `"Hero.Title"`. ``)
+  or both a condition and a dynamic weight in a random choice. Such a script used to compile and
+  was refused as `key-needed-both-ways` only once play reached it; the compiler now rejects it.
+  One key used two ways in two places is still fine. The playable case that tests the refusal
+  now holds a hand-edited playbook, since no compiler emits it. See
+  [the error catalog](docs/guide/error-codes.md#dlg2018).
+
 - **A query in a label** — a link's text, an image's alt text, or a menu option written as a jump
   can now hold a query (`` - => [Ask `"CompanionName"` to join](#join) ``), filled like one in
   speech. A command in a label reports `DLG1103`, since a label is shown whole and the command
@@ -268,6 +277,11 @@ changes easy to categorize.
 
 ### Fixed
 
+- **The `ddown` tool package carries its third-party license notices** — the tool bundles
+  libraries whose licenses require their text or copyright notice to accompany every binary
+  copy, and the package shipped none. It now includes
+  [THIRD-PARTY-NOTICES.md](THIRD-PARTY-NOTICES.md), and a test fails when a bundled assembly
+  has no entry.
 - **Every TOML spelling of a `dialogue.toml` setting is read** — a setting written as an inline
   table, an inline array of tables, or a dotted key (`speakers = [{ name = "Alice" }]`,
   `markdown.unmodeled.table = "keep"`) was ignored without an error, so the compile ran on the

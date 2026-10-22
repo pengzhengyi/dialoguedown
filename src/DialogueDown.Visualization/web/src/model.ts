@@ -454,8 +454,8 @@ export type TokenKind =
     | "ControlKeyword"
     | "Query"
     | "Condition"
-    | "StaticWeight"
-    | "DynamicWeight"
+    | "NumberWeight"
+    | "KeyWeight"
     | "Command"
     | "IgnoredMarkdown";
 

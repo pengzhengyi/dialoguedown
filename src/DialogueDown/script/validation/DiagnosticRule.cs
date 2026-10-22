@@ -29,9 +29,9 @@ internal abstract class DiagnosticRule : IDiagnosticRule
         ArgumentNullException.ThrowIfNull(nodes);
         ArgumentNullException.ThrowIfNull(diagnostics);
 
-        // The reporter closes over the sink so a rule reports with just a span and arguments,
-        // and stays stateless — the sink is never held on the rule, so a shared rule instance is
-        // safe across concurrent compilations.
+        // The reporter closes over the sink so a rule reports with just what it found, and stays
+        // stateless — the sink is never held on the rule, so a shared rule instance is safe across
+        // concurrent compilations.
         Analyze(nodes, (span, arguments, fixes) =>
             diagnostics.Report(new Diagnostic(Descriptor, span, arguments ?? [], fixes: fixes)));
     }

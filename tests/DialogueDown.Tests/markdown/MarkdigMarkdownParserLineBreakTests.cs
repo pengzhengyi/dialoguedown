@@ -46,7 +46,7 @@ public sealed class MarkdigMarkdownParserLineBreakTests : MarkdigMarkdownParserT
         // Markdig rebuilds a soft-wrapped paragraph's inline content into its own buffer, so a
         // LiteralInline's Content.Start is relative to that buffer (0), not the source. The
         // ContentSpan must still be the absolute source position (taken from the reliable
-        // Span), or a speaker or tokenizer anchored at ContentSpan lands at the top of the file.
+        // Span), or a speaker or tokenizer anchored at ContentSpan points at the top of the file.
         var document = Parse("""
             # Heading
 

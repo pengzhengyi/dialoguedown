@@ -145,7 +145,7 @@ export function createProblemsPanel(options: ProblemsPanelOptions): ProblemsPane
     element.className = "problems-panel";
 
     // The batch action leads the panel: one control that applies every fixable problem's preferred
-    // fix. It stays hidden until such a fix exists (see the Fix All Diagnostics note).
+    // fix. It is shown only in an editable script with at least one such fix.
     const toolbar = document.createElement("div");
     toolbar.className = "problem-toolbar";
     const fixAll = document.createElement("button");

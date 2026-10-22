@@ -175,9 +175,9 @@ the weights and assumes nothing.
 | Cross-runtime | The `readable/` cases in the table above |
 | Schema | CI validates every golden and accepted conformance playbook; the goldens' else-less branches protect `minContains: 0` |
 
-The round-trip property catches a checker that is too strict, never one too lax. A
-writer assertion that each emitted branch puts its else last would guard the other
-direction.
+The round-trip property catches a checker that is too strict, never one too lax. An
+assertion in `PlaybookWriter` that each emitted branch puts its else last would
+guard the other direction.
 
 ## Open questions
 

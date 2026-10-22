@@ -3,8 +3,8 @@ using DialogueDown.Visualization.Display;
 namespace DialogueDown.Visualization.Tests.Support;
 
 /// <summary>
-/// One place to build display-model objects for renderer tests, so a constructor
-/// change touches this file instead of every test.
+/// One place to build display-model objects for tests, so a constructor change touches this
+/// file instead of every test.
 /// </summary>
 internal static class DisplayFactory
 {

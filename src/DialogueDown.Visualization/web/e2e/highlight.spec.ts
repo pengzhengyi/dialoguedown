@@ -176,8 +176,8 @@ test("gives quoted code-span forms distinct semantic colors in light and dark", 
             token("Condition", "`Rainy?`"),
             token("Query", '`"playerName"`'),
             token("Command", '`playSound("wind")`'),
-            token("StaticWeight", "`60%`"),
-            token("DynamicWeight", "`Luck%`"),
+            token("NumberWeight", "`60%`"),
+            token("KeyWeight", "`Luck%`"),
             token("ReservedAnchor", "#END"),
         ],
     });
@@ -189,8 +189,8 @@ test("gives quoted code-span forms distinct semantic colors in light and dark", 
         ".dd-tok-condition",
         ".dd-tok-query",
         ".dd-tok-command",
-        ".dd-tok-static-weight",
-        ".dd-tok-dynamic-weight",
+        ".dd-tok-number-weight",
+        ".dd-tok-key-weight",
         ".dd-tok-reserved-anchor",
     ];
     const visibleColors = async () =>
@@ -248,8 +248,8 @@ test("marks the code-span kinds in the rendered preview too", async ({ page }) =
                 token("Condition", "`Rainy?`"),
                 token("Query", '`"playerName"`'),
                 token("Command", '`playSound("wind")`'),
-                token("StaticWeight", "`60%`"),
-                token("DynamicWeight", "`Luck%`"),
+                token("NumberWeight", "`60%`"),
+                token("KeyWeight", "`Luck%`"),
             ],
         }),
     );
@@ -261,8 +261,8 @@ test("marks the code-span kinds in the rendered preview too", async ({ page }) =
     await expect(preview.locator(".dd-tok-condition")).toHaveText("Rainy?");
     await expect(preview.locator(".dd-tok-query")).toHaveText('"playerName"');
     await expect(preview.locator(".dd-tok-command")).toHaveText('playSound("wind")');
-    await expect(preview.locator(".dd-tok-static-weight")).toHaveText("60%");
-    await expect(preview.locator(".dd-tok-dynamic-weight")).toHaveText("Luck%");
+    await expect(preview.locator(".dd-tok-number-weight")).toHaveText("60%");
+    await expect(preview.locator(".dd-tok-key-weight")).toHaveText("Luck%");
 
     // The control keyword keeps its own preview class and wears the token's color.
     const keyword = preview.locator(".dd-preview-control-keyword");

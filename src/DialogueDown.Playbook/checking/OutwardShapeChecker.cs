@@ -93,7 +93,7 @@ public sealed class OutwardShapeChecker : IPlaybookChecker
                         + "a node falls through at most one way.");
                 break;
 
-            // A conditional node may be skipped, so it needs a succession to land on.
+            // A conditional node may be skipped, so it needs a succession to fall through to.
             case 0 when shape.NodeIsConditional:
                 Refuse(CannotLeave(node, shape));
                 break;

@@ -188,8 +188,8 @@ public sealed class SemanticTokenProjectionTests
             >
             > Alice: `playSound("wind")` `"playerName"`
             >
-            > - `60%` Static weight.
-            > - `Luck%` Dynamic weight.
+            > - `60%` Number weight.
+            > - `Luck%` Key weight.
             > - `%` Remaining weight.
             """;
         var tokens = Project(source);
@@ -199,8 +199,8 @@ public sealed class SemanticTokenProjectionTests
             TextsOf(tokens, TokenKind.Command, source));
         Assert.Equal(["`\"playerName\"`"], TextsOf(tokens, TokenKind.Query, source));
         Assert.Equal(["`Rainy?`"], TextsOf(tokens, TokenKind.Condition, source));
-        Assert.Equal(["`60%`", "`%`"], TextsOf(tokens, TokenKind.StaticWeight, source));
-        Assert.Equal(["`Luck%`"], TextsOf(tokens, TokenKind.DynamicWeight, source));
+        Assert.Equal(["`60%`", "`%`"], TextsOf(tokens, TokenKind.NumberWeight, source));
+        Assert.Equal(["`Luck%`"], TextsOf(tokens, TokenKind.KeyWeight, source));
     }
 
     [Fact]

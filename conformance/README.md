@@ -13,7 +13,7 @@ with itself; one written by hand is a specification the implementation must meet
 ```text
 conformance/
   readable/     can a reader load this document at all
-  playable/     does a runner hold the same conversation   (arrives with C2)
+  playable/     does a runner hold the same conversation
 ```
 
 Each case is a folder, and `fixture.json` is always the entry point:
@@ -70,8 +70,8 @@ a large part of why this corpus exists.
 
 ## The playable half
 
-`playable/` arrives with the runtime ([C2]). A fixture there is one **session**:
-the messages a driver sends, interleaved with the replies a runner must give.
+A fixture under `playable/` is one **session**: the messages a driver sends,
+interleaved with the replies a runner must give.
 
 ```json
 { "send": "next" },
@@ -91,7 +91,7 @@ To run one, walk the `session` in order:
    that stops early are different failures, and saying which is which is what
    tells an author whether the fixture or the runtime is wrong.
 
-Comparison is ordinary equality, with the two exceptions above: `speech` and
+Comparison is ordinary equality, with two exceptions: `speech` and
 `label` compare as fragments when written as an array and as the flattening when
 written as a string, and an absent `speaker` means the anonymous default speaker
 rather than "any speaker".
@@ -112,9 +112,10 @@ to a reader's message.
 1. Write `source.dialogue.md`, as small as it can be while showing the one thing
    the case is about.
 2. Compile it: `ddown compile <source> --emit playbook -o playbook.json`.
-3. For a refusal, change **one** field of that playbook by hand — a compiler will
-   not emit a broken document, so the edit is the only way to write the case.
-4. For a refusal, open `source.dialogue.md` with a **`broken:` block**: an HTML
+3. For a readable refusal, or a playable case whose playbook no compiler emits,
+   change **one** field of that playbook by hand — a compiler will not emit such a
+   document, so the edit is the only way to write the case.
+4. For such a case, open `source.dialogue.md` with a **`broken:` block**: an HTML
    comment naming the edit and showing it — the invalid script where the language
    can express it, otherwise the changed part of the playbook. The comment is
    ignored, and the script below it still compiles.
@@ -134,5 +135,3 @@ send someone reading a script.
   document these fixtures are about.
 - [`schema/playbook-0.schema.json`](../schema/playbook-0.schema.json) — the
   format's schema. Every case the corpus **accepts** validates against it.
-
-[C2]: https://github.com/pengzhengyi/dialoguedown/issues/297

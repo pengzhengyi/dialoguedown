@@ -1,5 +1,4 @@
 using DialogueDown.Playbook.Nodes;
-using DialogueDown.Playbook.Speech;
 using DialogueDown.Playbook.Weights;
 using DialogueDown.Runtime.Protocol;
 using DialogueDown.Runtime.Situations;
@@ -77,7 +76,7 @@ public sealed class WalkTests
     /// Some walk is asked for a draw.
     /// </summary>
     /// <remarks>
-    /// <see cref="Stepping.RunnerWalkPropertyTests.AWalkIsOnlyEverAskedForADrawThatCanLand"/>
+    /// <see cref="Stepping.RunnerWalkPropertyTests.AWalkIsOnlyEverAskedForADrawThatCanPickARandomOption"/>
     /// checks nothing unless some walk is asked for a draw.
     /// </remarks>
     [Fact]
@@ -90,7 +89,7 @@ public sealed class WalkTests
     /// Some walk is asked for a draw with a random option the world excluded.
     /// </summary>
     /// <remarks>
-    /// <see cref="Stepping.RunnerWalkPropertyTests.AWalkIsOnlyEverAskedForADrawThatCanLand"/> and
+    /// <see cref="Stepping.RunnerWalkPropertyTests.AWalkIsOnlyEverAskedForADrawThatCanPickARandomOption"/> and
     /// <see cref="EveryAnswerAWalkGives_IsOneTheRunAccepts"/> check a draw with an option excluded
     /// only if some walk meets one.
     /// </remarks>
@@ -105,7 +104,7 @@ public sealed class WalkTests
     /// Some walk is asked for a draw with a share the world answered.
     /// </summary>
     /// <remarks>
-    /// <see cref="Stepping.RunnerWalkPropertyTests.AWalkIsOnlyEverAskedForADrawThatCanLand"/> and
+    /// <see cref="Stepping.RunnerWalkPropertyTests.AWalkIsOnlyEverAskedForADrawThatCanPickARandomOption"/> and
     /// <see cref="EveryAnswerAWalkGives_IsOneTheRunAccepts"/> check a draw with a key weight in
     /// play only if some walk meets one.
     /// </remarks>
@@ -149,7 +148,7 @@ public sealed class WalkTests
     // The sampled world answers every query with the same words, so finding them in a label shows
     // the world filled it in.
     private static bool SaysTheWorldsWords(OfferedOption option) =>
-        option.Label.Contains(new TextFragment(SampledWorld.Words));
+        option.Label.Contains(SpeechFactory.Text(SampledWorld.Words));
 
     // A random option's share is zero if the world excluded it, its weight is `0%`, its key
     // weight was answered 0, or its auto weight has nothing left. The only numbers a playbook

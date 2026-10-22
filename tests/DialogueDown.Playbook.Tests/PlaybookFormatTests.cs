@@ -42,7 +42,8 @@ public sealed class PlaybookFormatTests
             _ = new PlaybookFormat(-1, ImmutableArray<string>.Empty, ImmutableArray<string>.Empty);
 
         var error = Assert.Throws<ArgumentOutOfRangeException>(NegativeVersion);
-        Assert.Contains("-1", error.Message, StringComparison.Ordinal);
+        Assert.Equal("version", error.ParamName);
+        Assert.Equal(-1, error.ActualValue);
     }
 
     [Fact]

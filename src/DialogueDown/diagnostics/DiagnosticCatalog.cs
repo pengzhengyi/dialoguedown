@@ -65,7 +65,7 @@ internal static class DiagnosticCatalog
         DiagnosticCategory.Syntax,
         DiagnosticSeverity.Error);
 
-    /// <summary>DLG1106 — a condition guards no jump, line, choice, or control branch.</summary>
+    /// <summary>DLG1106 — a condition guards no jump, line, choice option, or control branch.</summary>
     public static readonly DiagnosticDescriptor OrphanCondition = new(
         "DLG1106",
         "Condition guards nothing",
@@ -148,7 +148,7 @@ internal static class DiagnosticCatalog
         DiagnosticCategory.Syntax,
         DiagnosticSeverity.Info);
 
-    /// <summary>DLG1116 — spaces typed together in speech collapse to one.</summary>
+    /// <summary>DLG1116 — spaces typed together in what the player reads collapse to one.</summary>
     public static readonly DiagnosticDescriptor ExtraSpaces = new(
         "DLG1116",
         "Spaces typed together collapse",
@@ -252,7 +252,9 @@ internal static class DiagnosticCatalog
         DiagnosticCategory.Semantic,
         DiagnosticSeverity.Error);
 
-    /// <summary>DLG2016 — a jump names a target outside this script, which is not resolved yet.</summary>
+    /// <summary>
+    /// DLG2016 — a jump names a target outside this script, which the compiler does not resolve.
+    /// </summary>
     public static readonly DiagnosticDescriptor ExternalJumpNotResolved = new(
         "DLG2016",
         "Jump outside this script is not resolved yet",
@@ -282,6 +284,15 @@ internal static class DiagnosticCatalog
         DiagnosticCategory.Semantic,
         DiagnosticSeverity.Error);
 
+    /// <summary>DLG2018 — one line, menu, or random choice needs a key as two kinds of answer.</summary>
+    public static readonly DiagnosticDescriptor KeyNeededBothWays = new(
+        "DLG2018",
+        "Key needed both ways",
+        "'{0}' is used here as {1}, and earlier in this {2} as {3}. The game gives one answer per "
+            + "key for the whole {2}, so it cannot answer both. Use a different key for one of them.",
+        DiagnosticCategory.Semantic,
+        DiagnosticSeverity.Error);
+
     // Style — DLG3xxx: a valid script shape that may be difficult to read or maintain.
 
     /// <summary>DLG3002 — a choice branch exceeds the recommended nesting depth.</summary>
@@ -293,7 +304,7 @@ internal static class DiagnosticCatalog
         DiagnosticCategory.Style,
         DiagnosticSeverity.Warning);
 
-    /// <summary>DLG3003 — a random choice's static weights do not total 100%.</summary>
+    /// <summary>DLG3003 — a random choice's number weights do not total 100%.</summary>
     public static readonly DiagnosticDescriptor ChoiceWeightsNotOneHundred = new(
         "DLG3003",
         "Choice weights do not total 100%",

@@ -3,7 +3,7 @@ using DialogueDown.Play.Tui;
 using Spectre.Console.Testing;
 using static DialogueDown.Play.Tests.Support.Consoles;
 using static DialogueDown.Play.Tests.Support.MenuOptionFactory;
-using static DialogueDown.Play.Tests.Support.OutputAssert;
+using static DialogueDown.TestSupport.OutputAssert;
 using static DialogueDown.TestSupport.SpeechFactory;
 
 namespace DialogueDown.Play.Tests.Tui;
@@ -117,7 +117,8 @@ public sealed class ChoicePromptTests
 
         var taken = await new ChoicePrompt(_menu).ShowAsync(console, CancellationToken.None);
 
-        // Down from the second option lands on the third, past the first, which cannot be taken.
+        // The cursor starts on the second option, since the first cannot be taken, and down moves
+        // it to the third.
         Assert.Equal(2, taken);
         Assert.Equal(2, ReadLines(console.Output).Count(line => line == "  ❯ Go around the back"));
     }
@@ -131,7 +132,8 @@ public sealed class ChoicePromptTests
 
         var taken = await new ChoicePrompt(_menu).ShowAsync(console, CancellationToken.None);
 
-        // Up from the second option cannot land on the first, which cannot be taken.
+        // Up from the second option stays put, since the first cannot be taken and the cursor
+        // does not wrap.
         Assert.Equal(1, taken);
     }
 

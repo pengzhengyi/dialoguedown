@@ -239,7 +239,7 @@ script's reloads.
 | --- | --- |
 | Missing file, wrong extension, invalid `--root` | The command exits with a message before serving. |
 | Editor save burst (temp write + rename) | Debounced into one recompile of the final content. |
-| Compile errors after a change | Still a `reload`; diagnostics ride the payload to the overlay and Problems panel. |
+| Compile errors after a change | Still a `reload`; the payload carries the diagnostics to the overlay and Problems panel. |
 | Script deleted or unreadable | `problem { target }`, routed to that document's save controller; a later save recovers. |
 | Several open tabs | All receive each push. |
 | `--port` already in use | Binding fails and the process reports the error. |

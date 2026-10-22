@@ -18,7 +18,7 @@ namespace DialogueDown.Runtime.Stepping;
 /// `"Alice.HasKey"`.</c> guards the line and stands in what it says under one name. The request
 /// names that key once and the world answers it once, so whichever kind comes back leaves one of
 /// the two uses without an answer it can read. Naming those keys is what lets the run say so
-/// rather than reading on with half of what it asked for.
+/// rather than going on with half of what it asked for.
 /// </para>
 /// </remarks>
 internal static class Questions

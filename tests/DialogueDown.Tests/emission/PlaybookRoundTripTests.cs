@@ -41,7 +41,7 @@ public sealed class PlaybookRoundTripTests
             });
 
     /// <summary>
-    /// A playbook the writer produced is one the reader accepts.
+    /// A playbook <c>PlaybookWriter</c> produces is one <see cref="PlaybookReader"/> accepts.
     /// </summary>
     /// <remarks>
     /// The reader throws <see cref="InvalidPlaybookException"/> on a document it judges malformed;

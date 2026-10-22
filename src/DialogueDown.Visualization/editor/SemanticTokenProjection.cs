@@ -125,10 +125,10 @@ internal sealed class SemanticTokenProjection
                 yield return Token(TokenKind.Condition, condition.Span, map);
                 break;
             case NumberWeight or AutoWeight:
-                yield return Token(TokenKind.StaticWeight, node.Span, map);
+                yield return Token(TokenKind.NumberWeight, node.Span, map);
                 break;
             case QueryWeight:
-                yield return Token(TokenKind.DynamicWeight, node.Span, map);
+                yield return Token(TokenKind.KeyWeight, node.Span, map);
                 break;
             case DefaultCommand or CustomCommand:
                 yield return Token(TokenKind.Command, node.Span, map);

@@ -22,8 +22,8 @@ export const PREVIEW_CONSTRUCT_KINDS: readonly TokenKind[] = [
     "ReservedAnchor",
     "Query",
     "Condition",
-    "StaticWeight",
-    "DynamicWeight",
+    "NumberWeight",
+    "KeyWeight",
     "Command",
 ];
 
@@ -55,9 +55,9 @@ const CONSTRUCT_TIP: Partial<Record<TokenKind, string>> = {
     Command: "A command — your game performs this action when the line plays.",
     Query: "A query — asks your game for a value and uses the answer here.",
     Condition: "A condition — what follows plays, is offered, or is taken only when it reads true.",
-    StaticWeight:
+    NumberWeight:
         "A weight — this choice's chance of being picked, set by the number written here.",
-    DynamicWeight: "A weight — this choice's chance of being picked, set by your game each time.",
+    KeyWeight: "A weight — this choice's chance of being picked, set by your game each time.",
     ReservedAnchor: "The reserved endpoint — a jump to it ends the run.",
     JumpIndicator: "A jump — takes the run to another section of the script.",
 };
@@ -86,8 +86,8 @@ const CODE_SPAN_KINDS: readonly TokenKind[] = [
     "Command",
     "Query",
     "Condition",
-    "StaticWeight",
-    "DynamicWeight",
+    "NumberWeight",
+    "KeyWeight",
 ];
 
 /** The text a mark looks for: the span's content for a code span, the text as written otherwise. */

@@ -21,8 +21,7 @@ public sealed class DocumentValidationTests
     {
         var result = DocumentValidation.Validate("/tmp/notes.txt");
 
-        Assert.NotNull(result);
-        Assert.Contains(".dialogue.md", result);
+        Assert.Equal("Expected a DialogueDown script ending in '.dialogue.md': /tmp/notes.txt", result);
     }
 
     [Fact]
@@ -30,7 +29,6 @@ public sealed class DocumentValidationTests
     {
         var result = DocumentValidation.Validate("/tmp/does-not-exist.dialogue.md");
 
-        Assert.NotNull(result);
-        Assert.Contains("not found", result, StringComparison.OrdinalIgnoreCase);
+        Assert.Equal("File not found: /tmp/does-not-exist.dialogue.md", result);
     }
 }

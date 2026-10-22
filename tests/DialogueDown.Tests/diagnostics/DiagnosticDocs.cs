@@ -659,6 +659,22 @@ internal static class DiagnosticDocs
                 ["> # Upstairs"],
                 ["# Upstairs"])),
         new(
+            DiagnosticCatalog.KeyNeededBothWays,
+            "A line, a menu, or a random choice asks the game everything it needs at once, and the "
+            + "game gives one answer per key. A condition needs true or false, a query words, and a "
+            + "key weight a number, so one key cannot serve two of them in one place. Use a "
+            + "separate key for one of the uses; a key may still be used another way in a different "
+            + "place.",
+            new(
+                """
+                `Hero.Title?` Guard: Welcome, `"Hero.Title"`.
+                """,
+                """
+                `Hero.HasTitle?` Guard: Welcome, `"Hero.Title"`.
+                """,
+                ["Hero.Title?"],
+                ["Hero.HasTitle?"])),
+        new(
             DiagnosticCatalog.DeeplyNestedChoiceBranch,
             "Nested choices remain valid, but a fourth level becomes difficult to scan and "
             + "maintain. Consider moving that branch into a new scene and jumping to it instead.",

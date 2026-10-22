@@ -5,7 +5,8 @@ import type { Report } from "../src/model";
 
 /**
  * A playbook with enough nodes to scroll, and a last node whose id (`9`) is deliberately not its
- * position — the corpus allows sparse ids, so a jump that indexed the array would land wrong.
+ * position — the corpus allows sparse ids, so a jump that indexed the array would go to the wrong
+ * node.
  */
 const JUMPABLE_JSON = `{
   "format": {
@@ -262,8 +263,8 @@ test.describe("Playbook tab — a compiled script", () => {
     });
 
     // A reader who has not learned the script language cannot tell a query from braces a writer
-    // typed, so the piece says which it is — the pointer shape and the tooltip the graph's routes
-    // already taught.
+    // typed, so the piece says which it is, with the same pointer shape and tooltip the graph's
+    // routes use.
     test("explains a query beside the piece on hover", async ({ page }) => {
         await page.click(playbookTab);
 
@@ -296,10 +297,10 @@ test.describe("Playbook tab — a compiled script", () => {
         expect(below).toContain('"id": 8');
     });
 
-    test("reveals the node an anchor lands on, found by id and not by position", async ({
+    test("reveals the node an anchor points at, found by id and not by position", async ({
         page,
     }) => {
-        // The anchor points at node 9, the last of ten. Landing on it proves both halves: the
+        // The anchor points at node 9, the last of ten. Reaching it proves both halves: the
         // editor really scrolled, and the search matched the id rather than counting elements.
         await page.click(playbookTab);
 
@@ -404,7 +405,7 @@ test.describe("Playbook tab — a compiled script", () => {
             .evaluate((node) => getComputedStyle(node).backgroundColor);
         expect(painted).not.toBe("rgba(0, 0, 0, 0)");
 
-        // The wash lifts with the tooltip rather than lingering over the document.
+        // The wash goes away with the tooltip rather than lingering over the document.
         await page.locator(".playbook-side").hover();
         await expect(page.locator(".playbook-hover")).toHaveCount(0);
         await expect(wash).toHaveCount(0);
@@ -487,7 +488,7 @@ test.describe("Playbook tab — a script that did not compile", () => {
 /**
  * A playbook whose references sit far from what they name: node 0 speaks as speaker 1 and its
  * edge targets node 9 — the last of many, and a sparse id, so a jump that counted array
- * positions would land wrong.
+ * positions would go to the wrong node.
  */
 const LINKABLE_JSON = `{
   "format": {
@@ -573,7 +574,7 @@ test.describe("Playbook tab — following an index", () => {
         await expect(refOnLine(page, '"target": 9')).toHaveText("9");
         await expect(refOnLine(page, '"the-end": 9')).toHaveText("9");
 
-        // The definition a jump lands on is not itself a link, and neither is a plain number.
+        // The definition a jump goes to is not itself a link, and neither is a plain number.
         await expect(refOnLine(page, '"id": 9')).toHaveCount(0);
         await expect(refOnLine(page, '"version": 0')).toHaveCount(0);
     });
@@ -748,7 +749,7 @@ test.describe("Playbook tab — the Nodes table", () => {
     });
 
     test("follows whichever way out is pressed when a node leads several", async ({ page }) => {
-        // Node 1 leads to 2 and 9. Pressing the second must land on 9, not on whichever came
+        // Node 1 leads to 2 and 9. Pressing the second must go to 9, not to whichever came
         // first: a cell that names two places and delivers one would be worse than plain text.
         const ways = panel(page, "Nodes")
             .locator("tbody tr")

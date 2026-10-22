@@ -3,8 +3,8 @@
 > [!NOTE]
 > Status: **implemented**. Every enum in a JSON contract pins its wire name with a
 > hand-written converter, so no shipped build needs a .NET 9+ package. The
-> `net8.0` target stays — only the out-of-band reference goes. The target
-> story remains [Target Frameworks](./Target%20Frameworks.md).
+> `net8.0` target stays, with no out-of-band package. The target story is
+> [Target Frameworks](./Target%20Frameworks.md).
 
 ## Table of contents
 
@@ -36,7 +36,7 @@ an out-of-band `System.Text.Json` package: **~800 KB** (660.8 KB
 `System.Text.Encodings.Web`) for net8.0 consumers only.
 
 **In scope:** the two enums, their converters, the tests that keep the wire
-names and the strictness, the removal of both conditional package references,
+names and the strictness, package references that are never target-conditional,
 and the docs that record the decision.
 
 **Out of scope:** moving a wire name (none moves), third-party dependencies
@@ -49,17 +49,16 @@ format is identical), and dropping `net8.0` — that waits on Godot 4.8, as
 - [x] `SpeechStyle` and `Verdict` read and write the exact names `italic`,
       `bold`, `strikethrough`, `accept`, `refuse`.
 - [x] One implementation serves both targets; no `[JsonStringEnumMemberName]`
-      usage remains.
-- [x] Both conditional `System.Text.Json` `PackageReference`s and the central
-      `PackageVersion` entry are gone, so no package reference is
-      target-conditional.
+      is used.
+- [x] No project references `System.Text.Json` as a package and
+      `Directory.Packages.props` has no version for it, so no package reference
+      is target-conditional.
 - [x] A number, an unknown name, and a wrong-case name are rejected with a
       message naming the valid ones.
 - [x] An enum member added without a wire name fails loudly, and the
       exhaustiveness test catches it.
-- [x] `StringOnlyEnumConverter` is deleted — its strictness is inherent now.
-- [x] Existing JSON assertions pass unchanged, proving the wire format is
-      byte-identical.
+- [x] The wire format is the one the attribute wrote: `StyledTextFragmentTests`
+      and `ReadableFixtureTests` pin it.
 
 ## Prior art
 
@@ -67,15 +66,14 @@ Surveyed 2026-09-24 (NuGet metadata and repository activity):
 
 | Option | License | Evidence | Verdict |
 | --- | --- | --- | --- |
-| `[JsonStringEnumMemberName]` + out-of-band package | MIT | Works on every target; the ~800 KB above | The thing being replaced: a .NET 9 feature on a .NET 8 target, paid for in bytes. |
+| `[JsonStringEnumMemberName]` + out-of-band package | MIT | Works on every target; the ~800 KB above | Rejected: a .NET 9 feature on a .NET 8 target, paid for in bytes. |
 | **Hand-written converter (chosen)** | — | `SessionEntryJsonConverter` is the house pattern; ~55 lines for both enums | Explicit, zero footprint, strictness by construction. |
 | [`Macross.Json.Extensions`](https://github.com/Macross-Software/core) 3.0.0 | MIT | 28.6M downloads; **last release 2022-06** | `[EnumMember]`-based converter; four years since a release; a dependency to replace a map. |
 | [`EnumExtensions.System.Text.Json`](https://github.com/StefH/System.Text.Json.EnumExtensions) 1.3.0 | MIT | 3M downloads; updated 2025-10; 29 stars | A converter reading `[EnumMember]`/`[Display]`; single small maintainer; the same footprint objection. |
 | [`PolySharp`](https://github.com/Sergio0694/PolySharp) 1.16 / [`Polyfill`](https://github.com/SimonCropp/Polyfill) 11.4 | MIT | Actively maintained polyfill generators | They can polyfill the attribute *type*, but the net8.0 serializer ignores it — the behavior is what is missing. |
 
 Five members across two enums do not justify a dependency, an attribute swap,
-and an upgrade surface. The hand-written route was also the
-natural fallback.
+and more packages to upgrade.
 
 ## The converter
 
@@ -126,16 +124,13 @@ throws `InvalidOperationException` on a number, and the contract is a
 the enum — StyleCop's file-name rule skips enums when it picks a file's first
 type, so a converter sharing `Verdict.cs` would name the file against itself.
 
-- `SpeechStyle` keeps the converter on the type —
-  `[JsonConverter(typeof(SpeechStyleConverter))]` replaces
-  `[JsonConverter(typeof(StringOnlyEnumConverter<SpeechStyle>))]`.
-- `Verdict` keeps its current registration, in `ReadableFixture`'s options,
-  swapping the in-box generic converter for `VerdictConverter`.
-- Both enums lose their per-member attributes and gain a remark saying the map
-  is the contract.
-- `StringOnlyEnumConverter<TEnum>` has no other user, so it is deleted; the
-  hand-written `Read` rejects numbers and unknown names by construction, which
-  is what the wrapper's `allowIntegerValues: false` was for.
+- `SpeechStyle` carries its converter on the type:
+  `[JsonConverter(typeof(SpeechStyleConverter))]`.
+- `Verdict` registers `VerdictConverter` in `ReadableFixture`'s options.
+- Neither enum has per-member attributes; each has a remark saying its members'
+  wire names are fixed, and where.
+- The hand-written `Read` rejects numbers and unknown names by construction, so
+  no wrapper converter with `allowIntegerValues: false` is needed.
 
 ## Key design decisions
 
@@ -148,8 +143,8 @@ smaller than the vetting it replaces.
 
 ### D2 — The map is the contract, and a test proves it
 
-The attribute's whole purpose was that a rename cannot change the format. The
-converter keeps that: the wire names exist only as string literals in the
+A pinned wire name exists so a rename cannot change the format. The converter
+keeps that: the wire names exist only as string literals in the
 converter and as assertions in its tests, so a rename either keeps the literal
 or fails the test.
 
@@ -168,10 +163,10 @@ existing one-converter-per-shape pattern. The write switch's default case throws
 so a new member added without a wire name fails on first use; the
 exhaustiveness test catches it earlier, at test time.
 
-### D5 — Keep multi-targeting; only the reference goes
+### D5 — Keep multi-targeting, without the reference
 
-With the converter, the `net8.0` lane carries no out-of-band package — the cost
-that made it expensive is gone, and what remains is build and test time. The
+With the converter, the `net8.0` lane carries no out-of-band package, so what it
+costs is build and test time. The
 lane still matters: a net10.0 consumer can resolve a net8.0 asset, but a net8.0
 consumer (Godot ≤ 4.7) cannot resolve a net10.0-only package. Dropping
 `net8.0` stays a separate decision, triggered by Godot 4.8 shipping its net10.0
@@ -186,64 +181,37 @@ as [Target Frameworks](./Target%20Frameworks.md) records.
 | Unknown name (`"cursive"`) | `JsonException` naming the value and the valid names. |
 | Wrong case (`"Italic"`) | Same rejection; the format is case-sensitive by design. |
 | Number (`"style": 1`) | Rejected in `Read`; the schema also disallows it. |
-| `null` in a nullable position | Handled by the serializer before the converter, unchanged from today. |
+| `null` in a nullable position | Handled by the serializer before the converter. |
 | A new member with no wire name | The write switch's default case throws; the exhaustiveness test fails first. |
-| A converter registered twice (attribute and options) | Not done: each enum has exactly one registration site, as today. |
+| A converter registered twice (attribute and options) | Not done: each enum has exactly one registration site. |
 | A name reused by two members | Impossible to express in a switch; the compiler rejects the duplicate case. |
 
 ## Demonstrable runs
 
-The out-of-band assemblies on both projects' `net8.0` target, before and after
-(filtered to the three assemblies):
+Neither project's `net8.0` target pulls in any of the three out-of-band
+assemblies:
 
 ```console
 $ dotnet list src/DialogueDown.Playbook/DialogueDown.Playbook.csproj package \
-    --include-transitive --framework net8.0
-   > System.Text.Json              10.0.12
-   > System.IO.Pipelines           10.0.12
-   > System.Text.Encodings.Web     10.0.12
-
-$ dotnet list tests/DialogueDown.Conformance/DialogueDown.Conformance.csproj package \
-    --include-transitive --framework net8.0
-   > System.Text.Json              10.0.12
-   > System.IO.Pipelines           10.0.12
-   > System.Text.Encodings.Web     10.0.12
-
-$ # after the change, both list none of the three
+    --include-transitive --framework net8.0 \
+    | grep -E 'System\.(Text\.Json|IO\.Pipelines|Text\.Encodings\.Web)'
+$ # no output; the same holds for tests/DialogueDown.Conformance
 ```
 
-Implementation evidence, in the order it was taken:
-
-1. `SpeechStyleConverterTests` written first, against the attribute
-   implementation: **11 passed on `net8.0` and `net10.0`**.
-2. The mechanism swapped; the same tests: **11 passed on both targets**, and the
-   whole Playbook suite **273 passed on each**.
-3. The references removed; a fresh `--no-incremental` solution build: **0
-   warnings, 0 errors**, and the full suite: **5,189 passed** across both lanes.
-   `ReadableFixtureTests` covered `Verdict` before and after (16 passed each).
-
-The wire format is the same bytes: `StyledTextFragmentTests` (`"style":
-"italic"`) and `ReadableFixtureTests` (`"verdict": "accept"`) pass unchanged
-throughout.
+The wire format is the one the attribute wrote: `StyledTextFragmentTests`
+(`"style": "italic"`) and `ReadableFixtureTests` (`"verdict": "accept"`) pin it.
 
 ## Integration
 
-| File | Change |
+| File | Role |
 | --- | --- |
-| `src/DialogueDown.Playbook/speech/SpeechStyleConverter.cs` | New. |
-| `src/DialogueDown.Playbook/speech/SpeechStyle.cs` | Converter attribute swapped; attributes removed; remark updated. |
-| `src/DialogueDown.Playbook/speech/StringOnlyEnumConverter.cs` | Deleted. |
-| `src/DialogueDown.Playbook/DialogueDown.Playbook.csproj` | Conditional `System.Text.Json` reference and its comment removed. |
-| `tests/DialogueDown.Conformance/Verdict.cs` | Attributes removed; remark points at the converter. |
-| `tests/DialogueDown.Conformance/VerdictConverter.cs` | New (its own file for the SA1649 reason above). |
-| `tests/DialogueDown.Conformance/ReadableFixture.cs` | Converter registration swapped. |
-| `tests/DialogueDown.Conformance/DialogueDown.Conformance.csproj` | Conditional reference and comment removed. |
-| `Directory.Packages.props` | `System.Text.Json` `PackageVersion` removed. |
+| `src/DialogueDown.Playbook/speech/SpeechStyleConverter.cs` | The playbook's converter. |
+| `src/DialogueDown.Playbook/speech/SpeechStyle.cs` | Names the converter in `[JsonConverter]`; its remark says the wire names are fixed. |
+| `tests/DialogueDown.Conformance/VerdictConverter.cs` | The corpus's converter, in its own file for the SA1649 reason above. |
+| `tests/DialogueDown.Conformance/Verdict.cs` | Its remark points at the converter. |
+| `tests/DialogueDown.Conformance/ReadableFixture.cs` | Registers `VerdictConverter`. |
 | [Playbook format](../runtime/Playbook%20Format.md) | The wire-name decision points here for how names are pinned. |
-| [Target Frameworks](./Target%20Frameworks.md) | The reference is gone; "When Godot moves" now covers only dropping `net8.0`. |
-
-No changelog entry: the libraries are not published and no wire name or public
-API changes.
+| [Target Frameworks](./Target%20Frameworks.md) | "When Godot moves" covers dropping `net8.0`. |
 
 ## Testability
 
@@ -263,10 +231,9 @@ reader is the only place a verdict is consumed.
 ## Open questions and deferred work
 
 - **`DialogueDown.Runtime` is missing from the guardrail.** The manifest guard
-  in `dev-dotnet-tasks.test.mjs` and the Target Frameworks table cover
-  `DialogueDown`, `ConfigurationLoader`, and `Playbook`, but `Runtime` also
-  multi-targets. Confirm whether a game references it, and if so add it to both
-  in a separate follow-up PR.
+  in `dev-dotnet-tasks.test.mjs` covers `DialogueDown`, `ConfigurationLoader`, and
+  `Playbook`, but not `Runtime`, which a game references and which multi-targets
+  too; [Target Frameworks](./Target%20Frameworks.md) records the gap.
 - **Drop `net8.0`** when Godot 4.8 ships
   ([#123738](https://github.com/godotengine/godot/pull/123738)); nothing here
   blocks that, and nothing here should anticipate it.

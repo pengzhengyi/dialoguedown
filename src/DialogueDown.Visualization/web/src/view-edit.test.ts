@@ -442,7 +442,7 @@ describe("createModeController — switchDocument (opening another script)", () 
         expect(c.mode).toBe("edit");
     });
 
-    it("lands in View when the switch asks for it, without a second prompt", () => {
+    it("opens in View when the switch asks for it, without a second prompt", () => {
         // Back is a navigation, not an intent to edit. The switch already resolved the buffer,
         // so leaving Edit here has nothing left to flush or ask about.
         const { ports, app } = fakePorts();
