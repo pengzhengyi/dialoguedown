@@ -111,12 +111,31 @@ public sealed class ChoiceNestingDepthRuleTests
         Assert.Equal("maximumNestingLevel", exception.ParamName);
     }
 
+    /// <summary>
+    /// Three menus, each the only option of the one around it, holding the group given at the
+    /// fourth level.
+    /// </summary>
+    /// <remarks>
+    /// The options between hold nothing but the next menu, a shape no script writes; the rule reads
+    /// only how deep a group sits.
+    /// </remarks>
+    /// <param name="level4">The group that sits at the fourth level.</param>
+    /// <returns>The outermost menu.</returns>
     private static Choices NestToFourthLevel(Choices level4)
     {
         var level3 = Choices(Choice(level4));
         return Choices(Choice(Choices(Choice(level3))));
     }
 
+    /// <summary>
+    /// Two menus, one inside the other, around the group given: placed as an option of a top-level
+    /// menu, the group sits at the fourth level.
+    /// </summary>
+    /// <remarks>
+    /// As in <see cref="NestToFourthLevel"/>, the options between hold only the next menu.
+    /// </remarks>
+    /// <param name="level4">The group that sits at the fourth level once this is nested once more.</param>
+    /// <returns>The menu at the second level.</returns>
     private static Choices NestFromSecondLevel(Choices level4)
     {
         var level3 = Choices(Choice(level4));

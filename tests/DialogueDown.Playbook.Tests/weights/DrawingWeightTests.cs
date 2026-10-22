@@ -20,7 +20,13 @@ public sealed class DrawingWeightTests
         void Unusable() => _ = new Number(percentage);
 
         var error = Assert.Throws<ArgumentOutOfRangeException>(Unusable);
-        Assert.Contains(percentage.ToString(CultureInfo.InvariantCulture), error.Message, StringComparison.Ordinal);
+        Assert.Equal("percentage", error.ParamName);
+        Assert.Equal(percentage, error.ActualValue);
+        Assert.StartsWith(
+            $"A number weight of {percentage.ToString(CultureInfo.InvariantCulture)} has no share: "
+                + "a weight must be finite and not negative.",
+            error.Message,
+            StringComparison.Ordinal);
     }
 
     [Fact]

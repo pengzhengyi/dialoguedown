@@ -1,6 +1,7 @@
 using DialogueDown.Playbook.Edges;
-using DialogueDown.Playbook.Speech;
 using DialogueDown.Playbook.Tests.Support;
+using static DialogueDown.TestSupport.SpeechFactory;
+
 namespace DialogueDown.Playbook.Tests.Edges;
 
 public sealed class OptionEdgeTests
@@ -53,8 +54,8 @@ public sealed class OptionEdgeTests
     [Fact]
     public void Equality_EqualLabels_AreEqual()
     {
-        var left = new OptionEdge(2, [new TextFragment("Ask about the inn")], Condition: null);
-        var right = new OptionEdge(2, [new TextFragment("Ask about the inn")], Condition: null);
+        var left = new OptionEdge(2, [Text("Ask about the inn")], Condition: null);
+        var right = new OptionEdge(2, [Text("Ask about the inn")], Condition: null);
 
         EqualityAssert.AssertValueEqual(left, right);
     }
@@ -62,8 +63,8 @@ public sealed class OptionEdgeTests
     [Fact]
     public void Equality_DifferentLabels_AreNotEqual()
     {
-        var left = new OptionEdge(2, [new TextFragment("Ask about the inn")], Condition: null);
-        var right = new OptionEdge(2, [new TextFragment("Say nothing")], Condition: null);
+        var left = new OptionEdge(2, [Text("Ask about the inn")], Condition: null);
+        var right = new OptionEdge(2, [Text("Say nothing")], Condition: null);
 
         EqualityAssert.AssertValueUnequal(left, right);
     }

@@ -30,6 +30,6 @@ public sealed class ImmutableArrayExtensionsTests
 
         var error = Assert.Throws<ArgumentException>(Uninitialized);
         Assert.Equal("speakers", error.ParamName);
-        Assert.Contains("String", error.Message, StringComparison.Ordinal);
+        Assert.StartsWith("The immutable String array must be initialized.", error.Message, StringComparison.Ordinal);
     }
 }

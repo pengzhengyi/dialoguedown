@@ -2,7 +2,7 @@ using DialogueDown.Conformance;
 using DialogueDown.Runtime.Protocol;
 using static DialogueDown.Runtime.Tests.Conformance.SessionEntries;
 using static DialogueDown.Runtime.Tests.Conformance.SessionOutcomeAssert;
-using static DialogueDown.TestSupport.SpeechFactory;
+using static DialogueDown.Runtime.Tests.EventFactory;
 
 namespace DialogueDown.Runtime.Tests.Conformance.Matchers;
 
@@ -38,7 +38,7 @@ public sealed class DrawMatcherTests
     [Fact]
     public void ARunSpeakingInsteadOfAskingForADrawDiverges() =>
         AssertDiverged(
-            Match(Spoke(), "[ 50, 50 ]"),
+            Match(Said("Alice", "Hi"), "[ 50, 50 ]"),
             "expected the host to be asked for a draw, but the run heard Alice speak");
 
     [Fact]
@@ -59,9 +59,6 @@ public sealed class DrawMatcherTests
             "expected the run to end, but it asked the host to draw against [50,30,20]");
 
     private static Draw Drew(params double[] shares) => new([.. shares]);
-
-    private static Said Spoke() =>
-        new("Alice", [Text("Hi")]);
 
     private SessionOutcome Match(Event happened, string expected) =>
         _matcher.Match(happened, Json(expected));

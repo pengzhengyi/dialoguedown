@@ -1,7 +1,7 @@
 using DialogueDown.Playbook.Nodes;
-using DialogueDown.Playbook.Speech;
 using DialogueDown.Playbook.Tests.Support;
 using static DialogueDown.TestSupport.PlaybookNodeFactory;
+using static DialogueDown.TestSupport.SpeechFactory;
 
 namespace DialogueDown.Playbook.Tests.Nodes;
 
@@ -47,8 +47,8 @@ public sealed class LineNodeTests
     [Fact]
     public void Equality_EqualSpeech_AreEqual()
     {
-        var left = new LineNode(0, 0, [new TextFragment("hello")], Condition: null, [Succession(1)]);
-        var right = new LineNode(0, 0, [new TextFragment("hello")], Condition: null, [Succession(1)]);
+        var left = new LineNode(0, 0, [Text("hello")], Condition: null, [Succession(1)]);
+        var right = new LineNode(0, 0, [Text("hello")], Condition: null, [Succession(1)]);
 
         EqualityAssert.AssertValueEqual(left, right);
     }
@@ -56,8 +56,8 @@ public sealed class LineNodeTests
     [Fact]
     public void Equality_DifferentSpeech_AreNotEqual()
     {
-        var left = new LineNode(0, 0, [new TextFragment("hello")], Condition: null, []);
-        var right = new LineNode(0, 0, [new TextFragment("goodbye")], Condition: null, []);
+        var left = new LineNode(0, 0, [Text("hello")], Condition: null, []);
+        var right = new LineNode(0, 0, [Text("goodbye")], Condition: null, []);
 
         EqualityAssert.AssertValueUnequal(left, right);
     }

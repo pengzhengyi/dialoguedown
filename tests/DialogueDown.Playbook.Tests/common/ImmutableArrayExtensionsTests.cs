@@ -37,6 +37,7 @@ public sealed class ImmutableArrayExtensionsTests
         var error = Assert.Throws<ArgumentException>(() => nothing.AssertNotEmpty("children"));
 
         Assert.Equal("children", error.ParamName);
-        Assert.Contains("String", error.Message, StringComparison.Ordinal);
+        Assert.StartsWith(
+            "The immutable String array must hold at least one element.", error.Message, StringComparison.Ordinal);
     }
 }

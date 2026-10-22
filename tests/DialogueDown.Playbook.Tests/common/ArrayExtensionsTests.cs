@@ -39,6 +39,6 @@ public sealed class ArrayExtensionsTests
         var error = Assert.Throws<ArgumentException>(() => values.AssertNoneMissing("values"));
 
         Assert.Equal("values", error.ParamName);
-        Assert.Contains(nameof(String), error.Message, StringComparison.Ordinal);
+        Assert.StartsWith("The String array must not hold a missing element.", error.Message, StringComparison.Ordinal);
     }
 }

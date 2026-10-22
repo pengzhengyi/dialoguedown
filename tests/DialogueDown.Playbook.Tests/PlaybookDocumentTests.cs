@@ -107,7 +107,8 @@ public sealed class PlaybookDocumentTests
         void NegativeAnchor() => _ = PlaybookFactory.Document(anchors: [("the-inn", -1)]);
 
         var error = Assert.Throws<ArgumentOutOfRangeException>(NegativeAnchor);
-        Assert.Contains("the-inn", error.Message, StringComparison.Ordinal);
+        Assert.Equal("anchors[\"the-inn\"]", error.ParamName);
+        Assert.Equal(-1, error.ActualValue);
     }
 
     [Fact]

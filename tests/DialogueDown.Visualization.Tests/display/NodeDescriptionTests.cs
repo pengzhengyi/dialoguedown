@@ -1,4 +1,6 @@
 using DialogueDown.Visualization.Display;
+using DialogueDown.Visualization.Tests.Support;
+
 namespace DialogueDown.Visualization.Tests.Display;
 
 public sealed class NodeDescriptionTests
@@ -27,7 +29,7 @@ public sealed class NodeDescriptionTests
     [Fact]
     public void Constructor_KeepsLabelAndAttributes()
     {
-        var attributes = new[] { new DisplayAttribute("level", "2") };
+        var attributes = new[] { DisplayFactory.Attr("level", "2") };
 
         var description = new NodeDescription("Heading", attributes);
 

@@ -23,7 +23,13 @@ public sealed class ReadableCorpusTests
         using var corpus = new TemporaryCorpus()
             .With("broken", ("fixture.json", "{ not a fixture"), ("playbook.json", APlaybook));
 
-        AssertInvalid(() => new ReadableCorpus(corpus.Folder).Read("broken"), "broken");
+        var error = AssertInvalid(() => new ReadableCorpus(corpus.Folder).Read("broken"));
+
+        // What follows the case is the JSON reader's own account of the problem.
+        Assert.StartsWith(
+            "The case 'broken' has a bad fixture.json: This is not a readable fixture: ",
+            error.Message,
+            StringComparison.Ordinal);
     }
 
     [Fact]
@@ -32,7 +38,9 @@ public sealed class ReadableCorpusTests
         using var corpus = new TemporaryCorpus()
             .With("no-playbook", ("fixture.json", AReadableFixture().ToJsonString()));
 
-        AssertInvalid(() => new ReadableCorpus(corpus.Folder).Read("no-playbook"), "no-playbook", "playbook.json");
+        var error = AssertInvalid(() => new ReadableCorpus(corpus.Folder).Read("no-playbook"));
+
+        Assert.Equal("The case 'no-playbook' has no playbook.json.", error.Message);
     }
 
     [Fact]
@@ -45,7 +53,9 @@ public sealed class ReadableCorpusTests
             ("fixture.json", AReadableFixture().WithField("playbook", "elsewhere.json")),
             ("playbook.json", APlaybook));
 
-        AssertInvalid(() => new ReadableCorpus(corpus.Folder).Read("renamed"), "elsewhere.json");
+        var error = AssertInvalid(() => new ReadableCorpus(corpus.Folder).Read("renamed"));
+
+        Assert.Equal("The case 'renamed' has no elsewhere.json.", error.Message);
     }
 
     [Fact]

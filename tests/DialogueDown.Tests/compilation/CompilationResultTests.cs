@@ -1,7 +1,5 @@
 using DialogueDown.Compilation;
 using DialogueDown.Diagnostics;
-using DialogueDown.Markdown;
-using DialogueDown.Script.Ast;
 using DialogueDown.Tests.Support;
 
 namespace DialogueDown.Tests.Compilation;
@@ -12,8 +10,8 @@ public sealed class CompilationResultTests
     [Fact]
     public void ExposesTheSourceTheFrontEndArtifactsAndTheDiagnostics()
     {
-        var markdown = new MarkdownDocument([]);
-        var script = new ScriptDocument([]);
+        var markdown = MarkdownAstFactory.Document();
+        var script = DialogueAstFactory.Document();
         var diagnostic = DiagnosticsFactory.Diagnostic();
 
         var result = CompilationFailure.AtTranspile("source", markdown, script, [diagnostic]);
@@ -49,11 +47,11 @@ public sealed class CompilationResultTests
     public void NullSharedArgument_Throws(int nullIndex) =>
         Assert.Throws<ArgumentNullException>(() => CompilationFailure.AtTranspile(
             nullIndex == 0 ? null! : "source",
-            nullIndex == 1 ? null! : new MarkdownDocument([]),
-            nullIndex == 2 ? null! : new ScriptDocument([]),
+            nullIndex == 1 ? null! : MarkdownAstFactory.Document(),
+            nullIndex == 2 ? null! : DialogueAstFactory.Document(),
             nullIndex == 3 ? null! : []));
 
     private static CompilationResult Result(params Diagnostic[] diagnostics) =>
         CompilationFailure.AtTranspile(
-            "source", new MarkdownDocument([]), new ScriptDocument([]), diagnostics);
+            "source", MarkdownAstFactory.Document(), DialogueAstFactory.Document(), diagnostics);
 }

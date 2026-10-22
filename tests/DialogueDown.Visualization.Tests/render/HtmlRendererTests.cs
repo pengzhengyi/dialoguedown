@@ -1,5 +1,4 @@
 using System.Text.Json.Nodes;
-using DialogueDown.Visualization.Display;
 using DialogueDown.Visualization.Render;
 using static DialogueDown.TestSupport.ReportPayload;
 using static DialogueDown.Visualization.Tests.Support.DisplayFactory;
@@ -37,7 +36,7 @@ public sealed class HtmlRendererTests
     [Fact]
     public void Render_EmbedsNodeSourceSnippet()
     {
-        var graph = MakeGraph("Markdown AST", [new DisplayNode("n0", "Heading (H1)", [], "# Hello")], []);
+        var graph = MakeGraph("Markdown AST", [Node("n0", "Heading (H1)") with { Source = "# Hello" }], []);
 
         var html = _renderer.Render(graph);
 

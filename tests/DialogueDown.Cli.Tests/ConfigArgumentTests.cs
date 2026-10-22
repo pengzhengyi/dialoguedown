@@ -17,7 +17,7 @@ public sealed class ConfigArgumentTests
     {
         var result = ConfigArgument.Validate("   ");
 
-        AssertRejected(result, "requires a path");
+        AssertRejected(result, "--config requires a path to a dialogue.toml.");
     }
 
     [Fact]
@@ -25,7 +25,7 @@ public sealed class ConfigArgumentTests
     {
         var result = ConfigArgument.Validate("no-such.toml");
 
-        AssertRejected(result, "not found");
+        AssertRejected(result, "Config file not found: no-such.toml");
     }
 
     [Fact]

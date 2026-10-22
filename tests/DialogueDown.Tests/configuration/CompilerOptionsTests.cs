@@ -64,7 +64,7 @@ public sealed class CompilerOptionsTests
         unmodeled[UnmodeledNodeKind.RawHtml] = UnmodeledNodeHandling.Ignore;
 
         Assert.Equal("Alice", Assert.Single(options.Speakers).Name);
-        Assert.False(options.UnmodeledMarkdown.ContainsKey(UnmodeledNodeKind.RawHtml));
+        Assert.DoesNotContain(UnmodeledNodeKind.RawHtml, options.UnmodeledMarkdown);
         Assert.Equal(hash, options.GetHashCode());
     }
 

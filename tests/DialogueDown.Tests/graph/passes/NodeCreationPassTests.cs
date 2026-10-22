@@ -1,4 +1,3 @@
-using DialogueDown.Common;
 using DialogueDown.Graph;
 using DialogueDown.Graph.Nodes;
 using DialogueDown.Graph.Passes;
@@ -152,9 +151,9 @@ public sealed class NodeCreationPassTests
 
         Assert.Collection(
             graph.Nodes,
-            node => Assert.Equal("Alice: hello", Slice(source, node.Span)),
-            node => Assert.Equal("Bob: goodbye", Slice(source, node.Span)),
-            node => Assert.Equal(string.Empty, Slice(source, node.Span)));
+            node => Assert.Equal("Alice: hello", SourceText.At(source, node.Span)),
+            node => Assert.Equal("Bob: goodbye", SourceText.At(source, node.Span)),
+            node => Assert.Equal(string.Empty, SourceText.At(source, node.Span)));
     }
 
     [Fact]
@@ -211,9 +210,6 @@ public sealed class NodeCreationPassTests
 
         AssertUnconditional(graph.Node(graph.Entry));
     }
-
-    private static string Slice(string source, SourceSpan span) =>
-        source.Substring(span.Start, span.Length);
 
     private DialogueGraph Build(string source) => GraphPasses.Build(source, _pass);
 }

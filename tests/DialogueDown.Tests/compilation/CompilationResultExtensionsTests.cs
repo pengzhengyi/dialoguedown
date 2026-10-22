@@ -1,5 +1,4 @@
 using DialogueDown.Compilation;
-using DialogueDown.Markdown;
 using DialogueDown.Script.Ast;
 using DialogueDown.Script.Desugar;
 using DialogueDown.Script.Semantics;
@@ -9,12 +8,12 @@ namespace DialogueDown.Tests.Compilation;
 
 public sealed class CompilationResultExtensionsTests
 {
-    private readonly ScriptDocument _script = new([]);
+    private readonly ScriptDocument _script = DialogueAstFactory.Document();
 
     [Fact]
     public void ReachedDesugared_Success_IsTheArtifactItProduced()
     {
-        var desugared = new DesugaredScriptDocument(_script);
+        var desugared = DialogueAstFactory.DesugaredDocument();
 
         Assert.Same(desugared, Success(desugared).ReachedDesugared());
     }
@@ -22,7 +21,7 @@ public sealed class CompilationResultExtensionsTests
     [Fact]
     public void ReachedSemantics_Success_IsTheArtifactItProduced()
     {
-        var desugared = new DesugaredScriptDocument(_script);
+        var desugared = DialogueAstFactory.DesugaredDocument();
         var semantics = SemanticModelFactory.Minimal(desugared);
 
         Assert.Same(semantics, Success(desugared, semantics).ReachedSemantics());
@@ -39,7 +38,7 @@ public sealed class CompilationResultExtensionsTests
     [Fact]
     public void ReachedDesugared_FailureAtAnalysis_IsTheArtifactItStillReached()
     {
-        var desugared = new DesugaredScriptDocument(_script);
+        var desugared = DialogueAstFactory.DesugaredDocument();
 
         // Reaching a stage is not succeeding: the compile ran every stage and still failed.
         Assert.Same(desugared, FailureAtAnalysis(desugared).ReachedDesugared());
@@ -48,7 +47,7 @@ public sealed class CompilationResultExtensionsTests
     [Fact]
     public void ReachedSemantics_FailureAtAnalysis_IsTheArtifactItStillReached()
     {
-        var desugared = new DesugaredScriptDocument(_script);
+        var desugared = DialogueAstFactory.DesugaredDocument();
         var semantics = SemanticModelFactory.Minimal(desugared);
 
         Assert.Same(semantics, FailureAtAnalysis(desugared, semantics).ReachedSemantics());
@@ -58,7 +57,7 @@ public sealed class CompilationResultExtensionsTests
         DesugaredScriptDocument desugared, SemanticModel? semantics = null) =>
         new(
             "source",
-            new MarkdownDocument([]),
+            MarkdownAstFactory.Document(),
             _script,
             desugared,
             semantics ?? SemanticModelFactory.Minimal(desugared),
@@ -66,13 +65,13 @@ public sealed class CompilationResultExtensionsTests
             []);
 
     private CompilationFailure FailureAtTranspile() =>
-        CompilationFailure.AtTranspile("source", new MarkdownDocument([]), _script, []);
+        CompilationFailure.AtTranspile("source", MarkdownAstFactory.Document(), _script, []);
 
     private CompilationFailure FailureAtAnalysis(
         DesugaredScriptDocument desugared, SemanticModel? semantics = null) =>
         CompilationFailure.AtAnalysis(
             "source",
-            new MarkdownDocument([]),
+            MarkdownAstFactory.Document(),
             _script,
             desugared,
             semantics ?? SemanticModelFactory.Minimal(desugared),

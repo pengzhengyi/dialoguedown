@@ -56,16 +56,16 @@ public sealed class GraphWalkTests
         var root = new Cell("root");
         var projection = new CellProjection().WithAttributes(
             root,
-            new DisplayAttribute("span", "[0, 3)"),
-            new DisplayAttribute("kind", "leaf"));
+            DisplayFactory.Attr("span", "[0, 3)"),
+            DisplayFactory.Attr("kind", "leaf"));
 
         var node = Assert.Single(GraphWalk.Walk(root, projection).Nodes);
 
         Assert.Equal("root", node.Label);
         Assert.Collection(
             node.Attributes,
-            a => Assert.Equal(new DisplayAttribute("span", "[0, 3)"), a),
-            a => Assert.Equal(new DisplayAttribute("kind", "leaf"), a));
+            a => Assert.Equal(DisplayFactory.Attr("span", "[0, 3)"), a),
+            a => Assert.Equal(DisplayFactory.Attr("kind", "leaf"), a));
     }
 
     [Fact]
