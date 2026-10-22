@@ -18,8 +18,6 @@ namespace DialogueDown.Tests.Compilation;
 /// </remarks>
 public sealed class ExtraSpacesFixPropertyTests
 {
-    private const int Samples = 200;
-
     /// <summary>
     /// A script and the same script with every <c>DLG1116</c> fix applied compile to playbooks the
     /// player reads the same.
@@ -34,7 +32,6 @@ public sealed class ExtraSpacesFixPropertyTests
     public void TheFixKeepsWhatThePlayerReads() =>
         SpacedScriptGen.Script().Sample(
             source => Assert.Equal(Read(source), Read(WithEveryFix(source))),
-            iter: Samples,
             print: source => source);
 
     /// <summary>A script with every <c>DLG1116</c> fix applied has no extra spaces left to note.</summary>
@@ -42,7 +39,6 @@ public sealed class ExtraSpacesFixPropertyTests
     public void FixingEveryNoteOnceLeavesNothingToNote() =>
         SpacedScriptGen.Script().Sample(
             source => Assert.Empty(Notes(WithEveryFix(source))),
-            iter: Samples,
             print: source => source);
 
     private static IReadOnlyList<Diagnostic> Notes(string source) =>

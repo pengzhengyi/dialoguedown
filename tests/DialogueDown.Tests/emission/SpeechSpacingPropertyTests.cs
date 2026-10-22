@@ -23,8 +23,6 @@ namespace DialogueDown.Tests.Emission;
 /// </remarks>
 public sealed class SpeechSpacingPropertyTests
 {
-    private const int Samples = 500;
-
     [Fact]
     public void NormalizingTwiceChangesNothing() =>
         SpeechGen.Speech().Sample(
@@ -34,7 +32,6 @@ public sealed class SpeechSpacingPropertyTests
 
                 Assert.Equal(once, SpeechSpacing.Normalize(once));
             },
-            iter: Samples,
             print: Written);
 
     /// <summary>
@@ -56,7 +53,6 @@ public sealed class SpeechSpacingPropertyTests
                     SpeechFragments.AllButAltText(normalized).OfType<TextFragment>(),
                     text => Assert.DoesNotMatch("[\t\n\r]", text.Text));
             },
-            iter: Samples,
             print: Written);
 
     /// <summary>
@@ -74,7 +70,6 @@ public sealed class SpeechSpacingPropertyTests
 
                 Assert.DoesNotContain(skipped, part => part.Contains('_'));
             },
-            iter: Samples,
             print: Written);
 
     /// <summary>
@@ -88,7 +83,6 @@ public sealed class SpeechSpacingPropertyTests
     public void OnlyCollapsibleSpacesChange() =>
         SpeechGen.Speech().Sample(
             speech => Assert.Equal(WithoutSpaces(speech), WithoutSpaces(SpeechSpacing.Normalize(speech))),
-            iter: Samples,
             print: Written);
 
     // A failing list as the playbook writes it, so the fragments inside styled text show.

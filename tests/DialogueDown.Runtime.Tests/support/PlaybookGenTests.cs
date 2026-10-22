@@ -21,8 +21,6 @@ namespace DialogueDown.Runtime.Tests;
 /// </remarks>
 public sealed class PlaybookGenTests
 {
-    private const int Samples = 200;
-
     // Node and edge kinds the generator leaves out, each with a note on what must change first.
     // The test below checks the note on every node kind. An edge kind stays out for as long as the
     // node kind it belongs to does, because that node is the only place it can appear.
@@ -113,8 +111,7 @@ public sealed class PlaybookGenTests
                         random.SuccessionTarget() is not null,
                         $"Random choice {random.Id} has nothing drawable in a sampled world, and no fall-through.");
                 }
-            },
-            iter: Samples);
+            });
     }
 
     /// <summary>
@@ -126,7 +123,7 @@ public sealed class PlaybookGenTests
     /// </remarks>
     [Fact]
     public void EverySampledPlaybook_IsOneTheReaderAccepts() =>
-        PlaybookGen.Valid().Sample(PlaybookAssert.AssertValidPlaybook, iter: Samples);
+        PlaybookGen.Valid().Sample(PlaybookAssert.AssertValidPlaybook);
 
     /// <summary>
     /// The type name of every node and edge kind the fixed samples from the generator hold.

@@ -9,9 +9,9 @@ namespace DialogueDown.Runtime.Tests.Stepping;
 /// What must hold for <em>every</em> playbook a walk can take, not only the ones an example names.
 /// </summary>
 /// <remarks>
-/// Each property is checked at every step of sampled walks (see <see cref="Walk"/>). Sample counts
-/// are small because these run in the ordinary suite. <see cref="WalkTests"/> shows that some walk
-/// reaches the situation each property is about, so no property passes without checking anything.
+/// Each property is checked at every step of sampled walks (see <see cref="Walk"/>).
+/// <see cref="WalkTests"/> shows that some walk reaches the situation each property is about, so
+/// no property passes without checking anything.
 /// </remarks>
 public sealed class RunnerWalkPropertyTests
 {

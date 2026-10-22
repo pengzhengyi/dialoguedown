@@ -20,8 +20,6 @@ namespace DialogueDown.Tests.Compilation;
 /// </remarks>
 public sealed class GameCallInLabelPropertyTests
 {
-    private const int Samples = 200;
-
     /// <summary>
     /// A label holding a command or a condition fails the compile with one error at each, and a
     /// label holding only queries compiles to a label that asks for them.
@@ -46,8 +44,7 @@ public sealed class GameCallInLabelPropertyTests
                 {
                     AssertAsksForEachQuery(script);
                 }
-            },
-            iter: Samples);
+            });
 
     /// <summary>
     /// Wrapping speech in a link's brackets changes how its words are shown, not what they ask.
@@ -69,8 +66,7 @@ public sealed class GameCallInLabelPropertyTests
 
                 Assert.Equal(SpeechTemplate.Keys(bare), SpeechTemplate.Keys(wrapped));
                 Assert.Equal(SpeechText.Of(bare), SpeechText.Of(wrapped));
-            },
-            iter: Samples);
+            });
 
     /// <summary>A scene whose one line says <paramref name="speech"/>.</summary>
     /// <remarks>

@@ -21,9 +21,6 @@ internal sealed record Walk(PlaybookDocument Playbook, SampledWorld World, int P
     // This passes every node of the largest sampled playbook at least twice.
     private const int MostSteps = 120;
 
-    // Walks sampled per property.
-    private const int Samples = 200;
-
     /// <summary>Walks over playbooks the default reader accepts.</summary>
     /// <returns>The generator.</returns>
     public static Gen<Walk> Generator() =>
@@ -46,8 +43,7 @@ internal sealed record Walk(PlaybookDocument Playbook, SampledWorld World, int P
                 {
                     holds(context, stepped);
                 }
-            },
-            iter: Samples);
+            });
 
     /// <summary>Every step this walk takes from the playbook's start.</summary>
     /// <returns>

@@ -17,9 +17,6 @@ namespace DialogueDown.Tests.Emission;
 /// </remarks>
 public sealed class PlaybookRoundTripTests
 {
-    // Modest so the property runs in the ordinary suite.
-    private const int Samples = 200;
-
     private const string ScriptName = "generated.dialogue.md";
 
     /// <summary>
@@ -79,6 +76,5 @@ public sealed class PlaybookRoundTripTests
                     {
                         invariantHolds(success, source);
                     }
-                },
-                iter: Samples);
+                });
 }

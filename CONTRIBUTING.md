@@ -110,8 +110,9 @@ call inside an ordinary `[Fact]`, so it needs nothing from the test runner.
 
 Add a property when a rule holds across all inputs and no single example can say
 so. Keep the generator producing scripts a writer could plausibly write — random
-characters only exercise the front end's rejection path — and keep the sample
-count modest so the suite stays fast.
+characters only exercise the front end's rejection path — and pass no `iter:`,
+so the `CsCheck_Iter` environment variable sets how many samples each property
+takes.
 
 ### Adding or updating a NuGet package
 
