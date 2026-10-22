@@ -25,6 +25,11 @@
     <PackageReference Include="xunit.v3.assert" />
   </ItemGroup>
 
+  <!-- For the generator coverage helper that every suite with a generator shares. -->
+  <ItemGroup>
+    <PackageReference Include="CsCheck" />
+  </ItemGroup>
+
   <ItemGroup>
     <Using Include="Xunit" />
   </ItemGroup>

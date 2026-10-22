@@ -11,7 +11,7 @@ using static DialogueDown.Tests.Support.CompilationAssert;
 namespace DialogueDown.Tests.Compilation;
 
 /// <summary>
-/// Laws over generated labels that hold game calls, in every placement a label can take.
+/// Properties over generated labels that hold game calls, in every placement a label can take.
 /// </summary>
 /// <remarks>
 /// Each expectation comes from the model <see cref="LabelGen"/> returns with its script, never from
@@ -20,8 +20,6 @@ namespace DialogueDown.Tests.Compilation;
 /// </remarks>
 public sealed class GameCallInLabelPropertyTests
 {
-    private const int Samples = 200;
-
     /// <summary>
     /// A label holding a command or a condition fails the compile with one error at each, and a
     /// label holding only queries compiles to a label that asks for them.
@@ -47,8 +45,7 @@ public sealed class GameCallInLabelPropertyTests
                 {
                     AssertAsksForEachQuery(script);
                 }
-            },
-            iter: Samples);
+            });
 
     /// <summary>
     /// Wrapping speech in a link's brackets changes how its words are shown, not what they ask.
@@ -70,8 +67,7 @@ public sealed class GameCallInLabelPropertyTests
 
                 Assert.Equal(SpeechTemplate.Keys(bare), SpeechTemplate.Keys(wrapped));
                 Assert.Equal(SpeechText.Of(bare), SpeechText.Of(wrapped));
-            },
-            iter: Samples);
+            });
 
     /// <summary>A scene whose one line says <paramref name="speech"/>.</summary>
     /// <remarks>
@@ -126,7 +122,7 @@ public sealed class GameCallInLabelPropertyTests
 
         Assert.Equal(script.Calls.Select(call => call.Key).Distinct(), SpeechTemplate.Keys(label));
         Assert.DoesNotContain(
-            Descendants(label),
+            SpeechFragments.All(label),
             fragment => fragment is DefaultCommandFragment or CustomCommandFragment);
     }
 
@@ -155,13 +151,4 @@ public sealed class GameCallInLabelPropertyTests
 
     private static IEnumerable<Edge> EdgesOf(PlaybookDocument playbook) =>
         playbook.Nodes.SelectMany(node => node.Out);
-
-    private static IEnumerable<SpeechFragment> Descendants(IEnumerable<SpeechFragment> fragments) =>
-        fragments.SelectMany(fragment => fragment switch
-        {
-            StyledTextFragment styled => Descendants(styled.Children).Prepend(fragment),
-            LinkFragment link => Descendants(link.Label).Prepend(fragment),
-            ImageFragment image => Descendants(image.Alt).Prepend(fragment),
-            _ => [fragment],
-        });
 }

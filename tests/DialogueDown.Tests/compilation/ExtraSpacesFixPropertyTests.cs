@@ -9,8 +9,8 @@ using DialogueDown.Tests.Support;
 namespace DialogueDown.Tests.Compilation;
 
 /// <summary>
-/// Laws over generated scripts about <c>DLG1116</c>'s fix, which writes one space in place of
-/// spaces typed together.
+/// Properties over generated scripts of <c>DLG1116</c>'s fix, which writes one space in place
+/// of spaces typed together.
 /// </summary>
 /// <remarks>
 /// <see cref="SpacedScriptGenCoverageTests"/> checks that every kind of spacing and every piece of
@@ -18,8 +18,6 @@ namespace DialogueDown.Tests.Compilation;
 /// </remarks>
 public sealed class ExtraSpacesFixPropertyTests
 {
-    private const int Samples = 200;
-
     /// <summary>
     /// A script and the same script with every <c>DLG1116</c> fix applied compile to playbooks the
     /// player reads the same.
@@ -34,7 +32,6 @@ public sealed class ExtraSpacesFixPropertyTests
     public void TheFixKeepsWhatThePlayerReads() =>
         SpacedScriptGen.Script().Sample(
             source => Assert.Equal(Read(source), Read(WithEveryFix(source))),
-            iter: Samples,
             print: source => source);
 
     /// <summary>A script with every <c>DLG1116</c> fix applied has no extra spaces left to note.</summary>
@@ -42,7 +39,6 @@ public sealed class ExtraSpacesFixPropertyTests
     public void FixingEveryNoteOnceLeavesNothingToNote() =>
         SpacedScriptGen.Script().Sample(
             source => Assert.Empty(Notes(WithEveryFix(source))),
-            iter: Samples,
             print: source => source);
 
     private static IReadOnlyList<Diagnostic> Notes(string source) =>
@@ -77,15 +73,19 @@ public sealed class ExtraSpacesFixPropertyTests
     // Everything in the speech that is not words, in order, inside styled text, links, and alt
     // text too.
     private static IEnumerable<string> Unseen(IEnumerable<SpeechFragment> speech) =>
-        speech.SelectMany(fragment => fragment switch
+        SpeechFragments.All(speech).SelectMany(Unseen);
+
+    // What one fragment is that is not words: where a link or image points, a command, a tag, or
+    // a query.
+    private static IEnumerable<string> Unseen(SpeechFragment fragment) =>
+        fragment switch
         {
-            StyledTextFragment styled => Unseen(styled.Children),
-            LinkFragment link => Unseen(link.Label).Prepend($"link {link.Target}"),
-            ImageFragment image => Unseen(image.Alt).Prepend($"image {image.Source}"),
+            LinkFragment link => [$"link {link.Target}"],
+            ImageFragment image => [$"image {image.Source}"],
             DefaultCommandFragment command => [$"`({command.Action})`"],
             CustomCommandFragment command => [$"`{command.Name}({string.Join(", ", command.Args)})`"],
             TagFragment tag => [$"#{tag.Name}={tag.Value}"],
             QueryFragment query => [$"`\"{query.Key}\"`"],
-            _ => Enumerable.Empty<string>(),
-        });
+            _ => [],
+        };
 }

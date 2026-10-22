@@ -7,10 +7,10 @@ namespace DialogueDown.Tests.Support;
 /// property tests about game calls in labels.
 /// </summary>
 /// <remarks>
-/// <see cref="ScriptGen"/> draws a game call in a label rarely, if at all, so these properties have
-/// a generator of their own. Each script is a fixed scene around one label, and the generator
+/// <see cref="ScriptGen"/> generates a game call in a label rarely, if at all, so these properties
+/// have a generator of their own. Each script is a fixed scene around one label, and the generator
 /// returns a model of what it placed, so a property states its expectation from the model rather
-/// than from the compiler's own reading. A query is drawn twice as often as a command or a
+/// than from the compiler's own reading. A query is generated twice as often as a command or a
 /// condition, so a fair share of labels hold only queries and compile.
 /// </remarks>
 internal static class LabelGen
@@ -52,7 +52,7 @@ internal static class LabelGen
     /// </summary>
     public static Gen<string> QueryLabel() => _queryLabel;
 
-    // One to three segments, each a word and then a code span drawn from call, sometimes with
+    // One to three segments, each a word and then a code span generated from call, sometimes with
     // emphasis around both.
     private static Gen<(string Text, IReadOnlyList<LabelCall> Calls)> Label(Gen<LabelCall> call) =>
         Gen.Select(_word, call, Gen.Bool, Segment)

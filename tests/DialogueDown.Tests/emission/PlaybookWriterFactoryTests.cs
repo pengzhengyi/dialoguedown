@@ -1,6 +1,6 @@
 using DialogueDown.Emission;
-using DialogueDown.Playbook.Checking;
 using DialogueDown.Tests.Support;
+using DialogueDown.TestSupport;
 using Microsoft.Extensions.DependencyInjection;
 using NSubstitute;
 
@@ -15,7 +15,7 @@ public sealed class PlaybookWriterFactoryTests
     {
         var playbook = PlaybookWriterFactory.CreateDefault().Write(Pipeline.Compiled("Alice: Hello."), Script);
 
-        PlaybookCheckerFactory.CreateDefault().Check(playbook);
+        PlaybookAssert.AssertValidPlaybook(playbook);
     }
 
     [Fact]

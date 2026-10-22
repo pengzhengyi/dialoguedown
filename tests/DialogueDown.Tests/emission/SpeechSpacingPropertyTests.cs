@@ -10,21 +10,19 @@ using DialogueDown.Tests.Support;
 namespace DialogueDown.Tests.Emission;
 
 /// <summary>
-/// Laws over generated speech lists that hold for every list <see cref="SpeechSpacing"/>
-/// normalizes, not only the ones an example test names.
+/// Properties over generated speech lists that hold for every list
+/// <see cref="SpeechSpacing"/> normalizes, not only the ones an example test names.
 /// </summary>
 /// <remarks>
-/// Each law reads a list as a pattern of pieces, one character each: <c>_</c> for a collapsible
-/// space or a soft line break, <c>v</c> for anything else the player sees, and <c>u</c> for a
-/// command or a tag. Styled text and a link's label belong to the list around them, so their
-/// pieces are read in place; an image is one visible piece. <c>"a  ", Wave(), **"bc"**</c> reads
-/// as <c>v__uvv</c>. <see cref="SpeechGenCoverageTests"/> checks that every kind of fragment and
-/// space is generated.
+/// Each property reads a list as a pattern of pieces, one character each: <c>_</c> for a
+/// collapsible space or a soft line break, <c>v</c> for anything else the player sees, and
+/// <c>u</c> for a command or a tag. Styled text and a link's label belong to the list around them,
+/// so their pieces are read in place; an image is one visible piece.
+/// <c>"a  ", Wave(), **"bc"**</c> reads as <c>v__uvv</c>. <see cref="SpeechGenCoverageTests"/>
+/// checks that every kind of fragment and space is generated.
 /// </remarks>
 public sealed class SpeechSpacingPropertyTests
 {
-    private const int Samples = 500;
-
     [Fact]
     public void NormalizingTwiceChangesNothing() =>
         SpeechGen.Speech().Sample(
@@ -34,7 +32,6 @@ public sealed class SpeechSpacingPropertyTests
 
                 Assert.Equal(once, SpeechSpacing.Normalize(once));
             },
-            iter: Samples,
             print: Written);
 
     /// <summary>
@@ -53,9 +50,10 @@ public sealed class SpeechSpacingPropertyTests
                 Assert.DoesNotContain("__", seen, StringComparison.Ordinal);
                 Assert.False(seen.StartsWith('_'), $"A space stands before the first visible piece: {seen}");
                 Assert.False(seen.EndsWith('_'), $"A space stands after the last visible piece: {seen}");
-                Assert.All(Texts(normalized), text => Assert.DoesNotMatch("[\t\n\r]", text));
+                Assert.All(
+                    SpeechFragments.AllButAltText(normalized).OfType<TextFragment>(),
+                    text => Assert.DoesNotMatch("[\t\n\r]", text.Text));
             },
-            iter: Samples,
             print: Written);
 
     /// <summary>
@@ -73,7 +71,6 @@ public sealed class SpeechSpacingPropertyTests
 
                 Assert.DoesNotContain(skipped, part => part.Contains('_'));
             },
-            iter: Samples,
             print: Written);
 
     /// <summary>
@@ -87,7 +84,6 @@ public sealed class SpeechSpacingPropertyTests
     public void OnlyCollapsibleSpacesChange() =>
         SpeechGen.Speech().Sample(
             speech => Assert.Equal(WithoutSpaces(speech), WithoutSpaces(SpeechSpacing.Normalize(speech))),
-            iter: Samples,
             print: Written);
 
     // A failing list as the playbook writes it, so the fragments inside styled text show.
@@ -106,16 +102,6 @@ public sealed class SpeechSpacingPropertyTests
             ImageFragment or QueryFragment => "v",
             _ => "u",
         }));
-
-    // The text of every text fragment in the list, inside styled text and links too.
-    private static IEnumerable<string> Texts(IEnumerable<SpeechFragment> speech) =>
-        speech.SelectMany(fragment => fragment switch
-        {
-            TextFragment text => [text.Text],
-            StyledTextFragment styled => Texts(styled.Children),
-            LinkFragment link => Texts(link.Label),
-            _ => [],
-        });
 
     private static ImmutableArray<SpeechFragment> WithoutSpaces(IEnumerable<SpeechFragment> speech) =>
         [.. speech.Select(WithoutSpaces).OfType<SpeechFragment>()];

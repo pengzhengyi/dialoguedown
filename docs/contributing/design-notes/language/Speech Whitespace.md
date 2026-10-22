@@ -469,14 +469,14 @@ The writer's guide and the error-code reference are listed under
 
 ### Property tests
 
-These use CsCheck, like `CompilerPropertyTests`. The laws about `SpeechSpacing` run
+These use CsCheck, like `CompilerPropertyTests`. The properties of `SpeechSpacing` run
 over speech lists from `SpeechGen`, which mix texts with spaces, tabs, encoded line
 breaks, and named spaces, styled text, links, images, queries, commands, tags, and
-soft line breaks. The laws about the fix run over scripts from `SpacedScriptGen`,
+soft line breaks. The properties of the fix run over scripts from `SpacedScriptGen`,
 which spaces a line and a menu's options every way, entities included. Each
-generator has a test that checks it reaches every kind it should.
+generator has a coverage test that checks it produces every kind it should.
 
-| Property | The law |
+| Property | What holds |
 | --- | --- |
 | **Normalizing twice changes nothing** | `SpeechSpacing` applied to its own output returns it unchanged. |
 | **The three rules hold** | In the output, passing over unseen fragments, no collapsible space follows another, and none stands before the first visible piece or after the last. |
