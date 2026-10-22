@@ -1,5 +1,6 @@
 using DialogueDown.TestSupport;
 using DialogueDown.Visualization.Live.Serving;
+using static DialogueDown.TestSupport.OutputAssert;
 
 namespace DialogueDown.Visualization.Live.Tests;
 
@@ -107,7 +108,7 @@ public sealed class ServeRootResolverTests
             document, [], explicitServeRoot: missing, new ThrowingConsent(), error);
 
         Assert.Null(serveRoot);
-        Assert.Contains("The --root folder does not exist", error.ToString());
+        AssertReads(error.ToString(), $"The --root folder does not exist: {missing}");
     }
 
     [Fact]
@@ -122,7 +123,7 @@ public sealed class ServeRootResolverTests
             document, [], explicitServeRoot: elsewhere, new ThrowingConsent(), error);
 
         Assert.Null(serveRoot);
-        Assert.Contains("not inside the --root folder", error.ToString());
+        AssertReads(error.ToString(), $"The document is not inside the --root folder: {elsewhere}");
     }
 
     [Fact]

@@ -3,7 +3,7 @@ using DialogueDown.Playbook.Speech;
 using DialogueDown.TestSupport;
 using Spectre.Console;
 using static DialogueDown.Play.Tests.Support.Consoles;
-using static DialogueDown.Play.Tests.Support.OutputAssert;
+using static DialogueDown.TestSupport.OutputAssert;
 using static DialogueDown.TestSupport.SpeechFactory;
 
 namespace DialogueDown.Play.Tests.Tui;

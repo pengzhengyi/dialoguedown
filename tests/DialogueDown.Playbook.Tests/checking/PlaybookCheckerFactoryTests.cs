@@ -23,7 +23,10 @@ public sealed class PlaybookCheckerFactoryTests
     {
         var playbook = PlaybookFactory.Document(format: PlaybookFactory.Format(_aVersionTooNew));
 
-        AssertFormatRefuses(playbook, Say(_aVersionTooNew));
+        AssertFormatRefuses(
+            playbook,
+            $"This playbook is version {Say(_aVersionTooNew)}, and this build reads up to "
+                + $"{Say(PlaybookSupport.NewestReadableVersion)}.");
     }
 
     [Fact]
@@ -33,7 +36,7 @@ public sealed class PlaybookCheckerFactoryTests
         var playbook = PlaybookFactory.Document(
             format: PlaybookFactory.Format(requires: [capability]));
 
-        AssertFormatRefuses(playbook, capability);
+        AssertFormatRefuses(playbook, $"This playbook requires '{capability}', which this build does not understand.");
     }
 
     [Fact]
@@ -49,7 +52,7 @@ public sealed class PlaybookCheckerFactoryTests
         // at index 0 claiming id 7, which only the wider set looks at.
         var playbook = PlaybookFactory.Document(nodes: [End(id: 7)]);
 
-        AssertReaderRefuses(playbook, "7", "position");
+        AssertReaderRefuses(playbook, "Node at index 0 claims id 7; a node's id is its position.");
     }
 
     [Fact]
@@ -60,7 +63,7 @@ public sealed class PlaybookCheckerFactoryTests
         var playbook = PlaybookFactory.Document(
             nodes: [Branch(Else(target: 1), Gated("HasMap", target: 1)), End(id: 1)]);
 
-        AssertReaderRefuses(playbook, "else before another branch");
+        AssertReaderRefuses(playbook, "Node 0, a branch, carries its else before another branch; the else is tried last.");
     }
 
     [Fact]
@@ -70,26 +73,28 @@ public sealed class PlaybookCheckerFactoryTests
         var playbook = PlaybookFactory.Document(
             nodes: [RandomChoice(Chance(-10, target: 1), Chance(50, target: 1)), End(id: 1)]);
 
-        AssertReaderRefuses(playbook, "-10%");
+        AssertReaderRefuses(
+            playbook,
+            "Node 0, a random choice, has a random option weighted -10%; a number weight must be finite and not negative.");
     }
 
     /// <summary>
     /// Asserts the format check — the version and required capabilities — refuses a playbook, and
     /// that the refusal says why. Used for a header this build cannot read at all.
     /// </summary>
-    private static void AssertFormatRefuses(PlaybookDocument playbook, params string[] explanation)
+    private static void AssertFormatRefuses(PlaybookDocument playbook, string explanation)
     {
         var error = Assert.Throws<InvalidPlaybookException>(
             () => PlaybookCheckerFactory.CreateFormat().Check(playbook));
 
-        AssertErrorExplains(error, explanation);
+        Assert.Equal(explanation, error.Message);
     }
 
     /// <summary>
     /// Asserts the wider reader refuses a playbook the format check accepts, and that the refusal
     /// says why — so a failure here is about what the document says, not its header.
     /// </summary>
-    private static void AssertReaderRefuses(PlaybookDocument playbook, params string[] explanation)
+    private static void AssertReaderRefuses(PlaybookDocument playbook, string explanation)
     {
         // The format must pass, or the refusal under test would be for the wrong reason.
         PlaybookCheckerFactory.CreateFormat().Check(playbook);
@@ -97,13 +102,8 @@ public sealed class PlaybookCheckerFactoryTests
         var error = Assert.Throws<InvalidPlaybookException>(
             () => PlaybookCheckerFactory.CreateDefault().Check(playbook));
 
-        AssertErrorExplains(error, explanation);
+        Assert.Equal(explanation, error.Message);
     }
-
-    private static void AssertErrorExplains(InvalidPlaybookException error, string[] expected) =>
-        Assert.All(
-            expected,
-            snippet => Assert.Contains(snippet, error.Message, StringComparison.Ordinal));
 
     private static PlaybookDocument ThisBuildWrites() =>
         PlaybookFactory.Document(format: PlaybookFactory.Format(

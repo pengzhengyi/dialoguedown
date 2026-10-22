@@ -148,6 +148,7 @@ public sealed class PlaybookWriterTests
         Assert.Throws<ArgumentNullException>(() => _writer.Write(OneEndNode(), null!));
     }
 
+    /// <summary>The graph an empty script compiles to: one end node, which is also where it starts.</summary>
     private static DialogueGraph OneEndNode() => Graph([EndNode(0)], entry: 0);
 
     private static DialogueGraph Graph(GraphEndNode[] nodes, int entry) =>

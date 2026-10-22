@@ -57,7 +57,7 @@ are the reason this page exists.
 | `DialogueDown.Runtime.Tests` | The runner — stepping, positions, the protocol — and the harness that plays the corpus against it. |
 | `DialogueDown.Play.Tests` | The terminal player's presentation: speech as terminal markup, the choice menu, and the player's turns, against Spectre's test console. |
 | `DialogueDown.Conformance` | Not tests: the reader both halves of the corpus load their cases with. |
-| `DialogueDown.TestSupport` | Not tests: what more than one suite needs — the concrete types under a base, the shipped examples, temporary files and folders, the playbook's mothers (`PlaybookFactory`, `PlaybookNodeFactory`, `SpeechFactory`), a reader for a report's JSON (`ReportPayload`), and assertions that compare JSON as JSON (`JsonAssert`). |
+| `DialogueDown.TestSupport` | Not tests: what more than one suite needs — the concrete types under a base, the shipped examples, temporary files and folders, the playbook's mothers (`PlaybookFactory`, `PlaybookNodeFactory`, `SpeechFactory`), a reader for a report's JSON (`ReportPayload`), assertions that compare JSON as JSON (`JsonAssert`), and assertions that read what a command or player printed (`OutputAssert`). |
 | `DialogueDown.Conformance.Tests` | That reader, and the corpus's own integrity. |
 | `DialogueDown.Architecture.Tests` | The boundaries between all of the above. |
 | `src/DialogueDown.Visualization/web` | The report client: unit tests beside the source, browser tests under `e2e/` and `e2e-live/`. |

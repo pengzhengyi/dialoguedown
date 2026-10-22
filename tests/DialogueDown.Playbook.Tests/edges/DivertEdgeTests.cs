@@ -1,6 +1,7 @@
 using DialogueDown.Playbook.Edges;
-using DialogueDown.Playbook.Speech;
 using DialogueDown.Playbook.Tests.Support;
+using static DialogueDown.TestSupport.SpeechFactory;
+
 namespace DialogueDown.Playbook.Tests.Edges;
 
 public sealed class DivertEdgeTests
@@ -49,8 +50,8 @@ public sealed class DivertEdgeTests
     [Fact]
     public void Equality_EqualLabels_AreEqual()
     {
-        var left = new DivertEdge(4, [new TextFragment("the inn")], Condition: null);
-        var right = new DivertEdge(4, [new TextFragment("the inn")], Condition: null);
+        var left = new DivertEdge(4, [Text("the inn")], Condition: null);
+        var right = new DivertEdge(4, [Text("the inn")], Condition: null);
 
         EqualityAssert.AssertValueEqual(left, right);
     }
@@ -58,8 +59,8 @@ public sealed class DivertEdgeTests
     [Fact]
     public void Equality_DifferentLabels_AreNotEqual()
     {
-        var left = new DivertEdge(4, [new TextFragment("the inn")], Condition: null);
-        var right = new DivertEdge(4, [new TextFragment("the market")], Condition: null);
+        var left = new DivertEdge(4, [Text("the inn")], Condition: null);
+        var right = new DivertEdge(4, [Text("the market")], Condition: null);
 
         EqualityAssert.AssertValueUnequal(left, right);
     }

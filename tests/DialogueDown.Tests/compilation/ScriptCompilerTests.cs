@@ -22,9 +22,9 @@ public sealed class ScriptCompilerTests
     public void Compile_RunsStagesInOrderThreadingSource_AndAssemblesResult()
     {
         var source = "Alice: hi";
-        var markdown = new MarkdownDocument([]);
-        var script = new ScriptDocument([]);
-        var desugared = new DesugaredScriptDocument(script);
+        var markdown = MarkdownAstFactory.Document();
+        var script = DialogueAstFactory.Document();
+        var desugared = DialogueAstFactory.DesugaredDocument();
         var semantics = SemanticModelFactory.Minimal(desugared);
 
         var parser = Substitute<IMarkdownParser, MarkdownDocument>(markdown);
@@ -152,11 +152,11 @@ public sealed class ScriptCompilerTests
         out ISemanticAnalyzer analyzer,
         CompilationMode mode = CompilationMode.BestEffort)
     {
-        var desugared = new DesugaredScriptDocument(new ScriptDocument([]));
-        transpiler = Substitute<IScriptTranspiler, ScriptDocument>(new ScriptDocument([]));
+        var desugared = DialogueAstFactory.DesugaredDocument();
+        transpiler = Substitute<IScriptTranspiler, ScriptDocument>(DialogueAstFactory.Document());
         analyzer = Substitute<ISemanticAnalyzer, SemanticModel>(SemanticModelFactory.Minimal(desugared));
         return new ScriptCompiler(
-            Substitute<IMarkdownParser, MarkdownDocument>(new MarkdownDocument([])),
+            Substitute<IMarkdownParser, MarkdownDocument>(MarkdownAstFactory.Document()),
             transpiler,
             Substitute<IScriptDesugarer, DesugaredScriptDocument>(desugared),
             NSubstitute.Substitute.For<IStructuralValidator>(),

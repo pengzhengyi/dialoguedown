@@ -70,7 +70,7 @@ public sealed class DialogueDownServiceCollectionExtensionsTests
         // A stage registered before AddDialogueDown wins, because each default uses TryAdd.
         var transpiler = Substitute.For<IScriptTranspiler>();
         transpiler.Transpile(Arg.Any<MarkdownDocument>(), Arg.Any<DiagnosticsContext>())
-            .Returns(new ScriptDocument([]));
+            .Returns(DialogueAstFactory.Document());
         using var provider = new ServiceCollection()
             .AddSingleton<IScriptTranspiler>(transpiler)
             .AddDialogueDown()

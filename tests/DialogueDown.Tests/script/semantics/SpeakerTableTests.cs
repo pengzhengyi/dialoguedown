@@ -99,6 +99,12 @@ public sealed class SpeakerTableTests
         Assert.Empty(table.Symbols);
     }
 
+    /// <summary>Alice, declared with the id <c>A</c>.</summary>
+    /// <remarks>
+    /// <code>
+    /// Alice @A: Hello.
+    /// </code>
+    /// </remarks>
     private static SpeakerSymbol Alice()
     {
         var alice = SpeakerSymbol.ForName("Alice");

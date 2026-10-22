@@ -114,7 +114,7 @@ public sealed class GameCallInLabelPropertyTests
         var reported = failure.Diagnostics
             .Where(diagnostic => diagnostic.IsError)
             .OrderBy(diagnostic => diagnostic.Span.Start)
-            .Select(diagnostic => (diagnostic.Descriptor.Code, SourceAt(script.Source, diagnostic)));
+            .Select(diagnostic => (diagnostic.Descriptor.Code, SourceText.At(script.Source, diagnostic.Span)));
 
         Assert.Equal(rejected.Select(call => (CodeFor(call.Kind), call.Written)), reported);
     }
@@ -163,7 +163,4 @@ public sealed class GameCallInLabelPropertyTests
             ImageFragment image => Descendants(image.Alt).Prepend(fragment),
             _ => [fragment],
         });
-
-    private static string SourceAt(string source, Diagnostic diagnostic) =>
-        source.Substring(diagnostic.Span.Start, diagnostic.Span.Length);
 }

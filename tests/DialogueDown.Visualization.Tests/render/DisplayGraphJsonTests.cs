@@ -121,7 +121,7 @@ public sealed class DisplayGraphJsonTests
     {
         var graph = MakeGraph(
             "G",
-            [new DisplayNode("n0", "Text", [], "# Hi"), Node("n1", "Empty")],
+            [Node("n0", "Text") with { Source = "# Hi" }, Node("n1", "Empty")],
             []);
 
         var nodes = Assert.IsType<JsonArray>(OnlyStageOf(DisplayGraphJson.Serialize([graph]))["nodes"]);
@@ -133,7 +133,7 @@ public sealed class DisplayGraphJsonTests
     [Fact]
     public void Serialize_IncludesNodeCategoryWhenPresent()
     {
-        var graph = MakeGraph("G", [new DisplayNode("n0", "Code span", [], null, "call")], []);
+        var graph = MakeGraph("G", [NodeWithCategory("n0", "Code span", "call")], []);
 
         var json = DisplayGraphJson.Serialize([graph]);
 
@@ -147,7 +147,10 @@ public sealed class DisplayGraphJsonTests
     {
         var graph = MakeGraph(
             "G",
-            [new DisplayNode("n0", "The Market", [], null, "structure", "scene:the-market"), Node("n1", "Plain")],
+            [
+                NodeWithCategory("n0", "The Market", "structure") with { EntityKey = "scene:the-market" },
+                Node("n1", "Plain"),
+            ],
             []);
 
         var nodes = Assert.IsType<JsonArray>(OnlyStageOf(DisplayGraphJson.Serialize([graph]))["nodes"]);

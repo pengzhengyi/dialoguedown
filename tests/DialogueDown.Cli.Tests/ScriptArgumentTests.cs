@@ -13,7 +13,7 @@ public sealed class ScriptArgumentTests
     {
         var result = ScriptArgument.Validate(script);
 
-        AssertRejected(result);
+        AssertRejected(result, "A script path is required.");
     }
 
     [Fact]
@@ -21,7 +21,7 @@ public sealed class ScriptArgumentTests
     {
         var result = ScriptArgument.Validate("notes.txt");
 
-        AssertRejected(result, ScriptArgument.Extension);
+        AssertRejected(result, "Expected a DialogueDown script ending in '.dialogue.md': notes.txt");
     }
 
     [Fact]
@@ -29,7 +29,7 @@ public sealed class ScriptArgumentTests
     {
         var result = ScriptArgument.Validate("does-not-exist.dialogue.md");
 
-        AssertRejected(result, "not found");
+        AssertRejected(result, "File not found: does-not-exist.dialogue.md");
     }
 
     [Fact]

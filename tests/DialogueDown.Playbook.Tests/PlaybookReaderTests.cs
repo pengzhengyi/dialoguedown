@@ -63,7 +63,9 @@ public sealed class PlaybookReaderTests
         var error = Assert.Throws<InvalidPlaybookException>(
             () => new PlaybookReader(_checker).Read(Playbook(anchors: """ "the-inn": -1 """)));
 
-        Assert.Contains("the-inn", error.Message, StringComparison.Ordinal);
+        var cause = Assert.IsType<ArgumentOutOfRangeException>(error.InnerException);
+        Assert.Equal("anchors[\"the-inn\"]", cause.ParamName);
+        Assert.Equal(-1, cause.ActualValue);
         _checker.DidNotReceive().Check(Arg.Any<PlaybookDocument>());
     }
 
