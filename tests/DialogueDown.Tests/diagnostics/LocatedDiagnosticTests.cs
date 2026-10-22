@@ -84,4 +84,25 @@ public sealed class LocatedDiagnosticTests
 
         Assert.Equal(withoutFix, withFix);
     }
+
+    [Fact]
+    public void Project_CarriesTheDisabledMark()
+    {
+        var disabled = Diagnostic(severity: DiagnosticSeverity.Warning) with { IsDisabled = true };
+
+        Assert.True(LocatedDiagnostic.Project(disabled, new LineMap("x")).IsDisabled);
+    }
+
+    [Fact]
+    public void Project_AnEnabledDiagnostic_IsNotDisabled() =>
+        Assert.False(LocatedDiagnostic.Project(Diagnostic(), new LineMap("x")).IsDisabled);
+
+    [Fact]
+    public void Equality_DisabledAndEnabled_AreNotEqual()
+    {
+        // A surface shows a disabled diagnostic differently, so the mark is part of its identity.
+        var enabled = LocatedDiagnostic.Project(Diagnostic(), new LineMap("x"));
+
+        Assert.NotEqual(enabled, enabled with { IsDisabled = true });
+    }
 }

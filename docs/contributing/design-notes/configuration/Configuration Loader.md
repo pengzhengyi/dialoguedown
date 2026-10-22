@@ -40,7 +40,7 @@ loader. An architecture test guards both directions. A consumer that builds
 
 | Term | Meaning |
 | --- | --- |
-| **Section** | A top-level key the schema defines: `mode`, `speakers`, or `markdown`. |
+| **Section** | A top-level key the schema defines: `mode`, `speakers`, `markdown`, or `diagnostics`. |
 | **Section reader** | An internal reader that owns one section and maps it to options. |
 | **Spelling** | One of the TOML forms that write the same setting: a `[table]` or `[[array]]` header, an inline table or array, or a dotted key. |
 | **Located tree** | The format-neutral tables, arrays, and scalars a front end produces, each carrying the source location it was written at. |
@@ -63,6 +63,9 @@ tags    = ["main", "mood=happy", { name = "a=b", value = "c" }]   # custom tags
 [markdown.unmodeled]
 table      = "keep"                   # keep or ignore, per kind
 code-block = "ignore"
+
+[diagnostics]
+disable = ["DLG3002", "DLG1114"]      # info and warning codes only
 ```
 
 | Key | Maps to |
@@ -73,6 +76,7 @@ code-block = "ignore"
 | `tags` | `CustomTags`: a shorthand string split at the first `=`, or a table `{ name, value? }` for a name that itself contains `=`. |
 | any other speaker key | `ReservedTags`: `true` → a name-only tag, a string → a valued tag, `false` → nothing. |
 | `markdown.unmodeled` | `CompilerOptions.UnmodeledMarkdown`; omitted kinds stay absent so their defaults apply (see [Unmodeled Markdown Handling](../core/Unmodeled%20Markdown%20Handling.md)). |
+| `diagnostics.disable` | `CompilerOptions.DisabledDiagnostics`; each code must name an info or warning diagnostic (see [Disabled Diagnostics](../diagnostics/Disabled%20Diagnostics.md)). |
 
 Every spelling of a setting is read the same way. Each group below configures
 one thing:
@@ -101,7 +105,7 @@ markdown = { unmodeled = { table = "keep" } }  # an inline table
 | `TomlDocumentReader` | internal | The TOML front end: text → a located `ConfigurationTable`, failing on a syntax error or a duplicate key. The only type that uses Tomlyn. |
 | `ConfigurationValue` | internal | The located tree: an abstract record with a `Location`, whose cases are `ConfigurationTable`, `ConfigurationArray`, and `ConfigurationScalar`. |
 | `ConfigurationEntry` | internal | One key of a table: its name, the location of the key, and its value. |
-| `ConfiguredModeReader`, `ConfiguredSpeakerReader`, `ConfiguredUnmodeledReader` | internal | One section each, read from the root `ConfigurationTable`. |
+| `ConfiguredModeReader`, `ConfiguredSpeakerReader`, `ConfiguredUnmodeledReader`, `ConfiguredDiagnosticsReader` | internal | One section each, read from the root `ConfigurationTable`. |
 | `DialogueConfigurationException` | public | A config error with its `ConfigurationSourceLocation`. |
 | `ConfigurationSourceLocation` | public | The source, line, and column of a config error. |
 

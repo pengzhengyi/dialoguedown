@@ -3,8 +3,8 @@ using DialogueDown.Configuration;
 namespace DialogueDown.Tests.Support;
 
 /// <summary>
-/// Builds the public configuration option types, so a test builds a configured
-/// speaker or tag through one place and a constructor change touches only this file.
+/// Builds the configuration option types, so a test builds a configured speaker, a tag, or a
+/// session's options through one place and a constructor change touches only this file.
 /// </summary>
 internal static class ConfigurationFactory
 {
@@ -23,4 +23,11 @@ internal static class ConfigurationFactory
     /// <summary>A configured speaker marked default: a bare name plus the reserved default tag.</summary>
     public static ConfiguredSpeaker DefaultConfiguredSpeaker(string name = "Narrator") =>
         ConfiguredSpeaker(name, reservedTags: [DefaultTag()]);
+
+    /// <summary>The options a compilation session in <paramref name="mode"/> reads.</summary>
+    /// <param name="mode">How far the compile proceeds after an error.</param>
+    /// <param name="disabledDiagnostics">The upper-case codes to mark disabled; none by default.</param>
+    public static CompilationSessionOptions CompilationSessionOptions(
+        CompilationMode mode, params string[] disabledDiagnostics) =>
+        new(mode, disabledDiagnostics.ToHashSet(StringComparer.Ordinal));
 }
