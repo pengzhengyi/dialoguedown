@@ -74,27 +74,6 @@ public sealed class QuestionsTests
             Questions.ToRequest(["Hero.HasSword", "Hero.HasShield", "Hero.HasSword"], [], []).BooleanKeys);
 
     [Fact]
-    public void Keys_WhenTheMomentAsksNothing_AreNone() =>
-        Assert.Empty(Questions.Keys([], [], []));
-
-    [Fact]
-    public void Keys_NameTheTruthsFirst_BecauseAGuardIsWrittenFirst() =>
-        Assert.Equal(
-            ["Hero.HasSword", "HeroName"], Questions.Keys(["Hero.HasSword"], ["HeroName"], []));
-
-    [Fact]
-    public void Keys_NameTheTruthsThenTheWordsThenTheNumbers() =>
-        Assert.Equal(
-            ["Hero.HasSword", "HeroName", "Guard.Mood"],
-            Questions.Keys(["Hero.HasSword"], ["HeroName"], ["Guard.Mood"]));
-
-    [Fact]
-    public void Keys_NameARepeatedKeyOnce() =>
-        Assert.Equal(
-            ["Hero.HasSword", "Hero.HasShield"],
-            Questions.Keys(["Hero.HasSword", "Hero.HasShield", "Hero.HasSword"], [], []));
-
-    [Fact]
     public void NeededBothWays_WhenNoKeyIsNamedTwiceOver_AreNone() =>
         Assert.Empty(Questions.NeededBothWays(["Hero.HasSword"], ["HeroName"], []));
 

@@ -153,8 +153,8 @@ internal static class Arrival
     // Asked before the kind is dispatched on, because what the world says decides whether the node
     // plays and what its words say, whatever kind it is.
     private static Visited? AskIfPlayingNeedsAnswers(int position, NodeQuestions needs) =>
-        needs.Keys() is { IsEmpty: false }
-            ? new Visited.Standing(StepResults.Ask(position, needs, Moment.BeforePlaying))
+        needs.ToRequest() is { Keys.IsEmpty: false } request
+            ? new Visited.Standing(StepResults.Ask(position, request, Moment.BeforePlaying))
             : null;
 
     private static Visited? PlayIfNotWalkedPast(PlayContext context, int position, Node arrived, Supply? supply) =>
@@ -163,14 +163,10 @@ internal static class Arrival
     // Only a node being walked past reaches this, and passing a node is leaving it, so a way out
     // only the world can allow is asked about here. The walk carries on in its own loop rather than
     // by leaving through departure, which keeps a cycle of such nodes inside the bound.
-    private static Visited? AskIfLeavingNeedsAnswers(int position, Node arrived)
-    {
-        var neededForLeaving = NodeQuestions.RequiredToLeave(arrived);
-
-        return neededForLeaving.Keys() is { IsEmpty: false }
-            ? new Visited.Standing(StepResults.Ask(position, neededForLeaving, Moment.BeforeLeaving))
+    private static Visited? AskIfLeavingNeedsAnswers(int position, Node arrived) =>
+        NodeQuestions.RequiredToLeave(arrived).ToRequest() is { Keys.IsEmpty: false } request
+            ? new Visited.Standing(StepResults.Ask(position, request, Moment.BeforeLeaving))
             : null;
-    }
 
     private static Visited WalkOn(int position, Node arrived) =>
         arrived.OnwardTarget() is int onward

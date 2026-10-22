@@ -134,14 +134,10 @@ internal static class Playing
     // A command can change the world, so the words after it are asked about only once the host has
     // performed it. When those words ask nothing, the line goes on at once.
     private static StepResult AskBeforeContinuing(
-        PlayContext context, int position, LineNode line, int segmentIndex)
-    {
-        var neededForContinuing = NodeQuestions.RequiredToPlayFrom(line, segmentIndex);
-
-        return neededForContinuing.Keys() is { IsEmpty: false }
-            ? StepResults.Ask(position, neededForContinuing, Moment.BeforeContinuingFrom(segmentIndex))
+        PlayContext context, int position, LineNode line, int segmentIndex) =>
+        NodeQuestions.RequiredToPlayFrom(line, segmentIndex).ToRequest() is { Keys.IsEmpty: false } request
+            ? StepResults.Ask(position, request, Moment.BeforeContinuingFrom(segmentIndex))
             : Line(context, position, line, supply: null, segmentIndex);
-    }
 
     private static StepResult ContinueWith(
         PlayContext context, AwaitingSupply waiting, LineNode line, int segmentIndex, Supply supply)

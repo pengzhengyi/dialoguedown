@@ -68,10 +68,6 @@ internal readonly record struct NodeQuestions(
         return new NodeQuestions(node.FindTruthsForLeaving(), Words: [], Numbers: []);
     }
 
-    /// <summary>The keys to ask about: the truths, then the words, then the numbers.</summary>
-    /// <returns>The keys, each named once. Empty when the node asks nothing.</returns>
-    public ImmutableArray<string> Keys() => Questions.Keys(Truths, Words, Numbers);
-
     /// <summary>These questions as a request, each key named under the kind of answer its use needs.</summary>
     /// <returns>The request, each kind's keys named once in the order written.</returns>
     public Resolve ToRequest() => Questions.ToRequest(Truths, Words, Numbers);

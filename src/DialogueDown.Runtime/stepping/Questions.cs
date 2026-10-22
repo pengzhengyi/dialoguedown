@@ -50,21 +50,6 @@ internal static class Questions
         ];
     }
 
-    /// <summary>The keys a moment asks about: its truths, then its words, then its numbers.</summary>
-    /// <param name="truths">The keys a guard reads.</param>
-    /// <param name="words">The keys a query reads.</param>
-    /// <param name="numbers">The keys a key weight reads.</param>
-    /// <returns>The keys, each named once. Empty when the moment asks nothing.</returns>
-    /// <remarks>
-    /// Each kind keeps the order the playbook names its keys in. For a line, truths first is also
-    /// the order a reader meets them, since a guard is written before the line it guards. A menu
-    /// follows the same rule, every condition before any label's query, and so does a random
-    /// choice, every condition before any key weight, so every node names its keys alike.
-    /// </remarks>
-    public static ImmutableArray<string> Keys(
-        ImmutableArray<string> truths, ImmutableArray<string> words, ImmutableArray<string> numbers) =>
-        [.. truths.Concat(words).Concat(numbers).Distinct(StringComparer.Ordinal)];
-
     /// <summary>A moment's questions as a request, each key named under the kind of answer its use needs.</summary>
     /// <param name="truths">The keys a guard reads, each needing a truth.</param>
     /// <param name="words">The keys a query reads, each needing words.</param>
