@@ -145,7 +145,7 @@ first, since a construct threads through them.
 | [Progression Order](./language/Progression%20Order.md) | How a script progresses (reading-order fall-through), the divert and detour jump roles, and the `#END` terminator | Partially implemented |
 | [Random Choice](./language/Random%20Choice.md) | A choice list with per-option `` `%` `` weights that the engine resolves to one option at random | Implemented |
 | [Conditions](./language/Conditions.md) | The condition (`` `key?` ``) and every place it attaches — a line, a jump, a choice option — with its grammar and how each resolves | Implemented |
-| [Unquoted Keys](./language/Unquoted%20Keys.md) | Let a condition (`` `IsAngry?` ``) and a dynamic weight (`` `Luck%` ``) drop the quotes around their key, keeping quotes as the escape | Implemented |
+| [Unquoted Keys](./language/Unquoted%20Keys.md) | Let a condition (`` `IsAngry?` ``) and a key weight (`` `Luck%` ``) drop the quotes around their key, keeping quotes as the escape | Implemented |
 | [Symbol Escape](./language/Symbol%20Escape.md) | One literal-punctuation rule: a backslash escapes the next character, so `#word` and `=>` are written as prose | Implemented |
 | [Speech Whitespace](./language/Speech%20Whitespace.md) | Spaces typed together reach the playbook as one, as a Markdown preview shows them; a command or tag takes no room; `DLG1116` notes where extra spaces collapse | Implemented |
 | [Block Controls](./language/Block%20Controls.md) | Connected blockquotes that group mutually-exclusive `if`/`elseif`/`else` branch bodies | Implemented |
@@ -258,7 +258,7 @@ and how a scene folds.
 | [Node Inspector](./visualization/graph/Node%20Inspector.md) | Read a graph node's source and preview, and jump to it in the Source tab | Implemented |
 | [Jump to Stage](./visualization/graph/Jump%20to%20Stage.md) | From a Source selection to the enclosing node in a later stage, via **Jump to ▸ \<stage\>** | Implemented |
 | [Dialogue Graph Region Fold](./visualization/graph/Dialogue%20Graph%20Region%20Fold.md) | Collapse a scene in the Dialogue Graph to one box the flow still passes through | Implemented |
-| [Region-Aware Graph Layout](./visualization/graph/Region-Aware%20Graph%20Layout.md) | Give every scene its own run of rows, so no two scene bands cross | Implemented |
+| [Region-Aware Graph Layout](./visualization/graph/Region-Aware%20Graph%20Layout.md) | Give every scene its own consecutive rows, so no two scene bands cross | Implemented |
 | [Keyboard Navigation](./visualization/graph/Keyboard%20Navigation.md) | Navigate a graph by its edges, with a keymap per tab shape | Implemented |
 
 #### Served session

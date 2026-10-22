@@ -51,7 +51,7 @@ Alice: My favorite color is red.
 
 > [!TIP]
 > A query can also drive a random choice's odds — see
-> [Dynamic weights](structure-and-flow.md#dynamic-weights).
+> [Key weights](structure-and-flow.md#key-weights).
 
 ### A query in a label
 
@@ -173,7 +173,7 @@ key begins and ends, so it can hold any characters — including spaces.
 
 Two constructs put a **sigil** right after the key: a
 [condition](structure-and-flow.md#conditional-jumps) ends it with `?`, and a
-[dynamic weight](structure-and-flow.md#dynamic-weights) ends it with `%`. There the sigil already marks
+[key weight](structure-and-flow.md#key-weights) ends it with `%`. There the sigil already marks
 where the key ends, so you may **drop the quotes** and write the key plainly:
 
 ```markdown

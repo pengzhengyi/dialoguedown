@@ -159,7 +159,7 @@ it mid-line.
 ### D4 — A dedicated boolean read
 
 A condition resolves through a boolean read of its key, so the runtime never
-parses `"true"` out of a string and there is no truthiness ladder. Dynamic
+parses `"true"` out of a string and there is no truthiness ladder. Key
 weights still read a value, because a number in a string is natural where a
 boolean is not.
 
@@ -187,7 +187,7 @@ branches with a fallback are the separate [block control](./Block%20Controls.md)
 
 A conditional option may be excluded at play time, so the achievable total is
 unknown at compile time. `WeightTotalRule` skips `DLG3003` and `DLG2010` for a
-random choice with any conditional option, exactly as it does for a dynamic
+random choice with any conditional option, exactly as it does for a key
 weight. A conditional option still needs a weight (`DLG1104`).
 
 ### D9 — A player option is shown unavailable, not removed
@@ -210,7 +210,7 @@ changing `?`.
 | Code | Meaning | Severity | When |
 | --- | --- | --- | --- |
 | `DLG1106` | A condition guards nothing | Error | The condition is not bound: not immediately before a `=>`, not at the start of a line or option with content, and not after an `` `if` `` / `` `elseif` `` marker. |
-| `DLG2018` | Key needed both ways | Error | One key is a condition and also a query or a dynamic weight in the same line, menu, or random choice. The runner asks the game for both at once, and the game gives one answer per key. |
+| `DLG2018` | Key needed both ways | Error | One key is a condition and also a query or a key weight in the same line, menu, or random choice. The runner asks the game for both at once, and the game gives one answer per key. |
 
 A code span that is not a clean condition falls back to game-call recognition,
 and if that fails it is `DLG1102` and kept as literal text. There is no

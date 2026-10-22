@@ -304,7 +304,7 @@ internal static class DiagnosticCatalog
         DiagnosticCategory.Style,
         DiagnosticSeverity.Warning);
 
-    /// <summary>DLG3003 — a random choice's static weights do not total 100%.</summary>
+    /// <summary>DLG3003 — a random choice's number weights do not total 100%.</summary>
     public static readonly DiagnosticDescriptor ChoiceWeightsNotOneHundred = new(
         "DLG3003",
         "Choice weights do not total 100%",

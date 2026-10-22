@@ -4,7 +4,7 @@ using DialogueDown.Script.Transpiler.Parsing;
 namespace DialogueDown.Script.Transpiler.Builders;
 
 /// <summary>
-/// Reads the key shared by a condition and a dynamic weight — the text left once a trailing
+/// Reads the key shared by a condition and a key weight — the text left once a trailing
 /// sigil (<c>?</c> or <c>%</c>) is stripped. A quoted key (<c>"..."</c>) yields its inner text
 /// through the same query grammar a value read uses; any other non-empty text is an unquoted
 /// key taken verbatim, so a key may hold spaces. Empty text is not a key and yields

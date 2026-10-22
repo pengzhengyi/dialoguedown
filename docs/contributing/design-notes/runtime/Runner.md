@@ -214,7 +214,7 @@ runtimes.
 | `wrong-answer-kind` | an answer is the wrong kind for its question — words for a condition, a truth for a query, or anything but a number for a key weight |
 | `invalid-weight` | a `Supply` answers a key weight in play with a number that is negative or not finite, or key weights with numbers whose shares are too large to add up |
 | `key-needed-both-ways` | one node needs the same key as two kinds of answer — a truth, words, or a number — which one answer cannot be |
-| `unplayable-node` | the node is of a kind this build does not play; the C# runner plays every kind, so only a runner that does not yet play one refuses this |
+| `unplayable-node` | **reserved**: the node is of a kind this build does not play. The C# runner plays every kind and never sends it |
 | `no-such-option` | a `Choose` names a position outside the options the menu offered: below 0, or past the last |
 | `unavailable-option` | a `Choose` names an option the menu offered as one the player cannot take |
 | `invalid-draw` | a `Drawn` carries a number below 0 or above 1, or one that is not a number |
@@ -353,8 +353,9 @@ construct a runner does not play showing as unplayable rather than misplayed.
 The C# runner plays every kind of node, so it refuses nothing as `unplayable-node`.
 Reaching what it does not play — a random choice whose shares need the world's
 answers, played with none, or a block condition, which arrival always walks past —
-is a fault in the runner, and throws. The reason stays in the closed set for a
-runtime that does not yet play every kind.
+is a fault in the runner, and throws. The reason is **reserved**: it stays in the
+closed set for a runtime that cannot play a kind, or for a kind the format adds later,
+so such a node is refused by name rather than misplayed.
 
 ### D15 — A failed effect holds the run
 

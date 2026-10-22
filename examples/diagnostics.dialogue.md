@@ -20,7 +20,7 @@ author: DialogueDown examples
 
 A door groans somewhere above you. Two ways lead deeper into the dark.
 
-<!-- DLG3003 (warning): these static weights total 60%, not 100%. -->
+<!-- DLG3003 (warning): these number weights total 60%, not 100%. -->
 - `30%` A cold draft tugs you toward the west wing.
 - `30%` Candlelight gutters somewhere to the east.
 

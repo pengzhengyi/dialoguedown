@@ -8,7 +8,7 @@ using DialogueDown.Script.Weights;
 namespace DialogueDown.Script.Validation;
 
 /// <summary>
-/// Checks a random choice's static weights. It asks the <see cref="IWeightNormalization"/>
+/// Checks a random choice's number weights. It asks the <see cref="IWeightNormalization"/>
 /// strategy for the raw total, then reports at the group's start: an error
 /// (<see cref="DiagnosticCatalog.ZeroChoiceWeightTotal"/>) when the weights sum to zero, so no
 /// option can be selected; otherwise a warning
@@ -36,7 +36,7 @@ internal sealed class WeightTotalRule(IWeightNormalization normalization) : IDia
     }
 
     /// <summary>Whether a static total is zero, so no option can be selected.</summary>
-    /// <param name="total">The total of a random choice's static weights.</param>
+    /// <param name="total">The total of a random choice's number weights.</param>
     /// <returns><see langword="true"/> when the total is zero.</returns>
     internal static bool IsZeroTotal(double total) => total < NearZeroThreshold;
 

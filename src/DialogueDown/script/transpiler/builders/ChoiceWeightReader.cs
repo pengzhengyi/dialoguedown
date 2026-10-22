@@ -31,7 +31,7 @@ internal static class ChoiceWeightReader
             return new AutoWeight(span);
         }
 
-        // A number is a static weight; only a finite, non-negative one is valid. `Infinity%`, and
+        // A number is a number weight; only a finite, non-negative one is valid. `Infinity%`, and
         // a number with more digits than a double holds, read as infinite. Trying the number first
         // keeps `50%` the number 50 rather than a key named "50".
         if (double.TryParse(value, WeightNumberStyles, CultureInfo.InvariantCulture, out var percentage))

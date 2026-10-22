@@ -333,7 +333,7 @@ Only a playbook built without the compiler can have a random choice with nothing
 drawable and no fall-through. The runner refuses it as `leads-nowhere`, and the run
 stands at it, as at any node that leads nowhere.
 
-The compiler reports a zero total for static weights as `DLG2010`, an error, and that
+The compiler reports a zero total for number weights as `DLG2010`, an error, and that
 includes a random choice whose only random option has a `0%` chance of being drawn. A
 single random option is always taken only while its share is above zero, so this one
 never is. `DLG3004`, which says a single random option is always taken, stays quiet for

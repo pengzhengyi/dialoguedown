@@ -38,8 +38,8 @@ describe("decoratedRanges", () => {
             "ControlKeyword",
             "Query",
             "Condition",
-            "StaticWeight",
-            "DynamicWeight",
+            "NumberWeight",
+            "KeyWeight",
             "Command",
             "IgnoredMarkdown",
         ];
@@ -59,8 +59,8 @@ describe("decoratedRanges", () => {
             "dd-tok-control-keyword",
             "dd-tok-query",
             "dd-tok-condition",
-            "dd-tok-static-weight",
-            "dd-tok-dynamic-weight",
+            "dd-tok-number-weight",
+            "dd-tok-key-weight",
             "dd-tok-command",
             "dd-tok-ignored-markdown",
         ]);

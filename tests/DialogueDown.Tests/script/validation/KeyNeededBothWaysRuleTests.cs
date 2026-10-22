@@ -87,7 +87,7 @@ public sealed class KeyNeededBothWaysRuleTests
             Check(GuardedByAKeyAnotherRandomOptionIsWeightedBy(weight)), DiagnosticCatalog.KeyNeededBothWays);
 
         Assert.Equal(weight.Span, diagnostic.Span);
-        Assert.Equal(["Guard.Mood", "a dynamic weight", "random choice", "a condition"], diagnostic.MessageArguments);
+        Assert.Equal(["Guard.Mood", "a key weight", "random choice", "a condition"], diagnostic.MessageArguments);
     }
 
     [Fact]
