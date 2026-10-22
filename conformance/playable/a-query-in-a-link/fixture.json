@@ -6,9 +6,11 @@
   "session": [
     {
       "expect": {
-        "resolve": [
-          "innName"
-        ]
+        "resolve": {
+          "text": [
+            "innName"
+          ]
+        }
       }
     },
     {

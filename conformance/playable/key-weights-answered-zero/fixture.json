@@ -6,7 +6,7 @@
   "session": [
     { "expect": { "said": { "speech": "The guard looks up." } } },
     { "send": "next" },
-    { "expect": { "resolve": ["Guard.Mood", "Guard.Temper"] } },
+    { "expect": { "resolve": { "number": ["Guard.Mood", "Guard.Temper"] } } },
     { "send": { "supply": { "Guard.Mood": 0, "Guard.Temper": 0 } } },
     { "expect": { "said": { "speech": "The guard looks away." } } },
     { "send": "next" },
