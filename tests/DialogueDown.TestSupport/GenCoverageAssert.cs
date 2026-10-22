@@ -3,35 +3,37 @@ using CsCheck;
 namespace DialogueDown.TestSupport;
 
 /// <summary>
-/// Asserts that the draws from a generator cover every value of an enum, or every kind in a list.
+/// Asserts that the samples from a generator cover every value of an enum, or every kind in a list.
 /// </summary>
 /// <remarks>
-/// It makes the fixed draws of <see cref="GenCoverage"/>, so it passes or fails the same way on
-/// every run, and a failure names each kind no draw covered.
+/// It takes the fixed samples of <see cref="GenCoverage"/>, so it passes or fails the same way on
+/// every run, and a failure names each kind no sample covered.
 /// </remarks>
 public static class GenCoverageAssert
 {
-    /// <summary>Asserts that every value of an enum is the kind of some draw.</summary>
-    /// <typeparam name="T">What the generator draws.</typeparam>
-    /// <typeparam name="TKind">The enum whose values the draws must cover.</typeparam>
+    /// <summary>Asserts that every value of an enum is the kind of some sample.</summary>
+    /// <typeparam name="T">What the generator produces.</typeparam>
+    /// <typeparam name="TKind">The enum whose values the samples must cover.</typeparam>
     /// <param name="gen">The generator.</param>
-    /// <param name="kindOf">The value one draw covers, such as the placement of its label.</param>
-    /// <param name="samples">How many draws to make.</param>
+    /// <param name="kindOf">
+    /// The value one sample covers, such as the placement of its label.
+    /// </param>
+    /// <param name="samples">How many samples to take.</param>
     public static void AssertCoversEveryValue<T, TKind>(
         Gen<T> gen, Func<T, TKind> kindOf, int samples = GenCoverage.Samples)
         where TKind : struct, Enum
     {
-        AssertCoversEveryValue(gen, draw => new[] { kindOf(draw) }, samples);
+        AssertCoversEveryValue(gen, sample => new[] { kindOf(sample) }, samples);
     }
 
-    /// <summary>Asserts that every value of an enum is among the kinds of some draw.</summary>
-    /// <typeparam name="T">What the generator draws.</typeparam>
-    /// <typeparam name="TKind">The enum whose values the draws must cover.</typeparam>
+    /// <summary>Asserts that every value of an enum is among the kinds of some sample.</summary>
+    /// <typeparam name="T">What the generator produces.</typeparam>
+    /// <typeparam name="TKind">The enum whose values the samples must cover.</typeparam>
     /// <param name="gen">The generator.</param>
     /// <param name="kindsOf">
-    /// The values one draw covers, such as the kind of each call in a label.
+    /// The values one sample covers, such as the kind of each call in a label.
     /// </param>
-    /// <param name="samples">How many draws to make.</param>
+    /// <param name="samples">How many samples to take.</param>
     public static void AssertCoversEveryValue<T, TKind>(
         Gen<T> gen, Func<T, IEnumerable<TKind>> kindsOf, int samples = GenCoverage.Samples)
         where TKind : struct, Enum
@@ -41,15 +43,15 @@ public static class GenCoverageAssert
         AssertNoneUncovered(Enum.GetValues<TKind>(), covered, $"{typeof(TKind).Name} values");
     }
 
-    /// <summary>Asserts that some draw covers each kind in a list.</summary>
-    /// <typeparam name="T">What the generator draws.</typeparam>
-    /// <typeparam name="TKind">The kinds the draws must cover.</typeparam>
+    /// <summary>Asserts that some sample covers each kind in a list.</summary>
+    /// <typeparam name="T">What the generator produces.</typeparam>
+    /// <typeparam name="TKind">The kinds the samples must cover.</typeparam>
     /// <param name="gen">The generator.</param>
     /// <param name="kinds">The kinds, such as each kind of space a speech can hold.</param>
     /// <param name="covers">
-    /// Whether one draw covers one kind, such as whether a drawn script holds a tab.
+    /// Whether one sample covers one kind, such as whether a sampled script holds a tab.
     /// </param>
-    /// <param name="samples">How many draws to make.</param>
+    /// <param name="samples">How many samples to take.</param>
     public static void AssertCoversEvery<T, TKind>(
         Gen<T> gen,
         IReadOnlyCollection<TKind> kinds,
@@ -57,7 +59,7 @@ public static class GenCoverageAssert
         int samples = GenCoverage.Samples)
     {
         var covered = GenCoverage.Covered(
-            gen, draw => kinds.Where(kind => covers(draw, kind)), samples);
+            gen, sample => kinds.Where(kind => covers(sample, kind)), samples);
 
         AssertNoneUncovered(kinds, covered, "kinds");
     }
@@ -69,7 +71,7 @@ public static class GenCoverageAssert
 
         if (uncovered.Count > 0)
         {
-            Assert.Fail($"No draw covered these {what}: {string.Join(", ", uncovered)}.");
+            Assert.Fail($"No sample covered these {what}: {string.Join(", ", uncovered)}.");
         }
     }
 

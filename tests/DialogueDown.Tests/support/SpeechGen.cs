@@ -10,7 +10,7 @@ namespace DialogueDown.Tests.Support;
 /// tests about spacing.
 /// </summary>
 /// <remarks>
-/// A text is one to four pieces drawn from words and from every kind of space: a space, two
+/// A text is one to four pieces taken from words and from every kind of space: a space, two
 /// spaces, a tab, an encoded line feed or carriage return, and the named spaces U+00A0 and U+2003.
 /// So spaces typed together, split across texts, and standing at either end of a list are all
 /// common. Around the texts stand soft line breaks, queries, images, tags, and both kinds of
@@ -33,7 +33,7 @@ internal static class SpeechGen
     private static readonly Gen<SpeechFragment> _command =
         Gen.OneOfConst<SpeechFragment>(DefaultCommand(), CustomCommand("Wave"));
 
-    // Every fragment that holds no other, but a command, by how often each is drawn.
+    // Every fragment that holds no other, but a command, by how often each is generated.
     private static readonly (int, IGen<SpeechFragment>)[] _leaves =
     [
         (6, _text),
@@ -54,8 +54,8 @@ internal static class SpeechGen
     /// </summary>
     public static Gen<ImmutableArray<SpeechFragment>> Speech() => _list;
 
-    // One fragment, holding others to the given depth. A command is drawn only where the compiler
-    // allows one.
+    // One fragment, holding others to the given depth. A command is generated only where the
+    // compiler allows one.
     private static Gen<SpeechFragment> Fragment(int depth, bool commands)
     {
         var leaf = Gen.Frequency<SpeechFragment>(commands ? [.. _leaves, (2, _command)] : _leaves);

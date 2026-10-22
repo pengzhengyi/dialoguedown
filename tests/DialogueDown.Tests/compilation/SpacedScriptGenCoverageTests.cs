@@ -11,7 +11,7 @@ namespace DialogueDown.Tests.Compilation;
 /// The properties over spaced scripts pass vacuously for spacing or a piece the generator never
 /// writes, so this fails if a change to the generator stops writing one.
 /// <para>
-/// It draws the fixed sample of <see cref="GenCoverage"/>, so it cannot flake.
+/// It takes the fixed samples of <see cref="GenCoverage"/>, so it cannot flake.
 /// </para>
 /// </remarks>
 public sealed class SpacedScriptGenCoverageTests

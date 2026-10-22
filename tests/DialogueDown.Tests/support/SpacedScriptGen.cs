@@ -19,11 +19,11 @@ namespace DialogueDown.Tests.Support;
 /// - coin&amp;#10;`"Gold"`
 /// </code>
 /// <para>
-/// Spacing is drawn between every two pieces of speech, after the last one, and inside emphasis, a
-/// link's label, alt text, and a jump's label: one, two, or three spaces, a tab, and the entities
-/// for a space, a tab, a line feed, and a no-break space, alone and beside a space. Speech and each
-/// label begin and end with a word, and a tag and an arrow have only literal spaces beside them, so
-/// the Markdown reads the same whichever spacing is drawn.
+/// Spacing is generated between every two pieces of speech, after the last one, and inside
+/// emphasis, a link's label, alt text, and a jump's label: one, two, or three spaces, a tab, and
+/// the entities for a space, a tab, a line feed, and a no-break space, alone and beside a space.
+/// Speech and each label begin and end with a word, and a tag and an arrow have only literal spaces
+/// beside them, so the Markdown reads the same whichever spacing is generated.
 /// </para>
 /// </remarks>
 internal static class SpacedScriptGen
@@ -50,7 +50,8 @@ internal static class SpacedScriptGen
         Gen.Const(new Piece("`\"Gold\"`")),
         Gen.Const(new Piece("#mood=sad", IsTag: true)));
 
-    // The spacing before a piece, drawn both ways so it can be literal where the piece needs it.
+    // The spacing before a piece, generated both ways so it can be literal where the piece needs
+    // it.
     private static readonly Gen<Step> _step =
         Gen.Select(_spacing, _literal, _piece, (spacing, literal, piece) => new Step(spacing, literal, piece));
 
@@ -103,7 +104,7 @@ internal static class SpacedScriptGen
     /// <param name="IsTag">Whether the piece is a tag, which needs a literal space on each side.</param>
     private sealed record Piece(string Text, bool IsTag = false);
 
-    /// <summary>A piece and the spacing before it, drawn as any spacing and as literal spaces.</summary>
+    /// <summary>A piece and the spacing before it, generated as any spacing and as literal spaces.</summary>
     /// <param name="Spacing">Spacing of any kind.</param>
     /// <param name="Literal">Spacing of literal spaces and tabs only.</param>
     /// <param name="Piece">The piece the spacing comes before.</param>

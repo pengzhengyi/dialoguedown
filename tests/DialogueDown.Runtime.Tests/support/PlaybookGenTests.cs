@@ -11,13 +11,13 @@ using DialogueDown.TestSupport;
 namespace DialogueDown.Runtime.Tests;
 
 /// <summary>
-/// Checks that the generator behind the walk property draws every node and edge kind the runner
-/// can play.
+/// Checks that the generator behind the walk property produces every node and edge kind the
+/// runner can play.
 /// </summary>
 /// <remarks>
-/// The generator draws only the kinds the runner can play. Every kind it leaves out is listed with
-/// a note on what must change first, and these tests fail once the runner plays a listed kind, so
-/// the generator keeps up with the runner.
+/// The generator produces only the kinds the runner can play. Every kind it leaves out is listed
+/// with a note on what must change first, and these tests fail once the runner plays a listed kind,
+/// so the generator keeps up with the runner.
 /// </remarks>
 public sealed class PlaybookGenTests
 {
@@ -26,57 +26,58 @@ public sealed class PlaybookGenTests
     // Node and edge kinds the generator leaves out, each with a note on what must change first.
     // The test below checks the note on every node kind. An edge kind stays out for as long as the
     // node kind it belongs to does, because that node is the only place it can appear.
-    private static readonly Dictionary<string, string> _notDrawn = new(StringComparer.Ordinal);
+    private static readonly Dictionary<string, string> _notGenerated = new(StringComparer.Ordinal);
 
     [Fact]
-    public void EveryKindTheFormatDefines_IsDrawnOrLeftOutOnPurpose()
+    public void EveryKindTheFormatDefines_IsGeneratedOrLeftOutOnPurpose()
     {
-        var drawn = DrawnKinds();
+        var generated = GeneratedKinds();
         var unaccounted = UnionMembers.NamesOf<Node>()
             .Concat(UnionMembers.NamesOf<Edge>())
-            .Where(kind => !drawn.Contains(kind) && !_notDrawn.ContainsKey(kind))
+            .Where(kind => !generated.Contains(kind) && !_notGenerated.ContainsKey(kind))
             .Order(StringComparer.Ordinal)
             .ToList();
 
         Assert.True(
             unaccounted.Count == 0,
-            $"{unaccounted.Count} kind(s) the format defines are neither drawn nor left out on "
-                + $"purpose: {string.Join(", ", unaccounted)}. Draw each one, so the walk property "
-                + "covers it, or list it with a note on what must change first.");
+            $"{unaccounted.Count} kind(s) the format defines are neither generated nor left out on "
+                + $"purpose: {string.Join(", ", unaccounted)}. Generate each one, so the walk "
+                + "property covers it, or list it with a note on what must change first.");
     }
 
     [Fact]
     public void EveryNodeKindLeftOut_IsStillOneTheRunnerCannotPlay()
     {
-        // Fails once the runner plays a listed kind, naming the kind the generator must now draw.
+        // Fails once the runner plays a listed kind, naming the kind the generator must now
+        // produce.
         foreach (var node in PlayContextFactory.OneOfEveryNodeKind())
         {
             var kind = node.GetType().Name;
 
-            if (_notDrawn.TryGetValue(kind, out var reason))
+            if (_notGenerated.TryGetValue(kind, out var reason))
             {
                 Assert.True(
                     node.IsUnplayableKind(),
                     $"{kind} is left out of the generator because {reason}, and the runner plays "
-                        + "one now. Draw it, so the walk property covers what the runner learned, "
-                        + "and remove its entry from the list.");
+                        + "one now. Generate it, so the walk property covers what the runner "
+                        + "learned, and remove its entry from the list.");
             }
         }
     }
 
     [Fact]
-    public void TheDraw_ReachesMoreThanAHandfulOfKinds()
+    public void TheSamples_ReachMoreThanAHandfulOfKinds()
     {
-        // Checks that DrawnKinds still sees what the generator produced. If it saw nothing, the
+        // Checks that GeneratedKinds still sees what the generator produced. If it saw nothing, the
         // check above would find nothing missing and pass.
-        Assert.True(DrawnKinds().Count >= 5);
+        Assert.True(GeneratedKinds().Count >= 5);
     }
 
     [Fact]
-    public void TheDraw_PutsACommandEverywhereALineCanHoldOne()
+    public void TheGenerator_PutsACommandEverywhereALineCanHoldOne()
     {
         // A line reaches the host in parts around each command, so the walk covers every part only
-        // if some drawn line holds its command first, between its words, last, and alone.
+        // if some sampled line holds its command first, between its words, last, and alone.
         GenCoverageAssert.AssertCoversEvery(
             PlaybookGen.Valid(),
             ["alone", "between", "first", "last"],
@@ -85,22 +86,24 @@ public sealed class PlaybookGenTests
     }
 
     [Fact]
-    public void TheDraw_GivesSomeRandomChoiceNothingDrawable_InAWorldDrawnBesideIt()
+    public void TheGenerator_GivesSomeRandomChoiceNothingDrawable_InAWorldSampledBesideIt()
     {
         // A random choice is walked past only when no random option has a share, so the walk covers
-        // that only if some drawn random choice has nothing drawable in a world the walk can meet.
+        // that only if some sampled random choice has nothing drawable in a world the walk can
+        // meet.
         var covered = GenCoverage.Covers(
             Gen.Select(PlaybookGen.Valid(), PlaybookGen.Worlds(), LeftNothingDrawable),
             randomChoices => randomChoices.Any());
 
-        Assert.True(covered, "No drawn random choice had nothing drawable.");
+        Assert.True(covered, "No sampled random choice had nothing drawable.");
     }
 
     [Fact]
-    public void TheDraw_GivesARandomChoiceAFallThrough_WheneverAWorldCanLeaveItNothingDrawable()
+    public void TheGenerator_GivesARandomChoiceAFallThrough_WheneverAWorldCanLeaveItNothingDrawable()
     {
         // A script compiles a random choice with a fall-through whenever the game can leave it
-        // nothing drawable, so a walk over drawn playbooks is never refused there as leading nowhere.
+        // nothing drawable, so a walk over sampled playbooks is never refused there as leading
+        // nowhere.
         Gen.Select(PlaybookGen.Valid(), PlaybookGen.Worlds()).Sample(
             (playbook, world) =>
             {
@@ -108,7 +111,7 @@ public sealed class PlaybookGenTests
                 {
                     Assert.True(
                         random.SuccessionTarget() is not null,
-                        $"Random choice {random.Id} has nothing drawable in a drawn world, and no fall-through.");
+                        $"Random choice {random.Id} has nothing drawable in a sampled world, and no fall-through.");
                 }
             },
             iter: Samples);
@@ -126,32 +129,34 @@ public sealed class PlaybookGenTests
         PlaybookGen.Valid().Sample(PlaybookAssert.AssertValidPlaybook, iter: Samples);
 
     /// <summary>
-    /// The type name of every node and edge kind the fixed draws from the generator hold.
+    /// The type name of every node and edge kind the fixed samples from the generator hold.
     /// </summary>
     /// <remarks>
     /// Read from the playbooks the generator actually produced, so the answer keeps up with the
     /// generator as it changes.
     /// </remarks>
-    private static IReadOnlySet<string> DrawnKinds() =>
+    private static IReadOnlySet<string> GeneratedKinds() =>
         GenCoverage.Covered(
             PlaybookGen.Valid(),
             playbook => playbook.Nodes.SelectMany(
                 node => node.Out.Select(edge => edge.GetType().Name).Prepend(node.GetType().Name)));
 
-    /// <summary>Every random choice in a playbook that a drawn world leaves nothing drawable.</summary>
+    /// <summary>
+    /// Every random choice in a playbook that a sampled world leaves nothing drawable.
+    /// </summary>
     /// <param name="playbook">The playbook.</param>
-    /// <param name="world">The world drawn beside it.</param>
+    /// <param name="world">The world sampled beside it.</param>
     /// <returns>The random choices none of whose random options has a share in that world.</returns>
     private static IEnumerable<RandomChoiceNode> LeftNothingDrawable(
-        PlaybookDocument playbook, DrawnWorld world) =>
+        PlaybookDocument playbook, SampledWorld world) =>
         playbook.Nodes.OfType<RandomChoiceNode>()
             .Where(random => RandomChoiceShares.HasNothingDrawable(random, ArrivingAt(random, world)));
 
-    /// <summary>What a drawn world answers when a run arrives at a random choice.</summary>
+    /// <summary>What a sampled world answers when a run arrives at a random choice.</summary>
     /// <param name="random">The random choice.</param>
-    /// <param name="world">The world drawn beside its playbook.</param>
+    /// <param name="world">The world sampled beside its playbook.</param>
     /// <returns>Each key its guards and key weights ask about, answered.</returns>
-    private static Supply ArrivingAt(RandomChoiceNode random, DrawnWorld world) =>
+    private static Supply ArrivingAt(RandomChoiceNode random, SampledWorld world) =>
         world.Answering(NodeQuestions.RequiredToPlay(random).Keys());
 
     /// <summary>Where a line's speech holds its first command.</summary>

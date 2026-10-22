@@ -12,7 +12,7 @@ namespace DialogueDown.Tests.Emission;
 /// The spacing properties over generated speech pass vacuously for a kind the generator never
 /// produces, so this fails if a change to the generator stops producing one.
 /// <para>
-/// It draws the fixed sample of <see cref="GenCoverage"/>, so it cannot flake.
+/// It takes the fixed samples of <see cref="GenCoverage"/>, so it cannot flake.
 /// </para>
 /// </remarks>
 public sealed class SpeechGenCoverageTests

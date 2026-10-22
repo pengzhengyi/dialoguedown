@@ -149,7 +149,7 @@ public sealed class WalkTests
     // The sampled world answers every query with the same words, so finding them in a label shows
     // the world filled it in.
     private static bool SaysTheWorldsWords(OfferedOption option) =>
-        option.Label.Contains(new TextFragment(DrawnWorld.Words));
+        option.Label.Contains(new TextFragment(SampledWorld.Words));
 
     // A random option's share is zero if the world excluded it, its weight is `0%`, its key
     // weight was answered 0, or its auto weight has nothing left. The only numbers a playbook

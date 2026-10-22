@@ -13,7 +13,7 @@ namespace DialogueDown.Runtime.Tests;
 /// <param name="World">The world sampled beside it, answering every key the run asks about.</param>
 /// <param name="Pick">Selects an option the player can take at every menu.</param>
 /// <param name="Draw">The number from 0 to 1 sent whenever the run asks for a draw.</param>
-internal sealed record Walk(PlaybookDocument Playbook, DrawnWorld World, int Pick, double Draw)
+internal sealed record Walk(PlaybookDocument Playbook, SampledWorld World, int Pick, double Draw)
 {
     // A sampled playbook may loop, so a walk stops after this many steps. Passing one node can take
     // five steps: answering what playing it needs, the host finishing a command inside a line,

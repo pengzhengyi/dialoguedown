@@ -17,7 +17,7 @@ namespace DialogueDown.Tests.Emission;
 /// <see cref="PlaybookRoundTripTests"/> checks only the shapes <see cref="ScriptGen"/> generates,
 /// so this fails if the generator stops producing any of the three.
 /// <para>
-/// It draws the fixed sample of <see cref="GenCoverage"/>, so it cannot flake.
+/// It takes the fixed samples of <see cref="GenCoverage"/>, so it cannot flake.
 /// </para>
 /// </remarks>
 public sealed class ScriptGenOutwardShapeCoverageTests

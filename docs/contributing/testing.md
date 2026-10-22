@@ -420,15 +420,15 @@ such as `EveryCatalogCodeIsDocumented`.
 ## Coverage that grows with the feature
 
 A few tests here cover less than they eventually will, on purpose. The generator
-behind the runtime's walk property draws only the node kinds the runner can play;
+behind the runtime's walk property generates only the node kinds the runner can play;
 the playable half of the conformance corpus ships more cases than the runner plays.
 Both are correct, and both are unfinished by design — the runtime arrives
 one pass at a time, and a test that waited for all of it would test nothing until
 the end.
 
 The risk is not the gap. It is a gap that closes quietly: a later pass teaches the
-runner to play choices, the generator that should now draw them carries on drawing
-lines, and the property stays green while covering less than it claims. Nothing is
+runner to play choices, the generator that should now generate them carries on
+generating lines, and the property stays green while covering less than it claims. Nothing is
 red, so nothing asks to be revisited.
 
 So a test in this shape **names what it covers rather than counting it**, and
@@ -445,7 +445,7 @@ list should have grown.
 held to the compiler: both enumerate what exists by reflection, then fail naming
 what is missing. The generator's check compares the kinds a sample of it actually
 produced against the kinds the playbook format defines, so a list of what it means
-to draw cannot drift from what it draws.
+to generate cannot drift from what it generates.
 
 A kind the generator skips is listed with the reason it is skipped, and for a node
 kind that reason is checked rather than believed: the test asserts the runner still
