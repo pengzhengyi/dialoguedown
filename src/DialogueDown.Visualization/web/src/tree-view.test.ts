@@ -401,7 +401,8 @@ describe("createTreeView — folding a scene", () => {
 
 /**
  * A graph whose flow crosses between scenes, as a branching script's does: the Market's own
- * choice keeps one option for itself and sends the other into the Forest, which fans out in three.
+ * choice keeps one option for itself and sends the other into the Forest, which fans out in
+ * three.
  *
  * Laid out by subtree extent alone, the Market's choice sinks towards the Forest's fan while the
  * Forest's band reaches up to hold its first option, and the two bands cross.
@@ -463,7 +464,7 @@ function bandRows(view: { svg: SVGSVGElement }): { region: string; top: number; 
 }
 
 describe("createTreeView — scenes never share rows with one another", () => {
-    it("gives each scene a run of rows clear of every other scene's", () => {
+    it("gives each scene consecutive rows clear of every other scene's", () => {
         const rows = bandRows(createTreeView(crossSceneStage(), () => {})).sort(
             (left, right) => left.top - right.top,
         );
@@ -729,7 +730,7 @@ describe("createTreeView — keyboard navigation follows the edges", () => {
         expect(chosen.at(-1)!.id).toBe("right"); // end's second way in
     });
 
-    it("leaves Shift+digit to a tree even when its edges wear route colors", () => {
+    it("leaves Shift+digit to a tree even when its edges have route colors", () => {
         // A named route does not make a stage the flow graph: the keyboard reads the stage's own
         // `nests` declaration, not its edge colors.
         const tree = stageWith({ start: 0, end: 3 });
@@ -766,9 +767,9 @@ describe("createTreeView — keyboard navigation follows the edges", () => {
         expect(chosen.at(-1)!.id).toBe("right");
     });
 
-    it("lands on the box of a folded scene the edge flows through", () => {
+    it("selects the box of a folded scene the edge flows through", () => {
         // The Market is gone from the drawing but not from the flow: the route that entered the
-        // scene now enters its box, so → from across the fold lands on the box.
+        // scene now enters its box, so → from across the fold selects the box.
         const chosen: DisplayNode[] = [];
         const view = createTreeView(scenedStage(), (node) => chosen.push(node), {
             initialRegionFold: ["The Market"],
@@ -782,8 +783,8 @@ describe("createTreeView — keyboard navigation follows the edges", () => {
     });
 
     it("counts a folded scene's box among its siblings in the drawing", () => {
-        // The Forest's box stands where its first node stood: the Market's choice has two children,
-        // `m2` and the box, so ↓ from one lands on the other like any pair of siblings.
+        // The Forest's box stands where its first node stood: the Market's choice has two
+        // children, `m2` and the box, so ↓ from one moves to the other like any pair of siblings.
         const chosen: DisplayNode[] = [];
         const view = createTreeView(crossSceneStage(), (node) => chosen.push(node), {
             initialRegionFold: ["The Forest"],

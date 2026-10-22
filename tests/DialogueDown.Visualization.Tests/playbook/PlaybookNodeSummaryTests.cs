@@ -93,8 +93,8 @@ public sealed class PlaybookNodeSummaryTests
         AssertSummary("Alice: <no speech>", SilentLine(), Speakers("Alice"));
     }
 
-    // Speech arrives exactly as it was composed, and a jump lifted out of a line can leave a space
-    // behind — so the summary trims rather than showing where the compiler cut.
+    // Spaces at either end of the speech are not part of the words, so the summary drops them when
+    // a playbook carries them; the compiler's own playbooks already trim speech.
     [Fact]
     public void Of_ALineWhoseSpeechIsPadded_TrimsIt()
     {

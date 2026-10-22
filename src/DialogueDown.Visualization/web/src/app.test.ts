@@ -318,7 +318,7 @@ describe("runApp — keyboard navigation follows the graph's edges", () => {
 
         arrow("ArrowRight");
 
-        // The fixture lists `b` before `a`, so a walk of the drawing would land on beta.
+        // The fixture lists `b` before `a`, so a walk of the drawing would reach beta.
         expect(detailTitle()).toContain("alpha");
     });
 

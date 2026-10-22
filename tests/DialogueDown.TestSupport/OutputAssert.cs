@@ -12,7 +12,7 @@ public static class OutputAssert
     public static void AssertReads(string output, params string[] lines) =>
         Assert.Equal(lines, ReadLines(output));
 
-    /// <summary>The output's lines, each without the fill to its right or the blank line after it.</summary>
+    /// <summary>The output's lines, with trailing spaces and final empty lines removed.</summary>
     /// <param name="output">What was printed.</param>
     /// <returns>The lines a reader meets, in order.</returns>
     public static string[] ReadLines(string output) =>

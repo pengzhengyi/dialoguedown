@@ -51,9 +51,9 @@ internal sealed record SessionOutcome(SessionVerdict Verdict, ImmutableArray<str
 
     /// <summary>The gravest of several partial outcomes, with every reason that reached it.</summary>
     /// <remarks>
-    /// A divergence outranks a construct the runner cannot play. Every reason at the gravest verdict
-    /// is kept, so a contributor sees every divergence in one run; reasons at a lesser verdict are
-    /// dropped.
+    /// A divergence takes precedence over a construct the runner cannot play. Every reason at the
+    /// gravest verdict is kept, so a contributor sees every divergence in one run; reasons at a
+    /// lesser verdict are dropped.
     /// </remarks>
     /// <param name="partials">What each check made of it, in the order they were checked.</param>
     /// <returns>The gravest verdict, and its reasons in the order they were found.</returns>

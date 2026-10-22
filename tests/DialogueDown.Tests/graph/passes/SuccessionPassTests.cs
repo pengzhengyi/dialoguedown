@@ -247,7 +247,7 @@ public sealed class SuccessionPassTests
             Alice: there
             """);
 
-        // Either condition failing lands on the same fall-through, so one is enough.
+        // Either condition failing leads to the same fall-through, so one is enough.
         AssertFallsThroughTo(graph.Nodes[0], graph.Nodes[1].Id);
     }
 

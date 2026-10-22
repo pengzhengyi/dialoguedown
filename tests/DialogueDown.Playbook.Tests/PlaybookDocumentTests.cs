@@ -83,7 +83,7 @@ public sealed class PlaybookDocumentTests
     public void Write_TablesInAnyOrder_AlwaysWritesThemSorted()
     {
         // Entries and anchors are lookup tables, so their order carries no meaning — but a golden
-        // file needs one. Sorting makes a playbook byte-identical however the writer built it.
+        // file needs one. Sorting makes a playbook byte-identical however the compiler built it.
         var document = PlaybookFactory.Document(anchors: [("the-inn", 1), ("a-market", 2)]);
 
         var json = PlaybookJsonAssert.Serialize(document);

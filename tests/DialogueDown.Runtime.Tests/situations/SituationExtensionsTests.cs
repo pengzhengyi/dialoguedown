@@ -91,7 +91,7 @@ public sealed class SituationExtensionsTests
     }
 
     [Fact]
-    public void Describe_RefusesASituationItWasNeverTaught() =>
+    public void Describe_RefusesASituationItDoesNotHandle() =>
         Assert.Throws<NotSupportedException>(() => new UnhandledSituation().Describe());
 
     [Fact]

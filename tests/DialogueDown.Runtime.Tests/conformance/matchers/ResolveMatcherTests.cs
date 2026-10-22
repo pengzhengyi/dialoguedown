@@ -15,8 +15,8 @@ public sealed class ResolveMatcherTests
 
     [Fact]
     public void KeysAskedInAnotherOrderDiverge() =>
-        // A run names keys as the playbook names them, so two runtimes reading one playbook ask in
-        // one order and a fixture can hold them to it.
+        // A run names the keys in a set order, truths then words then numbers, each as the playbook
+        // names them, so runtimes reading one playbook ask in one order, which a fixture can check.
         AssertDiverged(
             Match(Asked("Alice.HasKey", "playerName"), """[ "playerName", "Alice.HasKey" ]"""),
             """expected ["playerName","Alice.HasKey"] to be asked about, but ["Alice.HasKey","playerName"] was""");

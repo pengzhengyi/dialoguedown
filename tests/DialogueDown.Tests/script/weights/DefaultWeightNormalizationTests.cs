@@ -118,7 +118,7 @@ public sealed class DefaultWeightNormalizationTests
     [Fact]
     public void AQueryWeight_IsRejected_AsACallerError()
     {
-        // A query weight has no compile-time value; resolving one is the runtime's job, and
+        // A key weight has no compile-time value; resolving one is the runtime's job, and
         // normalizing it anyway would produce a probability nobody chose.
         Assert.Throws<ArgumentOutOfRangeException>(
             () => _normalizer.Normalize([QueryWeight("Luck"), NumberWeight(50)]));

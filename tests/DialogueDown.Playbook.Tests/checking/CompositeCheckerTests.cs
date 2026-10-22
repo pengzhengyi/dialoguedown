@@ -25,7 +25,8 @@ public sealed class CompositeCheckerTests
     [Fact]
     public void Check_ACheckThatRefuses_StopsThere()
     {
-        // Order is how a caller says which failure explains the others, so a refusal ends the run.
+        // Order is how a caller says which failure explains the others, so a refusal stops the
+        // checks after it.
         _first.When(check => check.Check(Arg.Any<PlaybookDocument>()))
             .Throw(new InvalidPlaybookException("no"));
 

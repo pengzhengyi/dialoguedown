@@ -17,7 +17,7 @@ function spanOf(placed: Map<string, number>, ids: readonly string[]): [number, n
 }
 
 describe("rankByRegion", () => {
-    it("gives each region a contiguous run of rows, clear of the next", () => {
+    it("gives each region consecutive rows, clear of the next", () => {
         // Two scenes the tree layout interleaved: their rows alternate.
         const placed = rankByRegion(
             [node("a1", 0, "A"), node("b1", 20, "B"), node("a2", 40, "A"), node("b2", 60, "B")],

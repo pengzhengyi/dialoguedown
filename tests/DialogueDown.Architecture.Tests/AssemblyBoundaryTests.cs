@@ -117,8 +117,8 @@ public sealed class AssemblyBoundaryTests
     public void Play_DependsOnlyOn_ThePlaybookAndSpectre()
     {
         // The terminal player renders the playbook's own speech through Spectre.Console. It knows
-        // neither the compiler nor the runner, so the presentation can be designed, built, and
-        // tested while the runner moves, and the driver that connects the two stays a later piece.
+        // neither the compiler nor the runner, so the presentation is built and tested without
+        // either of them.
         Types.InAssembly(Architecture.PlayAssembly)
             .Should()
             .OnlyHaveDependencyOn(

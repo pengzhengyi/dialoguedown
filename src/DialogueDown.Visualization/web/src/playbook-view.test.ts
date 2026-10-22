@@ -273,7 +273,7 @@ describe("createPlaybookView", () => {
         expect(rows[1].cells[2]?.textContent).toBe("");
     });
 
-    it("lists every anchor a jump may name, with the node it lands on", () => {
+    it("lists every anchor a jump may name, with the node it points at", () => {
         const rows = bodyRows(createPlaybookView(compiled()), "Anchors");
 
         expect(rows).toHaveLength(1);
@@ -535,7 +535,7 @@ describe("createPlaybookView Nodes table", () => {
     });
 
     // A list can be subject to a condition, and the condition introduces the list rather than
-    // becoming its first item: it reads on the cell's first line.
+    // becoming its first item: it stays on the cell's first line.
     it("reads a conditional command list's condition before the list", () => {
         const report = compiled();
         report.nodes[2].segments = [

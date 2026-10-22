@@ -145,7 +145,10 @@ internal static class StepAssert
     /// <param name="result">What the step produced.</param>
     /// <param name="node">Where it should be waiting.</param>
     /// <param name="moment">Which reading of the world it should be waiting on.</param>
-    /// <param name="keys">What it should have asked about, in the order written.</param>
+    /// <param name="keys">
+    /// What it should have asked about, in the order the request names them: truths, then words,
+    /// then numbers.
+    /// </param>
     public static void AssertAsked(StepResult result, int node, Moment moment, params string[] keys)
     {
         var resolve = Assert.IsType<Resolve>(Assert.Single(result.Events));
@@ -169,8 +172,8 @@ internal static class StepAssert
         Assert.Equal(keys, waiting.Keys);
     }
 
-    // Every kind is named, so an event kind the protocol gains fails here until it is given a written
-    // form, rather than passing as its bare type name.
+    // A kind with no written form here, such as a draw, fails rather than passing as its bare type
+    // name; AssertAskedForADraw checks a draw.
     private static string WrittenOut(Event happened) =>
         happened switch
         {

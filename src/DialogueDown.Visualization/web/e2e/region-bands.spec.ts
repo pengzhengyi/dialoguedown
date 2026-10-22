@@ -16,12 +16,12 @@ function child(fromId: string, toId: string): DisplayEdge {
 /**
  * Three scenes the flow passes in and out of, shaped as the Dialogue Graph of a real script is.
  *
- * The Alarm offers a choice. One option is a line of the Alarm's own that talks the resident down and
- * sends them to the Stairwell; the other diverts to the Door, which opens a choice of three.
+ * The Alarm offers a choice. One option is a line of the Alarm's own that talks the resident down
+ * and sends them to the Stairwell; the other diverts to the Door, which opens a choice of three.
  *
  * The tree layout centres a parent between its children, so the Alarm's choice is pushed down
- * towards the Door's wide fan while the Door's own band reaches up to hold its first option. Left as
- * the layout leaves them, the two bands would cross.
+ * towards the Door's wide fan while the Door's own band reaches up to hold its first option. Left
+ * as the layout leaves them, the two bands would cross.
  */
 const INTERLEAVED: Stage = {
     title: "Dialogue Graph",

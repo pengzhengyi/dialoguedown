@@ -58,7 +58,7 @@ public sealed class DepartureTests
             text: "The pick clicks.");
 
     [Fact]
-    public void Supplied_AtABlockWithoutAnElseWhoseBranchIsWithheld_ReadsOnPastTheBlock() =>
+    public void Supplied_AtABlockWithoutAnElseWhoseBranchIsWithheld_ContinuesPastTheBlock() =>
         AssertSaid(
             Departure.Supplied(
                 AConditionalBlockWithoutAnElse(), Waiting(0, "Alice.HasKey"), Answering(("Alice.HasKey", false))),

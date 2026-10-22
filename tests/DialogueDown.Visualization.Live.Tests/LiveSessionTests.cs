@@ -195,7 +195,7 @@ public sealed class LiveSessionTests
     [Fact]
     public void Save_UncertainWrite_ReturnsUncertainAndKeepsTheNewerExternalData()
     {
-        // A newer external write lands during the commit, so the save cannot tell whether its
+        // A newer external write arrives during the commit, so the save cannot tell whether its
         // bytes are the ones on disk.
         using var script = new TempScript("# Old");
         var session = new LiveSession(script.Path, "edit");
@@ -633,8 +633,8 @@ public sealed class LiveSessionTests
         session.Save(ConfigSave(AnInvalidConfig, valid, "allow-invalid"));
         var html = session.RenderInitialHtml();
 
-        // CurrentDocumentJson_AfterSavedInvalidConfig_CarriesTheInvalidSourceAndStatus asserts what
-        // that document carries; this asserts the page embeds it, once the save reached saved-invalid.
+        // The page embeds the session's current document, the one a reload restores, so it opens
+        // in the saved-invalid state.
         AssertPageEmbeds(html, session.CurrentDocumentJson());
         Assert.Equal("saved-invalid", FromPage(html).ConfigStatus);
     }

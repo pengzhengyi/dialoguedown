@@ -509,7 +509,7 @@ describe("createLiveEdit — saved-invalid baseline message", () => {
         await expect(done).resolves.toBe("saved-invalid");
         expect(live.statusMessage).toBe("line 1: bad key");
 
-        // Editing then discarding must land back on the saved-invalid baseline with its message,
+        // Editing then discarding must return to the saved-invalid baseline with its message,
         // not a saved-invalid status stripped of the detail the reader needs.
         live.onEdit("bogus2");
         expect(live.status).toBe("dirty");
@@ -590,7 +590,7 @@ describe("createLiveEdit — onDiskChange invalidation", () => {
         h.fireIdle(); // an idle save is now in flight
         expect(h.saves.length).toBe(1);
 
-        // An external change lands while the save is in flight.
+        // An external change arrives while the save is in flight.
         live.onDiskChange();
         expect(live.status).toBe("conflict");
 
@@ -610,7 +610,7 @@ describe("createLiveEdit — onDiskChange invalidation", () => {
         live.onDiskChange(); // conflict, epoch bumped
         expect(live.status).toBe("conflict");
 
-        // Start a reload, then let another external change land before its response is applied.
+        // Start a reload, then let another external change arrive before its response is applied.
         const done = live.reload();
         live.onDiskChange();
 

@@ -111,7 +111,7 @@ public sealed class InlineBuilderTests
     [Fact]
     public void Build_LabelTagIsKept_ButJumpStaysText()
     {
-        // A label admits text and tags, but not jumps: '=>' stays literal there.
+        // A label admits text, styling, tags, and code spans, but not jumps: '=>' stays literal.
         var speech = Build([Md.Link("#x", Md.Text("go => #here"))]);
 
         var link = AssertLink(Assert.Single(speech), "#x");

@@ -70,7 +70,7 @@ public sealed class JumpAssemblerTests
     public void DanglingIndicatorBetweenText_DegradesToPlainTextKeptGranular()
     {
         // "the " => " arrow" — no link follows, so the arrow is just the text "=>". It
-        // stays a separate text fragment; joining adjacent text is left to a later stage.
+        // stays a separate text fragment; no stage of the compile joins it to the texts beside it.
         var result = Assemble([Text("the "), JumpIndicator(), Text(" arrow")]);
 
         Assert.Equal(3, result.Count);

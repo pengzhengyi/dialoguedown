@@ -61,8 +61,8 @@ public sealed class ChoicePassTests
     [Fact]
     public void Apply_AnOptionThatOnlyJumps_IsNamedByTheJumpsOwnWords()
     {
-        // "- => [Take the east road](#END)" is the ordinary way to write a branching menu. Those
-        // words are the writer's name for the option, so a menu has to be able to show them
+        // "- => [Take the east road](#END)" is the ordinary way to write an option that jumps.
+        // Those words are the writer's name for the option, so a menu has to be able to show them
         // without reading the node the option leads to.
         var graph = Build("""
             Guide: Which way?

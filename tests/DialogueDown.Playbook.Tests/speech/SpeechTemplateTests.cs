@@ -60,7 +60,7 @@ public sealed class SpeechTemplateTests
                 SpeechTemplate.Fill([Text("You are "), Query("HeroName"), Text(".")], _ => "Ada")));
 
     [Fact]
-    public void Fill_AnswersARepeatedKeyAtEveryHole() =>
+    public void Fill_AnswersARepeatedKeyAtEveryQuery() =>
         Assert.Equal(
             "Ada told Ada.",
             SpeechText.Of(
@@ -205,7 +205,7 @@ public sealed class SpeechTemplateTests
     [Fact]
     public void Segments_DivideAtACommandWrittenMidLine()
     {
-        // A read on either side of a write. The two queries land in different segments, which is
+        // A read on either side of a write. The two queries fall in different segments, which is
         // what lets the world answer them differently.
         var segments = SpeechTemplate.Segments(
         [
