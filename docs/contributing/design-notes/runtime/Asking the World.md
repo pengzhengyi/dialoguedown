@@ -103,7 +103,7 @@ that kind, and a request always has at least one.
       succession either leads nowhere, and says so.
 - [x] Every key a moment needs is asked for in a single `Resolve`: one on the way
       in, one at each stop inside a line, and one on the way out.
-- [ ] A request names each key under the kind of answer it needs — a truth,
+- [x] A request names each key under the kind of answer it needs — a truth,
       words, or a number — so a driver knows what to answer with.
 - [x] A query in speech is replaced by what the world said before the line is said.
 - [x] A key asked and left unanswered is refused, and so is a key answered that

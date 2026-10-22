@@ -44,8 +44,11 @@ changes easy to categorize.
   the path it leaves, so a reader who opened a script from the tree can return to browsing it. The
   shell answers at `/browse`, since a run that pins a document redirects `/` to that document.
 
-- **A run asks the world what it needs to know** — `Resolve(keys)` joins `Perform` as a request the
-  run stops for, answered by `Supply(answers)`: a truth for a guard, words for a query. A line or
+- **A run asks the world what it needs to know** — `Resolve` joins `Perform` as a request the run
+  stops for, answered by `Supply(answers)`. It names each key under the kind of answer it needs, so
+  a driver knows what to answer with: `BooleanKeys` for a guard's truth, `TextKeys` for a query's
+  words, and `NumberKeys` for a key weight's number, with `Keys` listing them all. A fixture's
+  `resolve` groups its keys the same way, under `boolean`, `text`, and `number`. A line or
   control block the world withholds is stepped over; a jump or a block condition's branch is taken
   only when the world allows it, and a block with no branch taken and no `else` is skipped; a query
   in a line is said as the words that answered it, and an answer of no words leaves nothing in its
