@@ -329,29 +329,29 @@ tests work through, one row at a time.
 
 ### Property tests
 
-Example tests pin the cases someone thought of. These pin laws over generated
-labels, using CsCheck like `CompilerPropertyTests`. They need a generator of their
-own rather than `ScriptGen`: `ScriptGen.Script()` yields bare script text, and a
-game call in a label would be one draw among many alternatives, so a few hundred
+Example tests pin the cases someone thought of. These state properties over
+generated labels, using CsCheck like `CompilerPropertyTests`. They need a generator
+of their own rather than `ScriptGen`: `ScriptGen.Script()` yields bare script text,
+and a game call in a label would be one choice among many alternatives, so a run's
 samples could hold almost none.
 
 `LabelGen.Script()` yields a `LabelScript`: a fixed scene placing one label in a
 link, an image's alt text, a menu option's jump, or a divert, together with a model
 of each code span the label holds, in order, with its kind and its written form.
 Every label holds one to three code spans, each after a word and sometimes inside
-emphasis. A query is drawn twice as often as a command or a condition, so a fair
+emphasis. A query is generated twice as often as a command or a condition, so a fair
 share of labels hold only queries and compile. `LabelGen.QueryLabel()` builds a
 label the same way from queries alone, for the property that compares a label with
 speech.
 
-| Property | The law |
+| Property | What holds |
 | --- | --- |
 | **Brackets change how words are shown, not what they ask** | Speech built from words, emphasis, and queries, compiled bare and again wrapped in a link's brackets, asks for the same keys in the same order (`SpeechTemplate.Keys`) and reads as the same text (`SpeechText.Of`). This is the claim that a query in a label is filled like one in speech, stated as a metamorphic relation. |
 | **A label's code spans decide its outcome** | When the model holds a command or a condition, the compile fails with exactly one `DLG1103` per command and one `DLG1106` per condition, each spanning its code span, and no other error. When it holds only queries, the compile succeeds, and the emitted label asks for the model's keys in order and holds no command at any depth. The expectation comes from the model, never from the compiler's own reading. |
 
 Both live in `GameCallInLabelPropertyTests`. `LabelGenCoverageTests`, in the
-manner of `ScriptGenOutwardShapeCoverageTests`, runs the generator on a pinned seed
-and asserts that every placement and every kind of code span appears. A generator change that stopped producing one fails
+manner of `ScriptGenOutwardShapeCoverageTests`, takes the fixed samples of
+`GenCoverage` and asserts that every placement and every kind of code span appears. A generator change that stopped producing one fails
 there, instead of leaving a property that passes on nothing.
 
 ### Golden tests

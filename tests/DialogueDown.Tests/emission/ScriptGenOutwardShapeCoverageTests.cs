@@ -1,11 +1,10 @@
-using System.Collections.Concurrent;
-using CsCheck;
 using DialogueDown.Compilation;
 using DialogueDown.Emission;
 using DialogueDown.Playbook;
 using DialogueDown.Playbook.Edges;
 using DialogueDown.Playbook.Nodes;
 using DialogueDown.Tests.Support;
+using DialogueDown.TestSupport;
 
 namespace DialogueDown.Tests.Emission;
 
@@ -18,16 +17,11 @@ namespace DialogueDown.Tests.Emission;
 /// <see cref="PlaybookRoundTripTests"/> checks only the shapes <see cref="ScriptGen"/> generates,
 /// so this fails if the generator stops producing any of the three.
 /// <para>
-/// The seed is pinned, so the test runs over one fixed set of 400 scripts and cannot flake.
+/// It takes the fixed samples of <see cref="GenCoverage"/>, so it cannot flake.
 /// </para>
 /// </remarks>
 public sealed class ScriptGenOutwardShapeCoverageTests
 {
-    private const int Samples = 400;
-
-    // A fixed seed keeps the sample deterministic; this one covers all three shapes.
-    private const string Seed = "000UIj2j5CP1";
-
     private const string ScriptName = "generated.dialogue.md";
 
     // A line whose way out is a divert, plus the two node kinds that get a succession only because
@@ -45,29 +39,12 @@ public sealed class ScriptGenOutwardShapeCoverageTests
     [Fact]
     public void TheGeneratorReachesAllThreeHardOutwardShapes()
     {
-        var seen = new ConcurrentDictionary<OutwardShape, bool>();
-
-        ScriptGen.Script()
-            .Sample(
-                source =>
-                {
-                    if (ScriptCompilerFactory.CreateDefault().Compile(source) is not CompilationSuccess compiled)
-                    {
-                        return;
-                    }
-
-                    foreach (var shape in ShapesOf(Write(compiled)))
-                    {
-                        seen[shape] = true;
-                    }
-                },
-                seed: Seed,
-                iter: Samples);
-
-        var missing = Enum.GetValues<OutwardShape>().Where(shape => !seen.ContainsKey(shape)).ToList();
-
         // A shape ScriptGen never produced is one the round-trip tests would pass without covering.
-        Assert.Empty(missing);
+        GenCoverageAssert.AssertCoversEveryValue(
+            ScriptGen.Script(),
+            source => ScriptCompilerFactory.CreateDefault().Compile(source) is CompilationSuccess compiled
+                ? ShapesOf(Write(compiled))
+                : []);
     }
 
     private static PlaybookDocument Write(CompilationSuccess compiled) =>

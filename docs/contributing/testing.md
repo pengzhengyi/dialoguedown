@@ -74,17 +74,39 @@ a question this one cannot.
 
 ### Property tests
 
-**One rule, a thousand generated inputs.**
+**One rule, many generated inputs.**
 
 An example-based test can only cover the cases someone thought to write. A
-property test states a rule that must hold for *every* script and then generates
-scripts to try to break it — that every node's span addresses text that exists,
-that a child's span sits inside its parent's, that compiling never throws.
+property test states a rule that must hold for *every* input and then generates
+inputs to try to break it — that every node's span addresses text that exists,
+that normalizing speech twice changes nothing, that a run only ever stands at a
+node the playbook has.
 
-Written with [CsCheck](https://github.com/AnthonyLloyd/CsCheck) in
-`tests/DialogueDown.Tests/compilation/CompilerPropertyTests.cs`. The
+They are written with [CsCheck](https://github.com/AnthonyLloyd/CsCheck), in the
+classes named `*PropertyTests`. Each run checks fresh samples, so every CI run
+looks a little further. A failure is always a real counterexample, never bad
+luck: the rule must hold for every sample, and one broke it. The
 [contribution guide](https://github.com/pengzhengyi/dialoguedown/blob/main/CONTRIBUTING.md)
-explains when to add one and how to keep the generator honest.
+says when to add one, how many samples a run takes, and what to do when one
+fails.
+
+**Every generator has a coverage test.** A property says nothing about a kind of
+input its generator never produces: a rule about labels on links passes without
+checking anything if no sampled label is on a link. So each generator has a
+coverage test, which claims that every kind its properties rely on turns up in
+some sample, as the `*GenCoverageTests` classes and `WalkTests` do.
+
+The two kinds fail for different reasons, so they sample differently:
+
+| | Property | Coverage test |
+| --- | --- | --- |
+| Claims | Something of every sample | That some sample has each kind |
+| Samples | Fresh on every run; more in CI than locally | The same fixed samples on every run, from `GenCoverage` |
+| A failure means | The code breaks the rule for the input CsCheck prints | The generator stopped producing a kind |
+
+A coverage test could fail just because its samples missed a rare kind, so it
+never takes fresh ones. A property only gets stronger with more samples, so it
+takes as many as the run asks for.
 
 ### Golden tests
 
@@ -219,7 +241,7 @@ Start from what would go wrong, not from the list:
 | If you are… | Write |
 | --- | --- |
 | specifying a behavior | an example-based test |
-| stating a rule that holds for *all* inputs | a property test |
+| stating a rule that holds for *all* inputs | a property test, and a coverage test for any new generator |
 | changing a large structured output | let the golden diff show it |
 | adding a language construct | an example that uses it, plus the usual unit tests |
 | changing what the playbook carries | check the round-trip property still holds |
@@ -421,15 +443,15 @@ such as `EveryCatalogCodeIsDocumented`.
 ## Coverage that grows with the feature
 
 A few tests here cover less than they eventually will, on purpose. The generator
-behind the runtime's walk property draws only the node kinds the runner can play;
+behind the runtime's walk property generates only the node kinds the runner can play;
 the playable half of the conformance corpus ships more cases than the runner plays.
 Both are correct, and both are unfinished by design — the runtime arrives
 one pass at a time, and a test that waited for all of it would test nothing until
 the end.
 
 The risk is not the gap. It is a gap that closes quietly: a later pass teaches the
-runner to play choices, the generator that should now draw them carries on drawing
-lines, and the property stays green while covering less than it claims. Nothing is
+runner to play choices, the generator that should now generate them carries on
+generating lines, and the property stays green while covering less than it claims. Nothing is
 red, so nothing asks to be revisited.
 
 So a test in this shape **names what it covers rather than counting it**, and
@@ -446,7 +468,7 @@ list should have grown.
 held to the compiler: both enumerate what exists by reflection, then fail naming
 what is missing. The generator's check compares the kinds a sample of it actually
 produced against the kinds the playbook format defines, so a list of what it means
-to draw cannot drift from what it draws.
+to generate cannot drift from what it generates.
 
 A kind the generator skips is listed with the reason it is skipped, and for a node
 kind that reason is checked rather than believed: the test asserts the runner still

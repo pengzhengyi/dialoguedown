@@ -15,7 +15,7 @@ namespace DialogueDown.Runtime.Tests;
 /// Playbooks a reader accepts, generated rather than written out by hand.
 /// </summary>
 /// <remarks>
-/// Only what the runner plays is drawn: a line, an end, a jump, a line or a control block that
+/// Only what the runner plays is generated: a line, an end, a jump, a line or a control block that
 /// asks the host to perform something, a block condition, a menu, and a random choice of number,
 /// auto, and key weights. A line may hold a command before, between, or after its words, or say
 /// nothing but a command. A node or edge kind the runner gains belongs here too, so a walk covers
@@ -25,14 +25,14 @@ namespace DialogueDown.Runtime.Tests;
 /// jump may fire only when the world allows it, a block condition's first branch is always
 /// guarded, a menu's options and a random choice's random options may be guarded, a random option
 /// may have a key weight, and a line or an option's label may have a query in what it says. A
-/// guard, a key weight, and a query never read the same key, so a world drawn beside the playbook
+/// guard, a key weight, and a query never read the same key, so a world sampled beside the playbook
 /// can answer each key in the kind it needs. A menu whose every option is guarded has a
 /// fall-through beside them, as a script compiles to, so a walk sometimes passes a menu by. So
 /// does a random choice the world can leave with nothing drawable, so a walk sometimes passes a
 /// random choice by.
 /// </para>
 /// <para>
-/// A drawn playbook may loop, may begin anywhere, and may leave an end unreachable. All three are
+/// A sampled playbook may loop, may begin anywhere, and may leave an end unreachable. All three are
 /// shapes a script can compile to, and each is a walk worth taking.
 /// </para>
 /// </remarks>
@@ -41,14 +41,14 @@ internal static class PlaybookGen
     private const int MostNodes = 10;
     private const int MostSpeakers = 3;
 
-    // The key a drawn query reads, answered with words.
+    // The key a sampled query reads, answered with words.
     private const string WordsKey = "Name";
 
-    // The keys a drawn guard reads, each answered with a truth. Two, so two nodes, or a line and
+    // The keys a sampled guard reads, each answered with a truth. Two, so two nodes, or a line and
     // its jump, sometimes ask about the same one.
     private static readonly ImmutableArray<string> _truthKeys = ["Rainy", "Late"];
 
-    // The keys a drawn key weight reads, each answered with a number. Two, so a random choice's
+    // The keys a sampled key weight reads, each answered with a number. Two, so a random choice's
     // two key weights sometimes read the same one.
     private static readonly ImmutableArray<string> _weightKeys = ["Mood", "Luck"];
 
@@ -56,8 +56,8 @@ internal static class PlaybookGen
     // no share, and 60, which leaves an auto weight beside it 40.
     private static readonly ImmutableArray<double> _numbers = [0, 60];
 
-    /// <summary>What a drawn node turns out to be.</summary>
-    private enum Draws
+    /// <summary>What a sampled node turns out to be.</summary>
+    private enum NodeShape
     {
         /// <summary>A line that carries on.</summary>
         Line,
@@ -93,7 +93,7 @@ internal static class PlaybookGen
         RandomChoice,
     }
 
-    /// <summary>Where a drawn line holds a command in what it says.</summary>
+    /// <summary>Where a sampled line holds a command in what it says.</summary>
     private enum CommandAt
     {
         /// <summary>Nowhere: the line only speaks.</summary>
@@ -124,37 +124,37 @@ internal static class PlaybookGen
                     Gen.Int[0, nodes - 1],
                     (drafts, entry) => Document(drafts, speakers, entry)));
 
-    /// <summary>Worlds that answer whatever a drawn playbook asks.</summary>
+    /// <summary>Worlds that answer whatever a sampled playbook asks.</summary>
     /// <returns>The generator.</returns>
-    public static Gen<DrawnWorld> Worlds() =>
+    public static Gen<SampledWorld> Worlds() =>
         Gen.Select(
             Gen.Bool.Array[_truthKeys.Length],
             Gen.OneOfConst([.. _numbers]).Array[_weightKeys.Length],
-            (holds, numbers) => new DrawnWorld(ByKey(_truthKeys, holds), ByKey(_weightKeys, numbers)));
+            (holds, numbers) => new SampledWorld(ByKey(_truthKeys, holds), ByKey(_weightKeys, numbers)));
 
-    // Drawn without an index, then given one: a node states its own position, so it can only be
+    // Generated without an index, then given one: a node states its own position, so it can only be
     // built once its place among the others is known.
     private static Gen<NodeDraft> Draft(int nodes, int speakers) =>
         Gen.Select(
             Gen.OneOfConst(
-                Draws.Line,
-                Draws.End,
-                Draws.Jump,
-                Draws.Effects,
-                Draws.LineThatJumps,
-                Draws.Block,
-                Draws.BlockWithAnElse,
-                Draws.Menu,
-                Draws.RandomChoice),
+                NodeShape.Line,
+                NodeShape.End,
+                NodeShape.Jump,
+                NodeShape.Effects,
+                NodeShape.LineThatJumps,
+                NodeShape.Block,
+                NodeShape.BlockWithAnElse,
+                NodeShape.Menu,
+                NodeShape.RandomChoice),
             Gen.Int[0, speakers - 1],
             Gen.Int[0, nodes - 1],
             Gen.Int[0, nodes - 1],
             Gen.Select(Guard(), Guard(), BranchGuard()),
             Gen.Select(Gen.Bool, Gen.Enum<CommandAt>()),
             Gen.Select(Menu(), RandomChoice()),
-            (draws, speaker, onward, elsewhere, guards, speech, choices) =>
+            (shape, speaker, onward, elsewhere, guards, speech, choices) =>
                 new NodeDraft(
-                    draws,
+                    shape,
                     speaker,
                     onward,
                     elsewhere,
@@ -166,7 +166,7 @@ internal static class PlaybookGen
                     Menu: choices.Item1,
                     RandomChoice: choices.Item2));
 
-    // No guard is drawn as often as each key, so a walk still meets plenty of nodes it can pass
+    // No guard is generated as often as each key, so a walk still meets plenty of nodes it can pass
     // without asking.
     private static Gen<Condition?> Guard() =>
         Gen.OneOfConst<Condition?>([null, .. _truthKeys.Select(key => new KeyCondition(key))]);
@@ -204,7 +204,7 @@ internal static class PlaybookGen
                 .. _weightKeys.Select(key => new QueryWeight(key)),
             ]);
 
-    // Each key with the answer drawn for it.
+    // Each key with the answer sampled for it.
     private static ImmutableDictionary<string, T> ByKey<T>(ImmutableArray<string> keys, T[] answers) =>
         keys.Zip(answers).ToImmutableDictionary(
             answered => answered.First, answered => answered.Second, StringComparer.Ordinal);
@@ -213,7 +213,7 @@ internal static class PlaybookGen
         PlayContextFactory.Document(
             [.. drafts.Select((draft, id) => draft.At(id))], Speakers(speakers), entry);
 
-    // The first speaker is the anonymous default, so a drawn line can be said by nobody in
+    // The first speaker is the anonymous default, so a sampled line can be said by nobody in
     // particular as well as by somebody named.
     private static ImmutableArray<PlaybookSpeaker> Speakers(int speakers) =>
         [.. Enumerable.Range(0, speakers).Select(at =>
@@ -222,7 +222,7 @@ internal static class PlaybookGen
                 : new PlaybookSpeaker(Id: null, Name: $"Speaker {at}", Default: false, Tags: []))];
 
     /// <summary>A node before it knows where it stands.</summary>
-    /// <param name="Draws">What it turns out to be.</param>
+    /// <param name="Shape">What it turns out to be.</param>
     /// <param name="Speaker">Who says it, by index.</param>
     /// <param name="Onward">Where succession leads.</param>
     /// <param name="Elsewhere">Where a jump leads, when the node carries one.</param>
@@ -234,7 +234,7 @@ internal static class PlaybookGen
     /// <param name="Menu">What a menu's options ask of the world.</param>
     /// <param name="RandomChoice">The weights and guards of a random choice's random options.</param>
     private readonly record struct NodeDraft(
-        Draws Draws,
+        NodeShape Shape,
         int Speaker,
         int Onward,
         int Elsewhere,
@@ -249,20 +249,20 @@ internal static class PlaybookGen
         /// <summary>The node, standing at a position.</summary>
         /// <param name="id">Its position in the playbook.</param>
         /// <returns>The node.</returns>
-        public Node At(int id) => Draws switch
+        public Node At(int id) => Shape switch
         {
-            Draws.End => new EndNode(id),
-            Draws.Jump => new ControlNode(id, [], Condition: null, JumpOnItsOwnLine()),
-            Draws.Effects => new ControlNode(
+            NodeShape.End => new EndNode(id),
+            NodeShape.Jump => new ControlNode(id, [], Condition: null, JumpOnItsOwnLine()),
+            NodeShape.Effects => new ControlNode(
                 id,
                 [DefaultCommand("do something")],
                 Guard,
                 [new SuccessionEdge(Onward)]),
-            Draws.LineThatJumps => Speaks(id, [Jump(), new SuccessionEdge(Onward)]),
-            Draws.Block => new BranchNode(id, [GatedBranch(), new SuccessionEdge(Onward)]),
-            Draws.BlockWithAnElse => new BranchNode(id, [GatedBranch(), new BranchEdge(Onward, Condition: null)]),
-            Draws.Menu => new ChoiceNode(id, Ordered: false, Options()),
-            Draws.RandomChoice => new RandomChoiceNode(id, RandomOptions()),
+            NodeShape.LineThatJumps => Speaks(id, [Jump(), new SuccessionEdge(Onward)]),
+            NodeShape.Block => new BranchNode(id, [GatedBranch(), new SuccessionEdge(Onward)]),
+            NodeShape.BlockWithAnElse => new BranchNode(id, [GatedBranch(), new BranchEdge(Onward, Condition: null)]),
+            NodeShape.Menu => new ChoiceNode(id, Ordered: false, Options()),
+            NodeShape.RandomChoice => new RandomChoiceNode(id, RandomOptions()),
             _ => Speaks(id, [new SuccessionEdge(Onward)]),
         };
 
@@ -328,7 +328,7 @@ internal static class PlaybookGen
             ];
     }
 
-    /// <summary>What a drawn menu's options ask of the world.</summary>
+    /// <summary>What a sampled menu's options ask of the world.</summary>
     /// <param name="OnwardGuard">What the world must allow for the option that carries on to be taken.</param>
     /// <param name="ElsewhereGuard">What the world must allow for the option leading elsewhere to be taken.</param>
     /// <param name="OnwardAsks">Whether the label of the option that carries on has a query in it.</param>
@@ -340,7 +340,7 @@ internal static class PlaybookGen
         public bool EveryOptionIsGuarded => OnwardGuard is not null && ElsewhereGuard is not null;
     }
 
-    /// <summary>The weights and guards of a drawn random choice's random options.</summary>
+    /// <summary>The weights and guards of a sampled random choice's random options.</summary>
     /// <param name="OnwardWeight">The weight of the random option that carries on.</param>
     /// <param name="ElsewhereWeight">The weight of the random option leading elsewhere.</param>
     /// <param name="OnwardGuard">

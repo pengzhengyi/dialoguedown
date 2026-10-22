@@ -101,17 +101,41 @@ Most tests here are **example-based**: one input, one expected output. That is
 the right way to specify behavior, and it cannot state a rule that must hold for
 *every* input — no list of examples covers the one nobody wrote.
 
-A few **property tests** cover those, in
-`tests/DialogueDown.Tests/compilation/CompilerPropertyTests.cs`. They generate
-scripts with [CsCheck](https://github.com/AnthonyLloyd/CsCheck) and assert
-invariants: every node's span addresses text that exists, a child's span sits
-within its parent's, and compiling never throws. CsCheck runs as a plain method
-call inside an ordinary `[Fact]`, so it needs nothing from the test runner.
+**Property tests** cover those, in the classes named `*PropertyTests`. They
+generate inputs with [CsCheck](https://github.com/AnthonyLloyd/CsCheck) and check
+a rule on every one: every node's span addresses text that exists, compiling never
+throws, and a run only ever stands at a node the playbook has. CsCheck runs as a
+plain method call inside an ordinary `[Fact]`, so it needs nothing from the test
+runner. Each generator also has a coverage test, so no property passes without
+checking anything; the
+[testing guide](docs/contributing/testing.md#property-tests) explains how the two
+differ.
 
 Add a property when a rule holds across all inputs and no single example can say
 so. Keep the generator producing scripts a writer could plausibly write — random
-characters only exercise the front end's rejection path — and keep the sample
-count modest so the suite stays fast.
+characters only exercise the front end's rejection path — and pass no `iter:`, so
+the run decides how many samples each property takes: CsCheck's default of 100
+locally, and 500 in CI, which sets the `CsCheck_Iter` environment variable. Set
+it yourself to look harder:
+
+```bash
+CsCheck_Iter=10000 dotnet test DialogueDown.sln --configuration Release --no-build --minimum-expected-tests 3000
+```
+
+#### When a property fails
+
+A failing property has found a real counterexample, not a flake: the rule must
+hold for every sample, and one broke it. Never rerun CI just to turn it green.
+CsCheck prints the shrunk input and a seed that replays it:
+
+```bash
+CsCheck_Seed=<printed seed> dotnet test --project tests/DialogueDown.Tests --configuration Release --filter-method "*.SpeechSpacingPropertyTests.TheThreeRulesHold"
+```
+
+Fix the code and add the shrunk input as an example test in the same change, so
+the case stays checked whatever later runs sample. If the property fails on `main`
+too, your change did not cause it: file an issue with the seed and the shrunk
+input, and link it from your pull request, which may then merge.
 
 ### Adding or updating a NuGet package
 

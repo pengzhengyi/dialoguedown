@@ -13,13 +13,10 @@ namespace DialogueDown.Tests.Compilation;
 /// </summary>
 /// <remarks>
 /// Each property generates scripts and checks its invariant on every one, shrinking a failure to a
-/// script small enough to read. Sample counts stay modest so the properties run in the ordinary
-/// suite.
+/// script small enough to read.
 /// </remarks>
 public sealed class CompilerPropertyTests
 {
-    private const int Samples = 200;
-
     /// <summary>
     /// Every node in the Dialogue AST carries a span that addresses text the script contains.
     /// </summary>
@@ -159,7 +156,7 @@ public sealed class CompilerPropertyTests
         ForEveryScript(source => ScriptCompilerFactory.CreateDefault().Compile(source));
 
     private static void ForEveryScript(Action<string> invariantHolds) =>
-        ScriptGen.Script().Sample(invariantHolds, iter: Samples);
+        ScriptGen.Script().Sample(invariantHolds);
 
     // Only a script the compiler accepts has a graph; a rejected one is skipped.
     private static void ForEveryGraph(Action<DialogueGraph, string> invariantHolds) =>

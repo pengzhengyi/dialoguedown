@@ -363,7 +363,7 @@ by name.
 | Unit — ways out | The first jump or branch taken, then the `else`, then the succession, read with answers and without |
 | Unit — speech | A query substituted; a line with text and a query together; a query whose answer is empty |
 | Unit — the protocol | `Supply` where nothing was asked; `Next` while awaiting a supply |
-| Property | The walk property: the generator draws guards, jumps the world must allow, block conditions, and queries, and a world drawn beside each playbook answers every wait. A run still only ever stands where the playbook has a node, and never turns an answer away |
+| Property | The walk property: the generator produces guards, jumps the world must allow, block conditions, and queries, and a world sampled beside each playbook answers every wait. A run still only ever stands where the playbook has a node, and never turns an answer away |
 | Conformance | `a-conditional-line`, `a-conditional-jump`, `a-conditional-block`, and `a-query-in-speech` conform |
 
 Three are worth naming because they are easy to leave out. A node with a condition

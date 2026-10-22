@@ -41,6 +41,9 @@ jobs:
 
       - name: Test
         run: dotnet test DialogueDown.sln --configuration Release --no-build --minimum-expected-tests 3000
+        env:
+          # Each property checks this many samples, five times CsCheck's default for a local run.
+          CsCheck_Iter: "500"
 
       # Against the schema committed here, never the published URL, so a validation never
       # depends on the network or on Pages having caught up with the branch.

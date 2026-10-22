@@ -13,7 +13,7 @@ namespace DialogueDown.Tests.Support;
 /// one of them, so most scripts pass semantic analysis and go on to lowering and the graph.
 /// </para>
 /// <para>
-/// Content is small and drawn from a fixed vocabulary, so a shrunk counterexample stays readable.
+/// Content is small and taken from a fixed vocabulary, so a shrunk counterexample stays readable.
 /// </para>
 /// </remarks>
 internal static class ScriptGen
@@ -68,7 +68,7 @@ internal static class ScriptGen
             "<https://example.com>",
             "Look: <https://example.com> and <span>more</span>.");
 
-    // Headings come from a shuffle rather than a list of independent draws, so they are distinct:
+    // Headings come from a shuffle rather than a list of independent samples, so they are distinct:
     // two scenes under the same heading claim the same anchor, which is an error in its own right
     // and would stop the script before the stages under test.
     private static readonly Gen<string> _script =
