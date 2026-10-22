@@ -127,7 +127,7 @@ sequenceDiagram
     participant R as Runner
     R-->>D: Said "The guard looks up."
     D->>R: Next
-    R-->>D: Resolve ["Guard.IsAngry", "Guard.Mood"]
+    R-->>D: Resolve boolean: ["Guard.IsAngry"], number: ["Guard.Mood"]
     D->>R: Supply {Guard.IsAngry: false, Guard.Mood: 20}
     R-->>D: Draw [0, 30, 20]
     Note over R: AwaitingDraw
@@ -226,9 +226,8 @@ reason a menu reads its options' conditions on arrival
 ([O5](./Offering%20a%20Choice.md#o5--what-decides-a-menu-is-read-once-on-arrival)).
 A random choice has no **before leaving** moment.
 
-The request names its keys as every node's does: truths, then words, then numbers. A
-random choice has no words, so its conditions come first and its key weights after
-them, each in the order written and each key once.
+The request names every random option's condition under `boolean` and every key
+weight under `number`, each in the order written and each key once.
 
 ### R4 — The wait keeps the shares
 
@@ -350,7 +349,7 @@ option, so this case is rare in a compiled playbook.
 ### R8 — A key weight is answered with a number
 
 `NumberAnswer(value)` is the answer a key weight needs, the third member of the
-closed union [A3](./Asking%20the%20World.md#a3--an-answer-is-a-closed-union)
+closed union [A3](./Asking%20the%20World.md#a3--a-key-is-asked-and-answered-as-one-of-three-kinds)
 defines. It is a JSON number on the wire, as `BooleanAnswer` is `true` or `false`
 and `TextAnswer` is a string, so one `supply` can answer a condition, a query, and a
 key weight. A number for a key that needed a truth or words, or the reverse, is

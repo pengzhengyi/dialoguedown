@@ -239,7 +239,7 @@ role *behind* the driver; LSP and DAP solve this by naming the message
 | --- | --- | --- | --- |
 | driver → runner | **command** | `Start`, `Next`, `Done`, `Failed(explanation)`, `Supply(answers)`, `Choose(i)`, `Drawn(value)` | `Restore(state)` |
 | runner → driver | **event** | `Said`, `Continued`, `Ended`, `Refused` | `Invalidated` |
-| runner → driver | **request** | `Perform(effect)`, answered by `Done` or `Failed(explanation)`; `Resolve(keys)`, answered by `Supply(answers)`; `Offer(ordered, options)`, answered by `Choose(i)`; `Draw(shares)`, answered by `Drawn(value)` | — |
+| runner → driver | **request** | `Perform(effect)`, answered by `Done` or `Failed(explanation)`; `Resolve(booleanKeys, textKeys, numberKeys)`, answered by `Supply(answers)`; `Offer(ordered, options)`, answered by `Choose(i)`; `Draw(shares)`, answered by `Drawn(value)` | — |
 | driver → runner | **query** | — | `Describe()`, answered with the current location |
 
 `Resolve` is LSP's `workspace/configuration`: *the server knows what it needs; the
@@ -250,7 +250,7 @@ sequenceDiagram
     participant D as Driver
     participant R as Runner
     D->>R: Start
-    R-->>D: Resolve(["Alice.FavoriteColor"])
+    R-->>D: Resolve(text: ["Alice.FavoriteColor"])
     Note over D: free to block, await,<br/>or call a remote server
     D->>R: Supply({ "Alice.FavoriteColor": "red" })
     R-->>D: Said(Alice, "My favorite color is red.")
