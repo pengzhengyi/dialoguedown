@@ -13,7 +13,7 @@ function fix(title: string, ...edits: LspEdit[]): LspFix {
     return { title, edits };
 }
 
-/** A fixable diagnostic whose range covers four characters from its start, unless told otherwise. */
+/** A fixable diagnostic at `line` and `character` whose range covers the next four characters. */
 function diagnostic(code: string, fixes: LspFix[], line = 0, character = 0): LspDiagnostic {
     return {
         range: { start: { line, character }, end: { line, character: character + 4 } },
@@ -77,7 +77,8 @@ describe("planFixAll", () => {
             5,
         );
 
-        // Given the later one first, so the test proves the plan orders by position, not input order.
+        // Given the later one first, so the test proves the plan orders by position, not by input
+        // order.
         const plan = planFixAll([later, earlier], resolve);
 
         expect(plan.applied).toBe(1);

@@ -29,7 +29,8 @@ public sealed class GameCallInLabelPropertyTests
     /// <remarks>
     /// A failed compile reports <c>DLG1103</c> at each command and <c>DLG1106</c> at each
     /// condition, in the order they are written, and no other error. A successful one emits a
-    /// label that asks for the model's keys in order and holds no command at any depth.
+    /// label that asks for the model's keys in order, each once, and holds no command at any
+    /// depth.
     /// </remarks>
     [Fact]
     public void ALabelsCodeSpansDecideTheCompilesOutcome() =>

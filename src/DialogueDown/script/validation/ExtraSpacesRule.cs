@@ -68,8 +68,8 @@ internal sealed class ExtraSpacesRule : DiagnosticRule
             .Select(offset => new SourceSpan(text.Span.Start + offset, 1));
     }
 
-    // Groups the spans into runs, in order, each span in a run starting where the one before it
-    // ends.
+    // Groups the spans, in order, into sequences in which each span starts where the one before
+    // it ends.
     private static IEnumerable<IReadOnlyList<SourceSpan>> ContiguousRuns(IEnumerable<SourceSpan> spans)
     {
         List<SourceSpan> run = [];

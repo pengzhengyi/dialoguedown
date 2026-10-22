@@ -8,7 +8,7 @@ using static DialogueDown.TestSupport.SpeechFactory;
 namespace DialogueDown.Play.Tests.Tui;
 
 /// <summary>
-/// The transcript writer: a line names its speaker, a continuation does not, and the transcript
+/// The player's console: a line names its speaker, a continuation does not, and the transcript
 /// records what the player read, in order.
 /// </summary>
 public sealed class PlayerConsoleTests
@@ -79,7 +79,7 @@ public sealed class PlayerConsoleTests
         player.Say("Alice", [Text("The market closes at dusk.")]);
         player.Continue([Text("Come with me, then.")]);
 
-        // Alice is five characters, so her words begin at column seven.
+        // Alice is five characters and the gap two, so her words are indented seven columns.
         AssertReads(
             console.Output,
             "Alice  The market closes at dusk.",
@@ -198,7 +198,7 @@ public sealed class PlayerConsoleTests
         player.Say("神识", [Text("Hear me.")]);
         player.Continue([Text("Again.")]);
 
-        // Two wide characters occupy four cells, so this speaker's words begin at column six.
+        // Two wide characters take four cells and the gap two, so the words are indented six columns.
         AssertReads(
             console.Output,
             "神识  Hear me.",

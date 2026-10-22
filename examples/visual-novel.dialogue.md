@@ -7,7 +7,7 @@ author: DialogueDown examples
   A slice-of-life visual novel. It favors the presentation idioms: named custom
   actions for backgrounds, music, and sprites; styled inner thoughts; value
   queries for the player's name and the clock; a conditional block on how the
-  evening ends; and a dynamic-weight random choice standing in for a character's
+  evening ends; and a key-weight random choice standing in for a character's
   uncertain feelings.
 
   Stable, recurring effects are PascalCase C# method calls a game team keeps

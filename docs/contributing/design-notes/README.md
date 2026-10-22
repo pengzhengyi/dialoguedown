@@ -145,7 +145,7 @@ first, since a construct threads through them.
 | [Progression Order](./language/Progression%20Order.md) | How a script progresses (reading-order fall-through), the divert and detour jump roles, and the `#END` terminator | Partially implemented |
 | [Random Choice](./language/Random%20Choice.md) | A choice list with per-option `` `%` `` weights that the engine resolves to one option at random | Implemented |
 | [Conditions](./language/Conditions.md) | The condition (`` `key?` ``) and every place it attaches — a line, a jump, a choice option — with its grammar and how each resolves | Implemented |
-| [Unquoted Keys](./language/Unquoted%20Keys.md) | Let a condition (`` `IsAngry?` ``) and a dynamic weight (`` `Luck%` ``) drop the quotes around their key, keeping quotes as the escape | Implemented |
+| [Unquoted Keys](./language/Unquoted%20Keys.md) | Let a condition (`` `IsAngry?` ``) and a key weight (`` `Luck%` ``) drop the quotes around their key, keeping quotes as the escape | Implemented |
 | [Symbol Escape](./language/Symbol%20Escape.md) | One literal-punctuation rule: a backslash escapes the next character, so `#word` and `=>` are written as prose | Implemented |
 | [Speech Whitespace](./language/Speech%20Whitespace.md) | Spaces typed together reach the playbook as one, as a Markdown preview shows them; a command or tag takes no room; `DLG1116` notes where extra spaces collapse | Implemented |
 | [Block Controls](./language/Block%20Controls.md) | Connected blockquotes that group mutually-exclusive `if`/`elseif`/`else` branch bodies | Implemented |
@@ -193,7 +193,7 @@ Spectre.Console.Cli; they are not needed to understand the compiler.
 | 1 | [Command-Line Interface](./cli/Command-Line%20Interface.md) | The `ddown` CLI: `compile` and `visualize`, and the Live server as a library | Implemented |
 | 2 | [Compile CLI — Emit DOT](./cli/Compile%20CLI%20-%20Emit%20DOT.md) | `compile --emit dot` emits each stage's graph as portable Graphviz text | Implemented |
 | 3 | [Compile CLI — Fix Mode](./cli/Compile%20CLI%20-%20Fix%20Mode.md) | `compile --fix` applies a diagnostic's preferred fix in place, then verifies by recompiling | Implemented |
-| 4 | [Play CLI — Terminal Player](./cli/Play%20CLI%20-%20Terminal%20Player.md) | The terminal player's presentation — speech rendering, the choice menu, and the player's turns (part 1 of `ddown play`) | Implemented |
+| 4 | [Play CLI — Terminal Player](./cli/Play%20CLI%20-%20Terminal%20Player.md) | The terminal player's presentation — speech rendering, the choice menu, and the player's turns; the `ddown play` command that drives it is not built | Implemented |
 
 ### Visualization
 
@@ -258,7 +258,7 @@ and how a scene folds.
 | [Node Inspector](./visualization/graph/Node%20Inspector.md) | Read a graph node's source and preview, and jump to it in the Source tab | Implemented |
 | [Jump to Stage](./visualization/graph/Jump%20to%20Stage.md) | From a Source selection to the enclosing node in a later stage, via **Jump to ▸ \<stage\>** | Implemented |
 | [Dialogue Graph Region Fold](./visualization/graph/Dialogue%20Graph%20Region%20Fold.md) | Collapse a scene in the Dialogue Graph to one box the flow still passes through | Implemented |
-| [Region-Aware Graph Layout](./visualization/graph/Region-Aware%20Graph%20Layout.md) | Give every scene its own run of rows, so no two scene bands cross | Implemented |
+| [Region-Aware Graph Layout](./visualization/graph/Region-Aware%20Graph%20Layout.md) | Give every scene its own consecutive rows, so no two scene bands cross | Implemented |
 | [Keyboard Navigation](./visualization/graph/Keyboard%20Navigation.md) | Navigate a graph by its edges, with a keymap per tab shape | Implemented |
 
 #### Served session
@@ -271,7 +271,7 @@ project, and the window's chrome.
 | [Served Shell](./visualization/session/Served%20Shell.md) | The one loopback server behind `ddown visualize`: its routes, roots, security, View and Edit, and the watcher | Implemented |
 | [Live Edit and Autosave](./visualization/session/Live%20Edit%20and%20Autosave.md) | Editing the source in the report and saving it: Auto and Manual modes, conflicts, and save-before-navigation | Implemented |
 | [Explorer](./visualization/session/Explorer.md) | The project tree, the Files toggle, and opening a script without reloading the page | Implemented |
-| [Chrome and Layout](./visualization/session/Chrome%20and%20Layout.md) | Zen mode, the narrow-screen layout, and the Problems panel | Implemented |
+| [Chrome and Layout](./visualization/session/Chrome%20and%20Layout.md) | Zen mode, the narrow-screen layout, the Problems panel, and the switch that shows whitespace in the editors | Implemented |
 | [Served Client Packaging](./visualization/session/Served%20Client%20Packaging.md) | How the served page loads its client: hashed assets, and Mermaid fetched on demand | Implemented |
 
 ### Other notes

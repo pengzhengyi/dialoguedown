@@ -56,7 +56,7 @@ function foldedCount(state: EditorState): number {
 }
 
 describe("ignoredRegionsOf", () => {
-    it("can fold a run of whole lines, but not a span inside one", () => {
+    it("can fold consecutive whole lines, but not a span inside one", () => {
         expect(ignoredRegionsOf(stateWith()).map((region) => region.foldable)).toEqual([
             true,
             false,

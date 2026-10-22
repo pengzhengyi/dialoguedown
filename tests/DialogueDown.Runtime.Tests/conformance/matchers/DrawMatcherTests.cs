@@ -28,8 +28,8 @@ public sealed class DrawMatcherTests
 
     [Fact]
     public void SharesCloseToTheClaimButNotEqualDiverge() =>
-        // Every runtime works the shares out with the same arithmetic, so a share is held to its
-        // exact value rather than to one near it.
+        // Every runtime works the shares out with the same arithmetic, so a share must equal its
+        // exact value rather than come near it.
         AssertDiverged(
             Match(Drew(100.0 / 3, 100.0 / 3, 100.0 / 3), "[ 33.33, 33.33, 33.33 ]"),
             "expected a draw against [33.33,33.33,33.33], but the run asked for one against "

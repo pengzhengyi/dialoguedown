@@ -129,7 +129,7 @@ project references a package by name only.
 
 A version in a `.csproj` is an error under central management, which is the
 point: two projects cannot drift onto different versions of the same package.
-Dependabot updates `Directory.Packages.props` directly, so a bump lands in one
+Dependabot updates `Directory.Packages.props` directly, so a bump changes one
 place for every project that uses it.
 
 A project that genuinely needs a different version says so out loud, with

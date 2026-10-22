@@ -13,7 +13,7 @@ with itself; one written by hand is a specification the implementation must meet
 ```text
 conformance/
   readable/     can a reader load this document at all
-  playable/     does a runner hold the same conversation   (arrives with C2)
+  playable/     does a runner hold the same conversation
 ```
 
 Each case is a folder, and `fixture.json` is always the entry point:
@@ -70,8 +70,8 @@ a large part of why this corpus exists.
 
 ## The playable half
 
-`playable/` arrives with the runtime ([C2]). A fixture there is one **session**:
-the messages a driver sends, interleaved with the replies a runner must give.
+A fixture under `playable/` is one **session**: the messages a driver sends,
+interleaved with the replies a runner must give.
 
 ```json
 { "send": "next" },
@@ -91,7 +91,7 @@ To run one, walk the `session` in order:
    that stops early are different failures, and saying which is which is what
    tells an author whether the fixture or the runtime is wrong.
 
-Comparison is ordinary equality, with the two exceptions above: `speech` and
+Comparison is ordinary equality, with two exceptions: `speech` and
 `label` compare as fragments when written as an array and as the flattening when
 written as a string, and an absent `speaker` means the anonymous default speaker
 rather than "any speaker".
@@ -135,5 +135,3 @@ send someone reading a script.
   document these fixtures are about.
 - [`schema/playbook-0.schema.json`](../schema/playbook-0.schema.json) — the
   format's schema. Every case the corpus **accepts** validates against it.
-
-[C2]: https://github.com/pengzhengyi/dialoguedown/issues/297

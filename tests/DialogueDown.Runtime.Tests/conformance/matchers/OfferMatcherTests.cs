@@ -22,7 +22,7 @@ public sealed class OfferMatcherTests
 
     [Fact]
     public void OptionsOfferedInAnotherOrderDiverge() =>
-        // Every menu is offered in the order written, so a bulleted menu is held to that order too.
+        // Every menu is offered in the order written, so a bulleted menu's order is checked too.
         AssertDiverged(
             Match(Bulleted(Option("Go west"), Option("Go east")), TwoWays),
             """

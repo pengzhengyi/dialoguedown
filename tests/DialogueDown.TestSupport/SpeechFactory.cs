@@ -44,7 +44,7 @@ public static class SpeechFactory
     public static ImageFragment Image(string source = "art/key.png", params SpeechFragment[] alt) =>
         new(source, [.. alt.Length == 0 ? [Text("a key")] : alt]);
 
-    /// <summary>A hard break inside a line.</summary>
+    /// <summary>A soft line break: where the source wrapped within one line of speech.</summary>
     public static LineBreakFragment LineBreak() => new();
 
     /// <summary>A question the game answers at play time, such as <c>`"Gold"`</c>.</summary>

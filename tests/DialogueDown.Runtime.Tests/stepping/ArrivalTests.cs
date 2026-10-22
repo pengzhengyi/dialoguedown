@@ -147,7 +147,8 @@ public sealed class ArrivalTests
     [Fact]
     public void At_ARandomChoiceWithNothingDrawable_WalksOnByItsFallThrough()
     {
-        // No draw could land anywhere, so the run goes on to where the script carries on after it.
+        // No draw could pick a random option, so the run goes on to where the script carries on
+        // after it.
         var result = Arrival.At(ARandomChoiceWithNothingDrawableThenALine(), 0);
 
         AssertSaid(result, "Guard", "The guard says nothing.");
@@ -484,7 +485,7 @@ public sealed class ArrivalTests
     }
 
     [Fact]
-    public void At_AWalkAsLongAsThePlaybook_IsNotMistakenForARing()
+    public void At_AWalkAsLongAsThePlaybook_IsNotMistakenForAnEndlessLoop()
     {
         // The bound counts nodes passed, so a chain touching every node is the case it must not
         // refuse -- one node further and it would be a repeat.
@@ -792,7 +793,7 @@ public sealed class ArrivalTests
     /// The guard says nothing.
     /// </code>
     /// The compiler writes the random choice's fall-through, which leads to the line after it,
-    /// because every random option has a condition.
+    /// because the world can withhold its only random option and leave nothing to draw.
     /// </remarks>
     /// <returns>A context that asks about <c>Guard.IsAngry</c> before asking for a draw.</returns>
     private static PlayContext ARandomChoiceWhoseOnlyRandomOptionIsGuardedThenALine() =>

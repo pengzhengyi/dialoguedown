@@ -278,7 +278,7 @@ should read as the thing to press.
 | Graph: collapse all, then navigate to a hidden node | The scene expands first, per the existing rule. |
 | Source: edit inside a folded ignored run | The cursor cannot enter a folded range, so hidden text is never silently edited. |
 | Source: an ignored run inside a folded heading section | One fold state holds both, so the outer fold simply wins. |
-| Source: an ignored run of one line (a `---` divider) | Carries the cue, offers no chevron — there is nothing beneath to hide. |
+| Source: an ignored stretch of one line (a `---` divider) | Carries the cue, offers no chevron — there is nothing beneath to hide. |
 | Source: an ignored span inside a line | Keeps its dimmed ink and neither mark; only the Preview collapses inline regions. |
 | Source folded, Preview not (or the reverse) | Expected: the two panes hold separate state by design. |
 | Preview: a collapsed region | The control keeps its surface — with the content gone, it is what the reader must find. |

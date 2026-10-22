@@ -9,8 +9,8 @@ namespace DialogueDown.Runtime.Tests.Conformance.Matchers;
 /// <summary>Checks a <c>draw</c> claim: the shares the run asked the host to draw against.</summary>
 /// <remarks>
 /// The shares are compared in order and exactly, as numbers rather than as the text that writes
-/// them. Every runtime works them out with the same arithmetic, so two runtimes reading one
-/// playbook name the same shares.
+/// them. Every runtime works them out with the same arithmetic, so two runtimes given one playbook
+/// and the same answers name the same shares.
 /// </remarks>
 internal sealed class DrawMatcher : IExpectationMatcher
 {

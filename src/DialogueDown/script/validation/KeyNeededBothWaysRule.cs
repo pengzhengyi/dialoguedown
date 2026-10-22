@@ -7,7 +7,7 @@ namespace DialogueDown.Script.Validation;
 
 /// <summary>
 /// Reports a key that one line, menu, or random choice uses in two ways needing different kinds of
-/// answer: a condition needs true or false, a query words, and a dynamic weight a number.
+/// answer: a condition needs true or false, a query words, and a key weight a number.
 /// </summary>
 /// <remarks>
 /// <code>
@@ -19,9 +19,9 @@ namespace DialogueDown.Script.Validation;
 /// <para>
 /// Each place counts only what it asks about when it is reached: a line its condition and the
 /// queries in what it says, a menu its options' conditions and the queries in their labels, and a
-/// random choice its random options' conditions and dynamic weights. A jump's condition is asked
-/// when the line is left, and the text of a jump at the end of a line is never shown, so neither
-/// counts. One key used two ways in two places is fine.
+/// random choice its random options' conditions and key weights. A jump's condition is asked
+/// when the line is left, and the text of a jump at the end of a line is not part of what the line
+/// says, so neither counts. One key used two ways in two places is fine.
 /// </para>
 /// <para>
 /// Within a place, each way a key is used besides the way it is used first is reported once, at
@@ -52,7 +52,7 @@ internal sealed class KeyNeededBothWaysRule : DiagnosticRule
             menu.Options.SelectMany(option => ConditionOf(option).Concat(QueriesIn(option.Label())))),
         RandomChoices random => new(
             "random choice",
-            random.Options.SelectMany(option => ConditionOf(option).Concat(DynamicWeightOf(option.Weight)))),
+            random.Options.SelectMany(option => ConditionOf(option).Concat(KeyWeightOf(option.Weight)))),
         _ => null,
     };
 
@@ -75,10 +75,12 @@ internal sealed class KeyNeededBothWaysRule : DiagnosticRule
             .OfType<Query>()
             .Select(query => new QueryUse(query));
 
-    private static IEnumerable<KeyUse> DynamicWeightOf(ChoiceWeight weight) =>
-        weight is QueryWeight dynamic ? [new DynamicWeightUse(dynamic)] : [];
+    private static IEnumerable<KeyUse> KeyWeightOf(ChoiceWeight weight) =>
+        weight is QueryWeight keyWeight ? [new KeyWeightUse(keyWeight)] : [];
 
-    /// <summary>A line, menu, or random choice, and every key use it asks the game about at once.</summary>
+    /// <summary>
+    /// A line, menu, or random choice, and every key use it asks the game about at once.
+    /// </summary>
     private sealed record Place(string Name, IEnumerable<KeyUse> Uses);
 
     /// <summary>
@@ -105,8 +107,8 @@ internal sealed class KeyNeededBothWaysRule : DiagnosticRule
         public override string Way => "a query";
     }
 
-    private sealed class DynamicWeightUse(QueryWeight weight) : KeyUse(weight.Key, weight.Span)
+    private sealed class KeyWeightUse(QueryWeight weight) : KeyUse(weight.Key, weight.Span)
     {
-        public override string Way => "a dynamic weight";
+        public override string Way => "a key weight";
     }
 }

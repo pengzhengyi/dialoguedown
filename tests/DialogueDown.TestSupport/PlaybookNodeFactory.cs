@@ -194,16 +194,21 @@ public static class PlaybookNodeFactory
     /// <summary>A random choice at the id given.</summary>
     public static RandomChoiceNode RandomChoice(int id, params Edge[] options) => new(id, [.. options]);
 
-    /// <summary>One random option, at odds the writer fixed in the script.</summary>
+    /// <summary>One random option with a number weight, such as <c>`50%`</c>.</summary>
     public static RandomOptionEdge Chance(
         double percentage, string? condition = null, int target = 0) =>
         new(target, new NumberWeight(percentage), If(condition));
 
-    /// <summary>One random option, at odds the world supplies at play time.</summary>
+    /// <summary>
+    /// One random option with a key weight, such as <c>`Guard.Mood%`</c>, which the world
+    /// answers at play time.
+    /// </summary>
     public static RandomOptionEdge Chance(string key, string? condition = null, int target = 0) =>
         new(target, new QueryWeight(key), If(condition));
 
-    /// <summary>One random option, sharing evenly in whatever the rest leave.</summary>
+    /// <summary>
+    /// One random option with an auto weight, <c>`%`</c>: an even share of whatever the rest leave.
+    /// </summary>
     public static RandomOptionEdge EvenChance(string? condition = null, int target = 0) =>
         new(target, new AutoWeight(), If(condition));
 

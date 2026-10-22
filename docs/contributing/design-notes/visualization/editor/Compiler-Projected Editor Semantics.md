@@ -76,8 +76,8 @@ export interface SemanticToken {
 | Marker paragraph in a marker-headed quote | `ControlKeyword` (`` `if` ``, `` `elseif` ``, `` `else` ``) |
 | `Query` | `Query` (`` `"playerName"` ``) |
 | `Condition` | `Condition` (`` `Rainy?` ``) |
-| `NumberWeight`, `AutoWeight` | `StaticWeight` |
-| `QueryWeight` | `DynamicWeight` |
+| `NumberWeight`, `AutoWeight` | `NumberWeight` |
+| `QueryWeight` | `KeyWeight` |
 | `DefaultCommand`, `CustomCommand` | `Command` |
 | A `DLG1114` span | `IgnoredMarkdown` — see [Unmodeled Markdown Highlighting](./Unmodeled%20Markdown%20Highlighting.md) |
 
@@ -95,7 +95,7 @@ SourceSpan Separator)`. A quoted name's span includes its quotes; an id's includ
 Each kind maps to one `dd-tok-*` class through `TOKEN_CLASS`, shared with the preview's
 [construct marks](./Construct%20Marks%20in%20the%20Source%20Preview.md). Colors follow VS Code
 Light+/Dark+ roles: control keywords use the control-flow hue, `#END` the constant hue, commands the
-function hue, static weights the number hue, and queries, conditions, and dynamic weights distinct
+function hue, number weights the number hue, and queries, conditions, and key weights distinct
 string, variable, and type hues.
 
 ## Completions

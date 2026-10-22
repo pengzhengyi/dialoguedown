@@ -65,8 +65,8 @@ internal static class ScriptNodeExtensions
     }
 
     /// <summary>
-    /// The words a node shows the player: a line's spoken words, or a jump's label. Empty for any
-    /// other node.
+    /// The words a node may show the player: a line's spoken words, or a jump's label. Empty for
+    /// any other node.
     /// </summary>
     /// <remarks>
     /// These are the lists the playbook carries as speech.

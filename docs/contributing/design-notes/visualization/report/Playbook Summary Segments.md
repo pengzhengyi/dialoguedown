@@ -215,7 +215,7 @@ words, not of where a role ends.
 A `boundary` is a role, not a character, so the client draws it as a break: a menu's options as a
 bulleted list (alternatives) and a control's commands as a numbered list (order is meaning). The
 cell's text joins the lines with newlines, so search, sort, and copy still read every item and the
-highlight lands on the item that holds the match. A branch's `IF`/`THEN`/`ELSE` keeps one line,
+highlight falls on the item that holds the match. A branch's `IF`/`THEN`/`ELSE` keeps one line,
 because its branches are read together.
 
 ### D8 — A piece that names a node carries that node
@@ -238,7 +238,7 @@ in the shape the Dialogue Graph uses for its routes. The projection sends only t
 ### D10 — A condition is drawn as the query it is
 
 A condition is the boolean member of the query family: only the running game can answer it. So a
-condition key wears the `query` role and the `?` the script marks it with: `IF FoundKey? THEN 12`,
+condition key takes the `query` role and the `?` the script marks it with: `IF FoundKey? THEN 12`,
 `Brave the west road IF Alice.HasMap?`. A key already ending in `?` reads with two (`Rainy??`), the
 same awkwardness the value placeholder accepts.
 

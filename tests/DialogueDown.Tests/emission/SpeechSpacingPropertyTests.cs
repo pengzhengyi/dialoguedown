@@ -39,7 +39,8 @@ public sealed class SpeechSpacingPropertyTests
 
     /// <summary>
     /// Passing over commands and tags, no collapsible space follows another, and none stands
-    /// before the first visible piece or after the last. Every space kept is written as a space.
+    /// before the first visible piece or after the last. Every collapsible space kept is written as
+    /// a plain space.
     /// </summary>
     [Fact]
     public void TheThreeRulesHold() =>

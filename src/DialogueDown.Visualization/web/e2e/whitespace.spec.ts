@@ -95,7 +95,7 @@ for (const scheme of ["light", "dark"] as const) {
     });
 }
 
-test("the pressed toggle wears the View/Edit color", async ({ page }) => {
+test("the pressed toggle has the View/Edit color", async ({ page }) => {
     await page.goto(writeReport(REPORT));
     await toggle(page).click();
 

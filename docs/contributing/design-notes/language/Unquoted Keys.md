@@ -67,7 +67,7 @@ Out of scope:
 | **Sigil**        | The trailing operator inside a code span: `?` (condition) or `%` (weight).        |
 | **Value read**   | A query that inserts the key's value into speech (`` `"key"` ``); has *no* sigil. |
 | **Condition**    | A boolean read that guards a jump, line, or choice (`` `key?` ``).                |
-| **Weight**       | A dynamic random-choice weight computed from a key (`` `key%` ``).                |
+| **Weight**       | A key weight: a random-choice weight read from a key (`` `key%` ``).              |
 
 The **sigil** is the pivot of this note: it terminates the key and names the
 operation, so the key before it needs no quotes to mark where it ends.
@@ -99,7 +99,7 @@ so the sigil after the closing quote is unmistakably the operator:
 Here the key is the literal `Rainy?` and the trailing `?` is the condition. Without
 the quotes, `` `Rainy?` `` would read the key `Rainy`.
 
-**Recommendation.** Prefer the **unquoted** form for a condition and a dynamic
+**Recommendation.** Prefer the **unquoted** form for a condition and a key
 weight — it reads as a natural phrase and is the form this guide uses by default.
 Reach for quotes only to **escape**: a key that ends in a literal `?`/`%`, a key
 that contains a `"`, or a value read (which is always quoted).
@@ -205,8 +205,8 @@ key. So `` `X?` `` and `` `"X"?` `` both mean the key `X`, and `` `"Rainy?"?` ``
 the literal key `Rainy?`. Quotes never *change* a key — they only let it carry a
 character (a trailing `?`/`%`) the unquoted form would read as the operator.
 
-The quoted form has **no escape for an inner `"`** — it wraps any run of non-quote
-characters, matching the existing value-read grammar. A key that must contain a `"`
+The quoted form has **no escape for an inner `"`** — it wraps any sequence of
+non-quote characters, matching the value-read grammar. A key that must contain a `"`
 is therefore written **unquoted**, where the `"` is an ordinary character
 (`` `He said "hi"?` `` → key `He said "hi"`). Text that opens a quote but is not one
 clean `"…"` string (`` `"a"b"?` ``) is not treated as quoted; it is read as the raw

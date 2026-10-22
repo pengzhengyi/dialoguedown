@@ -23,8 +23,8 @@ export const TOKEN_CLASS: Record<TokenKind, string> = {
     ControlKeyword: "dd-tok-control-keyword",
     Query: "dd-tok-query",
     Condition: "dd-tok-condition",
-    StaticWeight: "dd-tok-static-weight",
-    DynamicWeight: "dd-tok-dynamic-weight",
+    NumberWeight: "dd-tok-number-weight",
+    KeyWeight: "dd-tok-key-weight",
     Command: "dd-tok-command",
     IgnoredMarkdown: "dd-tok-ignored-markdown",
 };

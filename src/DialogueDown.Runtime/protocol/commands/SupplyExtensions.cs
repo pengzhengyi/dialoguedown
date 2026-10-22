@@ -29,7 +29,7 @@ internal static class SupplyExtensions
         return Read<BooleanAnswer>(supply, key).Holds;
     }
 
-    /// <summary>The words the world gave for a key standing in a line.</summary>
+    /// <summary>The words the world gave for a query's key, in a line or an option's label.</summary>
     /// <param name="supply">What the world said.</param>
     /// <param name="key">The key to read.</param>
     /// <returns>The words to say where the key stands.</returns>

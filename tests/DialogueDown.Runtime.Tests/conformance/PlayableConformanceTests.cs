@@ -9,9 +9,9 @@ namespace DialogueDown.Runtime.Tests.Conformance;
 public sealed class PlayableConformanceTests
 {
     // Every case this build cannot play yet, with each reason it gives. Every other case must
-    // conform, so a new case is held to the whole conversation unless it is listed here. A listed
-    // case must give exactly its reasons, so one that starts conforming, or that is held back by
-    // something else, is noticed.
+    // conform, so a new case is checked against the whole conversation unless it is listed here.
+    // A listed case must give exactly its reasons, so one that starts conforming, or that is held
+    // back by something else, is noticed.
     private static readonly Dictionary<string, string[]> _notYetPlayable = new(StringComparer.Ordinal);
 
     public static TheoryData<PlayableCase> EveryCase() => [.. Corpora.Playable.Cases()];

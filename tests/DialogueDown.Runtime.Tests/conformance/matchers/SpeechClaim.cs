@@ -68,7 +68,7 @@ internal static class SpeechClaim
 
     // Read through the playbook's own reader so the comparison is between speech and speech,
     // not between two spellings of it: a fixture may order a fragment's properties as it likes,
-    // and may spell out what the writer leaves off.
+    // and may spell out what the serializer leaves off.
     private static SessionOutcome MatchAsFragments(ImmutableArray<SpeechFragment> spoken, JsonNode claimed)
     {
         var fragments = ReadFragments(claimed);
@@ -83,8 +83,9 @@ internal static class SpeechClaim
             spoken.Select((fragment, at) => MatchFragment(fragment, fragments[at], at)));
     }
 
-    // Compared as each writes out. The writer is what the corpus quotes, so it decides what two
-    // fragments saying the same thing look like, and it stays right as new kinds are added.
+    // Compared as each serializes. The corpus quotes the serializer's output, so the serializer
+    // decides what two fragments saying the same thing look like, and it stays right as new kinds
+    // are added.
     private static SessionOutcome MatchFragment(SpeechFragment spoken, SpeechFragment claimed, int at)
     {
         var heard = JsonSerializer.Serialize(spoken, FixtureJson.Compact);

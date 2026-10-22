@@ -129,7 +129,7 @@ test("Back returns to the previous script, and Forward returns again", async ({ 
     expect(await samePage(page)).toBe(true);
 });
 
-test("Back lands in View, because it is a navigation and not an intent to edit", async ({
+test("Back opens in View, because it is a navigation and not an intent to edit", async ({
     page,
 }) => {
     await openSecond(page);

@@ -20,8 +20,8 @@ public sealed class RunnerWalkPropertyTests
 {
     private const int Samples = 200;
 
-    // For a check that some walk meets a shape few drawn playbooks hold, so that a run of the suite
-    // all but never misses it by chance.
+    // For a check that some walk meets a shape few drawn playbooks hold, so that the suite all but
+    // never misses it by chance.
     private const int ManySamples = 1000;
 
     // A drawn playbook may loop, so a walk is cut off rather than run to an end. Passing a node can
@@ -157,14 +157,14 @@ public sealed class RunnerWalkPropertyTests
     }
 
     /// <summary>
-    /// A run only ever asks for a draw that can land on a random option.
+    /// A run only ever asks for a draw that can pick a random option.
     /// </summary>
     /// <remarks>
     /// A random choice with nothing drawable is walked past, so a draw asked for there would wait
     /// for a number that could pick nothing.
     /// </remarks>
     [Fact]
-    public void AWalkIsOnlyEverAskedForADrawThatCanLand() =>
+    public void AWalkIsOnlyEverAskedForADrawThatCanPickARandomOption() =>
         ForEveryWalk(
             (_, stepped) => Assert.All(
                 stepped.Events.OfType<Draw>(), draw => Assert.Contains(draw.Shares, share => share > 0)));
@@ -318,7 +318,7 @@ public sealed class RunnerWalkPropertyTests
         };
 
     // A menu with no option the player can take is walked past rather than offered, so a menu that
-    // waits always has one, and the pick modulo their count lands on one of them.
+    // waits always has one, and the pick modulo their count is one of them.
     private static int OneThePlayerCanTake(AwaitingChoice waiting, int pick) =>
         waiting.Available[pick % waiting.Available.Length];
 

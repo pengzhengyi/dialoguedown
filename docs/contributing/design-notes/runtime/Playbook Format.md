@@ -285,9 +285,10 @@ to a **checker** — one rule, one class — and returns only what passes.
 | `FormatChecker` → `VersionChecker` | a `format.version` outside the range this build reads |
 | `FormatChecker` → `CapabilityChecker` | a name in `requires` this build does not support |
 | `NodePositionChecker` | a node whose `id` is not its position (`nodes[i].id != i`) |
-| `ReferenceChecker` | an `entry`, anchor, edge target, or speaker index that lands nowhere |
+| `ReferenceChecker` | an `entry`, anchor, edge target, or speaker index past the end of the nodes or speakers |
 | `OutwardShapeChecker` | a node whose ways out break the outward-shape rule — see [Playbook Reader Rules](./Playbook%20Reader%20Rules.md#outward-shape) |
 | `BranchOrderChecker` | a `branch` that lacks a gated branch or puts its else before another branch — see [Playbook Reader Rules](./Playbook%20Reader%20Rules.md#branch-order) |
+| `NumberWeightChecker` | a `random-choice` with a number weight that is negative or not finite, or number weights that add up past what a double holds — see [Playbook Reader Rules](./Playbook%20Reader%20Rules.md#number-weights) |
 
 The version settles before the capabilities, because a document of an unknown
 shape may describe its capabilities in terms an older build would misread. Each
@@ -353,13 +354,13 @@ Inventing wire names is how a format drifts from the language its users speak.
 
 ### P4 — What a runner can derive is not stored
 
-A node does **not** carry the query keys needed to leave it. They are derivable by
-walking the node — its condition, its speech, its effects, and every out-edge's
-condition and weight — so storing them would put one fact in two places, where the
-two can disagree.
+A node does **not** carry the query keys a runner asks about to play or leave it.
+They are derivable by walking the node — its condition, its speech, its effects, and
+every out-edge's condition, weight, and label — so storing them would put one fact in
+two places, where the two can disagree.
 
-Storing them buys nothing measurable either. A runner walks each node once at load
-and caches the result, so there is no play-time difference. Resolving a node's
+Storing them buys nothing measurable either. The walk is cheap, and a runner that
+wants to avoid repeating it can walk each node once at load and cache the result. Resolving a node's
 reads in **one** round trip comes from the protocol's `Resolve`/`Supply` pair, not
 from a field in the artifact.
 
@@ -376,7 +377,7 @@ a document where it is not.
 This is a **renumbering**, not a passthrough. The compiler's `NodeId` is by contract
 an opaque handle — `DialogueGraph` resolves it through an id-keyed dictionary and
 its documentation says outright not to treat the value as a list index — and ids
-are minted in the order blocks are *encountered*, which is not the document order
+are assigned in the order blocks are *encountered*, which is not the document order
 the node list is in. So the writer must translate either way; the only question is
 what it translates into.
 
@@ -460,7 +461,7 @@ The writer pretty-prints. A playbook is meant to be opened, `jq`-ed, and reasone
 about, and readability is worth more than bytes for a file that measures in
 kilobytes. A compact mode — and, if it ever proves its value, compression or a
 binary encoding — stays available behind a CLI flag, because
-[the writer is a seam](./Dialogue%20Runtime%20Architecture.md#d2--json-with-a-formal-schema).
+[the writer can be swapped](./Dialogue%20Runtime%20Architecture.md#d2--json-with-a-formal-schema).
 
 ### P10 — Cross-file references wait for the linker
 

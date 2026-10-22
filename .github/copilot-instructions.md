@@ -60,9 +60,9 @@ forwards an argument it does not recognize to the test app, which then exits
 without running anything and reports **"Zero tests ran"** with exit code 5 — output
 that reads like a normal run. Keep the floor on any full-suite command you invent,
 and treat a shortfall (exit code 9) as a broken command rather than a broken
-suite. A framework-specific test-module glob fails the same way: two test projects
-multi-target `net8.0;net10.0`, so six projects produce **eight** modules and a
-`net10.0`-only glob silently runs 1,956 of 3,371 tests.
+suite. A framework-specific test-module glob fails the same way: several test
+projects multi-target `net8.0;net10.0`, so the suite builds more test modules than
+it has projects, and a `net10.0`-only glob silently skips every `net8.0` module.
 
 ## Conventions
 
@@ -117,12 +117,11 @@ Words that read two ways or are figurative:
 
 | Avoid | Write | Why |
 | --- | --- | --- |
-| a run of (text, lines) | a sequence of, consecutive | "run" reads as the verb |
+| a run of (words, text, lines) | a sequence of, consecutive | "run" reads as the verb; a run meaning one playthrough is fine |
 | peel | split off, remove | figurative |
 | weave | join, meet again | figurative |
 | surface (as a verb) | report, show | figurative |
 | arm | an option, random option, branch, or divert — or an edge when every kind is meant; a case, for a `switch`; start or set, for a timer | figurative; the guide never says it, and the playbook already names each kind |
-| a run, for one play of a dialogue | a playthrough | "run" reads as the verb |
 | seam | interface, or name the thing | figurative |
 | lands, lands on | enters, opens, is in range | figurative |
 | rides, rides along | is carried, holds | figurative |

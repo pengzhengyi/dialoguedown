@@ -124,7 +124,7 @@ public sealed class DialogueAstRewriterTests
                 Branch(Condition("Rich"), Line(Text("wealthy"))),
                 ElseBranch(Line(Text("broke")))));
 
-    /// <summary>A random choice with a numeric weight and an auto weight.</summary>
+    /// <summary>A random choice with a number weight and an auto weight.</summary>
     /// <remarks>
     /// <code>
     /// - `50%` heads

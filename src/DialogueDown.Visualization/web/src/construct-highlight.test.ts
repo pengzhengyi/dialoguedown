@@ -57,8 +57,8 @@ describe("annotatePreviewConstructs", () => {
         ["Command", '`playSound("wind")`', 'playSound("wind")', "dd-tok-command"],
         ["Query", '`"playerName"`', '"playerName"', "dd-tok-query"],
         ["Condition", "`Alice.HasMap?`", "Alice.HasMap?", "dd-tok-condition"],
-        ["StaticWeight", "`70%`", "70%", "dd-tok-static-weight"],
-        ["DynamicWeight", "`Bob.Affection?`", "Bob.Affection?", "dd-tok-dynamic-weight"],
+        ["NumberWeight", "`70%`", "70%", "dd-tok-number-weight"],
+        ["KeyWeight", "`Bob.Affection%`", "Bob.Affection%", "dd-tok-key-weight"],
         ["ReservedAnchor", "#END", "#END", "dd-tok-reserved-anchor"],
     ] as const)("tints a %s with the editor's own class", (kind, written, shown, className) => {
         const root = preview(`<p><code>${shown}</code></p>`, [construct(kind, written, 1)]);

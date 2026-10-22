@@ -10,7 +10,7 @@ namespace DialogueDown.Tests.Conformance;
 /// playbook no compiler can emit.
 /// </summary>
 /// <remarks>
-/// A committed playbook that no longer matches its source asserts an outdated format. Only playable
+/// A committed playbook that does not match its source asserts an outdated format. Only playable
 /// cases are checked this way: a readable case's playbook is deliberately that compile with one
 /// field broken.
 /// <para>

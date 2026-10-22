@@ -2,7 +2,7 @@ using DialogueDown.Common;
 namespace DialogueDown.Markdown;
 
 /// <summary>
-/// Plain text exactly as the author wrote it, with no styling applied. It always
+/// Plain text with no styling applied, its escapes removed and its entities decoded. It always
 /// has at least one character.
 /// </summary>
 /// <remarks>

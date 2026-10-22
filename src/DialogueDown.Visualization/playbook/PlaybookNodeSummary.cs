@@ -288,8 +288,8 @@ internal static class PlaybookNodeSummary
             _ => [],
         };
 
-    // An option and a random option both carry their condition after their own text, so the shape is
-    // written once.
+    // An option and a random option both carry their condition after their own text, so the shape
+    // is written once.
     private static ImmutableArray<PlaybookSegmentView> Guarded(Condition? condition) =>
         condition is KeyCondition key ? [PlaybookSegmentView.Keyword(Guard), Condition(key.Key)] : [];
 
@@ -355,8 +355,8 @@ internal static class PlaybookNodeSummary
         return [.. trimmed.Where(piece => piece.Text.Length > 0)];
     }
 
-    // The cut respects a word boundary so no word is left half-written. A piece the boundary lands
-    // inside keeps its role for the part that survived, so a cut row stays colored.
+    // The cut respects a word boundary so no word is left half-written. A piece the cut divides
+    // keeps its role for the part that is kept, so a cut row stays colored.
     private static ImmutableArray<PlaybookSegmentView> Capped(ImmutableArray<PlaybookSegmentView> pieces)
     {
         var line = string.Concat(pieces.Select(piece => piece.Text));

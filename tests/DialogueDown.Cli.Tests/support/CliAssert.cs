@@ -3,7 +3,7 @@ using Spectre.Console.Cli.Testing;
 
 namespace DialogueDown.Cli.Tests.Support;
 
-/// <summary>Assertions about how a run of <c>ddown</c> ended and what it told the person.</summary>
+/// <summary>Assertions about how a <c>ddown</c> command ended and what it told the person.</summary>
 internal static class CliAssert
 {
     /// <summary>Asserts that a run succeeded and printed each fragment.</summary>

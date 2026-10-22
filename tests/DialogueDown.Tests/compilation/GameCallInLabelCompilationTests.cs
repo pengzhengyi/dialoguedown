@@ -10,7 +10,7 @@ namespace DialogueDown.Tests.Compilation;
 
 /// <summary>
 /// A game call written in a label reaches a real compile: a query is carried into the playbook
-/// wherever the label lands, and a command or a condition fails the compile at its code span.
+/// wherever the label is written, and a command or a condition fails the compile at its code span.
 /// </summary>
 public sealed class GameCallInLabelCompilationTests
 {

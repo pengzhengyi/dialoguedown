@@ -32,7 +32,7 @@ public sealed class ScriptCompilerFactoryTests
         Assert.NotNull(result.Markdown);
         Assert.NotNull(result.Script);
 
-        // The desugared tree upholds the post-desugar invariants: the jump is assembled
+        // The desugared tree keeps the post-desugar invariants: the jump is assembled
         // and the speaker-less line has a default speaker.
         var body = result.Desugared.Body;
         AssertSceneHeading(body[0], "Scene", 1);

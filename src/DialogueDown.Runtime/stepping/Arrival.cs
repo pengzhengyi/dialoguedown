@@ -6,7 +6,7 @@ using DialogueDown.Runtime.Situations;
 namespace DialogueDown.Runtime.Stepping;
 
 /// <summary>
-/// What arriving at a node does: walking to one, deciding whether it plays, and reading on once
+/// What arriving at a node does: walking to one, deciding whether it plays, and continuing once
 /// the world has answered what the node asked.
 /// </summary>
 /// <remarks>
@@ -180,7 +180,7 @@ internal static class Arrival
     // would ask the player to advance past something they were never shown. A menu with no option
     // the player can take is walked past too, by its fall-through, because standing there would
     // wait for a choice the player cannot make. So is a random choice with nothing drawable,
-    // because no draw could land anywhere.
+    // because no draw could pick a random option.
     private static bool IsWalkedPast(Node node, Supply? supply) =>
         node switch
         {

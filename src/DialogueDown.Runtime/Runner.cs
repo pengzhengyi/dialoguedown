@@ -24,7 +24,7 @@ namespace DialogueDown.Runtime;
 ///   Done   ───────────▶
 ///          ◀─────────── Resolve [weapon.Attack]
 ///   Supply ───────────▶ { "weapon.Attack": "15" }
-///          ◀─────────── Continued " Now it is 15."
+///          ◀─────────── Continued "Now it is 15."
 ///   Next   ───────────▶
 ///          ◀─────────── Ended
 /// </code>

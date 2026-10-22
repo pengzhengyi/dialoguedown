@@ -662,7 +662,7 @@ internal static class DiagnosticDocs
             DiagnosticCatalog.KeyNeededBothWays,
             "A line, a menu, or a random choice asks the game everything it needs at once, and the "
             + "game gives one answer per key. A condition needs true or false, a query words, and a "
-            + "dynamic weight a number, so one key cannot serve two of them in one place. Use a "
+            + "key weight a number, so one key cannot serve two of them in one place. Use a "
             + "separate key for one of the uses; a key may still be used another way in a different "
             + "place.",
             new(
