@@ -112,7 +112,7 @@ class ReservedTargetsPanel implements Panel {
         const button = document.createElement("button");
         button.type = "button";
         button.className = "dd-reserved-target-copy";
-        button.setAttribute("aria-label", `Copy jump link to ${target.label}`);
+        button.setAttribute("aria-label", `Copy jump link to ${target.label} #${target.anchor}`);
         button.append(
             textSpan("dd-reserved-target-label", target.label),
             textSpan("dd-reserved-target-anchor", `#${target.anchor}`),

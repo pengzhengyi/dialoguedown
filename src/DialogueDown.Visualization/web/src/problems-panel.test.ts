@@ -103,6 +103,17 @@ describe("createProblemsPanel", () => {
         expect(goTo).toHaveBeenCalledWith(ERROR);
     });
 
+    it("keeps the visible diagnostic and location together in the accessible name", () => {
+        const panel = createPanel();
+
+        panel.setDiagnostics([ERROR]);
+
+        const button = panel.element.querySelector<HTMLButtonElement>(".problem-jump")!;
+        expect(button.getAttribute("aria-label")).toBe(
+            "error: A jump must be '=> [label](target)'. Ln 5, Col 3 — go to the problem",
+        );
+    });
+
     it("links each code to its entry in the error-code reference", () => {
         const panel = createPanel();
 
@@ -249,7 +260,11 @@ describe("createProblemsPanel", () => {
 
         panel.setDiagnostics([{ ...ERROR, fixes: [fix] }, { ...WARNING, fixes: [fix] }, INFO]);
 
-        expect(panel.element.querySelector(".problem-fix-all")!.textContent).toBe("Fix all (2)");
+        const button = panel.element.querySelector<HTMLButtonElement>(".problem-fix-all")!;
+        expect(button.textContent).toBe("Fix all (2)");
+        expect(button.getAttribute("aria-label")).toBe(
+            "Fix all (2) — apply every suggested repair",
+        );
     });
 
     it("applies every fixable problem at once without navigating", () => {

@@ -47,6 +47,9 @@ describe("reservedTargetsPanel", () => {
         expect(panel.querySelector(".dd-reserved-target-marker")?.textContent).toBe("∞");
         expect(panel.querySelector(".dd-reserved-target-label")?.textContent).toBe("End");
         expect(panel.querySelector(".dd-reserved-target-anchor")?.textContent).toBe("#END");
+        expect(panel.querySelector(".dd-reserved-target-copy")?.getAttribute("aria-label")).toBe(
+            "Copy jump link to End #END",
+        );
         expect(panel.querySelector("input, textarea, [contenteditable='true']")).toBeNull();
     });
 

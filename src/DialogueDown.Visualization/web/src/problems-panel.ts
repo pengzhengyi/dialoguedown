@@ -109,7 +109,7 @@ function buildRow(
 
     jump.setAttribute(
         "aria-label",
-        `${severity}: ${diagnostic.message} at ${locationLabel(diagnostic)} — go to the problem`,
+        `${severity}: ${diagnostic.message} ${locationLabel(diagnostic)} — go to the problem`,
     );
     jump.addEventListener("click", onActivate);
 
@@ -189,7 +189,7 @@ export function createProblemsPanel(options: ProblemsPanelOptions): ProblemsPane
         toolbar.hidden = !(editable && fixable > 0);
         fixAll.textContent = `Fix all (${fixable})`;
         fixAll.title = "Apply every suggested repair";
-        fixAll.setAttribute("aria-label", `Apply every suggested repair (${fixable})`);
+        fixAll.setAttribute("aria-label", `Fix all (${fixable}) — apply every suggested repair`);
 
         const clean = listed.length === 0;
         empty.hidden = !clean;
