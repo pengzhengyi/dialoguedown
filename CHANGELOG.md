@@ -280,6 +280,9 @@ changes easy to categorize.
 
 ### Fixed
 
+- **Report buttons keep their visible labels in their accessible names** — diagnostic controls
+  and reserved jump targets identify the same text for sighted, screen-reader, and voice-control
+  users.
 - **The `ddown` tool package carries its third-party license notices** — the tool bundles
   libraries whose licenses require their text or copyright notice to accompany every binary
   copy, and the package shipped none. It now includes

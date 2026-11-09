@@ -104,7 +104,7 @@ test("keeps every Problems row in position order with severity breaking exact ti
     ]);
     await expect(page.locator(".diagnostic-summary")).toHaveAttribute(
         "aria-label",
-        "2 errors, 2 warnings, 3 infos — open the Problems panel",
+        "2 2 3 — 2 errors, 2 warnings, 3 infos — open the Problems panel",
     );
 });
 

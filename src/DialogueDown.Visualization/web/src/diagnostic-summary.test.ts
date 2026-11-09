@@ -11,6 +11,7 @@ describe("createDiagnosticSummary", () => {
             (el) => el.textContent,
         );
         expect(values).toEqual(["2", "1", "5"]);
+        expect(summary.element.textContent?.trim()).toBe("2 1 5");
     });
 
     it("stays visible at zero rather than disappearing", () => {
@@ -39,7 +40,7 @@ describe("createDiagnosticSummary", () => {
 
         // The icons carry the meaning visually; the label has to carry it otherwise.
         expect(summary.element.getAttribute("aria-label")).toBe(
-            "1 errors, 0 warnings, 3 infos — open the Problems panel",
+            "1 0 3 — 1 errors, 0 warnings, 3 infos — open the Problems panel",
         );
     });
 

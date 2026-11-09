@@ -42,7 +42,7 @@ export function createDiagnosticSummary(onOpen: () => void): DiagnosticSummary {
         value.className = "diagnostic-value";
         value.textContent = "0";
         group.appendChild(value);
-        element.appendChild(group);
+        element.append(group, " ");
         values.set(key, value);
     }
 
@@ -55,7 +55,8 @@ export function createDiagnosticSummary(onOpen: () => void): DiagnosticSummary {
         element.classList.toggle("clean", counts.error + counts.warning + counts.info === 0);
         const parts = ORDER.map(({ key, label }) => `${counts[key]} ${label}`).join(", ");
         element.title = `${parts} — open the Problems panel`;
-        element.setAttribute("aria-label", element.title);
+        const totals = ORDER.map(({ key }) => counts[key]).join(" ");
+        element.setAttribute("aria-label", `${totals} — ${element.title}`);
     }
 
     setCounts({ error: 0, warning: 0, info: 0 });
