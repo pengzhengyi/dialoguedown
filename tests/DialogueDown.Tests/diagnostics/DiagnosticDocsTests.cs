@@ -1,5 +1,6 @@
 using DialogueDown.Compilation;
 using DialogueDown.Configuration;
+using DialogueDown.Diagnostics;
 
 namespace DialogueDown.Tests.Diagnostics;
 
@@ -22,7 +23,7 @@ public sealed class DiagnosticDocsTests
     public void EveryCatalogCodeIsDocumented()
     {
         var documented = DiagnosticDocs.All.Select(doc => doc.Descriptor.Code).ToHashSet();
-        var catalog = DiagnosticCatalogReflection.Descriptors().Select(descriptor => descriptor.Code);
+        var catalog = DiagnosticCatalog.All.Select(descriptor => descriptor.Code);
 
         // Every diagnostic the compiler can report needs a reader-facing entry, so the Error codes
         // page is complete. Adding a code to the catalog without documenting it fails here.

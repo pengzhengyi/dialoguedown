@@ -384,6 +384,24 @@ public sealed class SemanticTokenProjectionTests
     }
 
     [Fact]
+    public void Project_AnIgnoredDividerWhoseDiagnosticIsDisabled_IsStillMarked()
+    {
+        const string Source = """
+            Alice: Hi
+
+            ---
+
+            Bob: Bye
+            """;
+        var options = CompilerOptions.Default with { DisabledDiagnostics = ["DLG1114"] };
+
+        // Disabling DLG1114 hides the note, not the fact that the divider is left out.
+        Assert.Equal(
+            "---",
+            AssertSingleSemanticToken(Project(Source, options), TokenKind.IgnoredMarkdown).TextIn(Source));
+    }
+
+    [Fact]
     public void Project_DefaultIgnoredMarkdownConfiguredToKeep_IsNotMarked()
     {
         const string Source = """

@@ -98,7 +98,7 @@ public sealed class TomlConfigurationLoaderTests
             # The project's compilation mode.
             modee = "best-effort"
             """,
-            "Unknown setting 'modee'. Use 'mode', 'speakers', 'markdown'.",
+            "Unknown setting 'modee'. Use 'mode', 'speakers', 'markdown', 'diagnostics'.",
             line: 2,
             column: 1);
 
@@ -111,7 +111,7 @@ public sealed class TomlConfigurationLoaderTests
             [[speaker]]
             name = "Alice"
             """,
-            "Unknown setting 'speaker'. Use 'mode', 'speakers', 'markdown'.",
+            "Unknown setting 'speaker'. Use 'mode', 'speakers', 'markdown', 'diagnostics'.",
             line: 3,
             column: 3);
 
@@ -123,7 +123,7 @@ public sealed class TomlConfigurationLoaderTests
             ["markdown.unmodeled"]
             table = "keep"
             """,
-            "Unknown setting 'markdown.unmodeled'. Use 'mode', 'speakers', 'markdown'.",
+            "Unknown setting 'markdown.unmodeled'. Use 'mode', 'speakers', 'markdown', 'diagnostics'.",
             line: 1,
             column: 2);
 
@@ -140,4 +140,33 @@ public sealed class TomlConfigurationLoaderTests
         Assert.Equal(3, error.Location.Line);
         Assert.NotEqual(string.Empty, error.Message);
     }
+
+    [Fact]
+    public void Parse_WithDisabledDiagnostics_WrapsThemInOptions()
+    {
+        CompilerOptions options = TomlConfigurationLoader.Parse("""
+            [diagnostics]
+            disable = ["dlg3002", "DLG1114"]
+            """, SourceName);
+
+        Assert.Equal(["DLG1114", "DLG3002"], options.DisabledDiagnostics.Order());
+        Assert.Equal(CompilerOptions.Default.Mode, options.Mode);
+    }
+
+    [Fact]
+    public void Parse_NoDiagnosticsSection_DisablesNothing() =>
+        Assert.Empty(TomlConfigurationLoader.Parse("""
+            mode = "best-effort"
+            """, SourceName).DisabledDiagnostics);
+
+    [Theory]
+    [InlineData("DLG302")]
+    [InlineData("DLG2001")]
+    public void Parse_CodeThatCannotBeDisabled_ThrowsAConfigurationError(string code) =>
+        // The reader rejects it before CompilerOptions would, so the writer sees a located config
+        // error rather than an ArgumentException.
+        Assert.Throws<DialogueConfigurationException>(() => TomlConfigurationLoader.Parse($"""
+            [diagnostics]
+            disable = ["{code}"]
+            """, SourceName));
 }

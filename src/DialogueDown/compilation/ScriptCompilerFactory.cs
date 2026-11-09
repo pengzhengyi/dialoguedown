@@ -31,6 +31,6 @@ public static class ScriptCompilerFactory
             StructuralValidatorFactory.CreateDefault(),
             new SemanticAnalyzer(options.ForSemanticAnalyzer()),
             DialogueGraphBuilderFactory.CreateDefault(),
-            options.Mode);
+            options.ForCompilationSession());
     }
 }

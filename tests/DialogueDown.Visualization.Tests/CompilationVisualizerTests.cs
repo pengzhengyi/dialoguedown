@@ -381,6 +381,26 @@ public sealed class CompilationVisualizerTests
     }
 
     [Fact]
+    public void SerializeDocument_WithADisabledCode_LeavesItsDiagnosticsOut()
+    {
+        var visualizer = new CompilationVisualizer(
+            CompilerOptions.Default with { DisabledDiagnostics = ["DLG1114"] });
+
+        var json = visualizer.SerializeDocument(
+            "scene.dialogue.md",
+            """
+            Alice: Hi.
+
+            ---
+
+            Bob: Bye.
+            """,
+            "view");
+
+        AssertJson("[]", Parse(json).Diagnostics);
+    }
+
+    [Fact]
     public void SerializeDocument_ForACleanScript_CarriesAnEmptyDiagnosticsArray()
     {
         var visualizer = new CompilationVisualizer();

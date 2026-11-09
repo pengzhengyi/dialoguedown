@@ -40,7 +40,9 @@ scene.dialogue.md(5,1): error DLG2001: Two scenes resolve to the same anchor '#t
 Interactive terminals get an Errata block per diagnostic — the source line, a
 colored underline of the exact range, and a header such as `syntax warning [DLG1113]`
 — with the same summary. Diagnostics are sorted by position, then code; errors are
-red, warnings yellow, info cyan. A clean compile prints nothing. A `--fix` run adds a
+red, warnings yellow, info cyan. A clean compile prints nothing. A
+[disabled](./Disabled%20Diagnostics.md) diagnostic is left out of the blocks, the
+summary, and the hint, and a last line counts disabled diagnostics by code. A `--fix` run adds a
 section after the diagnostics, whose grammar is the
 [fix mode](../cli/Compile%20CLI%20-%20Fix%20Mode.md) note.
 
@@ -59,8 +61,8 @@ section after the diagnostics, whose grammar is the
 | `LinePosition` (public) | One-based `(Line, Column)`; `ToString()` is `line,column`. |
 | `LocatedDiagnostic` (public) | `Code`, `Severity`, `Category`, `Message`, `Start`, `End`, `StartOffset`, `EndOffset`, and `Fixes`. |
 | `CompilationResult.LocatedDiagnostics` (public) | The projection, built on first access and cached. |
-| `ErrataRenderer` (CLI) | Render diagnostics, summary, fixable hint, and a fix run's section to an `IAnsiConsole`. |
-| `DiagnosticDocumentation` (CLI) | Map a code to its hosted error-code anchor (`…/error-codes.html#dlg<code>`). |
+| `ErrataRenderer` (CLI) | Render diagnostics, summary, fixable hint, disabled count, and a fix run's section to an `IAnsiConsole`. |
+| `DiagnosticDocumentation` (public) | Map a code to its hosted error-code anchor (`…/error-codes.html#dlg<code>`). |
 | `CompileCommand` (CLI) | Compile, render, choose the exit code; parse `--mode`. |
 
 ## Key design decisions

@@ -19,10 +19,11 @@ internal sealed class DiagnosticProjection
     /// <summary>
     /// Projects <paramref name="diagnostics"/> into LSP-shaped diagnostics, preserving report order.
     /// </summary>
+    /// <remarks>A disabled diagnostic is left out.</remarks>
     public IReadOnlyList<LspDiagnostic> Project(IEnumerable<LocatedDiagnostic> diagnostics)
     {
         ArgumentNullException.ThrowIfNull(diagnostics);
-        return [.. diagnostics.Select(Project)];
+        return [.. diagnostics.Where(diagnostic => !diagnostic.IsDisabled).Select(Project)];
     }
 
     private static LspDiagnostic Project(LocatedDiagnostic diagnostic) =>

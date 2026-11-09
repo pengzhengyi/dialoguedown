@@ -9,10 +9,14 @@ internal interface IErrataRenderer
     /// <summary>
     /// Writes each diagnostic in <paramref name="diagnostics"/>, sorted by position then code,
     /// followed by a summary and, when any carries a fix, a hint such as
-    /// <c>2 fixable with --fix</c>. On an interactive console it renders rich Errata blocks with a
-    /// source snippet and caret over <paramref name="source"/>; otherwise it writes the greppable
-    /// <c>file(line,column): severity CODE: message</c> one-liner.
+    /// <c>2 fixable with --fix</c>.
     /// </summary>
+    /// <remarks>
+    /// Disabled diagnostics are left out of all three and counted by code on a last line, such as
+    /// <c>2 disabled: 1 DLG1114, 1 DLG3002</c>. On an interactive console it renders rich Errata
+    /// blocks with a source snippet and caret over <paramref name="source"/>; otherwise it writes the
+    /// greppable <c>file(line,column): severity CODE: message</c> one-liner.
+    /// </remarks>
     /// <param name="file">The script's path, as the report names it.</param>
     /// <param name="source">The script text the diagnostics locate.</param>
     /// <param name="diagnostics">The diagnostics as found.</param>
