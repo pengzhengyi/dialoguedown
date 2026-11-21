@@ -312,7 +312,7 @@ jobs:
       # come from .markdownlint-cli2.yaml; only the glob is passed, because the action's
       # default covers the base directory alone.
       - name: Lint Markdown
-        uses: DavidAnson/markdownlint-cli2-action@v24
+        uses: DavidAnson/markdownlint-cli2-action@v25
         with:
           globs: "**/*.md"
 
