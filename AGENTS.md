@@ -20,8 +20,12 @@ and its stages are described in
 
 ## Build and test
 
-Uses the .NET 10 SDK (`global.json` pins the floor). A plain `dotnet build` needs
-no Node — the built web report is committed.
+For local edits, run only the affected tests or lightweight documentation checks.
+Let [PR CI](.github/workflows/ci.yml) do full verification. The
+[build and test policy](.github/copilot-instructions.md#build-and-test) covers
+exceptions and approvals.
+
+To reproduce CI when needed (.NET SDK 10 or newer):
 
 ```bash
 # .NET library, CLI, and tests

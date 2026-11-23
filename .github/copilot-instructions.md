@@ -16,10 +16,24 @@ Path-specific rules live alongside this file and apply automatically:
 
 ## Build and test
 
-Uses the .NET 10 SDK (`global.json` pins 10.0.0 with `rollForward: latestMajor`). The
-shipped libraries still multi-target `net8.0` and `net10.0` for Godot consumers, so CI
-installs both runtimes; the SDK floor is not the consumer floor.
-A plain `dotnet build` needs no Node — the built web report is committed.
+**Local review:** run the smallest check that exercises the change and its directly
+affected callers. For C#, test the affected class or project on its configured
+frameworks; let `dotnet test` build that project and its dependencies. Use
+`--no-build` only when the binaries include the current edit. For web changes,
+choose the relevant Vitest file or Playwright scenario; for docs, check the affected
+text, links, or examples. Preserve required previews and generated artifacts.
+
+**Full verification:** use GitHub Actions on the pull request. Do not repeat
+solution-wide formatting, builds, tests, coverage, full browser suites, or the
+DocFX site build locally for each review, commit, or push. Run heavy checks locally
+when explicitly requested; if CI cannot answer a specific question, explain why
+and ask first. After an approved push, check the results for the current PR revision
+before merge. A branch push without a PR, an unstaged diff, and a stash do not
+trigger PR CI. This does not change commit, push, or merge approval.
+
+The commands below are for **reproducing CI**, not a local checklist. CI installs
+.NET 8 and 10 explicitly so multi-target tests run on both runtimes. A plain
+.NET build needs no Node because the report bundle is committed.
 
 ```bash
 # .NET library, CLI, and tests
@@ -41,14 +55,8 @@ cd src/DialogueDown.Visualization/web && npm run e2e:live
 VS Code tasks (**Terminal → Run Task**) mirror these: `build`, `test`,
 `web: check`, `verify: all`, and more.
 
-Use `build: fast` only for inner-loop compile feedback after restore; it skips
-analyzers. Use `test: project`, `test: filter`, or `test: class` after a build for
-targeted feedback. Frontend inner-loop tasks select one Vitest file or Playwright
-file/title. The normal `build`/`test` and full frontend tasks remain the required
-gate.
-
-`dotnet format --verify-no-changes` is the code-style gate, and CI runs it
-before the build. Run it too: code-style rules (`IDE####`, such as naming) do
+`dotnet format --verify-no-changes` is the code-style gate. CI runs it before
+the build because code-style rules (`IDE####`, such as naming) do
 **not** run during `dotnet build`, so a green build alone does not mean a green
 CI. Note also that analyzer warnings are emitted only when a project actually
 recompiles — repeating `dotnet build` with no changes prints zero warnings even

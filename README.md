@@ -114,6 +114,9 @@ dotnet run --project src/DialogueDown.Cli -- compile scene.dialogue.md
 
 ## Build and test
 
+For local changes, run the [focused checks](CONTRIBUTING.md#development-setup).
+GitHub Actions runs the full .NET checks on pull requests:
+
 ```bash
 dotnet restore DialogueDown.sln
 dotnet format DialogueDown.sln --verify-no-changes --no-restore

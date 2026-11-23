@@ -143,29 +143,23 @@ license does not affect the library's MIT license or reach consumers.
   pipeline never calls back into the compilation orchestrator). Extend that suite
   when you add a layer or boundary.
 
-## Before pushing
+## Local review and PR checks
 
-For fast compile feedback during an edit, after restoring once:
+Run the affected test class or project. For example:
 
 ```bash
-dotnet build DialogueDown.sln --configuration Release --no-restore \
-  -p:RunAnalyzers=false
+dotnet test --project tests/DialogueDown.Runtime.Tests -c Release --filter-class '*RunnerTests' --minimum-expected-tests 1
 ```
 
-This is an inner-loop build only. It deliberately skips StyleCop and Sonar; run
-the normal analyzer-enabled build and tests before pushing:
+Do not select just one target framework for a multi-target project. The VS Code
+tasks `test: project`, `test: filter`, and `test: class` use `--no-build`, so use
+them only if the affected project has already been built with the current edits.
 
-Use the VS Code tasks `test: project`, `test: filter`, and `test: class` after a
-successful build to run only the affected test project or behavior. They stop at
-the first failure (`--stop-on-fail on`), which is the one being worked on;
-`test: class` selects a class through xUnit's own `--filter-class` rather than the
-VSTest syntax `--filter` translates. `dotnet watch test` was measured slower than a
-direct project run on the development machine, so it is not part of the
-recommended loop.
+PR CI runs solution-wide formatting, the analyzer-enabled Release build, coverage,
+and the full test command:
 
 ```bash
 dotnet test DialogueDown.sln --configuration Release --no-build --minimum-expected-tests 3000
 ```
 
-Run source-focused coverage when you change tested behavior (see
-[`CONTRIBUTING.md`](../../CONTRIBUTING.md)).
+For local exceptions, follow the [build and test policy](../copilot-instructions.md#build-and-test).

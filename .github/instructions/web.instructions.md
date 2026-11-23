@@ -12,26 +12,21 @@ Full context is in [`CONTRIBUTING.md`](../../CONTRIBUTING.md).
 
 ## Workflow
 
-Run from `src/DialogueDown.Visualization/web/`:
+For local review, run the affected Vitest file or Playwright scenario from
+`src/DialogueDown.Visualization/web/`. For example:
 
 ```bash
-npm install
-npm run dev      # live-reloading dev server with sample data
-npm run check    # typecheck + eslint + stylelint + prettier + vitest
-npm run build    # rebuild the committed dist/report.html
-npm run e2e      # Playwright end-to-end + accessibility (needs: npx playwright install chromium)
-npm run e2e:live # build the CLI once, then run the real loopback-server E2E suite
+npm run test -- src/problems-panel.test.ts
+npx playwright test e2e/report.spec.ts -g "arrow keys"
 ```
 
 For inner-loop feedback, use the VS Code tasks `web: test file`,
 `web: test watch`, `web: e2e file`, `web: e2e grep`, or
-`web: e2e live file`. These narrow the test scope; they never replace
-`web: check` and the full static/live suites before pushing.
+`web: e2e live file`. PR CI runs `npm run check`, checks the built assets, and
+runs the full static and live browser suites.
 
 ## Rules
 
-- **Run `npm run check` before committing.** It must pass — it is the same gate CI
-  runs.
 - **Rebuild and commit `web/dist/report.html`** whenever you change anything under
   `web/src`, **or a file it embeds** — the report imports
   `schema/playbook-0.schema.json` (`src/playbook-schema.ts`), so a schema change
