@@ -201,7 +201,8 @@ Crosscheck the result against the approved design:
 
 Set the design note to implemented, reconcile terminology across docs and code,
 and add one concise domain-level `Unreleased` changelog entry. Polish the final
-docs and run every current repository gate required by the changed surfaces.
+docs and run the focused checks for the changed behavior. Full verification
+runs on the PR under the repository's [build and test policy](../../copilot-instructions.md#build-and-test).
 
 Build and open both the served visualization and static gallery demo using the
 repository's current documented workflow. Prompt the user to review source

@@ -78,15 +78,16 @@ The `docs/` tree is **audience-first** and builds into a DocFX site:
    python3 .github/scripts/generate-design-notes-toc.py
    ```
 
-4. Build the site to confirm it renders and links resolve:
+4. Check the changed Markdown and sidebar locally. The **Docs site** PR job builds
+   the site and checks its links. To reproduce a site-build failure or preview it
+   when needed:
 
    ```bash
    dotnet tool restore
    dotnet tool run docfx docs/docfx.json --warningsAsErrors   # add --serve to preview locally
    ```
 
-   The build fails on a warning, and CI builds the site on every pull request, so a broken
-   link or a missing cross-reference is a failure to fix rather than a note to leave.
+   Treat a warning as a failure to fix before merge.
 
 ## Moving, merging, or renaming a note
 

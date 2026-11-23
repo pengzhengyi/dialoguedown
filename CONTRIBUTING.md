@@ -24,7 +24,20 @@ Requirements:
 - .NET SDK 10 or newer
 - Git
 
-Clone the repository and run:
+During local review, run the smallest test selection that covers your edit and
+the callers whose behavior changes. For example, after editing the runner:
+
+```bash
+dotnet test --project tests/DialogueDown.Runtime.Tests -c Release --filter-class '*RunnerTests' --minimum-expected-tests 1
+```
+
+This builds the test project and its dependencies and exercises both of its target
+frameworks. After pushing an approved commit, open or update a pull request (a
+draft is fine) to run [CI](.github/workflows/ci.yml). Before merging, use the
+checks for the current PR revision, not an earlier run.
+
+The following full-solution commands are for reproducing CI, not prerequisites
+for committing or pushing:
 
 ```bash
 dotnet restore DialogueDown.sln
@@ -33,14 +46,14 @@ dotnet build DialogueDown.sln --configuration Release --no-restore
 dotnet test DialogueDown.sln --configuration Release --no-build --minimum-expected-tests 3000
 ```
 
-The `format` step is the code-style gate, and CI runs it first. Run it locally
-too: code-style rules such as naming (`IDE####`) do not run during
+The `format` step is the code-style gate, and CI runs it first:
+code-style rules such as naming (`IDE####`) do not run during
 `dotnet build`, so a green build alone does not mean a green CI. Analyzer
 warnings also appear only when a project actually recompiles — repeating
 `dotnet build` with no changes prints zero warnings even when violations exist.
 Add `--no-incremental` when a build's warning count has to be trusted.
 
-To collect coverage focused on production source code:
+CI collects coverage on production source code. To reproduce its report:
 
 ```bash
 dotnet tool restore
@@ -92,8 +105,7 @@ not warnings). The CLI and visualization projects are intentionally exempt.
 - **An immutable Dialogue AST** — an architecture test holds every AST node
   immutable, so no later stage can change what an earlier one produced.
 
-Use the `build: fast` task (analyzers off) for the inner loop, but run the
-normal analyzer-enabled `build`/`test` before pushing.
+The PR build runs the analyzers; `build: fast` skips them and is not a substitute.
 
 ### Properties, beside examples
 
@@ -177,12 +189,13 @@ plain `dotnet build` needs no Node. You only need Node (24+) to change the clien
 cd src/DialogueDown.Visualization/web
 npm install
 npm run dev                        # live-reloading dev server with sample data
-npm run check                      # typecheck, lint, style, format, unit tests
+npm run test -- src/problems-panel.test.ts # focused example for a Problems panel edit
 npx playwright install chromium    # once, for e2e
-npm run e2e                        # Playwright end-to-end + accessibility tests
+npx playwright test e2e/report.spec.ts -g "arrow keys" # one browser scenario
 npm run build                      # rebuild the committed dist/report.html
 ```
 
+CI runs `npm run check` and the full static and live browser suites.
 If you change anything under `web/src`, rebuild and commit `web/dist/report.html`
 so it stays in sync with its sources. As a safety net the **Sync report bundle**
 workflow rebuilds and commits it for you on pull requests that forget to (including
@@ -285,9 +298,8 @@ you can build, test, and clean without memorizing commands: `build` / `test`
 `test: filter` / `test: class` (one already-built .NET test scope), `web: build` / `web: check` /
 `web: e2e` (frontend), targeted `web: test file` / `web: test watch` /
 `web: e2e file` / `web: e2e grep` / `web: e2e live file`, `build: all` and
-`verify: all` (both stacks), and `clean` (remove build/test artifacts). Always
-run the normal analyzer-enabled build/test and full frontend gates before
-pushing.
+`verify: all` (both stacks), and `clean` (remove build/test artifacts). Use
+the focused tasks locally and the PR checks for full verification.
 
 ### Agent commands (opencode)
 
@@ -354,13 +366,12 @@ with `BREAKING CHANGE:` in the commit footer.
 
 ## Pull request checklist
 
-Before opening a pull request:
+For each pull request:
 
 - [ ] Add or update tests for behavior changes.
 - [ ] Update documentation for public API or script-language changes.
-- [ ] Run `dotnet format DialogueDown.sln --verify-no-changes` — the same code-style gate CI runs.
-- [ ] Run `dotnet test DialogueDown.sln --configuration Release --no-build --minimum-expected-tests 3000`.
-- [ ] Run source-focused coverage when changing tested behavior.
+- [ ] Report the focused local checks and their results, or explain why none applies.
+- [ ] Before merge, check CI on the current PR revision, including the full build, tests, and coverage.
 - [ ] If you changed the visualization frontend (`web/`), rebuild and commit `web/dist/report.html` (CI auto-commits it if you forget).
 - [ ] Keep the pull request focused on one topic.
 - [ ] Explain why the change is useful.
