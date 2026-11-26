@@ -6,9 +6,7 @@ namespace DialogueDown.ConfigurationLoader;
 
 /// <summary>
 /// Reads a DialogueDown project's <c>dialogue.toml</c> into a <see cref="CompilerOptions"/> so the
-/// engine-agnostic core never takes a TOML dependency. It reads the speakers, the compilation
-/// mode, and how unmodeled Markdown is handled; a config that sets none of them yields
-/// <see cref="CompilerOptions.Default"/>.
+/// engine-agnostic core never takes a TOML dependency.
 /// </summary>
 /// <remarks>
 /// Every TOML spelling of a setting reads the same: <c>[[speakers]]</c> headers and an inline
@@ -18,7 +16,12 @@ namespace DialogueDown.ConfigurationLoader;
 public static class TomlConfigurationLoader
 {
     private static readonly string[] _sections =
-        [ConfiguredModeReader.Key, ConfiguredSpeakerReader.Key, ConfiguredUnmodeledReader.Key];
+        [
+            ConfiguredModeReader.Key,
+            ConfiguredSpeakerReader.Key,
+            ConfiguredUnmodeledReader.Key,
+            ConfiguredDiagnosticsReader.Key,
+        ];
 
     /// <summary>
     /// Reads and parses the <c>dialogue.toml</c> at <paramref name="path"/>, which also names the
@@ -47,8 +50,9 @@ public static class TomlConfigurationLoader
         CompilationMode? mode = new ConfiguredModeReader().Read(root);
         IReadOnlyDictionary<UnmodeledNodeKind, UnmodeledNodeHandling> unmodeled =
             new ConfiguredUnmodeledReader().Read(root);
+        IReadOnlyList<string> disabled = new ConfiguredDiagnosticsReader().Read(root);
 
-        if (speakers.Count == 0 && mode is null && unmodeled.Count == 0)
+        if (speakers.Count == 0 && mode is null && unmodeled.Count == 0 && disabled.Count == 0)
         {
             return CompilerOptions.Default;
         }
@@ -56,6 +60,7 @@ public static class TomlConfigurationLoader
         return new CompilerOptions(
             mode ?? CompilerOptions.Default.Mode,
             speakers,
-            unmodeled);
+            unmodeled,
+            disabled);
     }
 }

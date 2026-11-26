@@ -65,6 +65,7 @@ ddown visualize                                       # the file launcher
 | `--mode <mode>` | compile | [CLI Diagnostic Rendering](../diagnostics/CLI%20Diagnostic%20Rendering.md) |
 | `--emit <playbook\|dot>`, `-o` | compile | [Compile CLI — Emit DOT](./Compile%20CLI%20-%20Emit%20DOT.md), [Playbook Format](../runtime/Playbook%20Format.md) |
 | `--fix` | compile | [Compile CLI — Fix Mode](./Compile%20CLI%20-%20Fix%20Mode.md) |
+| `--disable <codes>` | compile | [Disabled Diagnostics](../diagnostics/Disabled%20Diagnostics.md) |
 | `--edit`, `--root`, `--port`, `--no-open`, `-o` | visualize | [View and Edit Modes](../visualization/session/Served%20Shell.md) |
 
 ## Interfaces and abstractions

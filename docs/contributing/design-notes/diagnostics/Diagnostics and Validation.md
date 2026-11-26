@@ -4,8 +4,9 @@
 > Status: **implemented**. The machinery that lets one compile report every
 > problem in a script: a located diagnostic model, a per-compilation sink the
 > stages report into, a rule-based structural validator, recovery at each reporting
-> site, and compilation modes that decide how far a compile proceeds. Warnings as
-> errors and per-rule configuration are not built. The convention it carries — which
+> site, and compilation modes that decide how far a compile proceeds. A project can
+> [disable](./Disabled%20Diagnostics.md) a non-error code; warnings as errors and
+> per-rule severities are not built. The convention it carries — which
 > channel a fault takes and how codes are numbered — is the
 > [Error Model](../core/Error%20Model.md).
 

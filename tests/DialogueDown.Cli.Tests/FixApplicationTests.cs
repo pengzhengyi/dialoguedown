@@ -82,6 +82,16 @@ public sealed class FixApplicationTests
         Assert.Empty(fresh);
     }
 
+    [Fact]
+    public void NewDiagnostics_ADisabledDiagnostic_IsNeverNew()
+    {
+        var application = Applied(Insert(2, "\\"));
+
+        var fresh = application.NewDiagnostics([], [Diagnostic("DLG3002", 13) with { IsDisabled = true }]);
+
+        Assert.Empty(fresh);
+    }
+
     // An application whose fixes were all applied, each as one edit. Its text is not read.
     private static FixApplication Applied(params LocatedEdit[] edits) =>
         new(string.Empty, [.. edits.Select(edit => FixOutcome.Apply(AFix(edit)))]);

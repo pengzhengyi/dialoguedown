@@ -210,6 +210,26 @@ nothing. `--fix` writes no playbook, so it cannot be combined with `--emit` or
 `-o`; run a plain compile afterward when the playbook is next, and use
 `--mode best-effort --fix` to surface more repairs in one run.
 
+**Turn off a diagnostic you do not need.** `--disable` hides a warning or info code
+for one run, in addition to any your project disables in
+[`dialogue.toml`](configuration.md#disabling-diagnostics). Repeat it, or separate
+codes with commas. A last line counts what was disabled:
+
+```sh
+ddown compile my-scene.dialogue.md --disable DLG1114,DLG3002
+```
+
+```text
+my-scene.dialogue.md(3,27): warning DLG1113: `=>` makes a jump only when a link follows it. …
+  for more information, see https://pengzhengyi.github.io/dialoguedown/guide/error-codes.html#dlg1113
+1 warning
+1 fixable with --fix
+2 disabled: 1 DLG1114, 1 DLG3002
+```
+
+An error code cannot be disabled, and `--fix` never applies a disabled
+diagnostic's fix.
+
 > [!WARNING]
 > `--fix` rewrites the script, and it exits 0 once the corrected script
 > compiles — even though a file on disk just changed. Keep the script under
@@ -224,6 +244,7 @@ nothing. `--fix` writes no playbook, so it cannot be combined with `--emit` or
 | `--emit <format>` | What to write: `playbook` (the default) or `dot` for the compiler's stage graphs. |
 | `--mode <mode>` | How far to compile after an error: `stage-boundary` (default) or `best-effort`. |
 | `--fix` | Apply each diagnostic's preferred fix, write the corrected script in place, and recompile it. |
+| `--disable <codes>` | Hide these warning or info codes for this run, in addition to those `dialogue.toml` disables. Repeatable; commas separate codes. |
 | `--config <path>` | Use a specific `dialogue.toml`. Default: the nearest one above the script. |
 
 `--emit dot` writes the compiler's internal stage graphs instead, for feeding into

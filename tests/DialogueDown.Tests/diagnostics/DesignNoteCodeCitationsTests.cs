@@ -1,4 +1,5 @@
 using System.Text.RegularExpressions;
+using DialogueDown.Diagnostics;
 using DialogueDown.Tests.Support;
 
 namespace DialogueDown.Tests.Diagnostics;
@@ -22,7 +23,7 @@ public sealed partial class DesignNoteCodeCitationsTests
         ["DLG3001"] = "Choice Nesting Diagnostic names it as a code left unused.",
     };
 
-    private static readonly HashSet<string> _catalog = DiagnosticCatalogReflection.Descriptors()
+    private static readonly HashSet<string> _catalog = DiagnosticCatalog.All
         .Select(descriptor => descriptor.Code)
         .ToHashSet(StringComparer.Ordinal);
 

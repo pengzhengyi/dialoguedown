@@ -21,7 +21,7 @@ public sealed class DiagnosticCatalogMarkdownTests
     [Fact]
     public void RendersEveryCatalogCodeAsAnAnchoredSubsection()
     {
-        foreach (var descriptor in DiagnosticCatalogReflection.Descriptors())
+        foreach (var descriptor in DiagnosticCatalog.All)
         {
             // A bare code heading gives a stable slug (### DLG2001 -> #dlg2001) for deep links.
             Assert.Contains($"### {descriptor.Code}\n", _rendered);
@@ -31,7 +31,7 @@ public sealed class DiagnosticCatalogMarkdownTests
     [Fact]
     public void ShowsEachDescriptorsTitleSeverityAndMessage()
     {
-        foreach (var descriptor in DiagnosticCatalogReflection.Descriptors())
+        foreach (var descriptor in DiagnosticCatalog.All)
         {
             Assert.Contains($">{descriptor.DefaultSeverity}</span> · {descriptor.Title}", _rendered);
             Assert.Contains(descriptor.MessageFormat, _rendered);
@@ -67,7 +67,7 @@ public sealed class DiagnosticCatalogMarkdownTests
         Assert.All(
             Enum.GetValues<DiagnosticCategory>(),
             category => Assert.Equal(
-                DiagnosticCatalogReflection.Descriptors()
+                DiagnosticCatalog.All
                     .Where(descriptor => descriptor.Category == category)
                     .Select(descriptor => descriptor.Code)
                     .Order(StringComparer.Ordinal),

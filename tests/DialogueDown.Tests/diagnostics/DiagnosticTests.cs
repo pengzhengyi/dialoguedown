@@ -110,4 +110,16 @@ public sealed class DiagnosticTests
         Assert.Equal(withoutFix, withFix);
         Assert.Equal(withoutFix.GetHashCode(), withFix.GetHashCode());
     }
+
+    [Fact]
+    public void IsDisabled_DefaultsToFalse() =>
+        Assert.False(DiagnosticsFactory.Diagnostic().IsDisabled);
+
+    [Fact]
+    public void Equality_DisabledAndEnabled_AreNotEqual()
+    {
+        var enabled = DiagnosticsFactory.Diagnostic(severity: DiagnosticSeverity.Warning);
+
+        Assert.NotEqual(enabled, enabled with { IsDisabled = true });
+    }
 }

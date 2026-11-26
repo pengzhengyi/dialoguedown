@@ -3,7 +3,8 @@
 > [!NOTE]
 > Status: **implemented**. `DLG3002` warns when a branch reaches a fourth level of
 > nested choices, suggesting a new scene and a jump instead. Deep nesting stays
-> valid; a configurable threshold, suppression, and an automatic fix are not built.
+> valid, and a project can [disable](./Disabled%20Diagnostics.md) the code; a
+> configurable threshold and an automatic fix are not built.
 
 ## Ubiquitous language
 

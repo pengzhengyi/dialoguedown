@@ -164,7 +164,8 @@ correctly with no change here.
 
 The tradeoff: the highlighting depends on that diagnostic being produced, so demoting or
 suppressing `DLG1114` would silently take the coloring with it. A test pins the pair together so
-it cannot happen unnoticed.
+it cannot happen unnoticed. [Disabling](../../diagnostics/Disabled%20Diagnostics.md) `DLG1114`
+keeps the diagnostic and only marks it, so the coloring survives.
 
 ### D2a — The diagnostics reach the projection as an optional argument
 

@@ -25,7 +25,12 @@ internal static class DiagnosticCatalogMarkdown
         + "<span class=\"dd-sev dd-sev--error\">Error</span> (must be fixed), "
         + "<span class=\"dd-sev dd-sev--warning\">Warning</span> (compiles but is suspect), or "
         + "<span class=\"dd-sev dd-sev--info\">Info</span> (a neutral note). Placeholders such as "
-        + "`{0}` are filled with specifics — a name, a count — when the message is shown.\n";
+        + "`{0}` are filled with specifics — a name, a count — when the message is shown.\n"
+        + "\n"
+        + "A project can disable any Warning or Info code it does not want to hear about, in "
+        + "[`dialogue.toml`](configuration.md#disabling-diagnostics) or with `ddown compile "
+        + "--disable`. An Error cannot be disabled, because the script cannot compile until it is "
+        + "fixed.\n";
 
     // Categories in reporting order, each with the range its codes occupy and a one-line summary.
     // A category with no descriptors is not rendered.
@@ -46,7 +51,7 @@ internal static class DiagnosticCatalogMarkdown
 
     public static string Render()
     {
-        var byCategory = DiagnosticCatalogReflection.Descriptors()
+        var byCategory = DiagnosticCatalog.All
             .GroupBy(descriptor => descriptor.Category)
             .ToDictionary(group => group.Key, group => group.OrderBy(d => d.Code, StringComparer.Ordinal).ToList());
 

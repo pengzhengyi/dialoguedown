@@ -2,6 +2,7 @@ using System.Text;
 using DialogueDown.Cli.Tests.Support;
 using DialogueDown.Compilation;
 using DialogueDown.Configuration;
+using DialogueDown.Diagnostics;
 using DialogueDown.Playbook;
 using DialogueDown.TestSupport;
 using DialogueDown.Visualization.Live;
@@ -46,6 +47,30 @@ public sealed class CompileCommandTests
         # Gate
 
         Bob: Two.
+        """;
+
+    /// <summary>
+    /// A script with a fixable DLG1113 warning (line 5), a DLG1114 info (line 7), and a DLG3002
+    /// warning (line 12), so a test can disable none, some, or all of them.
+    /// </summary>
+    private const string ThreeKindsOfDiagnostic = """
+        # The workshop
+
+        Alice: Which way?
+
+        => The market
+
+        ---
+
+        - Ask about the wrench
+            - Ask again
+                - And again
+                    - One more time
+                        Bob: Top shelf.
+
+        # The market
+
+        Merchant: Wares!
         """;
 
     [Fact]
@@ -600,6 +625,106 @@ public sealed class CompileCommandTests
 
         AssertSucceeded(result);
         Assert.True(File.Exists(destination));
+    }
+
+    [Fact]
+    public void Compile_Disable_AddsToTheConfiguredSet()
+    {
+        using var tree = new TempTree();
+        var configPath = tree.File("dialogue.toml", """
+            [diagnostics]
+            disable = ["DLG1114"]
+            """);
+        using var script = new TempScript("# Scene");
+        var factory = AFactoryOf(ACompilerThatSucceeds());
+        var tester = CliTester.Create(compilerFactory: factory);
+
+        tester.Run("compile", script.Path, "--config", configPath, "--disable", "DLG3002");
+
+        Assert.Equal(
+            ["DLG1114", "DLG3002"],
+            OptionsTheCompilerWasBuiltWith(factory).DisabledDiagnostics.Order());
+    }
+
+    [Fact]
+    public void Compile_Disable_TakesRepeatedAndCommaSeparatedCodesInAnyCase()
+    {
+        using var script = new TempScript("# Scene");
+        var factory = AFactoryOf(ACompilerThatSucceeds());
+        var tester = CliTester.Create(compilerFactory: factory);
+
+        tester.Run("compile", script.Path, "--disable", " dlg1114 ,DLG3002,", "--disable", "DLG1113");
+
+        Assert.Equal(
+            ["DLG1113", "DLG1114", "DLG3002"],
+            OptionsTheCompilerWasBuiltWith(factory).DisabledDiagnostics.Order());
+    }
+
+    [Theory]
+    [InlineData("")]
+    [InlineData(",")]
+    public void Compile_DisableWithNoCode_FailsWithUsageError(string value)
+    {
+        using var script = new TempScript("# Scene");
+
+        var result = CliTester.Create().Run("compile", script.Path, "--disable", value);
+
+        AssertExited(result, ExitCodes.UsageError, "--disable needs a diagnostic code");
+    }
+
+    [Theory]
+    [InlineData("DLG302", "DLG302")]
+    [InlineData("DLG3002,dlg2001", "dlg2001")]
+    public void Compile_DisableACodeThatCannotBeDisabled_FailsWithUsageErrorNamingTheCode(string value, string code)
+    {
+        using var script = new TempScript("# Scene");
+
+        var result = CliTester.Create().Run("compile", script.Path, "--disable", value);
+
+        AssertExited(result, ExitCodes.UsageError, $"--disable {code}: {DisabledDiagnosticCodes.Check(code).Problem}");
+    }
+
+    [Fact]
+    public void Compile_SomeDisabled_ShowsTheRestAndCountsTheDisabled()
+    {
+        using var script = new TempScript(ThreeKindsOfDiagnostic);
+
+        var result = CliTester.Create().Run("compile", script.Path, "--disable", "DLG1114,DLG3002");
+
+        var output = AssertSucceeded(result);
+        AssertInOrder(
+            output, "warning DLG1113", "1 warning", "1 fixable with --fix", "2 disabled: 1 DLG1114, 1 DLG3002");
+        Assert.DoesNotContain("DLG1114:", output, StringComparison.Ordinal);
+        Assert.DoesNotContain("DLG3002:", output, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void Compile_AllDisabledFromTheConfig_PrintsOnlyTheDisabledLine()
+    {
+        using var tree = new TempTree();
+        var configPath = tree.File("dialogue.toml", """
+            [diagnostics]
+            disable = ["DLG1113", "DLG1114", "DLG3002"]
+            """);
+        using var script = new TempScript(ThreeKindsOfDiagnostic);
+
+        var result = CliTester.Create()
+            .Run("compile", script.Path, "--config", configPath, "-o", tree.File("out.json"));
+
+        Assert.Equal("3 disabled: 1 DLG1113, 1 DLG1114, 1 DLG3002", AssertSucceeded(result).Trim());
+    }
+
+    [Fact]
+    public void Compile_Fix_LeavesADisabledDiagnosticsTextAlone()
+    {
+        using var script = new TempScript(ThreeKindsOfDiagnostic);
+        var plain = CliTester.Create().Run("compile", script.Path, "--disable", "DLG1113");
+
+        var fix = CliTester.Create().Run("compile", script.Path, "--disable", "DLG1113", "--fix");
+
+        // With its only fixable diagnostic disabled, a fix run is a plain compile.
+        Assert.Equal(AssertSucceeded(plain, "1 disabled: 1 DLG1113"), AssertSucceeded(fix));
+        Assert.Equal(ThreeKindsOfDiagnostic, File.ReadAllText(script.Path));
     }
 
     /// <summary>A compiler that reports a clean compile of an empty script, whatever it is given.</summary>

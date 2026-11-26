@@ -86,6 +86,8 @@
     href: diagnostics/Ignored Markdown Diagnostic.md
   - name: CLI Diagnostic Rendering
     href: diagnostics/CLI Diagnostic Rendering.md
+  - name: Disabled Diagnostics
+    href: diagnostics/Disabled Diagnostics.md
 - name: Command-line interface
   items:
   - name: Command-Line Interface
