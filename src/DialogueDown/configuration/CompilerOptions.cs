@@ -39,6 +39,9 @@ public sealed partial record CompilerOptions
         UnmodeledMarkdown = unmodeledMarkdown.ToImmutableDictionary();
     }
 
+    /// <summary>The unconfigured options: every knob at its built-in default.</summary>
+    public static CompilerOptions Default { get; } = new();
+
     /// <summary>
     /// Speakers supplied by configuration — an immutable registry seeded alongside a script's own
     /// speakers. At most one may be the default speaker, and a script's own <c>##default</c> takes
@@ -70,9 +73,6 @@ public sealed partial record CompilerOptions
             _unmodeledMarkdown = value;
         }
     }
-
-    /// <summary>The unconfigured options: every knob at its built-in default.</summary>
-    public static CompilerOptions Default { get; } = new();
 
     /// <summary>The part of these options the semantic analysis stage reads.</summary>
     internal ISemanticAnalyzerOptions ForSemanticAnalyzer() => new SemanticAnalyzerOptions(Speakers);

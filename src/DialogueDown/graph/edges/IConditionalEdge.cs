@@ -14,13 +14,3 @@ internal interface IConditionalEdge
     /// <summary>The condition this edge is available under, or null when it always is.</summary>
     Condition? Condition { get; }
 }
-
-internal static class ConditionalEdgeExtensions
-{
-    /// <summary>Whether a condition withholds this edge.</summary>
-    public static bool IsConditional(this IConditionalEdge edge)
-    {
-        ArgumentNullException.ThrowIfNull(edge);
-        return edge.Condition is not null;
-    }
-}
