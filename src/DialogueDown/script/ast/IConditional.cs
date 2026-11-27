@@ -10,9 +10,3 @@ internal interface IConditional
     /// <summary>The condition guarding this node, or null when it is unconditional.</summary>
     Condition? Condition { get; }
 }
-
-internal static class ConditionalExtensions
-{
-    /// <summary>Whether a condition guards this node.</summary>
-    public static bool IsConditional(this IConditional node) => node.Condition is not null;
-}

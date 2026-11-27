@@ -266,6 +266,13 @@ internal static class PlaybookGen
             _ => Speaks(id, [new SuccessionEdge(Onward)]),
         };
 
+        private static CustomCommandFragment Wave() => CustomCommand("Wave");
+
+        // An option whose label asks names who it is said to, which the world fills in when the
+        // menu is offered.
+        private static OptionEdge Option(int target, string words, Condition? guard, bool asks) =>
+            new(target, asks ? [Text($"{words}, "), Query(WordsKey), Text(".")] : [Text($"{words}.")], guard);
+
         // A jump the world may withhold falls through to the line beneath it, which is how a
         // script compiles one. A jump that always fires has nowhere else to go.
         private ImmutableArray<Edge> JumpOnItsOwnLine() =>
@@ -291,8 +298,6 @@ internal static class PlaybookGen
                 ? [Text("Something, "), Query(WordsKey), Text(".")]
                 : [Text("Something.")];
 
-        private static CustomCommandFragment Wave() => CustomCommand("Wave");
-
         private DivertEdge Jump() => new(Elsewhere, [], JumpGuard);
 
         private BranchEdge GatedBranch() => new(Elsewhere, BranchGuard);
@@ -307,11 +312,6 @@ internal static class PlaybookGen
                 Option(Onward, "Go on", Menu.OnwardGuard, Menu.OnwardAsks),
                 Option(Elsewhere, "Go elsewhere", Menu.ElsewhereGuard, Menu.ElsewhereAsks),
             ];
-
-        // An option whose label asks names who it is said to, which the world fills in when the
-        // menu is offered.
-        private static OptionEdge Option(int target, string words, Condition? guard, bool asks) =>
-            new(target, asks ? [Text($"{words}, "), Query(WordsKey), Text(".")] : [Text($"{words}.")], guard);
 
         // A random choice the world can leave with nothing drawable falls through past its random
         // options, which is how a script compiles one, so the walk goes on rather than being refused
