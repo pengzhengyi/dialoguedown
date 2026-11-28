@@ -53,12 +53,12 @@
     <PackageVersion Include="xunit.v3"                                  Version="4.0.3" />
     <!-- Assertions without the test framework, for the shared helper library. -->
     <PackageVersion Include="xunit.v3.assert"                           Version="4.0.3" />
-    <PackageVersion Include="coverlet.MTP"                              Version="10.1.0" />
+    <PackageVersion Include="coverlet.MTP"                              Version="10.1.1" />
     <PackageVersion Include="NSubstitute"                               Version="6.2.0" />
     <PackageVersion Include="Bogus"                                     Version="35.6.5" />
     <PackageVersion Include="CsCheck"                                   Version="4.9.1" />
     <PackageVersion Include="NetArchTest.eNhancedEdition"               Version="1.4.5" />
-    <PackageVersion Include="Microsoft.Extensions.TimeProvider.Testing" Version="11.0.0" />
+    <PackageVersion Include="Microsoft.Extensions.TimeProvider.Testing" Version="11.0.1" />
     <PackageVersion Include="Spectre.Console.Testing"                   Version="0.57.2" />
     <PackageVersion Include="Spectre.Console.Cli.Testing"               Version="0.57.2" />
   </ItemGroup>
